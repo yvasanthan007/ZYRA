@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZYRA - Holographic Neural AI Core</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #080812;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  cursor: crosshair;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #ff8844;
+}
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+/* ===== ZYRA DASHBOARD OVERLAY ===== */
+#dashboard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Top Bar */
+#top-bar {
+  pointer-events: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px;
+  background: linear-gradient(180deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
+}
+
+#zyra-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #ff8844;
+  text-shadow: 0 0 20px rgba(255,136,68,0.3), 0 0 40px rgba(255,136,68,0.1);
+}
+#zyra-brand .brand-dot {
+  width: 10px;
+  height: 10px;
+  background: #ff8844;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #ff8844, 0 0 24px rgba(255,136,68,0.4);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.8); }
+}
+
+#status-indicators {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 12px;
+  color: rgba(255,136,68,0.6);
+  letter-spacing: 1px;
+}
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #44ff88;
+  box-shadow: 0 0 8px #44ff88;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+.status-dot.amber { background: #ff8844; box-shadow: 0 0 8px #ff8844; }
+
+/* Bottom Controls */
+#bottom-controls {
+  pointer-events: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 28px 28px;
+  background: linear-gradient(0deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
+}
+
+#chat-container {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#chat-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: rgba(8,8,18,0.6);
+  border: 1px solid rgba(255,136,68,0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,136,68,0.3) transparent;
+}
+#chat-messages::-webkit-scrollbar { width: 4px; }
+#chat-messages::-webkit-scrollbar-track { background: transparent; }
+#chat-messages::-webkit-scrollbar-thumb { background: rgba(255,136,68,0.3); border-radius: 2px; }
+
+.msg {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px 14px;
+  border-radius: 10px;
+  max-width: 85%;
+  animation: fadeInMsg 0.3s ease;
+}
+@keyframes fadeInMsg {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg.user {
+  background: rgba(255,136,68,0.12);
+  border: 1px solid rgba(255,136,68,0.2);
+  color: #ffcc88;
+  align-self: flex-end;
+  text-align: right;
+}
+.msg.zyra {
+  background: rgba(255,136,68,0.06);
+  border: 1px solid rgba(255,136,68,0.1);
+  color: #ffaa55;
+  align-self: flex-start;
+}
+.msg.zyra .zyra-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #ff8844;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.msg.system {
+  background: rgba(255,68,68,0.08);
+  border: 1px solid rgba(255,68,68,0.15);
+  color: #ff8888;
+  align-self: center;
+  text-align: center;
+  font-size: 11px;
+  max-width: 100%;
+}
+
+#chat-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+#chat-input {
+  flex: 1;
+  padding: 12px 18px;
+  background: rgba(8,8,18,0.7);
+  border: 1px solid rgba(255,136,68,0.2);
+  border-radius: 25px;
+  color: #ffcc88;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s;
+  backdrop-filter: blur(10px);
+}
+#chat-input:focus {
+  border-color: rgba(255,136,68,0.5);
+  box-shadow: 0 0 20px rgba(255,136,68,0.08);
+}
+#chat-input::placeholder {
+  color: rgba(255,136,68,0.3);
+}
+#chat-send {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,136,68,0.15);
+  border: 1px solid rgba(255,136,68,0.3);
+  color: #ff8844;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+#chat-send:hover {
+  background: rgba(255,136,68,0.25);
+  border-color: rgba(255,136,68,0.5);
+  box-shadow: 0 0 20px rgba(255,136,68,0.15);
+}
+
+/* Voice button */
+#voice-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,136,68,0.12);
+  border: 1px solid rgba(255,136,68,0.2);
+  color: #ff8844;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+#voice-btn:hover {
+  background: rgba(255,136,68,0.2);
+  box-shadow: 0 0 20px rgba(255,136,68,0.1);
+}
+#voice-btn.listening {
+  background: rgba(255,68,68,0.25);
+  border-color: #ff4444;
+  animation: voice-pulse 0.8s ease-in-out infinite;
+}
+@keyframes voice-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255,68,68,0.3); }
+  50% { box-shadow: 0 0 30px rgba(255,68,68,0.6); }
+}
+
+/* Connection status overlay */
+#connection-status {
+  position: fixed;
+  bottom: 100px;
+  right: 28px;
+  z-index: 20;
+  font-size: 11px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.6;
+}
+.conn-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ff4444;
+  transition: background 0.3s;
+}
+.conn-dot.connected { background: #44ff88; box-shadow: 0 0 8px #44ff88; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  #top-bar { padding: 12px 16px; flex-direction: column; gap: 8px; }
+  #zyra-brand { font-size: 16px; }
+  #status-indicators { font-size: 10px; gap: 12px; }
+  #bottom-controls { padding: 12px 16px 16px; }
+  #chat-messages { max-height: 140px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Dashboard Overlay -->
+<div id="dashboard-overlay">
+  <!-- Top Bar -->
+  <div id="top-bar">
+    <div id="zyra-brand">
+      <span class="brand-dot"></span>
+      <span>ZYRA</span>
+      <span style="font-size:11px;font-weight:300;opacity:0.5;letter-spacing:2px;">NEURAL AI CORE</span>
+    </div>
+    <div id="status-indicators">
+      <span class="status-item">
+        <span class="status-dot"></span>
+        SYSTEM ACTIVE
+      </span>
+      <span class="status-item">
+        <span class="status-dot amber"></span>
+        v2.0.1
+      </span>
+    </div>
+  </div>
+
+  <!-- Bottom Controls -->
+  <div id="bottom-controls">
+    <div id="chat-container">
+      <div id="chat-messages"></div>
+      <div id="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
+        <button id="voice-btn" title="Voice input">🎤</button>
+        <button id="chat-send" title="Send message">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Connection Status -->
+<div id="connection-status">
+  <span class="conn-dot" id="connDot"></span>
+  <span id="connText">DISCONNECTED</span>
+</div>
+
+<script>
+(function() {
+  // ===== THREE.JS VISUALIZATION =====
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x080812);
+  scene.fog = new THREE.FogExp2(0x080812, 0.018);
+
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0.8, 8);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x080812, 1);
+  document.body.prepend(renderer.domElement);
+
+  function onResize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', onResize);
+
+  // Mouse interactivity
+  const mouse = { x: 0, y: 0, targetX: 0, targetY: 0 };
+  document.addEventListener('mousemove', (e) => {
+    mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+
+  // Main group for mouse tilt
+  const mainGroup = new THREE.Group();
+  scene.add(mainGroup);
+
+  // ===== BACKGROUND STAR FIELD =====
+  const starCount = 2000;
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = new Float32Array(starCount * 3);
+  const starSizes = new Float32Array(starCount);
+  for (let i = 0; i < starCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 15 + Math.random() * 35;
+    starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    starPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    starPos[i * 3 + 2] = r * Math.cos(phi);
+    starSizes[i] = 0.3 + Math.random() * 0.8;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  const starMat = new THREE.PointsMaterial({
+    color: 0xff8844,
+    size: 0.06,
+    transparent: true,
+    opacity: 0.4,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+  });
+  const stars = new THREE.Points(starGeo, starMat);
+  scene.add(stars);
+
+  // ===== AMBIENT RED/ORANGE WASH =====
+  const washGeo = new THREE.SphereGeometry(12, 32, 32);
+  const washMat = new THREE.MeshBasicMaterial({
+    color: 0x441100,
+    transparent: true,
+    opacity: 0.08,
+    side: THREE.BackSide
+  });
+  const wash = new THREE.Mesh(washGeo, washMat);
+  scene.add(wash);
+
+  // ===== CORE GROUP =====
+  const coreGroup = new THREE.Group();
+  mainGroup.add(coreGroup);
+
+  // Solid Inner Core with Halo
+  const innerCoreGeo = new THREE.SphereGeometry(0.5, 48, 48);
+  const innerCoreMat = new THREE.MeshBasicMaterial({
+    color: 0xff8800,
+    transparent: true,
+    opacity: 0.85
+  });
+  const innerCore = new THREE.Mesh(innerCoreGeo, innerCoreMat);
+  coreGroup.add(innerCore);
+
+  // Brighter center
+  const centerGeo = new THREE.SphereGeometry(0.25, 32, 32);
+  const centerMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
+  const center = new THREE.Mesh(centerGeo, centerMat);
+  coreGroup.add(center);
+
+  // Core glow halo
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: 0xff6600,
+    transparent: true,
+    opacity: 0.12,
+    side: THREE.BackSide
+  });
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(1.0, 32, 32), haloMat);
+  coreGroup.add(halo);
+
+  // Outer glow layer
+  const outerHaloMat = new THREE.MeshBasicMaterial({
+    color: 0xff4400,
+    transparent: true,
+    opacity: 0.05,
+    side: THREE.BackSide
+  });
+  const outerHalo = new THREE.Mesh(new THREE.SphereGeometry(1.6, 32, 32), outerHaloMat);
+  coreGroup.add(outerHalo);
+
+  // ===== MAIN GEODESIC SPHERE =====
+  const geoGroup = new THREE.Group();
+  mainGroup.add(geoGroup);
+
+  // Outer geodesic - IcosahedronGeometry subdivision 3 for dense mesh
+  const mainWireGeo = new THREE.IcosahedronGeometry(2.2, 3);
+  const mainWireMat = new THREE.MeshBasicMaterial({
+    color: 0xff8800,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.2
+  });
+  const mainWire = new THREE.Mesh(mainWireGeo, mainWireMat);
+  geoGroup.add(mainWire);
+
+  // Brighter outer wireframe (subdivision 2)
+  const midWireGeo = new THREE.IcosahedronGeometry(2.0, 2);
+  const midWireMat = new THREE.MeshBasicMaterial({
+    color: 0xffaa33,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.15
+  });
+  const midWire = new THREE.Mesh(midWireGeo, midWireMat);
+  geoGroup.add(midWire);
+
+  // ===== INNER MESHES =====
+  const innerGroup = new THREE.Group();
+  mainGroup.add(innerGroup);
+
+  // Inner mesh 1
+  const innerMesh1Geo = new THREE.IcosahedronGeometry(1.5, 2);
+  const innerMesh1Mat = new THREE.MeshBasicMaterial({
+    color: 0xff9933,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.1
+  });
+  const innerMesh1 = new THREE.Mesh(innerMesh1Geo, innerMesh1Mat);
+  innerGroup.add(innerMesh1);
+
+  // Inner mesh 2 (tighter)
+  const innerMesh2Geo = new THREE.IcosahedronGeometry(1.1, 1);
+  const innerMesh2Mat = new THREE.MeshBasicMaterial({
+    color: 0xffbb44,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.08
+  });
+  const innerMesh2 = new THREE.Mesh(innerMesh2Geo, innerMesh2Mat);
+  innerGroup.add(innerMesh2);
+
+  // ===== DYNAMIC DATA ORBITS =====
+  const orbitGroup = new THREE.Group();
+  mainGroup.add(orbitGroup);
+
+  function createOrbitPath(radiusX, radiusY, radiusZ, color, opacity, segments) {
+    segments = segments || 120;
+    const points = [];
+    for (let i = 0; i <= segments; i++) {
+      const t = (i / segments) * Math.PI * 2;
+      const x = Math.cos(t) * radiusX;
+      const y = Math.sin(t) * radiusY;
+      const z = Math.sin(t * 0.7) * radiusZ;
+      points.push(new THREE.Vector3(x, y, z));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: opacity
+    });
+    return new THREE.Line(geo, mat);
+  }
+
+  // 3 Major orbits
+  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0xff8800, 0.35);
+  orbitGroup.add(orbit1);
+
+  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0xffaa33, 0.3);
+  orbit2.rotation.x = THREE.MathUtils.degToRad(35);
+  orbit2.rotation.z = THREE.MathUtils.degToRad(20);
+  orbitGroup.add(orbit2);
+
+  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0xff7700, 0.25);
+  orbit3.rotation.x = THREE.MathUtils.degToRad(-25);
+  orbit3.rotation.z = THREE.MathUtils.degToRad(45);
+  orbitGroup.add(orbit3);
+
+  // 2 Minor orbits
+  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0xff9933, 0.15);
+  orbit4.rotation.x = THREE.MathUtils.degToRad(60);
+  orbit4.rotation.z = THREE.MathUtils.degToRad(-10);
+  orbitGroup.add(orbit4);
+
+  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0xffbb44, 0.12);
+  orbit5.rotation.x = THREE.MathUtils.degToRad(-50);
+  orbit5.rotation.z = THREE.MathUtils.degToRad(30);
+  orbitGroup.add(orbit5);
+
+  // ===== ORBITING DATA-SQUARE PARTICLES =====
+  const particleOrbitGroup = new THREE.Group();
+  mainGroup.add(particleOrbitGroup);
+
+  // Create square particle texture
+  function createSquareTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(255, 180, 80, 1)';
+    ctx.fillRect(2, 2, 12, 12);
+    ctx.fillStyle = 'rgba(255, 220, 150, 0.6)';
+    ctx.fillRect(4, 4, 8, 8);
+    return new THREE.CanvasTexture(canvas);
+  }
+  const squareTexture = createSquareTexture();
+
+  const orbitParticleCount = 400;
+  const orbitParticleGeo = new THREE.BufferGeometry();
+  const orbitParticlePos = new Float32Array(orbitParticleCount * 3);
+  const orbitParticleData = [];
+
+  for (let i = 0; i < orbitParticleCount; i++) {
+    const orbitIdx = Math.floor(Math.random() * 5);
+    const t = Math.random() * Math.PI * 2;
+    const speed = 0.2 + Math.random() * 0.3;
+    const offset = Math.random() * 0.3;
+    const size = 0.02 + Math.random() * 0.04;
+    orbitParticleData.push({ orbitIdx, t, speed, offset, size });
+  }
+  orbitParticleGeo.setAttribute('position', new THREE.BufferAttribute(orbitParticlePos, 3));
+
+  const orbitParticleMat = new THREE.PointsMaterial({
+    map: squareTexture,
+    color: 0xffaa44,
+    size: 0.08,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
+    depthWrite: false
+  });
+  const orbitParticles = new THREE.Points(orbitParticleGeo, orbitParticleMat);
+  particleOrbitGroup.add(orbitParticles);
+
+  // ===== SCATTERED AMBER PARTICLES =====
+  const scatterCount = 800;
+  const scatterGeo = new THREE.BufferGeometry();
+  const scatterPos = new Float32Array(scatterCount * 3);
+  const scatterSizes = new Float32Array(scatterCount);
+  for (let i = 0; i < scatterCount; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 0.6 + Math.random() * 1.8;
+    scatterPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    scatterPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    scatterPos[i * 3 + 2] = r * Math.cos(phi);
+    scatterSizes[i] = 0.01 + Math.random() * 0.03;
+  }
+  scatterGeo.setAttribute('position', new THREE.BufferAttribute(scatterPos, 3));
+
+  const scatterMat = new THREE.PointsMaterial({
+    map: squareTexture,
+    color: 0xff9933,
+    size: 0.05,
+    transparent: true,
+    opacity: 0.5,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
+    depthWrite: false
+  });
+  const scatterParticles = new THREE.Points(scatterGeo, scatterMat);
+  mainGroup.add(scatterParticles);
+
+  // ===== GLOW SPRITE =====
+  function createGlowTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
+    grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
+    grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
+    grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
+    grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  const glowSpriteMat = new THREE.SpriteMaterial({
+    map: createGlowTexture(),
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false
+  });
+  const glowSprite = new THREE.Sprite(glowSpriteMat);
+  glowSprite.scale.set(6, 6, 1);
+  mainGroup.add(glowSprite);
+
+  // Smaller inner glow
+  const innerGlowMat = new THREE.SpriteMaterial({
+    map: createGlowTexture(),
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    opacity: 0.3,
+    depthWrite: false
+  });
+  const innerGlow = new THREE.Sprite(innerGlowMat);
+  innerGlow.scale.set(3, 3, 1);
+  mainGroup.add(innerGlow);
+
+  // ===== LIGHTING =====
+  const ambientLight = new THREE.AmbientLight(0xff6633, 0.15);
+  scene.add(ambientLight);
+  const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
+  pointLight.position.set(0, 0, 4);
+  scene.add(pointLight);
+
+  // ===== ANIMATION =====
+  let time = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.003;
+
+    // Mouse smooth follow
+    mouse.x += (mouse.targetX - mouse.x) * 0.05;
+    mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+    // Apply mouse tilt to main group
+    mainGroup.rotation.x = mouse.y * 0.15;
+    mainGroup.rotation.y = mouse.x * 0.2;
+
+    // Slow complex rotation of core group
+    coreGroup.rotation.y = time * 0.15;
+    coreGroup.rotation.x = Math.sin(time * 0.05) * 0.1;
+    coreGroup.rotation.z = Math.sin(time * 0.04) * 0.05;
+
+    // Geodesic sphere rotation (different speed for parallax)
+    geoGroup.rotation.y = time * 0.2;
+    geoGroup.rotation.x = Math.sin(time * 0.06) * 0.08;
+    geoGroup.rotation.z = Math.sin(time * 0.05) * 0.04;
+
+    // Inner meshes rotation (faster for depth effect)
+    innerGroup.rotation.y = time * 0.25;
+    innerGroup.rotation.x = Math.sin(time * 0.08) * 0.1;
+    innerGroup.rotation.z = Math.sin(time * 0.06) * 0.06;
+
+    // Orbit paths rotation
+    orbitGroup.rotation.y = time * 0.1;
+    orbitGroup.rotation.x = Math.sin(time * 0.03) * 0.05;
+
+    // Update orbiting particle positions
+    const positions = orbitParticles.geometry.attributes.position.array;
+    const orbits = [orbit1, orbit2, orbit3, orbit4, orbit5];
+
+    for (let i = 0; i < orbitParticleCount; i++) {
+      const data = orbitParticleData[i];
+      data.t += 0.005 * data.speed;
+
+      const t = data.t;
+      const rX = 2.5 + data.offset;
+      const rY = 2.2 + data.offset * 0.5;
+      const rZ = 1.5 + data.offset;
+
+      let x = Math.cos(t) * rX;
+      let y = Math.sin(t) * rY;
+      let z = Math.sin(t * 0.7) * rZ;
+
+      const orbit = orbits[data.orbitIdx];
+      const vec = new THREE.Vector3(x, y, z);
+      vec.applyEuler(orbit.rotation);
+
+      positions[i * 3] = vec.x;
+      positions[i * 3 + 1] = vec.y;
+      positions[i * 3 + 2] = vec.z;
+    }
+    orbitParticles.geometry.attributes.position.needsUpdate = true;
+
+    // Core pulsing
+    const pulse = 1 + Math.sin(time * 2) * 0.05;
+    innerCore.scale.setScalar(pulse);
+    innerCoreMat.opacity = 0.75 + Math.sin(time * 1.8) * 0.12;
+
+    center.scale.setScalar(1 + Math.sin(time * 3) * 0.06);
+
+    // Halo pulsing
+    haloMat.opacity = 0.1 + Math.sin(time * 1.5) * 0.04;
+    outerHaloMat.opacity = 0.04 + Math.sin(time * 1.2) * 0.02;
+
+    // Glow sprite pulsing
+    glowSpriteMat.opacity = 0.4 + Math.sin(time * 1.3) * 0.15;
+    innerGlowMat.opacity = 0.25 + Math.sin(time * 1.8) * 0.1;
+
+    // Particle shimmer
+    scatterMat.opacity = 0.4 + Math.sin(time * 0.6) * 0.15;
+    orbitParticleMat.opacity = 0.6 + Math.sin(time * 0.4) * 0.15;
+
+    // Star field slow rotation
+    stars.rotation.y = time * 0.01;
+    stars.rotation.x = Math.sin(time * 0.005) * 0.02;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  // ===== ZYRA DASHBOARD CONTROLS =====
+  const chatMessages = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+  const voiceBtn = document.getElementById('voice-btn');
+  const connDot = document.getElementById('connDot');
+  const connText = document.getElementById('connText');
+
+  let ws = null;
+  let isListening = false;
+  let recognition = null;
+
+  function addMessage(text, type) {
+    const msg = document.createElement('div');
+    msg.className = 'msg ' + type;
+    if (type === 'zyra') {
+      msg.innerHTML = '<div class="zyra-label">ZYRA</div>' + text;
+    } else {
+      msg.textContent = text;
+    }
+    chatMessages.appendChild(msg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function updateConnectionStatus(connected) {
+    if (connected) {
+      connDot.className = 'conn-dot connected';
+      connText.textContent = 'CONNECTED';
+    } else {
+      connDot.className = 'conn-dot';
+      connText.textContent = 'DISCONNECTED';
+    }
+  }
+
+  function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host || '127.0.0.1:8080';
+    ws = new WebSocket(protocol + '//' + host + '/ws');
+
+    ws.onopen = function() {
+      updateConnectionStatus(true);
+      addMessage('Connected to ZYRA Neural Core', 'system');
+    };
+
+    ws.onclose = function() {
+      updateConnectionStatus(false);
+      addMessage('Connection lost. Reconnecting...', 'system');
+      setTimeout(connectWebSocket, 2000);
+    };
+
+    ws.onerror = function() {
+      updateConnectionStatus(false);
+    };
+
+    ws.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'response' && data.success) {
+          addMessage(data.data, 'zyra');
+        } else if (data.type === 'error') {
+          addMessage('Error: ' + (data.error || 'Unknown error'), 'system');
+        } else if (data.type === 'voice_response') {
+          addMessage(data.data, 'zyra');
+        }
+      } catch (e) {
+        console.error('WebSocket message error:', e);
+      }
+    };
+  }
+
+  function sendMessage(text) {
+    if (!text || !text.trim()) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      addMessage('Not connected to ZYRA server', 'system');
+      return;
+    }
+    addMessage(text.trim(), 'user');
+    ws.send(JSON.stringify({ type: 'chat', data: text.trim() }));
+    chatInput.value = '';
+  }
+
+  // Chat send
+  chatSend.addEventListener('click', function() {
+    sendMessage(chatInput.value);
+  });
+
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage(chatInput.value);
+    }
+  });
+
+  // Voice input (Web Speech API)
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      chatInput.value = transcript;
+      sendMessage(transcript);
+      isListening = false;
+      voiceBtn.classList.remove('listening');
+    };
+
+    recognition.onerror = function() {
+      isListening = false;
+      voiceBtn.classList.remove('listening');
+    };
+
+    recognition.onend = function() {
+      isListening = false;
+      voiceBtn.classList.remove('listening');
+    };
+
+    voiceBtn.addEventListener('click', function() {
+      if (isListening) {
+        recognition.stop();
+        isListening = false;
+        voiceBtn.classList.remove('listening');
+      } else {
+        try {
+          recognition.start();
+          isListening = true;
+          voiceBtn.classList.add('listening');
+        } catch (e) {
+          console.error('Voice recognition error:', e);
+        }
+      }
+    });
+  } else {
+    voiceBtn.style.opacity = '0.3';
+    voiceBtn.title = 'Voice input not supported in this browser';
+  }
+
+  // Initial connection
+  setTimeout(connectWebSocket, 500);
+
+  // Hello message
+  setTimeout(function() {
+    addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
+  }, 1500);
+})();
+</script>
+</body>
+</html>
