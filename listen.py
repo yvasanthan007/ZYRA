@@ -27,9 +27,7 @@ def listen():
     try:
         command = recognizer.recognize_google(audio)
 
-        print(f"👤 You: {command}")
-
-        return command.lower().strip()
+        return command
 
     except sr.UnknownValueError:
         print("❌ I couldn't understand that.")

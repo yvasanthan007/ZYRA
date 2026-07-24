@@ -1,7 +1,16 @@
 from listen import listen
 from speak import speak
 from brain import ask_ai
-from commands.open_app import *
+from commands.open_app import (
+    open_chrome, open_vscode, open_notepad, open_calculator,
+    open_cmd, open_powershell, open_task_manager, open_control_panel,
+    open_file_explorer, open_settings, open_google, open_youtube,
+    open_github, open_chatgpt, open_gmail, open_leetcode, open_linkedin,
+    search_google, search_youtube, open_downloads, open_documents,
+    open_desktop, shutdown_pc, restart_pc, sleep_pc, lock_pc,
+    screenshot, volume_up, volume_down, mute, wifi_on, wifi_off,
+    empty_recycle_bin, current_time, current_date, play_music, open_camera,
+)
 from commands.close_app import close_app
 from memory import remember, recall
 
@@ -18,7 +27,7 @@ while True:
         if not command:
             continue
 
-        command = command.lower().strip()
+        command = command.lower()
 
         print(f"You : {command}")
 
@@ -30,7 +39,7 @@ while True:
             print(response)
             speak(response)
 
-        if "open chrome" in command:
+        elif "open chrome" in command:
             speak("Opening Chrome")
             open_chrome()
         
@@ -169,7 +178,7 @@ while True:
             current_time_str = current_time()
             speak(f"The current time is {current_time_str}")
 
-        elif "what is the Today's date" in command or "current date" in command:
+        elif "today's date" in command or "current date" in command:
             current_date_str = current_date()
             speak(f"Today's date is {current_date_str}")
 
@@ -200,7 +209,7 @@ while True:
 
 
 
-        elif "exit" in command or "quit" in command or "goodbye" in command or "Shut it down" in command:
+        elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
             speak("Goodbye. Have a nice day.")
             break
 

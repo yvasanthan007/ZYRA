@@ -5,6 +5,8 @@ import winshell
 import webbrowser
 from datetime import datetime
 
+HOME = os.path.expanduser("~")
+
 
 #------------------Open Applications---------------------#
 
@@ -12,7 +14,7 @@ def open_chrome():
     os.startfile(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 
 def open_vscode():
-    os.startfile(r"C:\Users\Vasanthan Y\AppData\Local\Programs\Microsoft VS Code\Code.exe")
+    os.startfile(os.path.join(HOME, r"AppData\Local\Programs\Microsoft VS Code\Code.exe"))
 
 def open_notepad():
     os.system("notepad")
@@ -79,13 +81,13 @@ def search_youtube(query):
 #------------------file explorer--------------------#
 
 def open_downloads():
-    os.startfile(r"C:\Users\Vasanthan Y\Downloads")
+    os.startfile(os.path.join(HOME, "Downloads"))
 
 def open_documents():
-    os.startfile(r"C:\Users\Vasanthan Y\Documents")
+    os.startfile(os.path.join(HOME, "Documents"))
 
 def open_desktop():
-    os.startfile(r"C:\Users\Vasanthan Y\Desktop")
+    os.startfile(os.path.join(HOME, "Desktop"))
 
 
 #--------------------PC : shutdown,restart,sleep ---------------#
@@ -157,7 +159,7 @@ def current_date():
 #--------------play music----------------------#
 
 def play_music():
-    os.startfile(r"C:\Users\Vasanthan Y\Music")
+    os.startfile(os.path.join(HOME, "Music"))
 
 #--------------Open Camera---------------------#
 

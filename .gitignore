@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 database/*.db
 .env
+screenshot.png
+zyra_voice.mp3
+memory/data.json
