@@ -1,0 +1,1 @@
+{"version":3,"file":"CommandPanel.d.ts","sourceRoot":"","sources":["../../../src/renderer/components/CommandPanel.tsx"],"names":[],"mappings":"AAAA,OAAO,KAA8B,MAAM,OAAO,CAAC;AAQnD,UAAU,iBAAiB;IACzB,SAAS,EAAE,CAAC,MAAM,EAAE,MAAM,KAAK,IAAI,CAAC;CACrC;AAUD,QAAA,MAAM,YAAY,EAAE,KAAK,CAAC,EAAE,CAAC,iBAAiB,CAoE7C,CAAC;AAEF,eAAe,YAAY,CAAC"}

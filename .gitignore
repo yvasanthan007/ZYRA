@@ -6,3 +6,24 @@ database/*.db
 screenshot.png
 zyra_voice.mp3
 memory/data.json
+# Node
+node_modules/
+
+# Electron
+desktop-ui/node_modules/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
