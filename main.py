@@ -25,6 +25,7 @@ from commands.open_app import (
 from commands.close_app import close_app
 from memory import remember, recall
 from backend.server import start_server_thread
+from link_analysis import analyze_link
 
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
@@ -462,6 +463,9 @@ if __name__ == "__main__":
                         speak(f"Your favorite language is {language}.")
                     else:
                         speak("I don't know your favorite language yet.")
+
+                elif "analyse this link" in command or "analyze this link" in command or "check this link" in command:
+                    analyze_link()
 
                 elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
                     speak("Goodbye. Have a nice day.")
