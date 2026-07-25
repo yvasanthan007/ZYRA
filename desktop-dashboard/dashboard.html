@@ -47,105 +47,9 @@ canvas {
   background: linear-gradient(180deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
 }
 
-/* Left brand */
-#brand-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-#brand-title {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: #ff8844;
-  text-shadow: 0 0 20px rgba(255,136,68,0.3), 0 0 40px rgba(255,136,68,0.1);
-}
-#brand-divider {
-  width: 1px;
-  height: 18px;
-  background: rgba(255,255,255,0.15);
-}
-#brand-subtitle {
-  font-size: 11px;
-  font-weight: 300;
-  letter-spacing: 3px;
-  color: rgba(200,200,210,0.5);
-  text-transform: uppercase;
-}
-
-/* Right status */
-#status-right {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  font-size: 12px;
-  letter-spacing: 1.5px;
-}
-.status-el {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: rgba(200,200,210,0.55);
-  font-weight: 300;
-}
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #44ff88;
-  box-shadow: 0 0 8px #44ff88;
-  animation: pulse-dot 2.2s ease-in-out infinite;
-}
-.status-dot.amber {
-  background: #ff8844;
-  box-shadow: 0 0 8px #ff8844;
-}
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.78); }
-}
-.status-text {
-  color: rgba(200,200,210,0.55);
-}
-.status-text.active {
-  color: rgba(68,255,136,0.7);
-  font-weight: 500;
-}
-
-/* Bottom Right — Connection */
-#connection-status {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  color: rgba(200,200,210,0.45);
-  font-weight: 300;
-}
-.conn-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #44ff88;
-  box-shadow: 0 0 10px #44ff88;
-  animation: pulse-dot 2.2s ease-in-out infinite;
-}
-.conn-label {
-  color: rgba(68,255,136,0.7);
-  font-weight: 500;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
-  #top-bar { padding: 14px 18px; flex-wrap: wrap; gap: 8px; }
-  #brand-title { font-size: 18px; letter-spacing: 2px; }
-  #brand-subtitle { font-size: 9px; letter-spacing: 2px; }
-  #status-right { gap: 16px; font-size: 10px; }
-  #connection-status { bottom: 20px; right: 20px; font-size: 10px; }
+  #top-bar { padding: 14px 18px; }
 }
 </style>
 </head>
@@ -153,31 +57,10 @@ canvas {
 
 <!-- Dashboard HUD Overlay (no chat, no interaction) -->
 <div id="dashboard-hud">
-  <!-- Top Bar -->
-  <div id="top-bar">
-    <div id="brand-left">
-      <span id="brand-title">ZYRA</span>
-      <span id="brand-divider"></span>
-      <span id="brand-subtitle">Neural AI Core</span>
-    </div>
-    <div id="status-right">
-      <span class="status-el">
-        <span class="status-dot"></span>
-        <span class="status-text active">SYSTEM ACTIVE</span>
-      </span>
-      <span class="status-el">
-        <span class="status-dot amber"></span>
-        <span class="status-text">v2.0.1</span>
-      </span>
-    </div>
-  </div>
+  <!-- Top Bar (empty - header elements removed) -->
+  <div id="top-bar"></div>
 </div>
 
-<!-- Connection Status Bottom-Right -->
-<div id="connection-status">
-  <span class="conn-dot"></span>
-  <span class="conn-label">CONNECTED</span>
-</div>
 
 <script>
 (function() {
