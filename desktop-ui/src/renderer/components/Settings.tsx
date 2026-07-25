@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SettingsProps {
   setStatus: (status: string) => void;
@@ -12,8 +12,16 @@ const Settings: React.FC<SettingsProps> = ({ setStatus }) => {
   const [rememberedKey, setRememberedKey] = useState('');
   const [rememberedValue, setRememberedValue] = useState('');
 
-  const handleSave = () => {
-    setStatus('Settings saved');
+  const handleSave = async () => {
+    try {
+      // Persist voice setting
+      await window.zyraAPI.toggleVoice(voiceEnabled);
+      // Persist model preference via memory
+      await window.zyraAPI.remember('ai_model', modelName);
+      setStatus('Settings saved');
+    } catch (err) {
+      setStatus('Failed to save settings');
+    }
   };
 
   const handleRemember = async () => {

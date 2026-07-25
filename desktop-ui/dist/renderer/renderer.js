@@ -36108,8 +36108,17 @@ const Settings = ({ setStatus }) => {
     const [recallValue, setRecallValue] = (0, react_1.useState)('');
     const [rememberedKey, setRememberedKey] = (0, react_1.useState)('');
     const [rememberedValue, setRememberedValue] = (0, react_1.useState)('');
-    const handleSave = () => {
-        setStatus('Settings saved');
+    const handleSave = async () => {
+        try {
+            // Persist voice setting
+            await window.zyraAPI.toggleVoice(voiceEnabled);
+            // Persist model preference via memory
+            await window.zyraAPI.remember('ai_model', modelName);
+            setStatus('Settings saved');
+        }
+        catch (err) {
+            setStatus('Failed to save settings');
+        }
     };
     const handleRemember = async () => {
         if (!rememberedKey.trim() || !rememberedValue.trim())
@@ -36185,13 +36194,38 @@ const VoiceControl = ({ setStatus }) => {
         setStatus(newState ? 'Listening...' : 'Voice disabled');
         try {
             await window.zyraAPI.toggleVoice(newState);
+            if (newState) {
+                // Start polling for voice status in real use case
+                setTranscript('');
+                setResponse('');
+            }
         }
         catch (err) {
             setStatus('Voice control error');
             setIsListening(false);
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "voice-control", children: [(0, jsx_runtime_1.jsxs)("div", { className: "voice-status-card", children: [(0, jsx_runtime_1.jsxs)("div", { className: `voice-indicator ${isListening ? 'active' : 'inactive'}`, children: [(0, jsx_runtime_1.jsx)("span", { className: "mic-icon", children: isListening ? '🎙️' : '🎤' }), (0, jsx_runtime_1.jsx)("h2", { children: isListening ? 'Listening' : 'Voice Off' })] }), (0, jsx_runtime_1.jsx)("button", { className: `voice-toggle-button ${isListening ? 'active' : ''}`, onClick: toggleListening, children: isListening ? 'Stop Listening' : 'Start Listening' }), isListening && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Speak clearly into your microphone" }))] }), (transcript || response) && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [transcript && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "You said:" }), (0, jsx_runtime_1.jsx)("p", { children: transcript })] })), response && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "ZYRA:" }), (0, jsx_runtime_1.jsx)("p", { children: response })] }))] })), (0, jsx_runtime_1.jsxs)("div", { className: "voice-info", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Voice Commands" }), (0, jsx_runtime_1.jsxs)("ul", { children: [(0, jsx_runtime_1.jsx)("li", { children: "\"Open Chrome\" - Launch Google Chrome" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Open VS Code\" - Launch Visual Studio Code" }), (0, jsx_runtime_1.jsx)("li", { children: "\"What is the time?\" - Get current time" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Search Google for [query]\" - Search the web" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Shutdown\" - Shutdown the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Volume up\" / \"Volume down\" - Adjust volume" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Screenshot\" - Take a screenshot" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Lock\" - Lock the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Exit\" - Close ZYRA" })] })] })] }));
+    const handleTranscriptInput = async (text) => {
+        if (!text.trim())
+            return;
+        setTranscript(text);
+        setStatus('Processing...');
+        try {
+            const result = await window.zyraAPI.executeCommand(text);
+            setResponse(typeof result === 'string' ? result : 'Command executed');
+            setStatus('Voice disabled');
+            setIsListening(false);
+        }
+        catch (err) {
+            setResponse('Error processing voice command');
+            setStatus('Error');
+        }
+    };
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "voice-control", children: [(0, jsx_runtime_1.jsxs)("div", { className: "voice-status-card", children: [(0, jsx_runtime_1.jsxs)("div", { className: `voice-indicator ${isListening ? 'active' : 'inactive'}`, children: [(0, jsx_runtime_1.jsx)("span", { className: "mic-icon", children: isListening ? '🎙️' : '🎤' }), (0, jsx_runtime_1.jsx)("h2", { children: isListening ? 'Listening' : 'Voice Off' })] }), (0, jsx_runtime_1.jsx)("button", { className: `voice-toggle-button ${isListening ? 'active' : ''}`, onClick: toggleListening, children: isListening ? 'Stop Listening' : 'Start Listening' }), isListening && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Speak clearly into your microphone" }))] }), (0, jsx_runtime_1.jsxs)("div", { className: "voice-manual-input", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Manual Voice Input" }), (0, jsx_runtime_1.jsxs)("div", { className: "voice-input-group", children: [(0, jsx_runtime_1.jsx)("input", { type: "text", className: "voice-text-input", placeholder: "Type what you would say (e.g., 'open chrome')...", value: transcript, onChange: (e) => setTranscript(e.target.value), onKeyDown: (e) => {
+                                    if (e.key === 'Enter') {
+                                        handleTranscriptInput(transcript);
+                                    }
+                                } }), (0, jsx_runtime_1.jsx)("button", { className: "voice-send-button", onClick: () => handleTranscriptInput(transcript), disabled: !transcript.trim(), children: "Send" })] })] }), (transcript || response) && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [transcript && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "You said:" }), (0, jsx_runtime_1.jsx)("p", { children: transcript })] })), response && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "ZYRA:" }), (0, jsx_runtime_1.jsx)("p", { children: response })] }))] })), (0, jsx_runtime_1.jsxs)("div", { className: "voice-info", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Voice Commands" }), (0, jsx_runtime_1.jsxs)("ul", { children: [(0, jsx_runtime_1.jsx)("li", { children: "\"Open Chrome\" - Launch Google Chrome" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Open VS Code\" - Launch Visual Studio Code" }), (0, jsx_runtime_1.jsx)("li", { children: "\"What is the time?\" - Get current time" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Search Google for [query]\" - Search the web" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Shutdown\" - Shutdown the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Volume up\" / \"Volume down\" - Adjust volume" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Screenshot\" - Take a screenshot" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Lock\" - Lock the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Exit\" - Close ZYRA" })] })] })] }));
 };
 exports["default"] = VoiceControl;
 

@@ -16,9 +16,29 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
 
     try {
       await window.zyraAPI.toggleVoice(newState);
+      if (newState) {
+        // Start polling for voice status in real use case
+        setTranscript('');
+        setResponse('');
+      }
     } catch (err) {
       setStatus('Voice control error');
       setIsListening(false);
+    }
+  };
+
+  const handleTranscriptInput = async (text: string) => {
+    if (!text.trim()) return;
+    setTranscript(text);
+    setStatus('Processing...');
+    try {
+      const result = await window.zyraAPI.executeCommand(text);
+      setResponse(typeof result === 'string' ? result : 'Command executed');
+      setStatus('Voice disabled');
+      setIsListening(false);
+    } catch (err) {
+      setResponse('Error processing voice command');
+      setStatus('Error');
     }
   };
 
@@ -38,6 +58,31 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
         {isListening && (
           <p className="voice-hint">Speak clearly into your microphone</p>
         )}
+      </div>
+
+      <div className="voice-manual-input">
+        <h3>Manual Voice Input</h3>
+        <div className="voice-input-group">
+          <input
+            type="text"
+            className="voice-text-input"
+            placeholder="Type what you would say (e.g., 'open chrome')..."
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleTranscriptInput(transcript);
+              }
+            }}
+          />
+          <button
+            className="voice-send-button"
+            onClick={() => handleTranscriptInput(transcript)}
+            disabled={!transcript.trim()}
+          >
+            Send
+          </button>
+        </div>
       </div>
 
       {(transcript || response) && (

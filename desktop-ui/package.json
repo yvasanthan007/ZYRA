@@ -1,6 +1,7 @@
 {
   "name": "zyra-desktop-ui",
   "version": "1.0.0",
+  "private": true,
   "description": "Desktop UI for ZYRA AI Assistant",
   "main": "dist/main/main.js",
   "scripts": {
@@ -9,9 +10,10 @@
     "build:renderer": "webpack --config webpack.config.js --env target=renderer",
     "build": "npm run build:main && npm run build:preload && npm run build:renderer",
     "start": "npm run build && electron .",
-    "dev": "npm run build && electron ."
+    "dev": "electron ."
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "css-loader": "^6.8.0",

@@ -4,7 +4,6 @@ Bridges FastAPI backend with Zyra's AI modules (brain, speak, listen, commands)
 """
 import sys
 import os
-import json
 import threading
 from typing import Optional, Dict, Any
 

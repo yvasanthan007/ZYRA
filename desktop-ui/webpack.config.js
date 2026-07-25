@@ -52,7 +52,7 @@ module.exports = (env) => {
   // renderer
   return {
     ...config,
-    target: 'electron-renderer',
+    target: 'web',
     entry: './src/renderer/index.tsx',
     output: {
       path: path.resolve(__dirname, 'dist/renderer'),
