@@ -25,7 +25,7 @@ from commands.open_app import (
 from commands.close_app import close_app
 from memory import remember, recall
 from backend.server import start_server_thread
-from link_analysis import analyze_link
+from link_analysis import analyze_link, initialize_ml_model
 
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
@@ -258,6 +258,10 @@ if __name__ == "__main__":
 
     # Register Microsoft Edge as the preferred browser
     register_edge_browser()
+
+    # Initialize ML model for link analysis (non-blocking, falls back to heuristics)
+    print("\n📦 Initializing ML model for link analysis...")
+    initialize_ml_model()
 
     # Start the backend server in background thread (non-blocking)
     server_thread = start_backend_server()

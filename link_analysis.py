@@ -1,27 +1,25 @@
 """
-link_analysis.py — Zyra Voice-Activated Link Analysis Module
+link_analysis.py — Zyra Voice-Activated Link Analysis Module (ML-Enhanced)
 
 Provides:
   - Smart URL retrieval: OCR from screen (WhatsApp Web) + clipboard fallback
-  - Heuristic-based URL safety analysis (no external API key required)
+  - ML-based URL safety analysis using LightGBM/RandomForest classifier
+  - Heuristic fallback if ML model is unavailable
   - Typosquatting detection for popular domains
   - Optional VirusTotal API threat checking
   - Voice feedback via Zyra's existing TTS engine (speak.py)
 
-Analysis checks:
-  - Suspicious TLDs (e.g. .xyz, .top, .gq, .ml, .cf, .tk, .click, .download, .review)
-  - IP-based hosts (direct IPv4 addresses instead of domain names)
-  - Missing HTTPS protocol
-  - Suspicious keywords in URL path (login, verify, secure, update, etc.)
-  - URL shortener domains (bit.ly, tinyurl, etc.)
-  - Excessive subdomains (potential phishing)
-  - Long URL path (potential obfuscation)
-  - Typosquatting (e.g. gooogle.com, facbook.com, paypa1.com)
-  - VirusTotal API scan (optional, set VIRUSTOTAL_API_KEY)
+Analysis tiers:
+  - Safe (Probability < 0.35)
+  - Suspicious (0.35 <= Probability < 0.70)
+  - Dangerous (Probability >= 0.70)
+
+Performance: <30ms for ML inference (offline feature extraction)
 """
 
 import re
 import socket
+import time
 from urllib.parse import urlparse
 
 import pyperclip
@@ -30,14 +28,33 @@ import requests
 from speak import speak
 from screen_ocr import get_url_smart
 
+# Import ML module
+try:
+    from ml_link_analyzer import load_model_once, analyze_link_ml, is_model_loaded
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    print("⚠ ML module not available — using heuristic-only analysis")
+
+# Import feature extractor for fallback heuristics
+try:
+    from url_feature_extractor import extract_url_features
+    FEATURE_EXTRACTOR_AVAILABLE = True
+except ImportError:
+    FEATURE_EXTRACTOR_AVAILABLE = False
+
 
 # ──────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────
 
 # Set this to your VirusTotal API key to enable API-based threat scanning.
-# Leave as None to use heuristic-only analysis.
+# Leave as None to use ML + heuristic analysis only.
 VIRUSTOTAL_API_KEY = None  # e.g. "your_api_key_here"
+
+# ML model settings
+USE_ML_FIRST = True  # Try ML first, fallback to heuristics
+USE_VIRUSTOTAL_FALLBACK = True  # Check VirusTotal for uncertain cases
 
 
 # ──────────────────────────────────────────────
@@ -103,7 +120,7 @@ def is_valid_url(url):
 
 
 # ──────────────────────────────────────────────
-# 3. Heuristic URL Safety Analysis
+# 3. Heuristic URL Safety Analysis (Fallback)
 # ──────────────────────────────────────────────
 
 # Known suspicious / high-risk TLDs often used in phishing/malware
@@ -134,7 +151,6 @@ SUSPICIOUS_KEYWORDS = [
 ]
 
 # Popular domains to check for typosquatting
-# Maps domain → canonical name for display
 POPULAR_DOMAINS = {
     "google": "Google", "facebook": "Facebook", "youtube": "YouTube",
     "twitter": "Twitter", "instagram": "Instagram", "linkedin": "LinkedIn",
@@ -174,7 +190,7 @@ def _levenshtein_distance(s1, s2):
     if len(s2) == 0:
         return len(s1)
 
-    prev_row = range(len(s2) + 1)
+    prev_row = list(range(len(s2) + 1))
     for i, c1 in enumerate(s1):
         curr_row = [i + 1]
         for j, c2 in enumerate(s2):
@@ -191,38 +207,28 @@ def _check_typosquatting(hostname):
     """
     Check if the hostname is a typosquatting attempt on a popular domain.
 
-    Uses Levenshtein distance for fuzzy matching:
-      - gooogle.com → Google (distance 1 from google)
-      - facbook.com → Facebook (distance 1 from facebook)
-      - paypa1.com → PayPal (distance 1 from paypal)
-
     Returns:
         tuple: (is_typo: bool, brand_name: str, original_domain: str)
     """
     hostname_lower = hostname.lower()
-    # Remove www. prefix for checking
     if hostname_lower.startswith("www."):
         check_name = hostname_lower[4:]
     else:
         check_name = hostname_lower
 
-    # Extract the main domain part (before first dot)
     main_part = check_name.split(".")[0] if "." in check_name else check_name
 
     for brand_key, brand_name in POPULAR_DOMAINS.items():
-        # Exact match is NOT typosquatting
         if main_part == brand_key:
             continue
 
-        # Use Levenshtein distance for fuzzy matching
-        # Threshold: distance <= 1 for short names, <= 2 for longer names
         max_distance = 2 if len(brand_key) >= 8 else 1
         distance = _levenshtein_distance(main_part, brand_key)
 
         if 1 <= distance <= max_distance:
             return True, brand_name, f"{brand_key}.com"
 
-        # Also check with common character substitutions (leet-speak)
+        # Check with leet-speak substitutions
         substitutions = {"0": "o", "1": "l", "3": "e", "4": "a",
                          "5": "s", "7": "t", "8": "b"}
         normalized = "".join(substitutions.get(c, c) for c in main_part)
@@ -234,27 +240,15 @@ def _check_typosquatting(hostname):
     return False, None, None
 
 
-def analyze_url(url):
+def analyze_url_heuristic(url):
     """
-    Perform a heuristic security analysis on the given URL.
-
-    Checks performed:
-      1. Suspicious TLD
-      2. IP-based host (no domain name)
-      3. Missing HTTPS
-      4. URL shortener domain
-      5. Suspicious keywords in path/query
-      6. Excessive subdomains (>= 3)
-      7. Long path length (> 100 chars) — potential obfuscation
-      8. Typosquatting detection
+    Perform heuristic security analysis on a URL (fallback method).
 
     Args:
         url: The URL string to analyze.
 
     Returns:
         tuple: (verdict: str, reasons: list)
-            verdict is one of: "safe", "suspicious", "dangerous"
-            reasons is a list of human-readable strings explaining the verdict.
     """
     if not is_valid_url(url):
         return "dangerous", ["The URL is not structurally valid."]
@@ -265,31 +259,31 @@ def analyze_url(url):
     reasons = []
     risk_score = 0
 
-    # ── Check 1: Suspicious TLD ──
+    # Check 1: Suspicious TLD
     for tld in SUSPICIOUS_TLDS:
         if hostname.endswith(tld):
             reasons.append(f"Suspicious top-level domain: {tld}")
             risk_score += 3
             break
 
-    # ── Check 2: IP-based host ──
+    # Check 2: IP-based host
     if _is_ip_host(hostname):
         reasons.append("URL uses a raw IP address instead of a domain name")
         risk_score += 3
 
-    # ── Check 3: Missing HTTPS ──
+    # Check 3: Missing HTTPS
     if parsed.scheme != "https":
         reasons.append("Connection is not using HTTPS (secure protocol)")
         risk_score += 1
 
-    # ── Check 4: URL shortener ──
+    # Check 4: URL shortener
     for shortener in URL_SHORTENERS:
         if shortener in hostname:
             reasons.append(f"URL is shortened by {shortener} — destination is hidden")
             risk_score += 2
             break
 
-    # ── Check 5: Suspicious keywords ──
+    # Check 5: Suspicious keywords
     lower_path = path.lower()
     found_keywords = [kw for kw in SUSPICIOUS_KEYWORDS if kw in lower_path]
     if found_keywords:
@@ -298,7 +292,7 @@ def analyze_url(url):
         )
         risk_score += min(len(found_keywords), 3)
 
-    # ── Check 6: Excessive subdomains ──
+    # Check 6: Excessive subdomains
     subdomain_count = _count_subdomains(hostname)
     if subdomain_count >= 3:
         reasons.append(
@@ -306,12 +300,12 @@ def analyze_url(url):
         )
         risk_score += 2
 
-    # ── Check 7: Long path (obfuscation) ──
+    # Check 7: Long path
     if len(path) > 100:
         reasons.append("Unusually long URL path — may hide malicious content")
         risk_score += 1
 
-    # ── Check 8: Typosquatting ──
+    # Check 8: Typosquatting
     is_typo, brand_name, original_domain = _check_typosquatting(hostname)
     if is_typo:
         reasons.append(
@@ -320,7 +314,7 @@ def analyze_url(url):
         )
         risk_score += 3
 
-    # ── Determine verdict ──
+    # Determine verdict
     if risk_score >= 5:
         verdict = "dangerous"
     elif risk_score >= 2:
@@ -342,15 +336,11 @@ def check_url_virustotal(url):
     """
     Check a URL against the VirusTotal API.
 
-    Requires VIRUSTOTAL_API_KEY to be set.
-    Uses the VirusTotal v3 API.
-
     Args:
         url: The URL to check.
 
     Returns:
         tuple: (verdict: str, details: str)
-            verdict is one of: "safe", "malicious", "unverified", "error"
     """
     if not VIRUSTOTAL_API_KEY:
         return "unverified", "VirusTotal API key not configured."
@@ -422,7 +412,61 @@ def check_url_virustotal(url):
 
 
 # ──────────────────────────────────────────────
-# 5. Orchestrator: Full Pipeline
+# 5. ML-Enhanced Analysis
+# ──────────────────────────────────────────────
+
+def analyze_link_ml_enhanced(url):
+    """
+    Analyze URL using ML model with heuristic fallback.
+    
+    Args:
+        url: URL string to analyze
+    
+    Returns:
+        tuple: (verdict: str, reasons: list, metadata: dict)
+    """
+    metadata = {
+        'method': 'unknown',
+        'probability': 0.0,
+        'confidence': 'low',
+    }
+    
+    # Try ML analysis first
+    if USE_ML_FIRST and ML_AVAILABLE:
+        try:
+            result = analyze_link_ml(url, use_virustotal=False)
+            
+            if result and result.get('ml_available'):
+                metadata['method'] = 'ml'
+                metadata['probability'] = result.get('probability', 0.0)
+                metadata['confidence'] = result.get('confidence', 'low')
+                metadata['execution_time_ms'] = result.get('execution_time_ms', 0.0)
+                
+                return result['verdict'], result['reasons'], metadata
+        except Exception as e:
+            print(f"⚠ ML analysis failed: {e}, falling back to heuristics")
+    
+    # Fallback to heuristic analysis
+    verdict, reasons = analyze_url_heuristic(url)
+    metadata['method'] = 'heuristic'
+    
+    # Convert heuristic risk score to probability estimate
+    # This is a rough mapping for consistency
+    if verdict == 'dangerous':
+        metadata['probability'] = 0.8
+        metadata['confidence'] = 'medium'
+    elif verdict == 'suspicious':
+        metadata['probability'] = 0.5
+        metadata['confidence'] = 'medium'
+    else:
+        metadata['probability'] = 0.1
+        metadata['confidence'] = 'high'
+    
+    return verdict, reasons, metadata
+
+
+# ──────────────────────────────────────────────
+# 6. Orchestrator: Full Pipeline
 # ──────────────────────────────────────────────
 
 def analyze_link():
@@ -430,13 +474,14 @@ def analyze_link():
     Full voice-activated link analysis pipeline:
       1. Get URL from screen OCR (WhatsApp Web) or clipboard fallback
       2. Validate it
-      3. Run heuristic analysis
+      3. Run ML analysis (with heuristic fallback)
       4. Optionally check with VirusTotal API
       5. Speak the result back to the user
 
     This is the main entry point to call from main.py.
     """
     print("\n🔗 Zyra is analysing the link...")
+    pipeline_start = time.time()
 
     # Step 1: Get URL from screen (OCR) or clipboard
     url = get_url_smart()
@@ -454,19 +499,29 @@ def analyze_link():
         print("   ❌ Invalid URL structure.")
         return
 
-    # Step 3: Run heuristic analysis
-    verdict, reasons = analyze_url(url)
+    # Step 3: Run ML-enhanced analysis
+    verdict, reasons, metadata = analyze_link_ml_enhanced(url)
+    
+    analysis_method = metadata.get('method', 'unknown')
+    probability = metadata.get('probability', 0.0)
+    execution_time = metadata.get('execution_time_ms', 0.0)
+    
+    print(f"   🧠 Analysis method: {analysis_method.upper()}")
+    if analysis_method == 'ml':
+        print(f"   ⚡ ML inference: {execution_time:.2f}ms")
+        print(f"   📊 Phishing probability: {probability*100:.1f}%")
 
     # Step 4: Optionally run VirusTotal check
     vt_verdict = None
     vt_details = None
-    if VIRUSTOTAL_API_KEY:
+    
+    if USE_VIRUSTOTAL_FALLBACK and VIRUSTOTAL_API_KEY:
         print("   🔬 Checking with VirusTotal API...")
         vt_verdict, vt_details = check_url_virustotal(url)
         print(f"   VirusTotal: {vt_verdict.upper()} — {vt_details}")
 
     # Step 5: Determine final verdict and speak
-    # VirusTotal overrides heuristic if it found malicious
+    # VirusTotal overrides if it found malicious
     if vt_verdict == "malicious":
         final_verdict = "dangerous"
         speak("Warning! The link has been flagged as malicious by security scanners.")
@@ -475,37 +530,74 @@ def analyze_link():
         speak("Caution. The link appears suspicious according to security scanners.")
     elif verdict == "dangerous":
         final_verdict = "dangerous"
-        speak("Warning! The link from your screen appears unsafe.")
+        if analysis_method == 'ml':
+            speak(f"Warning! This link appears dangerous. The security model detected a {probability*100:.0f}% probability of phishing. I recommend avoiding this website.")
+        else:
+            speak("Warning! The link from your screen appears unsafe.")
     elif verdict == "suspicious":
         final_verdict = "suspicious"
-        speak("Caution. The link from your screen appears suspicious.")
+        if analysis_method == 'ml':
+            speak(f"Caution. This link appears somewhat suspicious. The security model detected a {probability*100:.0f}% probability of phishing. Please verify before proceeding.")
+        else:
+            speak("Caution. The link from your screen appears suspicious.")
     else:
         final_verdict = "safe"
-        speak("I have analyzed the link. It appears to be safe.")
+        if analysis_method == 'ml':
+            speak(f"I have analyzed the link. It appears to be safe. The security model detected only a {probability*100:.0f}% probability of phishing.")
+        else:
+            speak("I have analyzed the link. It appears to be safe.")
 
     # Print detailed results to console
     icon = {"safe": "✅", "suspicious": "⚠️", "dangerous": "🚫"}[final_verdict]
     print(f"\n   {icon} Final Verdict: {final_verdict.upper()}")
 
-    print(f"   📊 Heuristic Analysis:")
+    print(f"   📊 Analysis Details:")
     for reason in reasons:
         print(f"      • {reason}")
 
     if vt_details:
         print(f"   🔬 VirusTotal: {vt_details}")
+    
+    total_time = time.time() - pipeline_start
+    print(f"   ⏱️  Total pipeline time: {total_time*1000:.1f}ms")
 
     return final_verdict, url, reasons
 
 
 # ──────────────────────────────────────────────
-# 6. Standalone Test
+# 7. Model Initialization
+# ──────────────────────────────────────────────
+
+def initialize_ml_model():
+    """
+    Initialize ML model at system startup.
+    Call this function during Zyra initialization.
+    
+    Returns:
+        bool: True if ML model loaded successfully
+    """
+    if not ML_AVAILABLE:
+        print("ℹ️  ML module not available — using heuristic analysis")
+        return False
+    
+    return load_model_once()
+
+
+# ──────────────────────────────────────────────
+# 8. Standalone Test
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("  Zyra Link Analysis — Standalone Test")
-    print("=" * 50)
+    print("=" * 70)
+    print("  Zyra Link Analysis — Standalone Test (ML-Enhanced)")
+    print("=" * 70)
     print()
+    
+    # Initialize ML model
+    print("📦 Initializing ML model...")
+    ml_loaded = initialize_ml_model()
+    print()
+    
     print("Testing with sample URLs...")
     print()
 
@@ -523,20 +615,35 @@ if __name__ == "__main__":
     ]
 
     for url in test_urls:
-        verdict, reasons = analyze_url(url)
+        print(f"\nTesting: {url}")
+        
+        # Use ML-enhanced analysis
+        verdict, reasons, metadata = analyze_link_ml_enhanced(url)
+        
         icon = {"safe": "✅", "suspicious": "⚠️", "dangerous": "🚫"}[verdict]
-        print(f"{icon} {verdict.upper():12s} | {url}")
+        print(f"{icon} {verdict.upper():12s} | Method: {metadata['method']}")
+        
+        if metadata['method'] == 'ml':
+            print(f"   Probability: {metadata['probability']*100:.1f}%")
+            print(f"   Confidence: {metadata['confidence']}")
+            if 'execution_time_ms' in metadata:
+                print(f"   Inference time: {metadata['execution_time_ms']:.2f}ms")
+        
         for r in reasons:
             print(f"    • {r}")
         print()
 
-    print("=" * 50)
+    print("=" * 70)
     print("Now testing smart URL retrieval (OCR + clipboard)...")
     print("(Make sure a URL is visible on screen or in clipboard)")
-    print("=" * 50)
+    print("=" * 70)
 
     url = get_url_smart()
     if url:
         print(f"✅ Retrieved URL: {url}")
+        verdict, reasons, metadata = analyze_link_ml_enhanced(url)
+        print(f"Verdict: {verdict.upper()}")
+        for r in reasons:
+            print(f"  • {r}")
     else:
         print("ℹ️  No URL found on screen or clipboard.")
