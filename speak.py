@@ -1,5 +1,6 @@
 import asyncio
 import os
+import tempfile
 
 import edge_tts
 import pygame
@@ -10,7 +11,9 @@ pygame.mixer.init()
 
 
 async def _speak_async(text):
-    output_file = "zyra_voice.mp3"
+    # Use a temporary file to avoid conflicts
+    temp_dir = tempfile.gettempdir()
+    output_file = os.path.join(temp_dir, "zyra_voice.mp3")
 
     communicate = edge_tts.Communicate(text, VOICE)
     await communicate.save(output_file)
@@ -23,8 +26,12 @@ async def _speak_async(text):
 
     pygame.mixer.music.unload()
 
-    if os.path.exists(output_file):
-        os.remove(output_file)
+    # Clean up temp file
+    try:
+        if os.path.exists(output_file):
+            os.remove(output_file)
+    except Exception:
+        pass
 
 
 def speak(text):
@@ -34,9 +41,19 @@ def speak(text):
     print(f"Zyra: {text}")
 
     try:
+        # Check if mixer is initialized
+        if not pygame.mixer.get_init():
+            pygame.mixer.init()
+        
         asyncio.run(_speak_async(text))
     except RuntimeError:
+        # If event loop is already running, create a new one
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(_speak_async(text))
-        loop.close()
+        try:
+            loop.run_until_complete(_speak_async(text))
+        finally:
+            loop.close()
+    except Exception as e:
+        print(f"TTS Error: {e}")
+        # Continue without TTS - voice is optional

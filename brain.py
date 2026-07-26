@@ -30,6 +30,10 @@ conversation = [
 
 
 def ask_ai(question):
+    """Ask the AI a question and get a response."""
+    if not question or not question.strip():
+        return "Please say something!"
+    
     conversation.append(
         {
             "role": "user",
@@ -62,5 +66,9 @@ def ask_ai(question):
 
         return answer
 
-    except Exception:
-        return "Sorry, Repeat it again !!."
+    except ollama.ResponseError as e:
+        print(f"Ollama error: {e}")
+        return "Sorry, I'm having trouble connecting to the AI model. Please make sure Ollama is running."
+    except Exception as e:
+        print(f"AI error: {e}")
+        return "Sorry, something went wrong. Please try again."

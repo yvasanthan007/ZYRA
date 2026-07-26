@@ -25,12 +25,12 @@ from commands.open_app import (
 from commands.close_app import close_app
 from memory import remember, recall
 from backend.server import start_server_thread
-from link_analysis import analyze_link
 from backend.link_security import (
     extract_url as extract_link_url,
     analyze_url_security,
     summarize_for_voice,
     format_security_report,
+    analyze_link_request,
 )
 
 # ========== Configuration ==========
@@ -476,16 +476,17 @@ if __name__ == "__main__":
                       or "analyse this url" in command or "analyze this url" in command
                       or "check this link" in command or "check the link" in command
                       or "check this url" in command or "check the url" in command):
-                    # If the spoken command contains a URL, analyze it directly via
-                    # the backend security module (text-only report, no frontend UI
-                    # changes). Otherwise fall back to OCR + clipboard retrieval.
+                    # Use the backend security module for link analysis
+                    # Returns a structured text-only report (no frontend UI changes)
+                    report = analyze_link_request(command)
+                    print(f"\n{report}\n")
+                    # Extract URL for voice summary
                     url_in_text = extract_link_url(command)
                     if url_in_text:
                         result = analyze_url_security(url_in_text)
-                        print(f"\n{format_security_report(result)}\n")
                         speak(summarize_for_voice(result))
                     else:
-                        analyze_link()
+                        speak("I've analyzed the link. Check the console for details.")
 
                 elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
                     speak("Goodbye. Have a nice day.")
