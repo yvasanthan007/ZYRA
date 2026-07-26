@@ -1,4 +1,6 @@
 import speech_recognition as sr
+import sounddevice as sd
+import numpy as np
 
 recognizer = sr.Recognizer()
 
@@ -9,34 +11,59 @@ recognizer.pause_threshold = 0.8
 
 
 def listen():
-    with sr.Microphone() as source:
+    """Listen for voice input from the microphone using sounddevice."""
+    try:
         print("\n🎤 Listening...")
 
-        recognizer.adjust_for_ambient_noise(source, duration=0.5)
+        # Audio parameters
+        sample_rate = 16000  # 16kHz sampling rate
+        channels = 1  # Mono audio
+        duration = 10  # Maximum recording duration in seconds
+        chunk_size = 1024
 
+        # Record audio using sounddevice
         try:
-            audio = recognizer.listen(
-                source,
-                timeout=5,
-                phrase_time_limit=10
+            audio_data = sd.rec(
+                int(duration * sample_rate),
+                samplerate=sample_rate,
+                channels=channels,
+                dtype=np.int16,
+                blocking=True
+            )
+            
+            # Convert numpy array to bytes
+            audio_bytes = audio_data.tobytes()
+            
+            # Create AudioData object for speech_recognition
+            audio = sr.AudioData(
+                audio_bytes,
+                sample_rate=sample_rate,
+                sample_width=2  # 16-bit = 2 bytes
             )
 
-        except sr.WaitTimeoutError:
+        except Exception as e:
+            print(f"❌ Recording error: {e}")
             return ""
 
-    try:
-        command = recognizer.recognize_google(audio)
+        try:
+            command = recognizer.recognize_google(audio)
+            return command
 
-        return command
+        except sr.UnknownValueError:
+            print("❌ I couldn't understand that.")
+            return ""
 
-    except sr.UnknownValueError:
-        print("❌ I couldn't understand that.")
+        except sr.RequestError:
+            print("❌ Unable to connect to Google's speech service.")
+            return ""
+
+        except Exception as e:
+            print("Error:", e)
+            return ""
+
+    except OSError as e:
+        print(f"❌ Microphone error: {e}")
         return ""
-
-    except sr.RequestError:
-        print("❌ Unable to connect to Google's speech service.")
-        return ""
-
     except Exception as e:
-        print("Error:", e)
-        return "" 
+        print(f"❌ Listening error: {e}")
+        return ""

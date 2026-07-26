@@ -27,6 +27,11 @@ from backend.zyra_bridge import (
     process_message,
     speak_text,
 )
+from backend.link_security import (
+    analyze_url_security,
+    format_security_report,
+    extract_url,
+)
 
 app = FastAPI(
     title="ZYRA AI Assistant API",
@@ -231,6 +236,39 @@ async def speak_endpoint(data: Dict[str, Any]):
     try:
         speak_text(text)
         return {"success": True, "data": "Speaking"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.post("/api/analyze-link")
+async def analyze_link_endpoint(data: Dict[str, Any]):
+    """
+    Backend-only link security analysis.
+    Inspects a URL for phishing, malicious intent, or suspicious attributes.
+    Never modifies the frontend dashboard UI — returns a text-only report.
+
+    Request body (provide either field):
+        {"url": "http://example.com/login"}
+        {"text": "Analyse the link http://example.com/login"}
+
+    Response:
+        {"success": true, "report": "...", "analysis": {...}}
+    """
+    url = (data.get("url") or "").strip()
+    text = (data.get("text") or "").strip()
+    target = url or (extract_url(text) if text else "")
+    if not target:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Provide 'url' or 'text' containing a URL"}
+        )
+    try:
+        analysis = analyze_url_security(target)
+        report = format_security_report(analysis)
+        return {"success": True, "report": report, "analysis": analysis}
     except Exception as e:
         return JSONResponse(
             status_code=500,

@@ -26,6 +26,16 @@ from commands.open_app import (
 )
 from commands.close_app import close_app
 
+# ── Backend Security Analysis Module (backend-only, no frontend UI) ──
+from backend.link_security import (
+    is_link_analysis_request,
+    analyze_link_request,
+    analyze_url_security,
+    format_security_report,
+    summarize_for_voice,
+    extract_url,
+)
+
 # Command map for executing voice commands programmatically
 COMMAND_MAP = {
     "open_chrome": open_chrome,
@@ -84,7 +94,13 @@ def process_chat(message: str) -> str:
     """
     if not message or not message.strip():
         return "Please say something!"
-    
+
+    # ── Backend-only link security analysis ──
+    # When the user provides a link or triggers analysis, return the structured
+    # text-only security report directly — no frontend/dashboard UI changes.
+    if is_link_analysis_request(message):
+        return analyze_link_request(message)
+
     answer = ask_ai(message)
     return answer
 
@@ -177,7 +193,12 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
     # Check for exit commands
     if any(word in text for word in ["exit", "quit", "goodbye", "shut it down"]):
         return {"response": "Goodbye. Have a nice day.", "action": "exit"}
-    
+
+    # ── Backend-only link security analysis ──
+    # Activated by "Analyse the link" / "Analyze this URL" or any URL in text.
+    if is_link_analysis_request(text):
+        return {"response": analyze_link_request(text), "action": "link_analysis"}
+
     # Check command map (natural language matching)
     command_mappings = [
         ("open chrome", "open_chrome"),
@@ -343,5 +364,24 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             speak_text(data)
             return {"success": True, "data": "Speaking"}
         return {"success": False, "error": "Invalid speak data"}
-    
+
+    elif message_type == "analyze_link":
+        # Backend-only link security analysis via the bridge.
+        # data may be a raw URL string, a message containing a URL, or a dict
+        # with {"url": ...} / {"text": ...}.
+        if isinstance(data, str):
+            text = data
+        elif isinstance(data, dict):
+            text = data.get("url") or data.get("text") or ""
+        else:
+            return {"success": False, "error": "Invalid analyze_link data"}
+        url = extract_url(text) if text else None
+        if not url:
+            return {"success": False, "error": "No URL found to analyze"}
+        result = analyze_url_security(url)
+        return {"success": True, "data": {
+            "report": format_security_report(result),
+            "analysis": result,
+        }}
+
     return {"success": False, "error": f"Unknown type: {message_type}"}
