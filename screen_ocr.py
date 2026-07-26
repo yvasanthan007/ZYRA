@@ -11,14 +11,13 @@ Workflow:
   4. Return the first valid URL found (or None)
 
 Fallback:
-  - If EasyOCR fails or is not installed, falls back to clipboard extraction
+  - If no URL found on screen, fetch text from pyperclip.paste() and extract URL
   - If clipboard also fails, returns None
 """
 
 import re
 import io
 import os
-import tempfile
 from urllib.parse import urlparse
 
 from PIL import Image
@@ -170,85 +169,73 @@ def extract_urls_from_text(text):
 
 
 # ──────────────────────────────────────────────
-# 4. Orchestrator: Screen → OCR → URL
+# 4. Clipboard URL Extraction
 # ──────────────────────────────────────────────
 
-def get_url_from_screen():
+def get_url_from_clipboard():
     """
-    Full pipeline: capture screen → OCR → extract URLs.
+    Extract URL from system clipboard text.
 
     Returns:
-        str: The first valid URL found on screen, or None if nothing found.
+        str: The first valid URL found in clipboard, or None.
     """
-    print("\n📸 Capturing screen for URL detection...")
-
-    # Step 1: Capture screen
-    image = capture_screen()
-    if image is None:
-        print("   ❌ Screen capture failed.")
-        return None
-
-    print(f"   ✅ Screen captured ({image.size[0]}x{image.size[1]}px)")
-
-    # Step 2: OCR
-    text = extract_text_from_image(image)
-    if not text:
-        print("   ❌ No text detected on screen.")
-        return None
-
-    print(f"   📝 OCR detected text ({len(text)} chars)")
-
-    # Step 3: Extract URLs
-    urls = extract_urls_from_text(text)
-
-    if not urls:
-        print("   ❌ No URLs found in detected text.")
-        return None
-
-    # Return the first URL found
-    url = urls[0]
-    print(f"   🔗 URL found: {url}")
-
-    if len(urls) > 1:
-        print(f"   ℹ️  Found {len(urls)} URLs total, using first one.")
-
-    return url
-
-
-# ──────────────────────────────────────────────
-# 5. Smart URL Retrieval (OCR + Clipboard Fallback)
-# ──────────────────────────────────────────────
-
-def get_url_smart():
-    """
-    Smart URL retrieval:
-      1. Try OCR from screen (for WhatsApp Web links)
-      2. Fallback to clipboard extraction
-      3. Return None if both fail
-
-    Returns:
-        str: A valid URL, or None.
-    """
-    # Try OCR first (captures WhatsApp Web links on screen)
-    url = get_url_from_screen()
-
-    if url:
-        return url
-
-    # Fallback to clipboard
-    print("   📋 Falling back to clipboard extraction...")
     try:
         import pyperclip
         text = pyperclip.paste()
         if text and text.strip():
             urls = extract_urls_from_text(text.strip())
             if urls:
-                print(f"   ✅ URL found in clipboard: {urls[0]}")
                 return urls[0]
     except Exception:
         pass
+    return None
 
-    print("   ❌ No URL found on screen or clipboard.")
+
+# ──────────────────────────────────────────────
+# 5. Main Function: get_active_url()
+# ──────────────────────────────────────────────
+
+def get_active_url():
+    """
+    Capture the user's primary monitor using OCR and extract any visible URL.
+    If no URL is found on screen, immediately check the clipboard.
+
+    This is the main entry point for Zyra's link analysis feature.
+
+    Returns:
+        str: The extracted URL string, or None if no URL found.
+    """
+    # Step 1: Try to capture URL from screen via OCR
+    print("\n📸 Capturing screen for URL detection...")
+    
+    image = capture_screen()
+    if image is not None:
+        print(f"   ✅ Screen captured ({image.size[0]}x{image.size[1]}px)")
+        
+        text = extract_text_from_image(image)
+        if text:
+            print(f"   📝 OCR detected text ({len(text)} chars)")
+            urls = extract_urls_from_text(text)
+            if urls:
+                url = urls[0]
+                print(f"   🔗 URL found on screen: {url}")
+                if len(urls) > 1:
+                    print(f"   ℹ️  Found {len(urls)} URLs total, using first one.")
+                return url
+        else:
+            print("   ❌ No text detected on screen.")
+    else:
+        print("   ❌ Screen capture failed.")
+
+    # Step 2: Fallback to clipboard
+    print("   📋 Checking clipboard for URL...")
+    url = get_url_from_clipboard()
+    if url:
+        print(f"   ✅ URL found in clipboard: {url}")
+        return url
+
+    # Step 3: No URL found anywhere
+    print("   ❌ No URL found on screen or in clipboard.")
     return None
 
 
@@ -283,14 +270,14 @@ if __name__ == "__main__":
             print(f"     → No URLs found")
     print()
 
-    # Test screen capture + OCR
-    print("--- Testing screen capture + OCR ---")
-    print("(Capturing primary monitor and scanning for URLs...)")
-    url = get_url_from_screen()
+    # Test get_active_url() - the main function
+    print("--- Testing get_active_url() ---")
+    print("(Will capture screen, then fallback to clipboard...)")
+    url = get_active_url()
     if url:
         print(f"\n  ✅ URL found: {url}")
     else:
-        print("\n  ℹ️  No URL found on screen (this is normal if no links are visible).")
+        print("\n  ℹ️  No URL found on screen or clipboard (this is normal if no links are visible).")
     print()
 
     print("=" * 50)

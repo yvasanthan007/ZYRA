@@ -25,13 +25,7 @@ from commands.open_app import (
 from commands.close_app import close_app
 from memory import remember, recall
 from backend.server import start_server_thread
-from backend.link_security import (
-    extract_url as extract_link_url,
-    analyze_url_security,
-    summarize_for_voice,
-    format_security_report,
-    analyze_link_request,
-)
+from zyra_handler import handle_analyze_link_intent, is_link_analysis_intent
 
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
@@ -470,23 +464,18 @@ if __name__ == "__main__":
                     else:
                         speak("I don't know your favorite language yet.")
 
-                elif ("analyse the link" in command or "analyze the link" in command
-                      or "analyse this link" in command or "analyze this link" in command
-                      or "analyse the url" in command or "analyze the url" in command
-                      or "analyse this url" in command or "analyze this url" in command
-                      or "check this link" in command or "check the link" in command
-                      or "check this url" in command or "check the url" in command):
-                    # Use the backend security module for link analysis
-                    # Returns a structured text-only report (no frontend UI changes)
-                    report = analyze_link_request(command)
-                    print(f"\n{report}\n")
-                    # Extract URL for voice summary
-                    url_in_text = extract_link_url(command)
-                    if url_in_text:
-                        result = analyze_url_security(url_in_text)
-                        speak(summarize_for_voice(result))
-                    else:
-                        speak("I've analyzed the link. Check the console for details.")
+                elif is_link_analysis_intent(command):
+                    # Use the new real-time screen capture link analysis
+                    # Captures screen OCR + clipboard, runs 8-check heuristic,
+                    # and speaks the exact verdict directly to user
+                    result = handle_analyze_link_intent(command)
+                    
+                    # Print detailed report to console
+                    if result.get('success') and result.get('checks'):
+                        print(f"\n🔗 URL: {result['url']}")
+                        print(f"📈 Risk Score: {result['score']}")
+                        print(f"⚖️  Verdict: {result['verdict']}")
+                        print(f"🗣️  Speech: {result['speech_text']}")
 
                 elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
                     speak("Goodbye. Have a nice day.")
