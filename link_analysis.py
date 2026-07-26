@@ -20,6 +20,7 @@ Analysis checks:
   - VirusTotal API scan (optional, set VIRUSTOTAL_API_KEY)
 """
 
+import base64
 import re
 import socket
 from urllib.parse import urlparse
@@ -340,10 +341,10 @@ def analyze_url(url):
 
 def check_url_virustotal(url):
     """
-    Check a URL against the VirusTotal API.
+    Check a URL against the VirusTotal v3 API.
 
     Requires VIRUSTOTAL_API_KEY to be set.
-    Uses the VirusTotal v3 API.
+    Uses the VirusTotal v3 API with Base64-encoded URL identifier.
 
     Args:
         url: The URL to check.
@@ -355,13 +356,13 @@ def check_url_virustotal(url):
     if not VIRUSTOTAL_API_KEY:
         return "unverified", "VirusTotal API key not configured."
 
-    api_url = "https://www.virustotal.com/api/v3/urls"
     headers = {"x-apikey": VIRUSTOTAL_API_KEY}
 
     try:
         # Step 1: Submit URL for analysis
+        submit_url = "https://www.virustotal.com/api/v3/urls"
         response = requests.post(
-            api_url,
+            submit_url,
             headers=headers,
             data={"url": url},
             timeout=15,
@@ -376,7 +377,7 @@ def check_url_virustotal(url):
         if not analysis_id:
             return "error", "Could not get analysis ID from VirusTotal."
 
-        # Step 2: Get analysis results
+        # Step 2: Get analysis results using the analysis ID
         analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
         analysis_response = requests.get(
             analysis_url,
@@ -412,6 +413,73 @@ def check_url_virustotal(url):
                 "safe",
                 f"Cleared by all {total} security vendors."
             )
+
+    except requests.exceptions.Timeout:
+        return "error", "VirusTotal API request timed out."
+    except requests.exceptions.ConnectionError:
+        return "error", "Could not connect to VirusTotal API."
+    except Exception as e:
+        return "error", f"VirusTotal check failed: {e}"
+
+
+def check_url_virustotal_by_id(url):
+    """
+    Alternative VirusTotal v3 API lookup using Base64-encoded URL identifier.
+    
+    Per VirusTotal v3 spec, URLs can be queried directly using their Base64-encoded
+    identifier at /api/v3/urls/{id}.
+
+    Args:
+        url: The URL to check.
+
+    Returns:
+        tuple: (verdict: str, details: str)
+            verdict is one of: "safe", "malicious", "unverified", "error"
+    """
+    if not VIRUSTOTAL_API_KEY:
+        return "unverified", "VirusTotal API key not configured."
+
+    headers = {"x-apikey": VIRUSTOTAL_API_KEY}
+
+    try:
+        # Base64-encode the URL for the v3 API endpoint
+        url_bytes = url.encode("utf-8")
+        url_b64 = base64.urlsafe_b64encode(url_bytes).decode("utf-8").rstrip("=")
+        
+        # Query the URL directly by its Base64 identifier
+        url_lookup = f"https://www.virustotal.com/api/v3/urls/{url_b64}"
+        response = requests.get(url_lookup, headers=headers, timeout=15)
+
+        if response.status_code == 200:
+            result = response.json()
+            stats = result.get("data", {}).get("attributes", {}).get("stats", {})
+            
+            malicious = stats.get("malicious", 0)
+            suspicious = stats.get("suspicious", 0)
+            total = stats.get("total", 0)
+
+            if total == 0:
+                return "unverified", "No security vendors have scanned this URL."
+
+            if malicious > 0:
+                return (
+                    "malicious",
+                    f"Flagged as malicious by {malicious}/{total} security vendors."
+                )
+            elif suspicious > 0:
+                return (
+                    "suspicious",
+                    f"Flagged as suspicious by {suspicious}/{total} security vendors."
+                )
+            else:
+                return (
+                    "safe",
+                    f"Cleared by all {total} security vendors."
+                )
+        elif response.status_code == 404:
+            return "unverified", "URL not found in VirusTotal database (never scanned)."
+        else:
+            return "error", f"VirusTotal API error: HTTP {response.status_code}"
 
     except requests.exceptions.Timeout:
         return "error", "VirusTotal API request timed out."
@@ -469,7 +537,7 @@ def analyze_link():
     # VirusTotal overrides heuristic if it found malicious
     if vt_verdict == "malicious":
         final_verdict = "dangerous"
-        speak("Warning! The link has been flagged as malicious by security scanners.")
+        speak("Warning! VirusTotal flagged this link as malicious.")
     elif vt_verdict == "suspicious":
         final_verdict = "suspicious"
         speak("Caution. The link appears suspicious according to security scanners.")
