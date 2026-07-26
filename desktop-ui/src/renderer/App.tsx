@@ -32,7 +32,6 @@ const App: React.FC = () => {
       <main className="main-content">
         <header className="app-header">
           <h1>ZYRA</h1>
-          <span className="status-badge">{statusMessage}</span>
         </header>
         <div className="view-container">
           {renderView()}

@@ -25,7 +25,13 @@ from commands.open_app import (
 from commands.close_app import close_app
 from memory import remember, recall
 from backend.server import start_server_thread
-from link_analysis import analyze_link
+from backend.link_security import (
+    extract_url as extract_link_url,
+    analyze_url_security,
+    summarize_for_voice,
+    format_security_report,
+    analyze_link_request,
+)
 
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
@@ -464,8 +470,23 @@ if __name__ == "__main__":
                     else:
                         speak("I don't know your favorite language yet.")
 
-                elif "analyse this link" in command or "analyze this link" in command or "check this link" in command:
-                    analyze_link()
+                elif ("analyse the link" in command or "analyze the link" in command
+                      or "analyse this link" in command or "analyze this link" in command
+                      or "analyse the url" in command or "analyze the url" in command
+                      or "analyse this url" in command or "analyze this url" in command
+                      or "check this link" in command or "check the link" in command
+                      or "check this url" in command or "check the url" in command):
+                    # Use the backend security module for link analysis
+                    # Returns a structured text-only report (no frontend UI changes)
+                    report = analyze_link_request(command)
+                    print(f"\n{report}\n")
+                    # Extract URL for voice summary
+                    url_in_text = extract_link_url(command)
+                    if url_in_text:
+                        result = analyze_url_security(url_in_text)
+                        speak(summarize_for_voice(result))
+                    else:
+                        speak("I've analyzed the link. Check the console for details.")
 
                 elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
                     speak("Goodbye. Have a nice day.")

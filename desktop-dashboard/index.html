@@ -649,33 +649,44 @@ canvas {
   function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host || '127.0.0.1:8080';
-    ws = new WebSocket(protocol + '//' + host + '/ws');
+    const wsUrl = protocol + '//' + host + '/ws';
+    
+    try {
+      ws = new WebSocket(wsUrl);
 
-    ws.onopen = function() {
-    };
+      ws.onopen = function() {
+        // Connection established silently
+      };
 
-    ws.onclose = function() {
-      addMessage('Connection lost. Reconnecting...', 'system');
-      setTimeout(connectWebSocket, 2000);
-    };
+      ws.onclose = function(event) {
+        addMessage('Connection lost. Reconnecting...', 'system');
+        setTimeout(connectWebSocket, 2000);
+      };
 
-    ws.onerror = function() {
-    };
+      ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+        addMessage('Connection error. Retrying...', 'system');
+      };
 
-    ws.onmessage = function(event) {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'response' && data.success) {
-          addMessage(data.data, 'zyra');
-        } else if (data.type === 'error') {
-          addMessage('Error: ' + (data.error || 'Unknown error'), 'system');
-        } else if (data.type === 'voice_response') {
-          addMessage(data.data, 'zyra');
+      ws.onmessage = function(event) {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'response' && data.success) {
+            addMessage(data.data, 'zyra');
+          } else if (data.type === 'error') {
+            addMessage('Error: ' + (data.error || 'Unknown error'), 'system');
+          } else if (data.type === 'voice_response') {
+            addMessage(data.data, 'zyra');
+          }
+        } catch (e) {
+          console.error('WebSocket message error:', e);
         }
-      } catch (e) {
-        console.error('WebSocket message error:', e);
-      }
-    };
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
+      addMessage('Failed to connect to ZYRA server', 'system');
+      setTimeout(connectWebSocket, 2000);
+    }
   }
 
   function sendMessage(text) {
