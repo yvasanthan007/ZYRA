@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
+import { app } from 'electron';
 
 interface Command {
   type: string;
@@ -18,13 +19,72 @@ export class PythonBridge {
   private pendingRequests: Map<number, { resolve: (value: unknown) => void; reject: (reason: unknown) => void }> = new Map();
   private buffer = '';
 
+  /**
+   * In development: use system Python and the source bridge_server.py
+   * In production: use the bundled Python binary from process.resourcesPath
+   *   (the binary can be either a PyInstaller one-file exe or a standalone
+   *    interpreter + script pair placed in the resources directory)
+   */
+  private getPythonCommand(): string {
+    if (app.isPackaged) {
+      // Bundled via PyInstaller — check for the compiled binary first
+      const bundledExe = path.join(process.resourcesPath, 'zyra_backend');
+      const fs = require('fs');
+      if (fs.existsSync(bundledExe)) return bundledExe;
+      // Fall back to bundled Python interpreter
+      const pythonPath = path.join(process.resourcesPath, 'python', 'python.exe');
+      if (fs.existsSync(pythonPath)) return pythonPath;
+      // Fall back to system Python (requires user to have Python installed)
+      return 'python';
+    }
+    // Development mode
+    return 'python';
+  }
+
+  private getBridgeScriptPath(): string {
+    if (app.isPackaged) {
+      // In packaged app, bridge_server.py is in resources
+      return path.join(process.resourcesPath, 'bridge_server.py');
+    }
+    // In development: __dirname is dist/main/, script is at desktop-ui/bridge_server.py
+    return path.join(__dirname, '../../bridge_server.py');
+  }
+
+  /**
+   * In development: spawn `python <script>` (uses system Python + source files)
+   * In production: spawn the bundled binary directly (no script path needed)
+   */
   start(): void {
-    // __dirname is dist/main/ ; bridge_server.py is at desktop-ui/bridge_server.py
-    const scriptPath = path.join(__dirname, '../../bridge_server.py');
-    
-    this.process = spawn('python', [scriptPath], {
+    const pythonCmd = this.getPythonCommand();
+
+    if (app.isPackaged) {
+      // Bundled binary — run directly (PyInstaller --onefile)
+      const binaryPath = path.join(process.resourcesPath, 'zyra_backend');
+      const fs = require('fs');
+      if (fs.existsSync(binaryPath)) {
+        this.spawnProcess(binaryPath, []);
+      } else {
+        // Fall back to interpreter + script
+        this.spawnProcess(pythonCmd, [this.getBridgeScriptPath()]);
+      }
+    } else {
+      // Development: spawn system Python with the script
+      this.spawnProcess(pythonCmd, [this.getBridgeScriptPath()]);
+    }
+  }
+
+  private spawnProcess(cmd: string, args: string[]): void {
+    const cwd = app.isPackaged
+      ? process.resourcesPath
+      : path.join(__dirname, '../..');
+
+    this.process = spawn(cmd, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: path.join(__dirname, '../..'),
+      cwd,
+      env: {
+        ...process.env,
+        PYTHONUNBUFFERED: '1',  // Ensure stdout is flushed immediately
+      },
     });
 
     this.process.stdout?.on('data', (data: Buffer) => {
@@ -58,7 +118,7 @@ export class PythonBridge {
     }
   }
 
-  async sendCommand(command: Command): Promise<unknown> {
+  async sendCommand(command: Command, timeoutMs = 30000): Promise<unknown> {
     return new Promise((resolve, reject) => {
       if (!this.process || !this.process.stdin) {
         reject(new Error('Python process not running'));
@@ -66,10 +126,32 @@ export class PythonBridge {
       }
 
       const id = ++this.requestId;
-      this.pendingRequests.set(id, { resolve, reject });
+
+      // Set timeout to prevent hanging
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`Command timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      this.pendingRequests.set(id, {
+        resolve: (value: unknown) => {
+          clearTimeout(timeout);
+          resolve(value);
+        },
+        reject: (reason: unknown) => {
+          clearTimeout(timeout);
+          reject(reason);
+        },
+      });
 
       const message = JSON.stringify({ id, ...command }) + '\n';
-      this.process.stdin.write(message);
+      this.process.stdin.write(message, (err) => {
+        if (err) {
+          clearTimeout(timeout);
+          this.pendingRequests.delete(id);
+          reject(err);
+        }
+      });
     });
   }
 

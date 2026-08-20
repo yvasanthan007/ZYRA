@@ -12,6 +12,17 @@ interface ZyraAPI {
   remember: (key: string, value: string) => Promise<string>;
   recall: (key: string) => Promise<string | null>;
   getCommands: () => Promise<CommandItem[]>;
+  speak: (text: string) => Promise<string>;
+  analyzeLink: (data: string | { url: string }) => Promise<any>;
+  showNotification: (title: string, body: string) => void;
+  saveConversation: (data: any) => Promise<string>;
+  loadConversation: () => Promise<any>;
+  selectDirectory: () => Promise<string | null>;
+  quitAndInstall: () => void;
+  onNavigate: (callback: (view: string) => void) => void;
+  onViewShow: (callback: () => void) => void;
+  onUpdateAvailable: (callback: (info: any) => void) => void;
+  onUpdateDownloaded: (callback: (info: any) => void) => void;
 }
 
 interface Window {

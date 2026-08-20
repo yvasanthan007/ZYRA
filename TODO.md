@@ -1,4 +1,4 @@
-# ZYRA Fullscreen Dashboard Implementation
+  # ZYRA Fullscreen Dashboard Implementation
 
 ## Progress Tracker
 

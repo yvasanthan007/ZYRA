@@ -102,6 +102,39 @@ def handle_message(msg):
     elif msg_type == "voice_status":
         return {"success": True, "data": {"listening": False}}
 
+    elif msg_type == "speak":
+        if isinstance(data, str):
+            from speak import speak
+            speak(data)
+            return {"success": True, "data": "Speaking..."}
+        return {"success": False, "error": "Invalid speak data"}
+
+    elif msg_type == "analyze_link":
+        # Link security analysis via the bridge
+        if isinstance(data, str):
+            text = data
+        elif isinstance(data, dict):
+            text = data.get("url") or data.get("text") or ""
+        else:
+            return {"success": False, "error": "Invalid analyze_link data"}
+
+        if not text:
+            return {"success": False, "error": "No URL provided"}
+
+        from backend.link_security import extract_url, analyze_url_security, format_security_report
+        url = extract_url(text)
+        if not url:
+            return {"success": False, "error": "No URL found to analyze"}
+
+        result = analyze_url_security(url)
+        return {"success": True, "data": {
+            "report": format_security_report(result),
+            "analysis": result,
+        }}
+
+    elif msg_type == "list_commands":
+        return {"success": True, "data": list(COMMAND_MAP.keys())}
+
     return {"success": False, "error": f"Unknown type: {msg_type}"}
 
 

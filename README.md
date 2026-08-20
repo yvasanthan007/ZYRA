@@ -228,7 +228,7 @@ Do not click or enter credentials — close the page and report the source of th
 - Ensure PyAudio is installed: `pip install pyaudio`
 - Check internet connection (uses Google Speech API)
 
-### AI not responding?
+### AI not responding?   
 - Make sure Ollama is running: `ollama serve`
 - Pull the Llama3 model: `ollama pull llama3`
 

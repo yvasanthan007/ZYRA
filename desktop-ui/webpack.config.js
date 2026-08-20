@@ -4,8 +4,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = (env) => {
   const target = env.target || 'renderer';
 
-  const config = {
-    mode: 'development',
+    const config = {
+    mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     devtool: 'source-map',
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],

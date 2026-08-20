@@ -1,44 +1,128 @@
+"""
+commands/open_app.py — System Control Commands (Cross-Platform)
+
+Originally Windows-only, now supports Windows, macOS, and Linux.
+"""
+
 import os
+import sys
+import platform
+import subprocess
 import ctypes
-import pyautogui
-import winshell
-import webbrowser
-from datetime import datetime
+
+# ── Platform Detection ──────────────────────────────────────
+IS_WINDOWS = platform.system() == 'Windows'
+IS_MAC = platform.system() == 'Darwin'
+IS_LINUX = platform.system() == 'Linux'
 
 HOME = os.path.expanduser("~")
 
 
-#------------------Open Applications---------------------#
+# ── URL / Web Browser Helpers ──────────────────────────────
+
+def _open_url(url):
+    """Open a URL in the default browser (cross-platform)."""
+    try:
+        import webbrowser
+        webbrowser.open(url)
+    except Exception:
+        if IS_MAC:
+            subprocess.run(['open', url])
+        elif IS_LINUX:
+            subprocess.run(['xdg-open', url])
+        else:  # Windows
+            os.startfile(url)
+
+
+# ── Application Launchers ──────────────────────────────────
 
 def open_chrome():
-    os.startfile(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+    chrome_paths = {
+        'Windows': r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        'Darwin': '/Applications/Google Chrome.app',
+        'Linux': '/usr/bin/google-chrome',
+    }
+    plat = platform.system()
+    p = chrome_paths.get(plat, '')
+    if os.path.exists(p):
+        if IS_WINDOWS:
+            os.startfile(p)
+        else:
+            subprocess.run([p, 'https://www.google.com'])
+    else:
+        _open_url("https://www.google.com")
+
 
 def open_vscode():
-    os.startfile(os.path.join(HOME, r"AppData\Local\Programs\Microsoft VS Code\Code.exe"))
+    vscode_paths = {
+        'Windows': os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Programs', 'Microsoft VS Code', 'Code.exe'),
+        'Darwin': '/Applications/Visual Studio Code.app/Contents/MacOS/Electron',
+        'Linux': os.path.expanduser('~/.local/bin/code'),
+    }
+    plat = platform.system()
+    p = vscode_paths.get(plat, '')
+    if os.path.exists(p):
+        if IS_WINDOWS:
+            os.startfile(p)
+        else:
+            subprocess.Popen([p])
+    else:
+        subprocess.run(['code'], capture_output=True)
+
 
 def open_notepad():
-    os.system("notepad")
+    if IS_WINDOWS:
+        os.system("notepad")
+    elif IS_MAC:
+        subprocess.run(['open', '-a', 'TextEdit'])
+    else:
+        subprocess.run(['gedit']) or subprocess.run(['nano'])
+
 
 def open_calculator():
-    os.system("calc")
+    if IS_WINDOWS:
+        os.system("calc")
+    elif IS_MAC:
+        subprocess.run(['open', '-a', 'Calculator'])
+    else:
+        subprocess.run(['gnome-calculator']) or subprocess.run(['kcalc'])
+
 
 def open_cmd():
-    os.system("start cmd")
+    if IS_WINDOWS:
+        os.system("start cmd")
+    elif IS_MAC:
+        subprocess.run(['open', '-a', 'Terminal'])
+    else:
+        subprocess.run(['x-terminal-emulator']) or subprocess.run(['gnome-terminal'])
+
 
 def open_powershell():
-    os.system("start powershell")
+    if IS_WINDOWS:
+        os.system("start powershell")
+    elif IS_MAC or IS_LINUX:
+        open_cmd()
+
 
 def open_task_manager():
-    os.system("taskmgr")
+    if IS_WINDOWS:
+        os.system("taskmgr")
+    elif IS_MAC:
+        subprocess.run(['open', '-a', 'Activity Monitor'])
+    else:
+        subprocess.run(['gnome-system-monitor']) or subprocess.run(['htop'])
+
 
 def open_control_panel():
-    os.system("control")
+    if IS_WINDOWS:
+        os.system("control")
+    elif IS_MAC:
+        subprocess.run(['open', 'x-apple.systempreferences:'])
+    else:
+        subprocess.run(['gnome-control-center']) or _open_url("settings://")
+
 
 def open_file_explorer():
-    os.system("explorer")
-
-def open_settings():
-    os.system("start ms-settings:")
 
 
 #------------------Web Browser---------------------#
