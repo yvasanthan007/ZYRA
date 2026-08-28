@@ -90,29 +90,34 @@ def test_heuristic_analysis():
     print("-" * 70)
 
     for url, description in test_urls:
-        verdict, reasons = analyze_url(url)
+        res = analyze_url(url)
+        if isinstance(res, dict):
+            verdict = res.get("verdict", "Safe")
+            score = res.get("score", 0)
+            reasons = [c.get("details", "") for c in res.get("checks", [])]
+        else:
+            verdict, reasons = res
+            # Calculate score from reasons
+            score = 0
+            for reason in reasons:
+                if "Suspicious top-level domain" in reason:
+                    score += 3
+                elif "raw IP address" in reason:
+                    score += 3
+                elif "not using HTTPS" in reason:
+                    score += 1
+                elif "shortened by" in reason:
+                    score += 2
+                elif "suspicious keywords" in reason:
+                    score += 2
+                elif "Excessive subdomains" in reason:
+                    score += 2
+                elif "long URL path" in reason:
+                    score += 1
+                elif "typosquatting" in reason.lower():
+                    score += 3
 
-        # Calculate score from reasons
-        score = 0
-        for reason in reasons:
-            if "Suspicious top-level domain" in reason:
-                score += 3
-            elif "raw IP address" in reason:
-                score += 3
-            elif "not using HTTPS" in reason:
-                score += 1
-            elif "shortened by" in reason:
-                score += 2
-            elif "suspicious keywords" in reason:
-                score += 2
-            elif "Excessive subdomains" in reason:
-                score += 2
-            elif "long URL path" in reason:
-                score += 1
-            elif "typosquatting" in reason.lower():
-                score += 3
-
-        icon = {"safe": "✅", "suspicious": "⚠️", "dangerous": "🚫"}[verdict]
+        icon = {"safe": "✅", "suspicious": "⚠️", "dangerous": "🚫"}.get(verdict.lower(), "❓")
 
         print(f"\n  {icon} {verdict.upper()} (Score: {score})")
         print(f"     URL: {url}")

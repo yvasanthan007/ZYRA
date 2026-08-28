@@ -140,7 +140,7 @@ def _check_typosquatting(hostname):
         tuple: (is_typo: bool, brand_name: str, original_domain: str)
     """
     hostname_lower = hostname.lower()
-    
+
     # Remove www. prefix for checking
     if hostname_lower.startswith("www."):
         check_name = hostname_lower[4:]
@@ -210,7 +210,7 @@ def analyze_url(url: str) -> dict:
     parsed = urlparse(url)
     hostname = parsed.hostname or ""
     path = parsed.path + ("?" + parsed.query if parsed.query else "")
-    
+
     checks = []
     total_score = 0
 
@@ -220,7 +220,7 @@ def analyze_url(url: str) -> dict:
         if hostname.endswith(tld):
             tld_found = tld
             break
-    
+
     if tld_found:
         total_score += 3
         checks.append({
@@ -253,7 +253,7 @@ def analyze_url(url: str) -> dict:
         if shortener in hostname:
             shortener_found = shortener
             break
-    
+
     if shortener_found:
         total_score += 2
         checks.append({
@@ -338,12 +338,12 @@ def analyze_url(url: str) -> dict:
 def _generate_speech_text(url: str, verdict: str, score: int) -> str:
     """
     Generate the exact voice response text based on verdict category.
-    
+
     Args:
         url: The analyzed URL
         verdict: "Safe", "Suspicious", or "Dangerous"
         score: Total risk score
-        
+
     Returns:
         str: Exact speech text for Zyra to speak
     """
@@ -358,19 +358,19 @@ def _generate_speech_text(url: str, verdict: str, score: int) -> str:
 def _check_virustotal(url: str) -> str:
     """
     Check URL against VirusTotal API (silent background check).
-    
+
     Args:
         url: URL to check
-        
+
     Returns:
         str: "malicious", "suspicious", "safe", or "error"
     """
     if not VIRUSTOTAL_API_KEY:
         return "safe"
-    
+
     try:
         headers = {"x-apikey": VIRUSTOTAL_API_KEY}
-        
+
         # Submit URL for analysis
         submit_url = "https://www.virustotal.com/api/v3/urls"
         response = requests.post(
@@ -379,16 +379,16 @@ def _check_virustotal(url: str) -> str:
             data={"url": url},
             timeout=15,
         )
-        
+
         if response.status_code != 200:
             return "safe"
-        
+
         result = response.json()
         analysis_id = result.get("data", {}).get("id", "")
-        
+
         if not analysis_id:
             return "safe"
-        
+
         # Get analysis results
         analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
         analysis_response = requests.get(
@@ -396,25 +396,29 @@ def _check_virustotal(url: str) -> str:
             headers=headers,
             timeout=15,
         )
-        
+
         if analysis_response.status_code != 200:
             return "safe"
-        
+
         analysis_result = analysis_response.json()
         stats = analysis_result.get("data", {}).get("attributes", {}).get("stats", {})
-        
+
         malicious = stats.get("malicious", 0)
         suspicious = stats.get("suspicious", 0)
-        
+
         if malicious > 0:
             return "malicious"
         elif suspicious > 0:
             return "suspicious"
         else:
             return "safe"
-    
+
     except Exception:
         return "safe"
+
+
+# Backward compatibility alias
+check_url_virustotal = _check_virustotal
 
 
 # ──────────────────────────────────────────────
@@ -434,7 +438,7 @@ def analyze_link() -> dict:
     """
     # Step 1: Get URL from screen or clipboard
     url = get_active_url()
-    
+
     if not url:
         return {
             "url": None,
@@ -443,10 +447,10 @@ def analyze_link() -> dict:
             "speech_text": "I couldn't find any URL on your screen or in your clipboard.",
             "checks": []
         }
-    
+
     # Step 2: Run heuristic analysis
     result = analyze_url(url)
-    
+
     return result
 
 
@@ -476,10 +480,10 @@ if __name__ == "__main__":
     for url in test_urls:
         result = analyze_url(url)
         verdict_icon = {"Safe": "✅", "Suspicious": "⚠️", "Dangerous": "🚫"}.get(result["verdict"], "❓")
-        
+
         print(f"{verdict_icon} {result['verdict']:12s} | Score: {result['score']:2d} | {url}")
         print(f"   🗣️  {result['speech_text']}")
-        
+
         if result["checks"]:
             print(f"   📊 Checks triggered:")
             for check in result["checks"]:

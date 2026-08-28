@@ -68,6 +68,8 @@ electron_1.contextBridge.exposeInMainWorld('zyraAPI', {
     recall: (key) => electron_1.ipcRenderer.invoke('memory:recall', key),
     // Commands List
     getCommands: () => electron_1.ipcRenderer.invoke('commands:list'),
+    // System Monitor Metrics
+    getSystemMetrics: () => electron_1.ipcRenderer.invoke('system:metrics'),
 });
 
 })();

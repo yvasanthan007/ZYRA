@@ -26,4 +26,8 @@ contextBridge.exposeInMainWorld('zyraAPI', {
   // Commands List
   getCommands: (): Promise<Array<{ id: string; label: string; category: string }>> =>
     ipcRenderer.invoke('commands:list'),
+
+  // System Monitor Metrics
+  getSystemMetrics: (): Promise<any> =>
+    ipcRenderer.invoke('system:metrics'),
 });

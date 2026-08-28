@@ -122,6 +122,12 @@ electron_1.ipcMain.handle('memory:recall', async (_event, key) => {
         return null;
     return pythonBridge.sendCommand({ type: 'recall', data: key });
 });
+// System Monitor metrics
+electron_1.ipcMain.handle('system:metrics', async () => {
+    if (!pythonBridge)
+        return null;
+    return pythonBridge.sendCommand({ type: 'system_metrics', data: null });
+});
 // Get available commands list
 electron_1.ipcMain.handle('commands:list', async () => {
     return [
@@ -141,6 +147,7 @@ electron_1.ipcMain.handle('commands:list', async () => {
         { id: 'open_gmail', label: 'Open Gmail', category: 'web' },
         { id: 'open_leetcode', label: 'Open LeetCode', category: 'web' },
         { id: 'open_linkedin', label: 'Open LinkedIn', category: 'web' },
+        { id: 'monitor_system', label: 'Monitor System', category: 'system' },
         { id: 'volume_up', label: 'Volume Up', category: 'system' },
         { id: 'volume_down', label: 'Volume Down', category: 'system' },
         { id: 'mute', label: 'Mute', category: 'system' },

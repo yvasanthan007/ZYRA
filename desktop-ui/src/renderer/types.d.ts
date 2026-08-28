@@ -12,6 +12,7 @@ interface ZyraAPI {
   remember: (key: string, value: string) => Promise<string>;
   recall: (key: string) => Promise<string | null>;
   getCommands: () => Promise<CommandItem[]>;
+  getSystemMetrics: () => Promise<any>;
 }
 
 interface Window {

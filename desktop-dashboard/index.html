@@ -50,6 +50,277 @@ canvas {
   background: linear-gradient(180deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
 }
 
+.top-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.top-logo {
+  font-size: 18px;
+  color: #ff8844;
+  text-shadow: 0 0 10px rgba(255, 136, 68, 0.7);
+  animation: pulseLogo 3s infinite ease-in-out;
+}
+@keyframes pulseLogo {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 16px rgba(255, 136, 68, 1); }
+}
+.top-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #ffaa55;
+}
+.top-subtitle {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(255, 136, 68, 0.6);
+  text-transform: uppercase;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.top-btn {
+  background: rgba(255, 136, 68, 0.12);
+  border: 1px solid rgba(255, 136, 68, 0.35);
+  border-radius: 20px;
+  color: #ffaa55;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+.top-btn:hover {
+  background: rgba(255, 136, 68, 0.25);
+  border-color: rgba(255, 136, 68, 0.6);
+  color: #ffdd99;
+  box-shadow: 0 0 16px rgba(255, 136, 68, 0.25);
+  transform: translateY(-1px);
+}
+.top-btn.active {
+  background: rgba(255, 136, 68, 0.3);
+  border-color: #ff8844;
+  box-shadow: 0 0 16px rgba(255, 136, 68, 0.35);
+}
+.btn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff8844;
+  box-shadow: 0 0 8px #ff8844;
+  animation: blinkDot 2s infinite;
+}
+@keyframes blinkDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== SYSTEM MONITOR HUD CARD ===== */
+.system-monitor-card {
+  position: absolute;
+  top: 70px;
+  right: 28px;
+  width: 330px;
+  max-height: calc(100vh - 200px);
+  background: rgba(8, 8, 20, 0.88);
+  border: 1px solid rgba(255, 136, 68, 0.28);
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.15);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  z-index: 20;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.97);
+  overflow: hidden;
+}
+
+.system-monitor-card.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.sm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: rgba(255, 136, 68, 0.08);
+  border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+}
+.sm-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sm-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
+  animation: pulseGreen 1.8s infinite;
+}
+@keyframes pulseGreen {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+.sm-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ff9944;
+  text-transform: uppercase;
+}
+.sm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sm-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  color: #00ff88;
+}
+.sm-badge.offline {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: rgba(255, 68, 68, 0.35);
+  color: #ff6666;
+}
+.sm-btn-close {
+  background: none;
+  border: none;
+  color: rgba(255, 136, 68, 0.6);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+.sm-btn-close:hover {
+  color: #ff8844;
+  background: rgba(255, 136, 68, 0.15);
+}
+
+.sm-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 136, 68, 0.3) transparent;
+}
+.sm-body::-webkit-scrollbar { width: 4px; }
+.sm-body::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.3); border-radius: 2px; }
+
+.sm-metric-card, .sm-info-card {
+  background: rgba(8, 8, 18, 0.55);
+  border: 1px solid rgba(255, 136, 68, 0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sm-metric-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffbb66;
+}
+.sm-metric-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffaa44;
+}
+
+.sm-ascii-bar {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.2;
+  color: #ff8844;
+  letter-spacing: 2px;
+  user-select: none;
+  word-break: break-all;
+}
+
+.sm-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 136, 68, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.sm-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff8844, #ffcc66);
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(255, 136, 68, 0.6);
+  transition: width 0.4s ease;
+}
+
+.sm-sub-info {
+  font-size: 11px;
+  color: rgba(255, 180, 100, 0.65);
+}
+
+.sm-card-heading {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff8844;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.sm-stat-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.sm-stat-k {
+  color: rgba(255, 180, 100, 0.7);
+}
+.sm-stat-v {
+  font-family: 'Consolas', monospace;
+  font-weight: 600;
+  color: #ffcc88;
+}
+
+.sm-uptime-val, .sm-sys-val {
+  font-size: 12px;
+  font-family: 'Consolas', monospace;
+  color: #ffcc88;
+  word-break: break-word;
+}
+
 /* Bottom Controls */
 #bottom-controls {
   pointer-events: auto;
@@ -185,8 +456,112 @@ canvas {
 <!-- Dashboard Overlay -->
 <div id="dashboard-overlay">
   <!-- Top Bar -->
-  <!-- Top Bar (empty - header elements removed) -->
-  <div id="top-bar"></div>
+  <div id="top-bar">
+    <div class="top-brand">
+      <span class="top-logo">◈</span>
+      <span class="top-title">ZYRA</span>
+      <span class="top-subtitle">// Neural Core</span>
+    </div>
+    <div class="top-actions">
+      <button id="btn-toggle-monitor" class="top-btn" title="Toggle System Monitor">
+        <span class="btn-dot"></span>
+        <span class="btn-text">System Monitor</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- System Monitor HUD Card -->
+  <div id="system-monitor-card" class="system-monitor-card" aria-label="System Monitor">
+    <div class="sm-header">
+      <div class="sm-title-group">
+        <span class="sm-pulse-dot" id="sm-pulse-dot"></span>
+        <span class="sm-title">SYSTEM MONITOR</span>
+      </div>
+      <div class="sm-header-actions">
+        <span class="sm-badge" id="sm-badge">LIVE</span>
+        <button class="sm-btn-close" id="sm-close-btn" title="Close System Monitor">✕</button>
+      </div>
+    </div>
+
+    <div class="sm-body" id="sm-body">
+      <!-- CPU Metric -->
+      <div class="sm-metric-card">
+        <div class="sm-row">
+          <span class="sm-metric-name">CPU</span>
+          <span class="sm-metric-val" id="sm-cpu-val">--%</span>
+        </div>
+        <div class="sm-ascii-bar" id="sm-cpu-ascii">░░░░░░░░░░</div>
+        <div class="sm-bar-track">
+          <div class="sm-bar-fill" id="sm-cpu-bar" style="width: 0%;"></div>
+        </div>
+        <div class="sm-sub-info" id="sm-cpu-sub">Cores: --</div>
+      </div>
+
+      <!-- Memory Metric -->
+      <div class="sm-metric-card">
+        <div class="sm-row">
+          <span class="sm-metric-name">Memory</span>
+          <span class="sm-metric-val" id="sm-mem-val">--%</span>
+        </div>
+        <div class="sm-ascii-bar" id="sm-mem-ascii">░░░░░░░░░░</div>
+        <div class="sm-bar-track">
+          <div class="sm-bar-fill" id="sm-mem-bar" style="width: 0%;"></div>
+        </div>
+        <div class="sm-sub-info" id="sm-mem-sub">-- GB / -- GB</div>
+      </div>
+
+      <!-- Disk Metric -->
+      <div class="sm-metric-card">
+        <div class="sm-row">
+          <span class="sm-metric-name">Disk</span>
+          <span class="sm-metric-val" id="sm-disk-val">--%</span>
+        </div>
+        <div class="sm-ascii-bar" id="sm-disk-ascii">░░░░░░░░░░</div>
+        <div class="sm-bar-track">
+          <div class="sm-bar-fill" id="sm-disk-bar" style="width: 0%;"></div>
+        </div>
+        <div class="sm-sub-info" id="sm-disk-sub">-- GB used / -- GB free</div>
+      </div>
+
+      <!-- Network Activity -->
+      <div class="sm-info-card">
+        <div class="sm-card-heading">Network</div>
+        <div class="sm-stat-line">
+          <span class="sm-stat-k">↓ Download</span>
+          <span class="sm-stat-v" id="sm-net-down">0 B/s</span>
+        </div>
+        <div class="sm-stat-line">
+          <span class="sm-stat-k">↑ Upload</span>
+          <span class="sm-stat-v" id="sm-net-up">0 B/s</span>
+        </div>
+        <div class="sm-sub-info" id="sm-net-total">Total: 0 B ↓ / 0 B ↑</div>
+      </div>
+
+      <!-- Battery & Power -->
+      <div class="sm-info-card">
+        <div class="sm-stat-line">
+          <span class="sm-stat-k">Battery</span>
+          <span class="sm-stat-v" id="sm-battery-val">--%</span>
+        </div>
+        <div class="sm-stat-line">
+          <span class="sm-stat-k">Charging</span>
+          <span class="sm-stat-v" id="sm-battery-charging">--</span>
+        </div>
+      </div>
+
+      <!-- System Uptime -->
+      <div class="sm-info-card">
+        <div class="sm-card-heading">Uptime</div>
+        <div class="sm-uptime-val" id="sm-uptime-val">--</div>
+      </div>
+
+      <!-- Operating System -->
+      <div class="sm-info-card">
+        <div class="sm-card-heading">System</div>
+        <div class="sm-sys-val" id="sm-system-val">--</div>
+      </div>
+    </div>
+  </div>
 
   <!-- Bottom Controls -->
   <div id="bottom-controls">
@@ -650,7 +1025,7 @@ canvas {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host || '127.0.0.1:8080';
     const wsUrl = protocol + '//' + host + '/ws';
-    
+
     try {
       ws = new WebSocket(wsUrl);
 
@@ -671,12 +1046,25 @@ canvas {
       ws.onmessage = function(event) {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'response' && data.success) {
+          if (data.type === 'show_system_monitor') {
+            startSystemMonitor();
+            if (data.data) {
+              updateSystemMonitorUI(data.data);
+            }
+          } else if (data.type === 'system_metrics' && data.data) {
+            updateSystemMonitorUI(data.data);
+          } else if (data.type === 'response' && data.success) {
             addMessage(data.data, 'zyra');
+            if (typeof data.data === 'string' && (data.data.includes('SYSTEM MONITOR') || data.data.toLowerCase().includes('system monitor'))) {
+              startSystemMonitor();
+            }
           } else if (data.type === 'error') {
             addMessage('Error: ' + (data.error || 'Unknown error'), 'system');
           } else if (data.type === 'voice_response') {
             addMessage(data.data, 'zyra');
+            if (typeof data.data === 'string' && data.data.toLowerCase().includes('system monitor')) {
+              startSystemMonitor();
+            }
           }
         } catch (e) {
           console.error('WebSocket message error:', e);
@@ -711,6 +1099,166 @@ canvas {
       sendMessage(chatInput.value);
     }
   });
+
+  // ===== SYSTEM MONITOR CONTROLLER =====
+  const monitorCard = document.getElementById('system-monitor-card');
+  const btnToggleMonitor = document.getElementById('btn-toggle-monitor');
+  const btnCloseMonitor = document.getElementById('sm-close-btn');
+  const smBadge = document.getElementById('sm-badge');
+
+  // Metric element references
+  const elCpuVal = document.getElementById('sm-cpu-val');
+  const elCpuAscii = document.getElementById('sm-cpu-ascii');
+  const elCpuBar = document.getElementById('sm-cpu-bar');
+  const elCpuSub = document.getElementById('sm-cpu-sub');
+
+  const elMemVal = document.getElementById('sm-mem-val');
+  const elMemAscii = document.getElementById('sm-mem-ascii');
+  const elMemBar = document.getElementById('sm-mem-bar');
+  const elMemSub = document.getElementById('sm-mem-sub');
+
+  const elDiskVal = document.getElementById('sm-disk-val');
+  const elDiskAscii = document.getElementById('sm-disk-ascii');
+  const elDiskBar = document.getElementById('sm-disk-bar');
+  const elDiskSub = document.getElementById('sm-disk-sub');
+
+  const elNetDown = document.getElementById('sm-net-down');
+  const elNetUp = document.getElementById('sm-net-up');
+  const elNetTotal = document.getElementById('sm-net-total');
+
+  const elBatteryVal = document.getElementById('sm-battery-val');
+  const elBatteryCharging = document.getElementById('sm-battery-charging');
+
+  const elUptimeVal = document.getElementById('sm-uptime-val');
+  const elSystemVal = document.getElementById('sm-system-val');
+
+  let isMonitorActive = false;
+  let monitorInterval = null;
+
+  function updateSystemMonitorUI(m) {
+    if (!m) return;
+    try {
+      // CPU
+      if (m.cpu) {
+        const cpuPct = Math.round(m.cpu.percent || 0);
+        elCpuVal.textContent = cpuPct + '%';
+        elCpuAscii.textContent = m.cpu.bar || '░░░░░░░░░░';
+        elCpuBar.style.width = Math.min(100, Math.max(0, cpuPct)) + '%';
+        elCpuSub.textContent = `Cores: ${m.cpu.cores_physical || 1} physical / ${m.cpu.cores_logical || 1} logical`;
+      }
+
+      // Memory
+      if (m.memory) {
+        const memPct = Math.round(m.memory.percent || 0);
+        elMemVal.textContent = memPct + '%';
+        elMemAscii.textContent = m.memory.bar || '░░░░░░░░░░';
+        elMemBar.style.width = Math.min(100, Math.max(0, memPct)) + '%';
+        elMemSub.textContent = `${m.memory.used_str || '0 GB'} / ${m.memory.total_str || '0 GB'} (${m.memory.available_str || '0 GB'} avail)`;
+      }
+
+      // Disk
+      if (m.disk) {
+        const diskPct = Math.round(m.disk.percent || 0);
+        elDiskVal.textContent = diskPct + '%';
+        elDiskAscii.textContent = m.disk.bar || '░░░░░░░░░░';
+        elDiskBar.style.width = Math.min(100, Math.max(0, diskPct)) + '%';
+        elDiskSub.textContent = `${m.disk.used_str || '0 GB'} used / ${m.disk.free_str || '0 GB'} free`;
+      }
+
+      // Network
+      if (m.network) {
+        elNetDown.textContent = m.network.download_speed_str || '0 B/s';
+        elNetUp.textContent = m.network.upload_speed_str || '0 B/s';
+        elNetTotal.textContent = `Total: ${m.network.total_recv_str || '0 B'} ↓ / ${m.network.total_sent_str || '0 B'} ↑`;
+      }
+
+      // Battery
+      if (m.battery) {
+        elBatteryVal.textContent = m.battery.percent_str || 'N/A';
+        elBatteryCharging.textContent = m.battery.charging_str || 'No';
+      }
+
+      // Uptime
+      if (m.uptime) {
+        elUptimeVal.textContent = m.uptime.formatted || '0h 00m';
+      }
+
+      // System
+      if (m.system) {
+        elSystemVal.textContent = m.system.formatted || m.system.os || 'Windows/Linux/macOS';
+      }
+
+      if (smBadge) {
+        smBadge.textContent = 'LIVE';
+        smBadge.classList.remove('offline');
+      }
+    } catch (err) {
+      console.error('Error updating monitor UI:', err);
+    }
+  }
+
+  function fetchSystemMetrics() {
+    if (!isMonitorActive) return;
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify({ type: 'system_metrics' }));
+        return;
+      } catch (e) {}
+    }
+
+    // Fallback REST fetch if WebSocket isn't open
+    fetch('/api/system/metrics')
+      .then(res => res.json())
+      .then(json => {
+        if (json && json.success && json.data) {
+          updateSystemMonitorUI(json.data);
+        }
+      })
+      .catch(err => {
+        if (smBadge) {
+          smBadge.textContent = 'OFFLINE';
+          smBadge.classList.add('offline');
+        }
+      });
+  }
+
+  function startSystemMonitor() {
+    isMonitorActive = true;
+    if (monitorCard) monitorCard.classList.add('visible');
+    if (btnToggleMonitor) btnToggleMonitor.classList.add('active');
+
+    fetchSystemMetrics();
+    if (!monitorInterval) {
+      monitorInterval = setInterval(fetchSystemMetrics, 1500);
+    }
+  }
+
+  function stopSystemMonitor() {
+    isMonitorActive = false;
+    if (monitorCard) monitorCard.classList.remove('visible');
+    if (btnToggleMonitor) btnToggleMonitor.classList.remove('active');
+
+    if (monitorInterval) {
+      clearInterval(monitorInterval);
+      monitorInterval = null;
+    }
+  }
+
+  function toggleSystemMonitor() {
+    if (isMonitorActive) {
+      stopSystemMonitor();
+    } else {
+      startSystemMonitor();
+    }
+  }
+
+  if (btnToggleMonitor) {
+    btnToggleMonitor.addEventListener('click', toggleSystemMonitor);
+  }
+  if (btnCloseMonitor) {
+    btnCloseMonitor.addEventListener('click', stopSystemMonitor);
+  }
 
   // Initial connection
   setTimeout(connectWebSocket, 500);

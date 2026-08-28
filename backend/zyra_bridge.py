@@ -25,6 +25,13 @@ from commands.open_app import (
     empty_recycle_bin, current_time, current_date, play_music, open_camera,
 )
 from commands.close_app import close_app
+from system_monitor import (
+    get_system_metrics,
+    format_system_monitor_text,
+    get_voice_summary,
+    is_system_monitor_intent,
+    start_system_monitor,
+)
 
 # ── Backend Security Analysis Module (backend-only, no frontend UI) ──
 from backend.link_security import (
@@ -75,6 +82,8 @@ COMMAND_MAP = {
     "current_date": current_date,
     "play_music": play_music,
     "open_camera": open_camera,
+    "monitor_system": start_system_monitor,
+    "system_monitor": start_system_monitor,
 }
 
 # Keep track of the voice assistant thread
@@ -85,10 +94,10 @@ _voice_running = False
 def process_chat(message: str) -> str:
     """
     Process a chat message through Zyra's AI brain.
-    
+
     Args:
         message: The user's message/query
-        
+
     Returns:
         Zyra's response as a string
     """
@@ -101,6 +110,10 @@ def process_chat(message: str) -> str:
     if is_link_analysis_request(message):
         return analyze_link_request(message)
 
+    # ── System Monitor ──
+    if is_system_monitor_intent(message):
+        return format_system_monitor_text()
+
     answer = ask_ai(message)
     return answer
 
@@ -108,25 +121,25 @@ def process_chat(message: str) -> str:
 def process_command(command_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Execute a voice command programmatically.
-    
+
     Args:
         command_name: The command to execute (e.g., "open_chrome")
         params: Optional parameters for the command
-        
+
     Returns:
         Result dict with success status and message
     """
     if not command_name:
         return {"success": False, "error": "No command specified"}
-    
+
     command_name = command_name.lower().strip()
-    
+
     # Handle close commands
     if command_name.startswith("close_"):
         app_name = command_name.replace("close_", "").strip()
         response = close_app(app_name)
         return {"success": True, "data": response}
-    
+
     # Handle search commands
     if command_name.startswith("search_google"):
         query = params.get("query", "") if params else ""
@@ -134,14 +147,14 @@ def process_command(command_name: str, params: Optional[Dict[str, Any]] = None) 
             search_google(query)
             return {"success": True, "data": f"Searched Google for {query}"}
         return {"success": False, "error": "No search query provided"}
-    
+
     if command_name.startswith("search_youtube"):
         query = params.get("query", "") if params else ""
         if query:
             search_youtube(query)
             return {"success": True, "data": f"Searched YouTube for {query}"}
         return {"success": False, "error": "No search query provided"}
-    
+
     # Execute from command map
     if command_name in COMMAND_MAP:
         try:
@@ -149,7 +162,7 @@ def process_command(command_name: str, params: Optional[Dict[str, Any]] = None) 
             return {"success": True, "data": f"Executed {command_name}"}
         except Exception as e:
             return {"success": False, "error": str(e)}
-    
+
     return {"success": False, "error": f"Unknown command: {command_name}"}
 
 
@@ -157,24 +170,24 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
     """
     Process a voice command from transcribed text.
     Parses natural language and executes the appropriate action.
-    
+
     Args:
         transcribed_text: The text transcribed from voice
-        
+
     Returns:
         Result dict with response text and action taken
     """
     if not transcribed_text:
         return {"response": "", "action": "none"}
-    
+
     text = transcribed_text.lower().strip()
-    
+
     # Check for close commands
     if text.startswith("close "):
         app = text.replace("close ", "").strip()
         response = close_app(app)
         return {"response": response, "action": "close_app"}
-    
+
     # Check for memory commands
     if "my favorite language is" in text:
         language = text.replace("my favorite language is", "").strip()
@@ -183,13 +196,13 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
             "response": f"I'll remember that. Your favorite language is {language}.",
             "action": "remember"
         }
-    
+
     if "what is my favorite language" in text:
         language = recall("favorite_language")
         if language:
             return {"response": f"Your favorite language is {language}.", "action": "recall"}
         return {"response": "I don't know your favorite language yet.", "action": "recall"}
-    
+
     # Check for exit commands
     if any(word in text for word in ["exit", "quit", "goodbye", "shut it down"]):
         return {"response": "Goodbye. Have a nice day.", "action": "exit"}
@@ -198,6 +211,17 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
     # Activated by "Analyse the link" / "Analyze this URL" or any URL in text.
     if is_link_analysis_request(text):
         return {"response": analyze_link_request(text), "action": "link_analysis"}
+
+    # ── System Monitor intent ──
+    if is_system_monitor_intent(text):
+        metrics = get_system_metrics()
+        voice_resp = get_voice_summary(metrics)
+        return {
+            "response": voice_resp,
+            "action": "system_monitor",
+            "metrics": metrics,
+            "formatted": format_system_monitor_text(metrics),
+        }
 
     # Check command map (natural language matching)
     command_mappings = [
@@ -242,7 +266,7 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
         ("current date", "current_date"),
         ("play music", "play_music"),
     ]
-    
+
     for phrase, command in command_mappings:
         if phrase in text:
             try:
@@ -289,18 +313,18 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
                 return {"response": response_text, "action": command}
             except Exception as e:
                 return {"response": f"Error executing command: {str(e)}", "action": "error"}
-    
+
     # For search commands
     if "search google for" in text:
         query = text.replace("search google for", "").strip()
         search_google(query)
         return {"response": f"Searching Google for {query}", "action": "search_google"}
-    
+
     if "search youtube for" in text:
         query = text.replace("search youtube for", "").strip()
         search_youtube(query)
         return {"response": f"Searching YouTube for {query}", "action": "search_youtube"}
-    
+
     # Default: use AI brain
     answer = ask_ai(text)
     return {"response": answer, "action": "chat"}
@@ -313,7 +337,7 @@ def speak_text(text: str) -> None:
     """
     if not text:
         return
-    
+
     thread = threading.Thread(target=speak, args=(text,), daemon=True)
     thread.start()
 
@@ -329,7 +353,7 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             answer = process_chat(data)
             return {"success": True, "data": answer}
         return {"success": False, "error": "Invalid chat data"}
-    
+
     elif message_type == "command":
         if isinstance(data, str):
             result = process_command(data)
@@ -338,13 +362,13 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             result = process_command(data.get("command", ""), data)
             return result
         return {"success": False, "error": "Invalid command data"}
-    
+
     elif message_type == "voice":
         if isinstance(data, str):
             result = process_voice_command(data)
             return {"success": True, "data": result}
         return {"success": False, "error": "Invalid voice data"}
-    
+
     elif message_type == "remember":
         if isinstance(data, dict):
             key = data.get("key")
@@ -352,13 +376,13 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             remember(key, value)
             return {"success": True, "data": f"Remembered {key}"}
         return {"success": False, "error": "Invalid remember data"}
-    
+
     elif message_type == "recall":
         if isinstance(data, str):
             value = recall(data)
             return {"success": True, "data": value}
         return {"success": False, "error": "Invalid recall data"}
-    
+
     elif message_type == "speak":
         if isinstance(data, str):
             speak_text(data)
@@ -383,5 +407,14 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             "report": format_security_report(result),
             "analysis": result,
         }}
+
+    elif message_type in ("system_metrics", "get_system_metrics", "monitor_system", "start_monitoring"):
+        metrics = get_system_metrics()
+        return {
+            "success": True,
+            "data": metrics,
+            "formatted": format_system_monitor_text(metrics),
+            "summary": get_voice_summary(metrics),
+        }
 
     return {"success": False, "error": f"Unknown type: {message_type}"}

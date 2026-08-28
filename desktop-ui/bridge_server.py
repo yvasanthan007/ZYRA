@@ -19,6 +19,13 @@ from commands.open_app import (
     empty_recycle_bin, current_time, current_date, play_music, open_camera,
 )
 from commands.close_app import close_app
+from system_monitor import (
+    get_system_metrics,
+    format_system_monitor_text,
+    get_voice_summary,
+    is_system_monitor_intent,
+    start_system_monitor,
+)
 
 COMMAND_MAP = {
     "open_chrome": open_chrome,
@@ -56,6 +63,8 @@ COMMAND_MAP = {
     "current_date": current_date,
     "play_music": play_music,
     "open_camera": open_camera,
+    "monitor_system": start_system_monitor,
+    "system_monitor": start_system_monitor,
 }
 
 
@@ -65,6 +74,8 @@ def handle_message(msg):
 
     if msg_type == "chat":
         if isinstance(data, str):
+            if is_system_monitor_intent(data):
+                return {"success": True, "data": format_system_monitor_text()}
             answer = ask_ai(data)
             return {"success": True, "data": answer}
         return {"success": False, "error": "Invalid chat data"}
@@ -101,6 +112,15 @@ def handle_message(msg):
 
     elif msg_type == "voice_status":
         return {"success": True, "data": {"listening": False}}
+
+    elif msg_type in ("system_metrics", "get_system_metrics", "monitor_system"):
+        metrics = get_system_metrics()
+        return {
+            "success": True,
+            "data": metrics,
+            "formatted": format_system_monitor_text(metrics),
+            "summary": get_voice_summary(metrics),
+        }
 
     return {"success": False, "error": f"Unknown type: {msg_type}"}
 
