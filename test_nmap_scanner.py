@@ -115,6 +115,61 @@ class TestAnalyzeScanResults(unittest.TestCase):
         self.assertEqual(analysis["verdict"], "Critical")
 
 
+class TestResolveNmapPath(unittest.TestCase):
+    """Tests for Nmap executable auto-detection."""
+
+    def test_env_override_wins(self):
+        """The ZYRA_NMAP_PATH env var override is honored first."""
+        import os
+        import tempfile
+        from nmap_scanner import resolve_nmap_path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            fake = os.path.join(tmp, "nmap.exe")
+            with open(fake, "w") as f:
+                f.write("fake")
+            old = os.environ.get("ZYRA_NMAP_PATH")
+            os.environ["ZYRA_NMAP_PATH"] = fake
+            try:
+                self.assertEqual(resolve_nmap_path(), fake)
+            finally:
+                if old is None:
+                    os.environ.pop("ZYRA_NMAP_PATH", None)
+                else:
+                    os.environ["ZYRA_NMAP_PATH"] = old
+
+    def test_missing_raises_guidance(self):
+        """Missing Nmap produces a helpful RuntimeError."""
+        from unittest.mock import patch
+        from nmap_scanner import resolve_nmap_path
+
+        # Isolate from any real Nmap installs on this machine.
+        fake_env = {
+            "LOCALAPPDATA": "Z:\\zyra_tests\\nonexistent",
+            "ProgramFiles": "Z:\\zyra_tests\\nonexistent",
+            "ProgramFiles(x86)": "Z:\\zyra_tests\\nonexistent",
+            "SystemDrive": "Z:",
+        }
+        with patch("nmap_scanner.os.environ", fake_env), \
+             patch("nmap_scanner._NMAP_CANDIDATE_PATHS", []), \
+             patch("nmap_scanner.shutil.which", return_value=None):
+            with self.assertRaises(RuntimeError) as ctx:
+                resolve_nmap_path()
+            self.assertIn("nmap.org", str(ctx.exception))
+
+    def test_nmap_scanner_accepts_explicit_path(self):
+        """An explicit path is used without detection (e.g. tests/mocks)."""
+        import os
+        import tempfile
+        from nmap_scanner import NmapScanner
+
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = os.path.join(tmp, "does_not_exist_nmap.exe")
+            with self.assertRaises(RuntimeError) as ctx:
+                NmapScanner(nmap_path=missing)
+            self.assertIn("not installed or not in PATH", str(ctx.exception))
+
+
 class TestVoiceSummary(unittest.TestCase):
     """Tests for voice summary generation."""
     
