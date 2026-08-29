@@ -15,3 +15,4 @@ easyocr>=1.3.0
 mss>=10.0.0
 requests>=2.28.0
 Pillow>=10.0.0
+python-nmap>=0.7.1

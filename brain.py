@@ -17,6 +17,20 @@ except Exception:  # pragma: no cover - fallback if backend package not importab
         "analyses or touch the frontend dashboard UI for them."
     )
 
+# ── Network Security Analysis Module: Nmap integration ──
+# Zyra can perform network scanning using Nmap for security assessments.
+# When the user asks to scan a network or check for vulnerabilities, Zyra
+# uses Nmap to discover hosts, scan ports, detect services, and identify
+# potential security issues. This is a real security tool, not simulated.
+try:
+    from nmap_handler import NMAP_PERSONA
+except Exception:
+    NMAP_PERSONA = (
+        "NETWORK SECURITY MODE: Zyra can perform network scanning using Nmap. "
+        "When asked to scan networks or check for vulnerabilities, Zyra uses "
+        "real Nmap scans to discover hosts, open ports, services, and security issues."
+    )
+
 conversation = [
     {
         "role": "system",
@@ -24,6 +38,8 @@ conversation = [
             "You are Zyra, a helpful, intelligent, friendly AI assistant. "
             "Answer naturally and briefly unless the user asks for more details. "
             + SECURITY_ANALYST_PERSONA
+            + " "
+            + NMAP_PERSONA
         )
     }
 ]

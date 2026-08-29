@@ -242,6 +242,15 @@ Do not click or enter credentials — close the page and report the source of th
 - Check console output for analysis results
 - Voice summary requires URL in the command
 
+### Nmap scanning not working?
+- Nmap is **not** bundled with Windows. Zyra auto-detects it in standard install locations, the system PATH, or a portable copy under `%LOCALAPPDATA%\Zyra\tools\nmap` or `<repo>\tools\nmap`.
+- Install the official Windows installer from https://nmap.org/download.html, **or** run the bundled portable installer (no admin rights needed):
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File tools\setup_nmap.ps1
+  ```
+  Requires 7-Zip (https://www.7-zip.org) — it downloads the official nmap.org installer and extracts the binaries locally.
+- To override detection, set the `ZYRA_NMAP_PATH` environment variable to the full path of `nmap.exe`.
+
 ## Development
 
 ### Project Structure

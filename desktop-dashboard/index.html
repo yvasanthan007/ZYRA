@@ -516,6 +516,321 @@ canvas {
   box-shadow: 0 0 20px rgba(255,136,68,0.15);
 }
 
+/* ===== NMAP SCANNER HUD CARD ===== */
+.top-actions-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.nm-dot {
+  background: #ffcc44;
+  box-shadow: 0 0 8px #ffcc44;
+}
+
+.nmap-scanner-card {
+  position: absolute;
+  top: 70px;
+  right: 28px;
+  width: 360px;
+  max-height: calc(100vh - 190px);
+  background: rgba(8, 8, 20, 0.88);
+  border: 1px solid rgba(255, 136, 68, 0.28);
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.15);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  z-index: 25;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.97);
+  overflow: hidden;
+}
+.nmap-scanner-card.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.nm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(255, 136, 68, 0.08);
+  border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+  user-select: none;
+}
+.nm-subtitle {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 136, 68, 0.55);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.nm-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffcc44;
+  box-shadow: 0 0 10px #ffcc44;
+  animation: pulseGreen 1.8s infinite;
+}
+
+.nm-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 136, 68, 0.3) transparent;
+}
+.nm-body::-webkit-scrollbar { width: 4px; }
+.nm-body::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.3); border-radius: 2px; }
+
+.nm-info-card {
+  background: rgba(8, 8, 18, 0.55);
+  border: 1px solid rgba(255, 136, 68, 0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.nm-k {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 170, 85, 0.75);
+}
+.nm-request-text {
+  font-size: 12px;
+  color: #ffcc88;
+  font-style: italic;
+}
+
+.nm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.nm-field input,
+.nm-field select {
+  width: 100%;
+  padding: 9px 12px;
+  background: rgba(8, 8, 18, 0.7);
+  border: 1px solid rgba(255, 136, 68, 0.25);
+  border-radius: 8px;
+  color: #ffcc88;
+  font-size: 13px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.nm-field input:focus,
+.nm-field select:focus {
+  border-color: rgba(255, 136, 68, 0.55);
+  box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
+}
+.nm-field select { cursor: pointer; }
+.nm-field select option {
+  background: #0d0d1c;
+  color: #ffcc88;
+}
+.nm-op-desc {
+  font-size: 10px;
+  color: rgba(255, 136, 68, 0.55);
+}
+
+.nm-command {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 11px;
+  color: #ffaa44;
+  background: rgba(8, 8, 18, 0.7);
+  border: 1px dashed rgba(255, 136, 68, 0.3);
+  border-radius: 6px;
+  padding: 8px 10px;
+  word-break: break-all;
+  user-select: text;
+}
+
+.nm-btn {
+  background: rgba(255, 136, 68, 0.12);
+  border: 1px solid rgba(255, 136, 68, 0.35);
+  border-radius: 10px;
+  color: #ffaa55;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.nm-btn:hover:not(:disabled) {
+  background: rgba(255, 136, 68, 0.25);
+  border-color: rgba(255, 136, 68, 0.6);
+  color: #ffdd99;
+  box-shadow: 0 0 16px rgba(255, 136, 68, 0.25);
+}
+.nm-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.nm-btn-primary {
+  background: rgba(255, 136, 68, 0.22);
+  border-color: rgba(255, 136, 68, 0.55);
+  color: #ffcc77;
+  text-shadow: 0 0 8px rgba(255, 136, 68, 0.5);
+}
+.nm-btn-primary.scanning {
+  animation: nmPulseBtn 1.4s infinite;
+}
+@keyframes nmPulseBtn {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 136, 68, 0.2); }
+  50% { box-shadow: 0 0 18px rgba(255, 136, 68, 0.55); }
+}
+
+.nm-status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc44;
+}
+.nm-status.complete { color: #00ff88; }
+.nm-status.error { color: #ff6666; }
+.nm-stage {
+  font-size: 10px;
+  color: rgba(255, 136, 68, 0.6);
+}
+
+.nm-summary-row {
+  display: flex;
+  gap: 8px;
+}
+.nm-stat {
+  flex: 1;
+  background: rgba(8, 8, 18, 0.55);
+  border: 1px solid rgba(255, 136, 68, 0.12);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.nm-stat-v {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffaa44;
+}
+.nm-stat-k {
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255, 136, 68, 0.55);
+  margin-top: 2px;
+}
+
+.nm-obs-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.nm-obs-list li {
+  font-size: 11px;
+  color: #ffbb77;
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.4;
+}
+.nm-obs-list li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: #ff8844;
+}
+
+.nm-host {
+  border: 1px solid rgba(255, 136, 68, 0.14);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: rgba(8, 8, 18, 0.4);
+}
+.nm-host:last-child { margin-bottom: 0; }
+.nm-host-ip {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffcc66;
+}
+.nm-host-meta {
+  font-size: 10px;
+  color: rgba(255, 136, 68, 0.6);
+  margin-top: 2px;
+}
+.nm-host-ports {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.nm-port-line {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 11px;
+  color: #ffaa55;
+}
+.nm-port-num { color: #ffcc44; }
+.nm-port-svc { color: #ff9955; font-weight: 700; }
+.nm-port-ver { color: rgba(255, 136, 68, 0.5); font-size: 10px; }
+
+.nm-report-pre {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #ffbb77;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow-y: auto;
+  background: rgba(8, 8, 18, 0.5);
+  border: 1px solid rgba(255, 136, 68, 0.12);
+  border-radius: 6px;
+  padding: 10px;
+  user-select: text;
+}
+
+.nm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.nm-error-card {
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.nm-error-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ff6666;
+  margin-bottom: 4px;
+}
+.nm-error-reason {
+  font-size: 11px;
+  color: #ff9999;
+  line-height: 1.45;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   #top-bar { padding: 12px 16px; }
@@ -536,10 +851,16 @@ canvas {
       <span class="top-subtitle">// Neural Core</span>
     </div>
     <div class="top-actions">
-      <button id="btn-toggle-monitor" class="top-btn" title="Toggle System Monitor">
-        <span class="btn-dot"></span>
-        <span class="btn-text">System Monitor</span>
-      </button>
+      <div class="top-actions-col">
+        <button id="btn-toggle-monitor" class="top-btn" title="Toggle System Monitor">
+          <span class="btn-dot"></span>
+          <span class="btn-text">System Monitor</span>
+        </button>
+        <button id="btn-toggle-nmap" class="top-btn" title="Toggle Nmap Scanner">
+          <span class="btn-dot nm-dot"></span>
+          <span class="btn-text">Nmap Scanner</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -649,6 +970,95 @@ canvas {
           <span class="sm-stat-k">Host</span>
           <span class="sm-stat-v" id="sm-host-val">--</span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nmap Scanner HUD Card -->
+  <div id="nmap-scanner-card" class="nmap-scanner-card" aria-label="Nmap Scanner">
+    <div class="nm-header">
+      <div class="sm-title-group">
+        <span class="nm-pulse-dot"></span>
+        <div>
+          <div class="sm-title">NMAP SCANNER</div>
+          <div class="nm-subtitle">Network Intelligence Module</div>
+        </div>
+      </div>
+      <div class="sm-header-actions">
+        <span class="sm-badge" id="nm-badge">READY</span>
+        <button class="sm-btn-close" id="nm-close-btn" title="Close Nmap Scanner">✕</button>
+      </div>
+    </div>
+
+    <div class="nm-body" id="nm-body">
+      <!-- Original request (chat / voice originated) -->
+      <div class="nm-info-card" id="nm-request-card" style="display: none;">
+        <div class="nm-k">Request</div>
+        <div class="nm-request-text" id="nm-request-text">—</div>
+      </div>
+
+      <!-- Target -->
+      <div class="nm-field">
+        <label class="nm-k" for="nm-target">Target</label>
+        <input id="nm-target" type="text" placeholder="192.168.1.0/24" autocomplete="off" spellcheck="false">
+      </div>
+
+      <!-- Scan type -->
+      <div class="nm-field">
+        <label class="nm-k" for="nm-operation">Scan Type</label>
+        <select id="nm-operation"></select>
+        <div class="nm-op-desc" id="nm-op-desc">—</div>
+      </div>
+
+      <!-- Nmap command preview -->
+      <div class="nm-field">
+        <div class="nm-k">Nmap Command</div>
+        <div class="nm-command" id="nm-command">nmap -sn 127.0.0.1</div>
+      </div>
+
+      <button id="nm-start-btn" class="nm-btn nm-btn-primary">START SCAN</button>
+
+      <!-- Status -->
+      <div class="nm-info-card">
+        <div class="sm-row">
+          <span class="nm-k">Status</span>
+          <span class="nm-status" id="nm-status">● READY</span>
+        </div>
+        <div class="sm-bar-track"><div class="sm-bar-fill" id="nm-progress-bar" style="width: 0%;"></div></div>
+        <div class="nm-stage" id="nm-stage">Idle — awaiting instructions</div>
+      </div>
+
+      <!-- Summary -->
+      <div class="nm-summary-row" id="nm-summary-row" style="display: none;">
+        <div class="nm-stat"><div class="nm-stat-v" id="nm-stat-hosts">0</div><div class="nm-stat-k">Active Hosts</div></div>
+        <div class="nm-stat"><div class="nm-stat-v" id="nm-stat-ports">0</div><div class="nm-stat-k">Open Ports</div></div>
+        <div class="nm-stat"><div class="nm-stat-v" id="nm-stat-services">0</div><div class="nm-stat-k">Services</div></div>
+      </div>
+
+      <!-- Security observations -->
+      <div class="nm-info-card" id="nm-observations-card" style="display: none;">
+        <div class="nm-k">Security Observations</div>
+        <ul class="nm-obs-list" id="nm-obs-list"></ul>
+      </div>
+
+      <!-- Structured results -->
+      <div class="nm-info-card" id="nm-results-card" style="display: none;">
+        <div class="nm-k" id="nm-results-title">Scan Results</div>
+        <div id="nm-results"></div>
+      </div>
+
+      <!-- Report actions -->
+      <div class="nm-actions">
+        <button id="nm-view-btn" class="nm-btn" disabled>VIEW RESULTS</button>
+        <button id="nm-report-btn" class="nm-btn" disabled>GENERATE REPORT</button>
+        <button id="nm-pdf-btn" class="nm-btn" disabled>DOWNLOAD PDF</button>
+        <button id="nm-json-btn" class="nm-btn" disabled>DOWNLOAD JSON</button>
+      </div>
+
+      <!-- Error -->
+      <div class="nm-error-card" id="nm-error-card" style="display: none;">
+        <div class="nm-error-title">NMAP ERROR</div>
+        <div class="nm-error-reason" id="nm-error-reason"></div>
       </div>
     </div>
   </div>
@@ -1143,6 +1553,13 @@ canvas {
             }
           } else if (data.type === 'system_metrics' && data.data) {
             updateSystemMonitorUI(data.data);
+          } else if (data.type === 'show_nmap_scanner') {
+            openNmapPanel();
+            if (data.data) updateNmapUI(data.data);
+          } else if (data.type === 'nmap_status') {
+            if (data.data) updateNmapUI(data.data);
+          } else if (data.type === 'nmap_error') {
+            showNmapError(data.data && data.data.reason);
           } else if (data.type === 'response' && data.success) {
             // Metric payloads (objects) belong to the live monitor, not the chat feed
             if (data.data && typeof data.data === 'object' && data.data.cpu) {
@@ -1175,11 +1592,18 @@ canvas {
   function sendMessage(text) {
     if (!text || !text.trim()) return;
     const cleanText = text.trim();
-    if (cleanText.toLowerCase().includes('monitor my system') ||
-        cleanText.toLowerCase().includes('system monitor') ||
-        cleanText.toLowerCase().includes('monitor system') ||
-        cleanText.toLowerCase().includes('start system monitor')) {
+    const lowerText = cleanText.toLowerCase();
+    if (lowerText.includes('monitor my system') ||
+        lowerText.includes('system monitor') ||
+        lowerText.includes('monitor system') ||
+        lowerText.includes('start system monitor')) {
       startSystemMonitor();
+    }
+    // Nmap requests: open the panel immediately; the backend detects the
+    // intent, launches the whitelisted scan and streams live status back.
+    if (isNmapRequest(lowerText)) {
+      openNmapPanel();
+      setNmapStageHint(cleanText);
     }
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       addMessage('Not connected to ZYRA server', 'system');
@@ -1476,6 +1900,359 @@ canvas {
   if (btnCloseMonitor) {
     btnCloseMonitor.addEventListener('click', stopSystemMonitor);
   }
+
+  // ===== NMAP SCANNER CONTROLLER =====
+  const nmapCard = document.getElementById('nmap-scanner-card');
+  const btnToggleNmap = document.getElementById('btn-toggle-nmap');
+  const btnCloseNmap = document.getElementById('nm-close-btn');
+  const nmBadge = document.getElementById('nm-badge');
+  const nmRequestCard = document.getElementById('nm-request-card');
+  const nmRequestText = document.getElementById('nm-request-text');
+  const nmTarget = document.getElementById('nm-target');
+  const nmOperation = document.getElementById('nm-operation');
+  const nmOpDesc = document.getElementById('nm-op-desc');
+  const nmCommand = document.getElementById('nm-command');
+  const nmStartBtn = document.getElementById('nm-start-btn');
+  const nmStatus = document.getElementById('nm-status');
+  const nmProgressBar = document.getElementById('nm-progress-bar');
+  const nmStage = document.getElementById('nm-stage');
+  const nmSummaryRow = document.getElementById('nm-summary-row');
+  const nmStatHosts = document.getElementById('nm-stat-hosts');
+  const nmStatPorts = document.getElementById('nm-stat-ports');
+  const nmStatServices = document.getElementById('nm-stat-services');
+  const nmObservationsCard = document.getElementById('nm-observations-card');
+  const nmObsList = document.getElementById('nm-obs-list');
+  const nmResultsCard = document.getElementById('nm-results-card');
+  const nmResultsTitle = document.getElementById('nm-results-title');
+  const nmResults = document.getElementById('nm-results');
+  const nmViewBtn = document.getElementById('nm-view-btn');
+  const nmReportBtn = document.getElementById('nm-report-btn');
+  const nmPdfBtn = document.getElementById('nm-pdf-btn');
+  const nmJsonBtn = document.getElementById('nm-json-btn');
+  const nmErrorCard = document.getElementById('nm-error-card');
+  const nmErrorReason = document.getElementById('nm-error-reason');
+
+  let isNmapOpen = false;
+  let nmapScanId = null;
+  let nmapOps = {};            // key -> {label, description, default_target, example_command}
+  let nmapLastChatScan = null; // scan_id whose chat_response was already shown
+
+  const NMAP_TRIGGER_PHRASES = [
+    'scan my network', 'scan the network', 'scan network', 'network scan',
+    'find active hosts', 'active hosts', 'host discovery', 'discover hosts',
+    'find devices', 'devices on my network', 'devices on the network',
+    'check open ports', 'open ports', 'port scan', 'scan ports',
+    'check services', 'service detection', 'services running',
+    'vulnerability scan', 'check for vulnerabilities', 'stealth scan',
+    'ping sweep', 'sweep the network', 'nmap', 'scan this ip', 'scan host',
+    'scan 192.168', 'scan 10.0', 'scan 172.', 'is my network secure',
+    'security scan'
+  ];
+
+  function isNmapRequest(lowerText) {
+    return NMAP_TRIGGER_PHRASES.some(function (p) { return lowerText.includes(p); });
+  }
+
+  function openNmapPanel() {
+    isNmapOpen = true;
+    if (nmapCard) nmapCard.classList.add('visible');
+    if (btnToggleNmap) btnToggleNmap.classList.add('active');
+  }
+
+  function closeNmapPanel() {
+    isNmapOpen = false;
+    if (nmapCard) nmapCard.classList.remove('visible');
+    if (btnToggleNmap) btnToggleNmap.classList.remove('active');
+  }
+
+  if (btnToggleNmap) {
+    btnToggleNmap.addEventListener('click', function () {
+      if (isNmapOpen) { closeNmapPanel(); } else { openNmapPanel(); }
+    });
+  }
+  if (btnCloseNmap) {
+    btnCloseNmap.addEventListener('click', closeNmapPanel);
+  }
+
+  function setNmapStageHint(requestText) {
+    if (nmRequestCard && nmRequestText && requestText) {
+      nmRequestCard.style.display = '';
+      nmRequestText.textContent = '"' + requestText + '"';
+    }
+    if (nmStage) nmStage.textContent = 'Initializing scan request…';
+    if (nmStatus) {
+      nmStatus.textContent = '● INITIALIZING';
+      nmStatus.className = 'nm-status';
+    }
+  }
+
+  function showNmapError(reason) {
+    if (!nmErrorCard || !nmErrorReason) return;
+    nmErrorCard.style.display = '';
+    nmErrorReason.textContent = reason || 'Nmap could not be executed.';
+    if (nmStatus) {
+      nmStatus.textContent = '● ERROR';
+      nmStatus.className = 'nm-status error';
+    }
+    if (nmBadge) {
+      nmBadge.textContent = 'ERROR';
+      nmBadge.classList.add('offline');
+    }
+    if (nmStartBtn) {
+      nmStartBtn.disabled = false;
+      nmStartBtn.classList.remove('scanning');
+      nmStartBtn.textContent = 'START SCAN';
+    }
+  }
+
+  function setNmapButtonsEnabled(enabled) {
+    [nmViewBtn, nmReportBtn, nmPdfBtn, nmJsonBtn].forEach(function (b) {
+      if (b) b.disabled = !enabled;
+    });
+  }
+
+  function updateNmapUI(s) {
+    if (!s) return;
+    try {
+      if (nmErrorCard) nmErrorCard.style.display = 'none';
+
+      // Request context
+      if (s.request && nmRequestCard && nmRequestText) {
+        nmRequestCard.style.display = '';
+        nmRequestText.textContent = '"' + s.request + '"';
+      }
+
+      // Target / operation / command
+      if (s.target && nmTarget && document.activeElement !== nmTarget) {
+        nmTarget.value = s.target;
+      }
+      if (s.operation && nmOperation && nmapOps[s.operation]) {
+        nmOperation.value = s.operation;
+        nmOpDesc.textContent = nmapOps[s.operation].description || '';
+      }
+      if (s.command && nmCommand) {
+        nmCommand.textContent = s.command;
+      }
+
+      // Status + progress
+      const st = (s.status || '').toUpperCase();
+      if (nmStatus) {
+        nmStatus.textContent = '● ' + (st || 'READY');
+        nmStatus.className = 'nm-status' +
+          (st === 'COMPLETE' ? ' complete' : st === 'ERROR' ? ' error' : '');
+      }
+      if (nmBadge) {
+        nmBadge.textContent = st === 'COMPLETE' ? 'DONE' : (st || 'READY');
+        nmBadge.classList.toggle('offline', st === 'ERROR');
+      }
+      if (nmStage) {
+        const stageLabel = (s.stage || '').toUpperCase().replace(/_/g, ' ');
+        nmStage.textContent = st === 'SCANNING' ? (stageLabel + '…') :
+          st === 'COMPLETE' ? 'Scan finished — results ready' :
+          st === 'ERROR' ? 'Scan failed — see error details' :
+          'Idle — awaiting instructions';
+      }
+      if (nmProgressBar) {
+        nmProgressBar.style.width = Math.max(0, Math.min(100, s.progress || 0)) + '%';
+      }
+
+      // Start button state
+      if (nmStartBtn) {
+        const busy = st === 'SCANNING' || st === 'INITIALIZING';
+        nmStartBtn.disabled = busy;
+        nmStartBtn.classList.toggle('scanning', busy);
+        nmStartBtn.textContent = busy ? 'SCANNING…' : 'START SCAN';
+      }
+
+      // Summary stats
+      if (s.summary && (st === 'COMPLETE' || st === 'SCANNING')) {
+        if (nmSummaryRow) nmSummaryRow.style.display = '';
+        if (nmStatHosts) nmStatHosts.textContent = s.summary.hosts_up != null ? s.summary.hosts_up : 0;
+        if (nmStatPorts) nmStatPorts.textContent = s.summary.open_ports != null ? s.summary.open_ports : 0;
+        if (nmStatServices) nmStatServices.textContent = s.summary.services != null ? s.summary.services : 0;
+      }
+
+      // Structured hosts
+      if (Array.isArray(s.hosts) && s.hosts.length) {
+        renderNmapHosts(s.hosts);
+      }
+
+      // Security observations
+      if (Array.isArray(s.observations) && s.observations.length) {
+        renderNmapObservations(s.observations);
+      }
+
+      // Report buttons
+      if (s.scan_id) nmapScanId = s.scan_id;
+      setNmapButtonsEnabled(st === 'COMPLETE' && !!nmapScanId);
+
+      // Concise chat response on completion (shown once per scan)
+      if (st === 'COMPLETE' && s.chat_response && s.scan_id &&
+          nmapLastChatScan !== s.scan_id) {
+        nmapLastChatScan = s.scan_id;
+        addMessage(s.chat_response, 'zyra');
+      }
+
+      if (st === 'ERROR' && s.error) {
+        showNmapError(s.error);
+      }
+    } catch (err) {
+      console.error('Error updating Nmap UI:', err);
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+  }
+
+  function renderNmapHosts(hosts) {
+    if (!nmResults || !nmResultsCard) return;
+    nmResultsCard.style.display = '';
+    nmResultsTitle.textContent = 'Scan Results';
+    let html = '';
+    hosts.forEach(function (h) {
+      html += '<div class="nm-host">';
+      html += '<div class="nm-host-ip">' + escapeHtml(h.ip || 'unknown') + '</div>';
+      const meta = [];
+      if (h.hostname) meta.push('Host: ' + h.hostname);
+      if (h.mac) meta.push('MAC: ' + h.mac);
+      if (h.os) meta.push('OS: ' + h.os);
+      meta.push('Status: ' + (h.status || 'unknown').toUpperCase());
+      html += '<div class="nm-host-meta">' + escapeHtml(meta.join('  ·  ')) + '</div>';
+      if (Array.isArray(h.ports) && h.ports.length) {
+        html += '<div class="nm-host-ports">';
+        h.ports.forEach(function (p) {
+          html += '<div class="nm-port-line">';
+          html += '<span class="nm-port-num">' + escapeHtml(p.port) + '/' + escapeHtml(p.protocol || 'tcp') + '</span>';
+          html += '<span class="nm-port-svc">' + escapeHtml(p.service || 'unknown') + '</span>';
+          if (p.version) html += '<span class="nm-port-ver">' + escapeHtml(p.version) + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    nmResults.innerHTML = html;
+  }
+
+  function renderNmapObservations(observations) {
+    if (!nmObsList || !nmObservationsCard) return;
+    nmObservationsCard.style.display = '';
+    nmObsList.innerHTML = observations.map(function (o) {
+      return '<li>' + escapeHtml(o) + '</li>';
+    }).join('');
+  }
+
+  function updateNmapCommandPreview() {
+    const op = nmapOps[nmOperation ? nmOperation.value : ''];
+    const target = (nmTarget && nmTarget.value.trim()) ||
+      (op && op.default_target) || '127.0.0.1';
+    if (nmCommand) {
+      if (op && op.example_command) {
+        // Substitute the example target with the user's target for display.
+        nmCommand.textContent = op.example_command.replace(
+          op.default_target || '127.0.0.1', target);
+      } else {
+        nmCommand.textContent = 'nmap -sn ' + target;
+      }
+    }
+  }
+
+  function loadNmapOperations() {
+    fetch('/api/nmap/operations')
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        if (!json || !json.success || !Array.isArray(json.operations)) return;
+        nmapOps = {};
+        if (nmOperation) nmOperation.innerHTML = '';
+        json.operations.forEach(function (op) {
+          nmapOps[op.key] = op;
+          if (nmOperation) {
+            const opt = document.createElement('option');
+            opt.value = op.key;
+            opt.textContent = op.label;
+            nmOperation.appendChild(opt);
+          }
+        });
+        updateNmapCommandPreview();
+      })
+      .catch(function () { /* panel still usable; backend may be offline */ });
+  }
+
+  function startNmapScanManual() {
+    if (!nmTarget || !nmOperation) return;
+    const target = nmTarget.value.trim();
+    if (!target) {
+      showNmapError('Please enter a target (IP address, CIDR range or hostname).');
+      return;
+    }
+    nmErrorCard.style.display = 'none';
+    setNmapStageHint('');
+    nmStage.textContent = 'Validating target and preparing scan…';
+    fetch('/api/nmap/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        operation: nmOperation.value,
+        target: target,
+        request_text: 'Manual scan from Nmap Scanner panel'
+      })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.json.success) {
+          showNmapError((res.json && res.json.error) || 'Scan could not be started.');
+          return;
+        }
+        if (res.json.data) updateNmapUI(res.json.data);
+      })
+      .catch(function (err) {
+        showNmapError('Could not reach the ZYRA backend: ' + err);
+      });
+  }
+
+  function generateNmapReport() {
+    if (!nmapScanId) return;
+    nmResultsCard.style.display = '';
+    nmResultsTitle.textContent = 'Network Security Scan Report';
+    nmResults.innerHTML = '<div class="nm-stage">Generating report…</div>';
+    fetch('/api/nmap/report/' + nmapScanId + '?format=txt')
+      .then(function (r) {
+        if (!r.ok) throw new Error('Report generation failed (' + r.status + ')');
+        return r.text();
+      })
+      .then(function (text) {
+        nmResults.innerHTML = '<pre class="nm-report-pre">' + escapeHtml(text) + '</pre>';
+      })
+      .catch(function (err) {
+        nmResults.innerHTML = '<div class="nm-error-reason">' + escapeHtml(err.message) + '</div>';
+      });
+  }
+
+  function downloadNmapReport(format) {
+    if (!nmapScanId) return;
+    window.open('/api/nmap/report/' + nmapScanId + '?format=' + format, '_blank');
+  }
+
+  if (nmStartBtn) nmStartBtn.addEventListener('click', startNmapScanManual);
+  if (nmOperation) nmOperation.addEventListener('change', updateNmapCommandPreview);
+  if (nmTarget) nmTarget.addEventListener('input', updateNmapCommandPreview);
+  if (nmViewBtn) {
+    nmViewBtn.addEventListener('click', function () {
+      if (!nmResultsCard) return;
+      const show = nmResultsCard.style.display === 'none';
+      nmResultsCard.style.display = show ? '' : 'none';
+      nmViewBtn.textContent = show ? 'HIDE RESULTS' : 'VIEW RESULTS';
+      if (show) nmResultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+  if (nmReportBtn) nmReportBtn.addEventListener('click', generateNmapReport);
+  if (nmPdfBtn) nmPdfBtn.addEventListener('click', function () { downloadNmapReport('pdf'); });
+  if (nmJsonBtn) nmJsonBtn.addEventListener('click', function () { downloadNmapReport('json'); });
+
+  loadNmapOperations();
 
   // Window Dragging Support
   (function initDraggable() {

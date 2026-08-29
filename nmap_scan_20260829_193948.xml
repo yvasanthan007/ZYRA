@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///C:/Program Files (x86)/Nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.98 scan initiated Sat Aug 29 19:39:49 2026 as: nmap -oX nmap_scan_20260829_193948.xml -sS -sV -O -A -T4 -p- -&#45;script=default,vuln 10.118.80.90 -->
+<nmaprun scanner="nmap" args="nmap -oX nmap_scan_20260829_193948.xml -sS -sV -O -A -T4 -p- -&#45;script=default,vuln 10.118.80.90" start="1788012589" startstr="Sat Aug 29 19:39:49 2026" version="7.98" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="65535" services="1-65535"/>
+<verbose level="0"/>
+<debugging level="0"/>
+<host starttime="1788012625" endtime="1788013047"><status state="up" reason="localhost-response" reason_ttl="0"/>
+<address addr="10.118.80.90" addrtype="ipv4"/>
+<hostnames>
+</hostnames>
+<ports><extraports state="closed" count="65517">
+<extrareasons reason="reset" count="65517" proto="tcp" ports="1-134,136,138,140-444,446-3305,3307-5039,5041-7999,8001-8088,8090-8190,8192-33059,33061-49663,49669-49673,49675-54111,54114-65535"/>
+</extraports>
+<port protocol="tcp" portid="135"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="137"><state state="filtered" reason="no-response" reason_ttl="0"/><service name="netbios-ns" method="table" conf="3"/></port>
+<port protocol="tcp" portid="139"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="netbios-ssn" product="Microsoft Windows netbios-ssn" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="445"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="microsoft-ds" method="table" conf="3"/></port>
+<port protocol="tcp" portid="3306"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="mysql" product="MySQL" extrainfo="unauthorized" method="probed" conf="10"><cpe>cpe:/a:mysql:mysql</cpe></service></port>
+<port protocol="tcp" portid="5040"><state state="open" reason="syn-ack" reason_ttl="128"/></port>
+<port protocol="tcp" portid="8000"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="http" product="Splunkd httpd" method="probed" conf="10"><cpe>cpe:/a:splunk:splunk</cpe></service><script id="http-robots.txt" output="1 disallowed entry &#xa;/"/><script id="http-server-header" output="Splunkd"><elem>Splunkd</elem>
+</script><script id="http-title" output="Site doesn&apos;t have a title (text/html; charset=UTF-8).&#xa;Requested resource was http://10.118.80.90:8000/en-US/account/login?return_to=%2Fen-US%2F"><elem key="title"></elem>
+<elem key="redirect_url">http://10.118.80.90:8000/en-US/account/login?return_to=%2Fen-US%2F</elem>
+</script><script id="http-stored-xss" output="Couldn&apos;t find any stored XSS vulnerabilities."/><script id="http-dombased-xss" output="Couldn&apos;t find any DOM based XSS."/><script id="http-csrf" output="Couldn&apos;t find any CSRF vulnerabilities."/><script id="http-slowloris-check" output="&#xa;  VULNERABLE:&#xa;  Slowloris DOS attack&#xa;    State: LIKELY VULNERABLE&#xa;    IDs:  CVE:CVE-2007-6750&#xa;      Slowloris tries to keep many connections to the target web server open and hold&#xa;      them open as long as possible.  It accomplishes this by opening connections to&#xa;      the target web server and sending a partial request. By doing so, it starves&#xa;      the http server&apos;s resources causing Denial Of Service.&#xa;      &#xa;    Disclosure date: 2009-09-17&#xa;    References:&#xa;      http://ha.ckers.org/slowloris/&#xa;      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6750&#xa;"><table key="CVE-2007-6750">
+<elem key="title">Slowloris DOS attack</elem>
+<elem key="state">LIKELY VULNERABLE</elem>
+<table key="ids">
+<elem>CVE:CVE-2007-6750</elem>
+</table>
+<table key="description">
+<elem>Slowloris tries to keep many connections to the target web server open and hold&#xa;them open as long as possible.  It accomplishes this by opening connections to&#xa;the target web server and sending a partial request. By doing so, it starves&#xa;the http server&apos;s resources causing Denial Of Service.&#xa;</elem>
+</table>
+<table key="dates">
+<table key="disclosure">
+<elem key="year">2009</elem>
+<elem key="month">09</elem>
+<elem key="day">17</elem>
+</table>
+</table>
+<elem key="disclosure">2009-09-17</elem>
+<table key="exploit_results">
+</table>
+<table key="refs">
+<elem>http://ha.ckers.org/slowloris/</elem>
+<elem>https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6750</elem>
+</table>
+</table>
+</script><script id="http-enum" output="&#xa;  /robots.txt: Robots file&#xa;"/></port>
+<port protocol="tcp" portid="8089"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="http" product="Splunkd httpd" tunnel="ssl" method="probed" conf="10"><cpe>cpe:/a:splunk:splunk</cpe></service><script id="ssl-date" output="TLS randomness does not represent time"></script><script id="ssl-cert" output="Subject: commonName=SplunkServerDefaultCert/organizationName=SplunkUser&#xa;Not valid before: 2026-02-20T15:01:02&#xa;Not valid after:  2029-02-19T15:01:02"><table key="subject">
+<elem key="commonName">SplunkServerDefaultCert</elem>
+<elem key="organizationName">SplunkUser</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">SplunkCommonCA</elem>
+<elem key="countryName">US</elem>
+<elem key="emailAddress">support@splunk.com</elem>
+<elem key="localityName">San Francisco</elem>
+<elem key="organizationName">Splunk</elem>
+<elem key="stateOrProvinceName">CA</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">B40389ED6CD0EEC477B214614A1262D0E3AE95B4E2A043D643A1813E45268933022DE278209BD0B23D9FB661DF3959C9DDD377B6065F57D4EF3AC8AC32717DDB952AA0F9ECBC8721A37BC7B265F7D5AC5E2B37F0B982C2CDA187335B415A81A6DD3C4A5D6DDC8E65D34B596136C47CB6C833DEFB4F61EB2035E37E4FA1F5B173B943B4B8F63F2D44417CAB42294937FBA1B351C160A639287824C9A6DC9917A266E4478877CDF235F51747B06D605947999368614F5467EEC1817F018C632E76192918452FAC414CAFE33342D02EFD62977B6014999FB9F972A9B9CABE1F659999BDC62CC80F7642CF470150C5A0D30BC659A080D71E835C3D42CB0398819181</elem>
+<elem key="exponent">65537</elem>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2026-02-20T15:01:02</elem>
+<elem key="notAfter">2029-02-19T15:01:02</elem>
+</table>
+<elem key="md5">1818c216ca57251f4ad8ce0e023fc318</elem>
+<elem key="sha1">b583290928e570a603141becf1fc778a6c8d9fd0</elem>
+<elem key="sha256">07f4faa9686e398a200778d4fcbd68d52a1e71396e7dda261642aa75c8d139ac</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIIDPTCCAiUCFBnHmTJU9ljrsXoxJtnnfSU9KU0aMA0GCSqGSIb3DQEBCwUAMH8x&#xa;CzAJBgNVBAYTAlVTMQswCQYDVQQIDAJDQTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNj&#xa;bzEPMA0GA1UECgwGU3BsdW5rMRcwFQYDVQQDDA5TcGx1bmtDb21tb25DQTEhMB8G&#xa;CSqGSIb3DQEJARYSc3VwcG9ydEBzcGx1bmsuY29tMB4XDTI2MDIyMDE1MDEwMloX&#xa;DTI5MDIxOTE1MDEwMlowNzEgMB4GA1UEAwwXU3BsdW5rU2VydmVyRGVmYXVsdENl&#xa;cnQxEzARBgNVBAoMClNwbHVua1VzZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw&#xa;ggEKAoIBAQC0A4ntbNDuxHeyFGFKEmLQ466VtOKgQ9ZDoYE+RSaJMwIt4nggm9Cy&#xa;PZ+2Yd85Wcnd03e2Bl9X1O86yKwycX3blSqg+ey8hyGje8eyZffVrF4rN/C5gsLN&#xa;oYczW0FagabdPEpdbdyOZdNLWWE2xHy2yDPe+09h6yA1435PofWxc7lDtLj2Py1E&#xa;QXyrQilJN/uhs1HBYKY5KHgkyabcmReiZuRHiHfN8jX1F0ewbWBZR5mTaGFPVGfu&#xa;wYF/AYxjLnYZKRhFL6xBTK/jM0LQLv1il3tgFJmfuflyqbnKvh9lmZm9xizID3ZC&#xa;z0cBUMWg0wvGWaCA1x6DXD1CywOYgZGBAgMBAAEwDQYJKoZIhvcNAQELBQADggEB&#xa;AG577UPyGNq8XfGV6Mh9rPRoNmNC+8ypaiIcDip/AWkrLmOdYsyQRo87M50NFt0o&#xa;XITgxJqdnqnZT5Dfv0A+B6F5jYBA9YiMp6MAKoe5qvIj88yBTJGH/ISR3TTub9Em&#xa;GjYk6/GNuNv0Ni/KOYB9apDPa3LK5rnD5jsK0Uxgm4wdcXoUanQs58sAH4yuc8B9&#xa;15njHcKWUqcKVEG8iWatCglQhplz76hAQQMnoQRwE+WhHuVEywvgQiUKZGeE0tSC&#xa;OEZ7PjmUInuFuFlP9LIiqung0TQqtf1G915QvEaP3hJE/uJQcOsrDrQMxuDlnSuX&#xa;Q5iiQXjFks/GZTvKZLGaQso=&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script><script id="http-server-header" output="Splunkd"><elem>Splunkd</elem>
+</script><script id="http-slowloris-check" output="&#xa;  VULNERABLE:&#xa;  Slowloris DOS attack&#xa;    State: LIKELY VULNERABLE&#xa;    IDs:  CVE:CVE-2007-6750&#xa;      Slowloris tries to keep many connections to the target web server open and hold&#xa;      them open as long as possible.  It accomplishes this by opening connections to&#xa;      the target web server and sending a partial request. By doing so, it starves&#xa;      the http server&apos;s resources causing Denial Of Service.&#xa;      &#xa;    Disclosure date: 2009-09-17&#xa;    References:&#xa;      http://ha.ckers.org/slowloris/&#xa;      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6750&#xa;"><table key="CVE-2007-6750">
+<elem key="title">Slowloris DOS attack</elem>
+<elem key="state">LIKELY VULNERABLE</elem>
+<table key="ids">
+<elem>CVE:CVE-2007-6750</elem>
+</table>
+<table key="description">
+<elem>Slowloris tries to keep many connections to the target web server open and hold&#xa;them open as long as possible.  It accomplishes this by opening connections to&#xa;the target web server and sending a partial request. By doing so, it starves&#xa;the http server&apos;s resources causing Denial Of Service.&#xa;</elem>
+</table>
+<table key="dates">
+<table key="disclosure">
+<elem key="year">2009</elem>
+<elem key="month">09</elem>
+<elem key="day">17</elem>
+</table>
+</table>
+<elem key="disclosure">2009-09-17</elem>
+<table key="exploit_results">
+</table>
+<table key="refs">
+<elem>http://ha.ckers.org/slowloris/</elem>
+<elem>https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6750</elem>
+</table>
+</table>
+</script><script id="http-robots.txt" output="1 disallowed entry &#xa;/"/><script id="http-title" output="splunkd"><elem key="title">splunkd</elem>
+</script><script id="http-csrf" output="&#xa;Spidering limited to: maxdepth=3; maxpagecount=20; withinhost=10.118.80.90&#xa;  Found the following possible CSRF vulnerabilities: &#xa;    &#xa;    Path: https://10.118.80.90:8089/static/atom.xsl&#xa;    Form id: controlpoint{position()}&#xa;    Form action: {@href}&#xa;"/><script id="http-dombased-xss" output="Couldn&apos;t find any DOM based XSS."/><script id="http-stored-xss" output="Couldn&apos;t find any stored XSS vulnerabilities."/></port>
+<port protocol="tcp" portid="8191"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="limnerpressure" tunnel="ssl" method="table" conf="3"/><script id="ssl-cert" output="Subject: commonName=SplunkServerDefaultCert/organizationName=SplunkUser&#xa;Not valid before: 2026-02-20T15:01:02&#xa;Not valid after:  2029-02-19T15:01:02"><table key="subject">
+<elem key="commonName">SplunkServerDefaultCert</elem>
+<elem key="organizationName">SplunkUser</elem>
+</table>
+<table key="issuer">
+<elem key="commonName">SplunkCommonCA</elem>
+<elem key="countryName">US</elem>
+<elem key="emailAddress">support@splunk.com</elem>
+<elem key="localityName">San Francisco</elem>
+<elem key="organizationName">Splunk</elem>
+<elem key="stateOrProvinceName">CA</elem>
+</table>
+<table key="pubkey">
+<elem key="type">rsa</elem>
+<elem key="bits">2048</elem>
+<elem key="modulus">B40389ED6CD0EEC477B214614A1262D0E3AE95B4E2A043D643A1813E45268933022DE278209BD0B23D9FB661DF3959C9DDD377B6065F57D4EF3AC8AC32717DDB952AA0F9ECBC8721A37BC7B265F7D5AC5E2B37F0B982C2CDA187335B415A81A6DD3C4A5D6DDC8E65D34B596136C47CB6C833DEFB4F61EB2035E37E4FA1F5B173B943B4B8F63F2D44417CAB42294937FBA1B351C160A639287824C9A6DC9917A266E4478877CDF235F51747B06D605947999368614F5467EEC1817F018C632E76192918452FAC414CAFE33342D02EFD62977B6014999FB9F972A9B9CABE1F659999BDC62CC80F7642CF470150C5A0D30BC659A080D71E835C3D42CB0398819181</elem>
+<elem key="exponent">65537</elem>
+</table>
+<elem key="sig_algo">sha256WithRSAEncryption</elem>
+<table key="validity">
+<elem key="notBefore">2026-02-20T15:01:02</elem>
+<elem key="notAfter">2029-02-19T15:01:02</elem>
+</table>
+<elem key="md5">1818c216ca57251f4ad8ce0e023fc318</elem>
+<elem key="sha1">b583290928e570a603141becf1fc778a6c8d9fd0</elem>
+<elem key="sha256">07f4faa9686e398a200778d4fcbd68d52a1e71396e7dda261642aa75c8d139ac</elem>
+<elem key="pem">-&#45;&#45;&#45;&#45;BEGIN CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;MIIDPTCCAiUCFBnHmTJU9ljrsXoxJtnnfSU9KU0aMA0GCSqGSIb3DQEBCwUAMH8x&#xa;CzAJBgNVBAYTAlVTMQswCQYDVQQIDAJDQTEWMBQGA1UEBwwNU2FuIEZyYW5jaXNj&#xa;bzEPMA0GA1UECgwGU3BsdW5rMRcwFQYDVQQDDA5TcGx1bmtDb21tb25DQTEhMB8G&#xa;CSqGSIb3DQEJARYSc3VwcG9ydEBzcGx1bmsuY29tMB4XDTI2MDIyMDE1MDEwMloX&#xa;DTI5MDIxOTE1MDEwMlowNzEgMB4GA1UEAwwXU3BsdW5rU2VydmVyRGVmYXVsdENl&#xa;cnQxEzARBgNVBAoMClNwbHVua1VzZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw&#xa;ggEKAoIBAQC0A4ntbNDuxHeyFGFKEmLQ466VtOKgQ9ZDoYE+RSaJMwIt4nggm9Cy&#xa;PZ+2Yd85Wcnd03e2Bl9X1O86yKwycX3blSqg+ey8hyGje8eyZffVrF4rN/C5gsLN&#xa;oYczW0FagabdPEpdbdyOZdNLWWE2xHy2yDPe+09h6yA1435PofWxc7lDtLj2Py1E&#xa;QXyrQilJN/uhs1HBYKY5KHgkyabcmReiZuRHiHfN8jX1F0ewbWBZR5mTaGFPVGfu&#xa;wYF/AYxjLnYZKRhFL6xBTK/jM0LQLv1il3tgFJmfuflyqbnKvh9lmZm9xizID3ZC&#xa;z0cBUMWg0wvGWaCA1x6DXD1CywOYgZGBAgMBAAEwDQYJKoZIhvcNAQELBQADggEB&#xa;AG577UPyGNq8XfGV6Mh9rPRoNmNC+8ypaiIcDip/AWkrLmOdYsyQRo87M50NFt0o&#xa;XITgxJqdnqnZT5Dfv0A+B6F5jYBA9YiMp6MAKoe5qvIj88yBTJGH/ISR3TTub9Em&#xa;GjYk6/GNuNv0Ni/KOYB9apDPa3LK5rnD5jsK0Uxgm4wdcXoUanQs58sAH4yuc8B9&#xa;15njHcKWUqcKVEG8iWatCglQhplz76hAQQMnoQRwE+WhHuVEywvgQiUKZGeE0tSC&#xa;OEZ7PjmUInuFuFlP9LIiqung0TQqtf1G915QvEaP3hJE/uJQcOsrDrQMxuDlnSuX&#xa;Q5iiQXjFks/GZTvKZLGaQso=&#xa;-&#45;&#45;&#45;&#45;END CERTIFICATE-&#45;&#45;&#45;&#45;&#xa;</elem>
+</script><script id="ssl-date" output="2026-08-29T14:17:19+00:00; 0s from scanner time."><elem key="delta">0.0</elem>
+<elem key="date">2026-08-29T14:17:19+00:00</elem>
+</script></port>
+<port protocol="tcp" portid="33060"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="mysqlx" product="MySQL X protocol listener" method="probed" conf="10"><cpe>cpe:/a:mysql:mysql</cpe></service></port>
+<port protocol="tcp" portid="49664"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49665"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49666"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49667"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49668"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="49674"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="msrpc" product="Microsoft Windows RPC" ostype="Windows" method="probed" conf="10"><cpe>cpe:/o:microsoft:windows</cpe></service></port>
+<port protocol="tcp" portid="54112"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="unknown" servicefp="SF-Port54112-TCP:V=7.98%I=7%D=8/29%Time=6A92E866%P=i686-pc-windows-windows%r(HTTPOptions,106C,&quot;HTTP/1\.1\x20404\x20Not\x20Found\r\nCache-Control:\x20private,\x20no-cache,\x20no-store,\x20max-age=0,\x20must-revalidate\r\nVary:\x20rsc,\x20next-router-state-tree,\x20next-router-prefetch,\x20next-router-segment-prefetch,\x20Accept-Encoding\r\nx-nextjs-cache:\x20HIT\r\nx-nextjs-prerender:\x201\r\nx-nextjs-prerender:\x201\r\nx-nextjs-stale-time:\x20300\r\nX-Powered-By:\x20Next\.js\r\nETag:\x20\&quot;3mi3l5a67d2w1\&quot;\r\nContent-Type:\x20text/html;\x20charset=utf-8\r\nContent-Length:\x203745\r\nDate:\x20Sat,\x2029\x20Aug\x202026\x2014:10:46\x20GMT\r\nConnection:\x20close\r\n\r\n&lt;!DOCTYPE\x20html&gt;&lt;!-&#45;P52W7XAmyCumX8F5VaWVp-&#45;&gt;&lt;html&gt;&lt;head&gt;&lt;meta\x20charSet=\&quot;utf-8\&quot;/&gt;&lt;meta\x20name=\&quot;viewport\&quot;\x20content=\&quot;width=device-width,\x20initial-scale=1\&quot;/&gt;&lt;link\x20rel=\&quot;preload\&quot;\x20as=\&quot;script\&quot;\x20fetchPriority=\&quot;low\&quot;\x20href=\&quot;/_next/static/chunks/webpack-2b846011a9a7bab2\.js\&quot;/&gt;&lt;script\x20src=\&quot;/_next/static/chunks/4bd1b696-100b9d70ed4e49c1\.js\&quot;\x20async=\&quot;\&quot;&gt;&lt;/script&gt;&lt;script\x20src=\&quot;/_next/static/chunks/1255-abdc34a448022d42\.js\&quot;\x20async=\&quot;\&quot;&gt;&lt;/script&gt;&lt;script\x20src=\&quot;/_next/stati&quot;)%r(RTSPRequest,106C,&quot;HTTP/1\.1\x20404\x20Not\x20Found\r\nCache-Control:\x20private,\x20no-cache,\x20no-store,\x20max-age=0,\x20must-revalidate\r\nVary:\x20rsc,\x20next-router-state-tree,\x20next-router-prefetch,\x20next-router-segment-prefetch,\x20Accept-Encoding\r\nx-nextjs-cache:\x20HIT\r\nx-nextjs-prerender:\x201\r\nx-nextjs-prerender:\x201\r\nx-nextjs-stale-time:\x20300\r\nX-Powered-By:\x20Next\.js\r\nETag:\x20\&quot;3mi3l5a67d2w1\&quot;\r\nContent-Type:\x20text/html;\x20charset=utf-8\r\nContent-Length:\x203745\r\nDate:\x20Sat,\x2029\x20Aug\x202026\x2014:10:46\x20GMT\r\nConnection:\x20close\r\n\r\n&lt;!DOCTYPE\x20html&gt;&lt;!-&#45;P52W7XAmyCumX8F5VaWVp-&#45;&gt;&lt;html&gt;&lt;head&gt;&lt;meta\x20charSet=\&quot;utf-8\&quot;/&gt;&lt;meta\x20name=\&quot;viewport\&quot;\x20content=\&quot;width=device-width,\x20initial-scale=1\&quot;/&gt;&lt;link\x20rel=\&quot;preload\&quot;\x20as=\&quot;script\&quot;\x20fetchPriority=\&quot;low\&quot;\x20href=\&quot;/_next/static/chunks/webpack-2b846011a9a7bab2\.js\&quot;/&gt;&lt;script\x20src=\&quot;/_next/static/chunks/4bd1b696-100b9d70ed4e49c1\.js\&quot;\x20async=\&quot;\&quot;&gt;&lt;/script&gt;&lt;script\x20src=\&quot;/_next/static/chunks/1255-abdc34a448022d42\.js\&quot;\x20async=\&quot;\&quot;&gt;&lt;/script&gt;&lt;script\x20src=\&quot;/_next/stati&quot;);" method="table" conf="3"/><script id="fingerprint-strings" output="&#xa;  HTTPOptions, RTSPRequest: &#xa;    HTTP/1.1 404 Not Found&#xa;    Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate&#xa;    Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding&#xa;    x-nextjs-cache: HIT&#xa;    x-nextjs-prerender: 1&#xa;    x-nextjs-prerender: 1&#xa;    x-nextjs-stale-time: 300&#xa;    X-Powered-By: Next.js&#xa;    ETag: &quot;3mi3l5a67d2w1&quot;&#xa;    Content-Type: text/html; charset=utf-8&#xa;    Content-Length: 3745&#xa;    Date: Sat, 29 Aug 2026 14:10:46 GMT&#xa;    Connection: close&#xa;    &lt;!DOCTYPE html&gt;&lt;!-&#45;P52W7XAmyCumX8F5VaWVp-&#45;&gt;&lt;html&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;script&quot; fetchPriority=&quot;low&quot; href=&quot;/_next/static/chunks/webpack-2b846011a9a7bab2.js&quot;/&gt;&lt;script src=&quot;/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js&quot; async=&quot;&quot;&gt;&lt;/script&gt;&lt;script src=&quot;/_next/static/chunks/1255-abdc34a448022d42.js&quot; async=&quot;&quot;&gt;&lt;/script&gt;&lt;script src=&quot;/_next/stati"><elem key="HTTPOptions, RTSPRequest">&#xa;    HTTP/1.1 404 Not Found&#xa;    Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate&#xa;    Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding&#xa;    x-nextjs-cache: HIT&#xa;    x-nextjs-prerender: 1&#xa;    x-nextjs-prerender: 1&#xa;    x-nextjs-stale-time: 300&#xa;    X-Powered-By: Next.js&#xa;    ETag: &quot;3mi3l5a67d2w1&quot;&#xa;    Content-Type: text/html; charset=utf-8&#xa;    Content-Length: 3745&#xa;    Date: Sat, 29 Aug 2026 14:10:46 GMT&#xa;    Connection: close&#xa;    &lt;!DOCTYPE html&gt;&lt;!-&#45;P52W7XAmyCumX8F5VaWVp-&#45;&gt;&lt;html&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;script&quot; fetchPriority=&quot;low&quot; href=&quot;/_next/static/chunks/webpack-2b846011a9a7bab2.js&quot;/&gt;&lt;script src=&quot;/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js&quot; async=&quot;&quot;&gt;&lt;/script&gt;&lt;script src=&quot;/_next/static/chunks/1255-abdc34a448022d42.js&quot; async=&quot;&quot;&gt;&lt;/script&gt;&lt;script src=&quot;/_next/stati</elem>
+</script></port>
+<port protocol="tcp" portid="54113"><state state="open" reason="syn-ack" reason_ttl="128"/><service name="unknown" servicefp="SF-Port54113-TCP:V=7.98%I=7%D=8/29%Time=6A92E85F%P=i686-pc-windows-windows%r(GetRequest,C9,&quot;HTTP/1\.1\x20404\x20Not\x20Found\r\nAccess-Control-Allow-Origin:\x20\*\r\nAccess-Control-Allow-Headers:\x20Origin,\x20X-Requested-With,\x20Content-Type,\x20Accept\r\nDate:\x20Sat,\x2029\x20Aug\x202026\x2014:10:39\x20GMT\r\nConnection:\x20close\r\n\r\nNot\x20Found&quot;)%r(HTTPOptions,C9,&quot;HTTP/1\.1\x20404\x20Not\x20Found\r\nAccess-Control-Allow-Origin:\x20\*\r\nAccess-Control-Allow-Headers:\x20Origin,\x20X-Requested-With,\x20Content-Type,\x20Accept\r\nDate:\x20Sat,\x2029\x20Aug\x202026\x2014:10:39\x20GMT\r\nConnection:\x20close\r\n\r\nNot\x20Found&quot;)%r(RTSPRequest,C9,&quot;HTTP/1\.1\x20404\x20Not\x20Found\r\nAccess-Control-Allow-Origin:\x20\*\r\nAccess-Control-Allow-Headers:\x20Origin,\x20X-Requested-With,\x20Content-Type,\x20Accept\r\nDate:\x20Sat,\x2029\x20Aug\x202026\x2014:10:39\x20GMT\r\nConnection:\x20close\r\n\r\nNot\x20Found&quot;)%r(RPCCheck,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(DNSVersionBindReqTCP,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(DNSStatusRequestTCP,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(Help,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(SSLSessionReq,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(TerminalServerCookie,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(TLSSessionReq,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(Kerberos,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(SMBProgNeg,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(X11Probe,2F,&quot;HTTP/1\.1\x20400\x20Bad\x20Request\r\nConnection:\x20close\r\n\r\n&quot;)%r(FourOhFourRequest,C9,&quot;HTTP/1\.1\x20404\x20Not\x20Found\r\nAccess-Control-Allow-Origin:\x20\*\r\nAccess-Control-Allow-Headers:\x20Origin,\x20X-Requested-With,\x20Content-Type,\x20Accept\r\nDate:\x20Sat,\x2029\x20Aug\x202026\x2014:10:41\x20GMT\r\nConnection:\x20close\r\n\r\nNot\x20Found&quot;);" method="table" conf="3"/><script id="fingerprint-strings" output="&#xa;  DNSStatusRequestTCP, DNSVersionBindReqTCP, Help, Kerberos, RPCCheck, SMBProgNeg, SSLSessionReq, TLSSessionReq, TerminalServerCookie, X11Probe: &#xa;    HTTP/1.1 400 Bad Request&#xa;    Connection: close&#xa;  FourOhFourRequest: &#xa;    HTTP/1.1 404 Not Found&#xa;    Access-Control-Allow-Origin: *&#xa;    Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept&#xa;    Date: Sat, 29 Aug 2026 14:10:41 GMT&#xa;    Connection: close&#xa;    Found&#xa;  GetRequest, HTTPOptions, RTSPRequest: &#xa;    HTTP/1.1 404 Not Found&#xa;    Access-Control-Allow-Origin: *&#xa;    Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept&#xa;    Date: Sat, 29 Aug 2026 14:10:39 GMT&#xa;    Connection: close&#xa;    Found"><elem key="DNSStatusRequestTCP, DNSVersionBindReqTCP, Help, Kerberos, RPCCheck, SMBProgNeg, SSLSessionReq, TLSSessionReq, TerminalServerCookie, X11Probe">&#xa;    HTTP/1.1 400 Bad Request&#xa;    Connection: close</elem>
+<elem key="FourOhFourRequest">&#xa;    HTTP/1.1 404 Not Found&#xa;    Access-Control-Allow-Origin: *&#xa;    Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept&#xa;    Date: Sat, 29 Aug 2026 14:10:41 GMT&#xa;    Connection: close&#xa;    Found</elem>
+<elem key="GetRequest, HTTPOptions, RTSPRequest">&#xa;    HTTP/1.1 404 Not Found&#xa;    Access-Control-Allow-Origin: *&#xa;    Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept&#xa;    Date: Sat, 29 Aug 2026 14:10:39 GMT&#xa;    Connection: close&#xa;    Found</elem>
+</script></port>
+</ports>
+<os><portused state="open" proto="tcp" portid="135"/>
+<portused state="closed" proto="tcp" portid="1"/>
+<portused state="closed" proto="udp" portid="39460"/>
+<osmatch name="Microsoft Windows 10 1607 - 11 23H2" accuracy="97" line="74791">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="10" accuracy="97"><cpe>cpe:/o:microsoft:windows_10</cpe></osclass>
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="11" accuracy="97"><cpe>cpe:/o:microsoft:windows_11</cpe></osclass>
+</osmatch>
+<osmatch name="Microsoft Windows 10 1511" accuracy="96" line="74548">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="10" accuracy="96"><cpe>cpe:/o:microsoft:windows_10</cpe></osclass>
+</osmatch>
+<osmatch name="Microsoft Windows 10 1703 or Windows 11 21H2" accuracy="96" line="74943">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="10" accuracy="96"><cpe>cpe:/o:microsoft:windows_10</cpe></osclass>
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="11" accuracy="96"><cpe>cpe:/o:microsoft:windows_11</cpe></osclass>
+</osmatch>
+<osmatch name="Microsoft Windows 11 21H2" accuracy="95" line="75551">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="11" accuracy="95"><cpe>cpe:/o:microsoft:windows_11</cpe></osclass>
+</osmatch>
+<osmatch name="Windows 11 21H2" accuracy="94" line="75587">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="11" accuracy="94"><cpe>cpe:/o:microsoft:windows_11</cpe></osclass>
+</osmatch>
+<osmatch name="Windows Server 2022" accuracy="94" line="82130">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="2022" accuracy="94"><cpe>cpe:/o:microsoft:windows_server_2022</cpe></osclass>
+</osmatch>
+<osmatch name="Microsoft Windows 10 1703" accuracy="94" line="74847">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="10" accuracy="94"><cpe>cpe:/o:microsoft:windows_10</cpe></osclass>
+</osmatch>
+<osmatch name="Microsoft Windows Server 2008 R2 SP1 or Windows 7 SP1" accuracy="94" line="80561">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="2008" accuracy="94"><cpe>cpe:/o:microsoft:windows_server_2008:r2</cpe></osclass>
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="7" accuracy="94"><cpe>cpe:/o:microsoft:windows_7</cpe></osclass>
+</osmatch>
+<osmatch name="Microsoft Windows 10 1903" accuracy="93" line="75102">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="10" accuracy="93"><cpe>cpe:/o:microsoft:windows_10</cpe></osclass>
+</osmatch>
+<osmatch name="Microsoft Windows 10 21H1" accuracy="93" line="75368">
+<osclass type="general purpose" vendor="Microsoft" osfamily="Windows" osgen="10" accuracy="93"><cpe>cpe:/o:microsoft:windows_10</cpe></osclass>
+</osmatch>
+</os>
+<uptime seconds="77380" lastboot="Fri Aug 28 22:17:47 2026"/>
+<distance value="0"/>
+<tcpsequence index="259" difficulty="Good luck!" values="F3857FD1,810647EA,3DA4A8F3,9634292C,5ECAB53,A152CDF6"/>
+<ipidsequence class="Incremental" values="7ADC,7ADE,7AE0,7AE2,7AE4,7AE6"/>
+<tcptssequence class="1000HZ" values="4973C79,4973CEF,4973E06,4973E6C,4973EDA,4973F48"/>
+<hostscript><script id="smb-vuln-ms10-054" output="false">false</script><script id="smb2-time" output="&#xa;  date: 2026-08-29T14:11:43&#xa;  start_date: N/A"><elem key="date">2026-08-29T14:11:43</elem>
+<elem key="start_date">N/A</elem>
+</script><script id="smb2-security-mode" output="&#xa;  3.1.1: &#xa;    Message signing enabled and required"><table key="3.1.1">
+<elem>Message signing enabled and required</elem>
+</table>
+</script><script id="smb-vuln-ms10-061" output="Could not negotiate a connection:SMB: Failed to receive bytes: ERROR">false</script><script id="samba-vuln-cve-2012-1182" output="Could not negotiate a connection:SMB: Failed to receive bytes: ERROR">false</script></hostscript><times srtt="1599" rttvar="905" to="100000"/>
+</host>
+<runstats><finished time="1788013047" timestr="Sat Aug 29 19:47:27 2026" summary="Nmap done at Sat Aug 29 19:47:27 2026; 1 IP address (1 host up) scanned in 458.82 seconds" elapsed="458.82" exit="success"/><hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>
