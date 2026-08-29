@@ -5,6 +5,7 @@ interface SystemMonitorProps {
 }
 
 interface MetricState {
+  analysis?: { status: string; description: string; level: string };
   cpu: { percent: number; cores_logical: number; cores_physical: number; bar: string };
   memory: { percent: number; used_str: string; available_str: string; total_str: string; bar: string };
   disk: { percent: number; used_str: string; free_str: string; total_str: string; bar: string };
@@ -71,6 +72,39 @@ const SystemMonitor: React.FC<SystemMonitorProps> = ({ setStatus }) => {
         <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(0, 255, 136, 0.15)', color: '#00ff88', fontWeight: 'bold' }}>
           LIVE
         </span>
+      </div>
+
+      {/* Live System Health Analysis */}
+      <div className="metric-box" style={{
+        background: 'rgba(14, 14, 30, 0.85)',
+        padding: '12px 14px',
+        borderRadius: '8px',
+        border: '1px solid var(--border-color, #2a2a4a)',
+        borderLeft: `4px solid ${
+          metrics?.analysis?.level === 'warning' ? '#ff5555' :
+          metrics?.analysis?.level === 'elevated' ? '#ffaa00' :
+          metrics?.analysis?.level === 'low' ? '#00ccff' : '#00ff88'
+        }`,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <strong style={{ fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', color: '#ffaa55' }}>System Status</strong>
+          <span style={{
+            fontSize: '11px',
+            fontWeight: 'bold',
+            padding: '2px 7px',
+            borderRadius: '6px',
+            fontFamily: 'monospace',
+            color: metrics?.analysis?.level === 'warning' ? '#ff5555' :
+                   metrics?.analysis?.level === 'elevated' ? '#ffaa00' :
+                   metrics?.analysis?.level === 'low' ? '#00ccff' : '#00ff88',
+            background: 'rgba(255,255,255,0.08)'
+          }}>
+            {metrics?.analysis?.status || 'NORMAL'}
+          </span>
+        </div>
+        <p style={{ fontSize: '12px', margin: 0, color: 'rgba(255, 200, 150, 0.85)', lineHeight: 1.4 }}>
+          {metrics?.analysis?.description || 'CPU and memory usage are within normal ranges.'}
+        </p>
       </div>
 
       {/* CPU */}

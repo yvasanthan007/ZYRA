@@ -11,6 +11,7 @@ import platform
 import socket
 from datetime import timedelta
 from typing import Dict, Any, Optional
+from collections import deque
 
 try:
     import psutil
@@ -80,6 +81,99 @@ def make_progress_bar(percent: float, total_blocks: int = 10, filled_char: str =
     empty = total_blocks - filled
     return (filled_char * filled) + (empty_char * empty)
 
+
+def analyze_system_health(
+    cpu_pct: float,
+    ram_pct: float,
+    disk_pct: float,
+    *,
+    history: Optional[Any] = None,
+) -> Dict[str, Any]:
+    """
+    Continuously analyze collected metrics for unusual resource consumption or system changes.
+
+    Supports sustained-usage detection: when a rolling window of recent samples
+    (history) is supplied, warnings can reflect resource pressure that has
+    persisted over an extended period instead of a single snapshot.
+
+    Returns status: 'NORMAL', 'LOW ACTIVITY', 'HIGH RESOURCE USAGE', or 'WARNING', along with description.
+    Note: High resource usage is never attributed to malware or security threats.
+    """
+    # ── Sustained (multi-sample) evaluation over the rolling window ──
+    sustained_cpu = False
+    sustained_ram = False
+    cpu_sustained_avg = 0.0
+    ram_sustained_avg = 0.0
+    if history is not None:
+        try:
+            recent = list(history)[-20:]
+            if recent:
+                cpu_samples = [float(s.get("cpu", 0.0)) for s in recent]
+                ram_samples = [float(s.get("ram", 0.0)) for s in recent]
+                min_hits = max(4, int(len(recent) * 0.75))
+                sustained_cpu = sum(1 for c in cpu_samples if c >= 85.0) >= min_hits
+                sustained_ram = sum(1 for r in ram_samples if r >= 88.0) >= min_hits
+                cpu_sustained_avg = sum(cpu_samples) / len(cpu_samples)
+                ram_sustained_avg = sum(ram_samples) / len(ram_samples)
+        except Exception:
+            sustained_cpu = False
+            sustained_ram = False
+
+    if cpu_pct >= 90.0:
+        status = "WARNING"
+        description = f"CPU usage has remained high at {int(round(cpu_pct))}%. Heavy compute workload active."
+        level = "warning"
+    elif ram_pct >= 92.0:
+        status = "WARNING"
+        description = f"Memory usage is critically high at {int(round(ram_pct))}%. System is near physical memory capacity."
+        level = "warning"
+    elif disk_pct >= 95.0:
+        status = "WARNING"
+        description = f"Primary disk is nearly full at {int(round(disk_pct))}%. Consider freeing up disk space."
+        level = "warning"
+    elif sustained_cpu:
+        status = "WARNING"
+        description = (
+            f"CPU usage has remained above 85% for an extended period "
+            f"(average {int(round(cpu_sustained_avg))}% over recent samples). "
+            "A sustained heavy workload is active."
+        )
+        level = "warning"
+    elif sustained_ram:
+        status = "WARNING"
+        description = (
+            f"Memory usage has stayed critically high for an extended period "
+            f"(average {int(round(ram_sustained_avg))}% over recent samples)."
+        )
+        level = "warning"
+    elif cpu_pct >= 75.0 or ram_pct >= 80.0:
+        status = "HIGH RESOURCE USAGE"
+        reasons = []
+        if cpu_pct >= 75.0:
+            reasons.append(f"CPU at {int(round(cpu_pct))}%")
+        if ram_pct >= 80.0:
+            reasons.append(f"RAM at {int(round(ram_pct))}%")
+        description = f"Elevated load: {', '.join(reasons)}. Active processes are consuming significant resources."
+        level = "elevated"
+    elif cpu_pct <= 10.0 and ram_pct <= 45.0:
+        status = "LOW ACTIVITY"
+        description = "System is idle with minimal background resource consumption."
+        level = "low"
+    else:
+        status = "NORMAL"
+        description = "CPU and memory usage are within normal ranges."
+        level = "normal"
+
+    return {
+        "status": status,
+        "description": description,
+        "level": level,
+        "cpu_pct": cpu_pct,
+        "ram_pct": ram_pct,
+        "disk_pct": disk_pct,
+        "sustained": bool(sustained_cpu or sustained_ram),
+    }
+
 class SystemMonitor:
     """
     Thread-safe, non-blocking real-time system metrics collector.
@@ -91,6 +185,9 @@ class SystemMonitor:
         self._last_net_bytes_sent = 0
         self._last_net_time = 0.0
         self._initialized = False
+        # Rolling sample window (~60s at the dashboard's 1.5s poll) used for
+        # sustained-usage analysis. Bounded so memory usage stays tiny.
+        self._history = deque(maxlen=40)
         self._init_sampler()
 
     def _init_sampler(self):
@@ -222,9 +319,16 @@ class SystemMonitor:
             if not system_str:
                 system_str = os_name or "Unknown OS"
 
+            # Rolling history for sustained-usage analysis (bounded, low memory)
+            self._history.append({"cpu": cpu_percent, "ram": ram_percent, "ts": now})
+
+            # System Health Analysis (includes sustained multi-sample detection)
+            analysis = analyze_system_health(cpu_percent, ram_percent, disk_percent, history=self._history)
+
             metrics = {
                 "success": True,
                 "timestamp": now,
+                "analysis": analysis,
                 "cpu": {
                     "percent": round(cpu_percent, 1),
                     "cores_logical": cpu_cores_logical,
@@ -288,6 +392,14 @@ class SystemMonitor:
             "success": error_msg is None,
             "error": error_msg or "psutil not installed",
             "timestamp": time.time(),
+            "analysis": {
+                "status": "NORMAL",
+                "description": "System monitoring initialized.",
+                "level": "normal",
+                "cpu_pct": 0.0,
+                "ram_pct": 0.0,
+                "disk_pct": 0.0,
+            },
             "cpu": {"percent": 0.0, "cores_logical": 1, "cores_physical": 1, "bar": make_progress_bar(0)},
             "memory": {"percent": 0.0, "used_bytes": 0, "available_bytes": 0, "total_bytes": 0,
                        "used_str": "0 GB", "available_str": "0 GB", "total_str": "0 GB", "bar": make_progress_bar(0)},
@@ -327,6 +439,7 @@ def format_system_monitor_text(metrics: Optional[Dict[str, Any]] = None) -> str:
     batt = metrics.get("battery", {})
     uptime = metrics.get("uptime", {})
     sys_info = metrics.get("system", {})
+    analysis = metrics.get("analysis", {})
 
     lines = [
         "SYSTEM MONITOR",
@@ -334,24 +447,30 @@ def format_system_monitor_text(metrics: Optional[Dict[str, Any]] = None) -> str:
         f"CPU             {int(round(cpu.get('percent', 0)))}%",
         f"{cpu.get('bar', make_progress_bar(0))}",
         "",
-        f"Memory          {int(round(mem.get('percent', 0)))}%",
+        f"RAM             {int(round(mem.get('percent', 0)))}%",
+        f"Used: {mem.get('used_str', '0 GB')} / {mem.get('total_str', '0 GB')}",
         f"{mem.get('bar', make_progress_bar(0))}",
         "",
-        f"Disk            {int(round(disk.get('percent', 0)))}%",
+        f"DISK            {int(round(disk.get('percent', 0)))}%",
+        f"Used: {disk.get('used_str', '0 GB')} / {disk.get('total_str', '0 GB')}",
         f"{disk.get('bar', make_progress_bar(0))}",
         "",
-        "Network",
+        "NETWORK",
         f"↓ Download      {net.get('download_speed_str', '0 B/s')}",
         f"↑ Upload        {net.get('upload_speed_str', '0 B/s')}",
         "",
-        f"Battery         {batt.get('percent_str', 'N/A')}",
-        f"Charging        {batt.get('charging_str', 'Yes')}",
+        f"BATTERY         {batt.get('percent_str', 'N/A')}",
+        f"Charging:       {batt.get('charging_str', 'Yes').upper()}",
         "",
-        "Uptime",
+        "UPTIME",
         f"{uptime.get('formatted', '0h 00m')}",
         "",
-        "System",
-        f"{sys_info.get('formatted', sys_info.get('os', 'Windows/Linux/macOS'))}",
+        "SYSTEM",
+        f"OS:   {sys_info.get('os', 'Windows')}",
+        f"Host: {sys_info.get('hostname', 'localhost')}",
+        "",
+        f"System Status: {analysis.get('status', 'NORMAL')}",
+        f"{analysis.get('description', 'CPU and memory usage are within normal ranges.')}",
     ]
     return "\n".join(lines)
 
@@ -364,7 +483,8 @@ def get_voice_summary(metrics: Optional[Dict[str, Any]] = None) -> str:
     cpu_pct = int(round(metrics.get("cpu", {}).get("percent", 0)))
     ram_pct = int(round(metrics.get("memory", {}).get("percent", 0)))
     disk_pct = int(round(metrics.get("disk", {}).get("percent", 0)))
-    return f"System Monitor started. CPU is at {cpu_pct} percent, memory is at {ram_pct} percent, and disk is at {disk_pct} percent."
+    status = metrics.get("analysis", {}).get("status", "NORMAL")
+    return f"System Monitor started. Status is {status}. CPU is at {cpu_pct} percent, memory is at {ram_pct} percent, and disk is at {disk_pct} percent."
 
 
 def start_system_monitor() -> str:
