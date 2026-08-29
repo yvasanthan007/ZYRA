@@ -160,6 +160,11 @@ canvas {
   padding: 14px 18px;
   background: rgba(255, 136, 68, 0.08);
   border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+  cursor: grab;
+  user-select: none;
+}
+.sm-header:active {
+  cursor: grabbing;
 }
 .sm-title-group {
   display: flex;
@@ -319,6 +324,74 @@ canvas {
   font-family: 'Consolas', monospace;
   color: #ffcc88;
   word-break: break-word;
+}
+
+/* System Health Analysis Card */
+.sm-status-card {
+  background: rgba(14, 14, 30, 0.75);
+  border: 1px solid rgba(255, 136, 68, 0.2);
+  border-left: 3px solid #00ff88;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-left-color 0.3s ease;
+}
+.sm-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sm-status-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #ffaa55;
+  text-transform: uppercase;
+}
+.sm-status-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  font-family: 'Consolas', monospace;
+}
+.sm-status-badge.normal {
+  background: rgba(0, 255, 136, 0.16);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  color: #00ff88;
+}
+.sm-status-badge.low {
+  background: rgba(0, 204, 255, 0.16);
+  border: 1px solid rgba(0, 204, 255, 0.4);
+  color: #00ccff;
+}
+.sm-status-badge.elevated {
+  background: rgba(255, 170, 0, 0.18);
+  border: 1px solid rgba(255, 170, 0, 0.45);
+  color: #ffaa00;
+}
+.sm-status-badge.warning {
+  background: rgba(255, 68, 68, 0.2);
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  color: #ff5555;
+}
+.sm-status-desc {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 200, 150, 0.85);
+}
+
+/* Live sparkline graphs inside the monitor card */
+.sm-sparkline {
+  width: 100%;
+  height: 34px;
+  display: block;
+  margin-top: 6px;
+  opacity: 0.9;
 }
 
 /* Bottom Controls */
@@ -484,6 +557,17 @@ canvas {
     </div>
 
     <div class="sm-body" id="sm-body">
+      <!-- Live Analysis / System Status -->
+      <div class="sm-status-card" id="sm-analysis-card">
+        <div class="sm-status-header">
+          <span class="sm-status-title">System Status:</span>
+          <span class="sm-status-badge normal" id="sm-health-badge">NORMAL</span>
+        </div>
+        <div class="sm-status-desc" id="sm-health-desc">
+          CPU and memory usage are within normal ranges.
+        </div>
+      </div>
+
       <!-- CPU Metric -->
       <div class="sm-metric-card">
         <div class="sm-row">
@@ -494,6 +578,7 @@ canvas {
         <div class="sm-bar-track">
           <div class="sm-bar-fill" id="sm-cpu-bar" style="width: 0%;"></div>
         </div>
+        <canvas class="sm-sparkline" id="sm-cpu-spark" width="300" height="34" aria-hidden="true"></canvas>
         <div class="sm-sub-info" id="sm-cpu-sub">Cores: --</div>
       </div>
 
@@ -534,6 +619,7 @@ canvas {
           <span class="sm-stat-k">↑ Upload</span>
           <span class="sm-stat-v" id="sm-net-up">0 B/s</span>
         </div>
+        <canvas class="sm-sparkline" id="sm-net-spark" width="300" height="34" aria-hidden="true"></canvas>
         <div class="sm-sub-info" id="sm-net-total">Total: 0 B ↓ / 0 B ↑</div>
       </div>
 
@@ -559,6 +645,10 @@ canvas {
       <div class="sm-info-card">
         <div class="sm-card-heading">System</div>
         <div class="sm-sys-val" id="sm-system-val">--</div>
+        <div class="sm-stat-line" style="margin-top: 4px;">
+          <span class="sm-stat-k">Host</span>
+          <span class="sm-stat-v" id="sm-host-val">--</span>
+        </div>
       </div>
     </div>
   </div>
@@ -1054,9 +1144,14 @@ canvas {
           } else if (data.type === 'system_metrics' && data.data) {
             updateSystemMonitorUI(data.data);
           } else if (data.type === 'response' && data.success) {
-            addMessage(data.data, 'zyra');
-            if (typeof data.data === 'string' && (data.data.includes('SYSTEM MONITOR') || data.data.toLowerCase().includes('system monitor'))) {
-              startSystemMonitor();
+            // Metric payloads (objects) belong to the live monitor, not the chat feed
+            if (data.data && typeof data.data === 'object' && data.data.cpu) {
+              updateSystemMonitorUI(data.data);
+            } else {
+              addMessage(data.data, 'zyra');
+              if (typeof data.data === 'string' && (data.data.includes('SYSTEM MONITOR') || data.data.toLowerCase().includes('system monitor'))) {
+                startSystemMonitor();
+              }
             }
           } else if (data.type === 'error') {
             addMessage('Error: ' + (data.error || 'Unknown error'), 'system');
@@ -1079,12 +1174,19 @@ canvas {
 
   function sendMessage(text) {
     if (!text || !text.trim()) return;
+    const cleanText = text.trim();
+    if (cleanText.toLowerCase().includes('monitor my system') ||
+        cleanText.toLowerCase().includes('system monitor') ||
+        cleanText.toLowerCase().includes('monitor system') ||
+        cleanText.toLowerCase().includes('start system monitor')) {
+      startSystemMonitor();
+    }
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       addMessage('Not connected to ZYRA server', 'system');
       return;
     }
-    addMessage(text.trim(), 'user');
-    ws.send(JSON.stringify({ type: 'chat', data: text.trim() }));
+    addMessage(cleanText, 'user');
+    ws.send(JSON.stringify({ type: 'chat', data: cleanText }));
     chatInput.value = '';
   }
 
@@ -1107,6 +1209,10 @@ canvas {
   const smBadge = document.getElementById('sm-badge');
 
   // Metric element references
+  const elHealthBadge = document.getElementById('sm-health-badge');
+  const elHealthDesc = document.getElementById('sm-health-desc');
+  const elAnalysisCard = document.getElementById('sm-analysis-card');
+
   const elCpuVal = document.getElementById('sm-cpu-val');
   const elCpuAscii = document.getElementById('sm-cpu-ascii');
   const elCpuBar = document.getElementById('sm-cpu-bar');
@@ -1131,13 +1237,110 @@ canvas {
 
   const elUptimeVal = document.getElementById('sm-uptime-val');
   const elSystemVal = document.getElementById('sm-system-val');
+  const elHostVal = document.getElementById('sm-host-val');
 
   let isMonitorActive = false;
   let monitorInterval = null;
 
+  // ===== LIVE GRAPHS (lightweight 2D sparklines) =====
+  // Redrawn only when new metrics arrive (~0.7 Hz) to keep CPU/RAM overhead minimal.
+  const elCpuSpark = document.getElementById('sm-cpu-spark');
+  const elNetSpark = document.getElementById('sm-net-spark');
+  const cpuHistory = [];
+  const netHistory = []; // { down, up } in bytes/s
+  const SPARK_MAX_POINTS = 60;
+
+  function pushSparkPoint(histArr, value) {
+    histArr.push(value);
+    if (histArr.length > SPARK_MAX_POINTS) histArr.shift();
+  }
+
+  function drawCpuSparkline() {
+    if (!elCpuSpark) return;
+    const ctx = elCpuSpark.getContext('2d');
+    const w = elCpuSpark.width, h = elCpuSpark.height;
+    ctx.clearRect(0, 0, w, h);
+    // Guide lines at 50% and 90%
+    ctx.strokeStyle = 'rgba(255,136,68,0.15)';
+    ctx.lineWidth = 1;
+    [0.5, 0.9].forEach(function (f) {
+      const y = h - (h * f);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    });
+    if (cpuHistory.length < 2) return;
+    const step = w / (SPARK_MAX_POINTS - 1);
+    const x0 = w - (cpuHistory.length - 1) * step; // right-align newest point
+    ctx.beginPath();
+    for (let i = 0; i < cpuHistory.length; i++) {
+      const x = x0 + i * step;
+      const y = h - (Math.min(100, cpuHistory[i]) / 100) * (h - 2) - 1;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#ff8844';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    // Fill under curve
+    ctx.lineTo(x0 + (cpuHistory.length - 1) * step, h);
+    ctx.lineTo(x0, h);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,136,68,0.14)';
+    ctx.fill();
+  }
+
+  function drawNetSparkline() {
+    if (!elNetSpark) return;
+    const ctx = elNetSpark.getContext('2d');
+    const w = elNetSpark.width, h = elNetSpark.height;
+    ctx.clearRect(0, 0, w, h);
+    if (netHistory.length < 2) return;
+    let peak = 1024;
+    for (let i = 0; i < netHistory.length; i++) {
+      if (netHistory[i].down > peak) peak = netHistory[i].down;
+      if (netHistory[i].up > peak) peak = netHistory[i].up;
+    }
+    const step = w / (SPARK_MAX_POINTS - 1);
+    const x0 = w - (netHistory.length - 1) * step;
+    const series = [
+      { key: 'down', color: '#ff8844' },
+      { key: 'up', color: '#00ccff' }
+    ];
+    series.forEach(function (s) {
+      ctx.beginPath();
+      for (let i = 0; i < netHistory.length; i++) {
+        const x = x0 + i * step;
+        const v = Math.max(0, netHistory[i][s.key]) / peak;
+        const y = h - v * (h - 2) - 1;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    });
+  }
+
   function updateSystemMonitorUI(m) {
     if (!m) return;
     try {
+      // Live Analysis / Health Status
+      if (m.analysis) {
+        if (elHealthBadge) {
+          elHealthBadge.textContent = m.analysis.status || 'NORMAL';
+          elHealthBadge.className = 'sm-status-badge ' + (m.analysis.level || 'normal');
+        }
+        if (elHealthDesc) {
+          elHealthDesc.textContent = m.analysis.description || 'CPU and memory usage are within normal ranges.';
+        }
+        if (elAnalysisCard) {
+          const levelColors = {
+            normal: '#00ff88',
+            low: '#00ccff',
+            elevated: '#ffaa00',
+            warning: '#ff5555'
+          };
+          elAnalysisCard.style.borderLeftColor = levelColors[m.analysis.level] || '#00ff88';
+        }
+      }
+
       // CPU
       if (m.cpu) {
         const cpuPct = Math.round(m.cpu.percent || 0);
@@ -1145,6 +1348,8 @@ canvas {
         elCpuAscii.textContent = m.cpu.bar || '░░░░░░░░░░';
         elCpuBar.style.width = Math.min(100, Math.max(0, cpuPct)) + '%';
         elCpuSub.textContent = `Cores: ${m.cpu.cores_physical || 1} physical / ${m.cpu.cores_logical || 1} logical`;
+        pushSparkPoint(cpuHistory, cpuPct);
+        drawCpuSparkline();
       }
 
       // Memory
@@ -1170,6 +1375,11 @@ canvas {
         elNetDown.textContent = m.network.download_speed_str || '0 B/s';
         elNetUp.textContent = m.network.upload_speed_str || '0 B/s';
         elNetTotal.textContent = `Total: ${m.network.total_recv_str || '0 B'} ↓ / ${m.network.total_sent_str || '0 B'} ↑`;
+        pushSparkPoint(netHistory, {
+          down: m.network.download_speed_bytes || 0,
+          up: m.network.upload_speed_bytes || 0
+        });
+        drawNetSparkline();
       }
 
       // Battery
@@ -1186,6 +1396,9 @@ canvas {
       // System
       if (m.system) {
         elSystemVal.textContent = m.system.formatted || m.system.os || 'Windows/Linux/macOS';
+        if (elHostVal) {
+          elHostVal.textContent = m.system.hostname || 'localhost';
+        }
       }
 
       if (smBadge) {
@@ -1228,6 +1441,10 @@ canvas {
     if (monitorCard) monitorCard.classList.add('visible');
     if (btnToggleMonitor) btnToggleMonitor.classList.add('active');
 
+    // Start the live graphs from a clean slate on each session
+    cpuHistory.length = 0;
+    netHistory.length = 0;
+
     fetchSystemMetrics();
     if (!monitorInterval) {
       monitorInterval = setInterval(fetchSystemMetrics, 1500);
@@ -1259,6 +1476,49 @@ canvas {
   if (btnCloseMonitor) {
     btnCloseMonitor.addEventListener('click', stopSystemMonitor);
   }
+
+  // Window Dragging Support
+  (function initDraggable() {
+    if (!monitorCard) return;
+    const smHeader = monitorCard.querySelector('.sm-header');
+    if (!smHeader) return;
+
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialTop = 0;
+
+    smHeader.addEventListener('mousedown', function(e) {
+      if (e.target === btnCloseMonitor || e.target.closest('.sm-btn-close')) return;
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = monitorCard.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+
+      monitorCard.style.right = 'auto';
+      monitorCard.style.bottom = 'auto';
+      monitorCard.style.left = initialLeft + 'px';
+      monitorCard.style.top = initialTop + 'px';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const maxX = Math.max(0, window.innerWidth - monitorCard.offsetWidth - 10);
+      const maxY = Math.max(0, window.innerHeight - monitorCard.offsetHeight - 10);
+      const newLeft = Math.max(10, Math.min(maxX, initialLeft + dx));
+      const newTop = Math.max(10, Math.min(maxY, initialTop + dy));
+      monitorCard.style.left = newLeft + 'px';
+      monitorCard.style.top = newTop + 'px';
+    });
+
+    window.addEventListener('mouseup', function() {
+      isDragging = false;
+    });
+  })();
 
   // Initial connection
   setTimeout(connectWebSocket, 500);

@@ -22,6 +22,7 @@ from system_monitor import (
     make_progress_bar,
     format_bytes,
     format_speed,
+    analyze_system_health,
     SystemMonitor,
 )
 from backend.zyra_bridge import (
@@ -87,6 +88,44 @@ class TestSystemMonitor(unittest.TestCase):
         self.assertIn("os", metrics["system"])
         self.assertIn("formatted", metrics["system"])
 
+        # Health Analysis
+        self.assertIn("analysis", metrics)
+        self.assertIn("status", metrics["analysis"])
+        self.assertIn("description", metrics["analysis"])
+        self.assertIn("level", metrics["analysis"])
+
+    def test_health_analysis_logic(self):
+        """Test health status analysis thresholds and descriptions."""
+        # Normal
+        norm = analyze_system_health(35.0, 55.0, 50.0)
+        self.assertEqual(norm["status"], "NORMAL")
+        self.assertEqual(norm["level"], "normal")
+
+        # Low activity
+        low = analyze_system_health(5.0, 30.0, 40.0)
+        self.assertEqual(low["status"], "LOW ACTIVITY")
+        self.assertEqual(low["level"], "low")
+
+        # High resource usage
+        high = analyze_system_health(82.0, 70.0, 50.0)
+        self.assertEqual(high["status"], "HIGH RESOURCE USAGE")
+        self.assertEqual(high["level"], "elevated")
+
+        # Warning (CPU)
+        warn_cpu = analyze_system_health(95.0, 60.0, 50.0)
+        self.assertEqual(warn_cpu["status"], "WARNING")
+        self.assertEqual(warn_cpu["level"], "warning")
+
+        # Warning (RAM)
+        warn_ram = analyze_system_health(40.0, 94.0, 50.0)
+        self.assertEqual(warn_ram["status"], "WARNING")
+        self.assertEqual(warn_ram["level"], "warning")
+
+        # Warning (Disk)
+        warn_disk = analyze_system_health(40.0, 50.0, 98.0)
+        self.assertEqual(warn_disk["status"], "WARNING")
+        self.assertEqual(warn_disk["level"], "warning")
+
     def test_intent_detection(self):
         """Test trigger phrases for System Monitor."""
         triggers = [
@@ -121,15 +160,16 @@ class TestSystemMonitor(unittest.TestCase):
         text = format_system_monitor_text()
         self.assertIn("SYSTEM MONITOR", text)
         self.assertIn("CPU", text)
-        self.assertIn("Memory", text)
-        self.assertIn("Disk", text)
-        self.assertIn("Network", text)
+        self.assertIn("RAM", text)
+        self.assertIn("DISK", text)
+        self.assertIn("NETWORK", text)
         self.assertIn("Download", text)
         self.assertIn("Upload", text)
-        self.assertIn("Battery", text)
+        self.assertIn("BATTERY", text)
         self.assertIn("Charging", text)
-        self.assertIn("Uptime", text)
-        self.assertIn("System", text)
+        self.assertIn("UPTIME", text)
+        self.assertIn("SYSTEM", text)
+        self.assertIn("System Status:", text)
 
     def test_progress_bar_generation(self):
         """Test ASCII progress bar output."""
