@@ -400,6 +400,7 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 result = process_message(msg_type, msg_data)
 
+<<<<<<< HEAD
                 # Metrics-type requests answer with their own message type so the
                 # dashboard updates the live monitor card instead of the chat feed.
                 is_metrics_request = msg_type in (
@@ -408,6 +409,24 @@ async def websocket_endpoint(websocket: WebSocket):
                     "monitor_system",
                     "start_monitoring",
                 )
+=======
+                # Special handling for system_metrics requests - send as dedicated type
+                if msg_type in ("system_metrics", "get_system_metrics", "monitor_system", "start_monitoring"):
+                    if result.get("success"):
+                        await manager.send_personal({
+                            "type": "system_metrics",
+                            "data": result.get("data"),
+                            "formatted": result.get("formatted"),
+                            "success": True,
+                        }, websocket)
+                    else:
+                        await manager.send_personal({
+                            "type": "error",
+                            "success": False,
+                            "error": result.get("error", "Unknown error"),
+                        }, websocket)
+                    continue
+>>>>>>> 4d7867f (Completed System Monitor)
 
                 # Send response back to the client
                 response = {
