@@ -400,9 +400,18 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 result = process_message(msg_type, msg_data)
 
+                # Metrics-type requests answer with their own message type so the
+                # dashboard updates the live monitor card instead of the chat feed.
+                is_metrics_request = msg_type in (
+                    "system_metrics",
+                    "get_system_metrics",
+                    "monitor_system",
+                    "start_monitoring",
+                )
+
                 # Send response back to the client
                 response = {
-                    "type": "response",
+                    "type": "system_metrics" if is_metrics_request else "response",
                     "success": result.get("success", False),
                     "data": result.get("data", result.get("response")),
                 }
@@ -412,7 +421,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 await manager.send_personal(response, websocket)
 
                 # If it's a system monitor intent or action, broadcast card trigger
-                if result.get("action") == "system_monitor":
+                # (covers both voice commands and chat messages like "Monitor my system")
+                chat_monitor_intent = (
+                    msg_type == "chat"
+                    and isinstance(msg_data, str)
+                    and is_system_monitor_intent(msg_data)
+                )
+                if result.get("action") == "system_monitor" or chat_monitor_intent:
                     metrics = result.get("metrics") or get_system_metrics()
                     await manager.broadcast({
                         "type": "show_system_monitor",
