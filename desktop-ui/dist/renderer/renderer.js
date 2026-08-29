@@ -35944,6 +35944,7 @@ const ChatView_1 = __importDefault(__webpack_require__(/*! ./components/ChatView
 const CommandPanel_1 = __importDefault(__webpack_require__(/*! ./components/CommandPanel */ "./src/renderer/components/CommandPanel.tsx"));
 const VoiceControl_1 = __importDefault(__webpack_require__(/*! ./components/VoiceControl */ "./src/renderer/components/VoiceControl.tsx"));
 const Settings_1 = __importDefault(__webpack_require__(/*! ./components/Settings */ "./src/renderer/components/Settings.tsx"));
+const SystemMonitor_1 = __importDefault(__webpack_require__(/*! ./components/SystemMonitor */ "./src/renderer/components/SystemMonitor.tsx"));
 const App = () => {
     const [activeView, setActiveView] = (0, react_1.useState)('chat');
     const [statusMessage, setStatusMessage] = (0, react_1.useState)('Ready');
@@ -35953,6 +35954,8 @@ const App = () => {
                 return (0, jsx_runtime_1.jsx)(ChatView_1.default, { setStatus: setStatusMessage });
             case 'commands':
                 return (0, jsx_runtime_1.jsx)(CommandPanel_1.default, { setStatus: setStatusMessage });
+            case 'monitor':
+                return (0, jsx_runtime_1.jsx)(SystemMonitor_1.default, { setStatus: setStatusMessage });
             case 'voice':
                 return (0, jsx_runtime_1.jsx)(VoiceControl_1.default, { setStatus: setStatusMessage });
             case 'settings':
@@ -36154,6 +36157,7 @@ const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modul
 const navItems = [
     { id: 'chat', label: 'Chat', icon: '💬' },
     { id: 'commands', label: 'Commands', icon: '⚡' },
+    { id: 'monitor', label: 'Monitor', icon: '📊' },
     { id: 'voice', label: 'Voice', icon: '🎤' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
@@ -36161,6 +36165,85 @@ const Sidebar = ({ activeView, onViewChange }) => {
     return ((0, jsx_runtime_1.jsxs)("nav", { className: "sidebar", children: [(0, jsx_runtime_1.jsxs)("div", { className: "sidebar-logo", children: [(0, jsx_runtime_1.jsx)("span", { className: "logo-icon", children: "\uD83E\uDD16" }), (0, jsx_runtime_1.jsx)("span", { className: "logo-text", children: "ZYRA" })] }), (0, jsx_runtime_1.jsx)("ul", { className: "sidebar-nav", children: navItems.map((item) => ((0, jsx_runtime_1.jsx)("li", { children: (0, jsx_runtime_1.jsxs)("button", { className: `nav-button ${activeView === item.id ? 'active' : ''}`, onClick: () => onViewChange(item.id), title: item.label, children: [(0, jsx_runtime_1.jsx)("span", { className: "nav-icon", children: item.icon }), (0, jsx_runtime_1.jsx)("span", { className: "nav-label", children: item.label })] }) }, item.id))) })] }));
 };
 exports["default"] = Sidebar;
+
+
+/***/ },
+
+/***/ "./src/renderer/components/SystemMonitor.tsx"
+/*!***************************************************!*\
+  !*** ./src/renderer/components/SystemMonitor.tsx ***!
+  \***************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const SystemMonitor = ({ setStatus }) => {
+    const [metrics, setMetrics] = (0, react_1.useState)(null);
+    const [loading, setLoading] = (0, react_1.useState)(true);
+    const [error, setError] = (0, react_1.useState)(null);
+    (0, react_1.useEffect)(() => {
+        setStatus('System Monitor active');
+        let isMounted = true;
+        const fetchMetrics = async () => {
+            try {
+                if (window.zyraAPI && window.zyraAPI.getSystemMetrics) {
+                    const res = await window.zyraAPI.getSystemMetrics();
+                    if (isMounted) {
+                        const data = res && res.data ? res.data : res;
+                        if (data && data.cpu) {
+                            setMetrics(data);
+                            setError(null);
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                if (isMounted) {
+                    setError('Failed to fetch metrics');
+                }
+            }
+            finally {
+                if (isMounted)
+                    setLoading(false);
+            }
+        };
+        fetchMetrics();
+        const interval = setInterval(fetchMetrics, 1500);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+            setStatus('Ready');
+        };
+    }, []);
+    if (loading && !metrics) {
+        return (0, jsx_runtime_1.jsx)("div", { className: "loading-state", children: "Loading system metrics..." });
+    }
+    if (error && !metrics) {
+        return (0, jsx_runtime_1.jsx)("div", { className: "error-state", children: error });
+    }
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "system-monitor-view", style: { padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }, children: [(0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' }, children: [(0, jsx_runtime_1.jsx)("h2", { style: { fontSize: '18px', fontWeight: 'bold', color: 'var(--accent, #ff8844)', letterSpacing: '1px' }, children: "SYSTEM MONITOR" }), (0, jsx_runtime_1.jsx)("span", { style: { fontSize: '12px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(0, 255, 136, 0.15)', color: '#00ff88', fontWeight: 'bold' }, children: "LIVE" })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: {
+                    background: 'rgba(14, 14, 30, 0.85)',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color, #2a2a4a)',
+                    borderLeft: `4px solid ${metrics?.analysis?.level === 'warning' ? '#ff5555' :
+                        metrics?.analysis?.level === 'elevated' ? '#ffaa00' :
+                            metrics?.analysis?.level === 'low' ? '#00ccff' : '#00ff88'}`,
+                }, children: [(0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }, children: [(0, jsx_runtime_1.jsx)("strong", { style: { fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', color: '#ffaa55' }, children: "System Status" }), (0, jsx_runtime_1.jsx)("span", { style: {
+                                    fontSize: '11px',
+                                    fontWeight: 'bold',
+                                    padding: '2px 7px',
+                                    borderRadius: '6px',
+                                    fontFamily: 'monospace',
+                                    color: metrics?.analysis?.level === 'warning' ? '#ff5555' :
+                                        metrics?.analysis?.level === 'elevated' ? '#ffaa00' :
+                                            metrics?.analysis?.level === 'low' ? '#00ccff' : '#00ff88',
+                                    background: 'rgba(255,255,255,0.08)'
+                                }, children: metrics?.analysis?.status || 'NORMAL' })] }), (0, jsx_runtime_1.jsx)("p", { style: { fontSize: '12px', margin: 0, color: 'rgba(255, 200, 150, 0.85)', lineHeight: 1.4 }, children: metrics?.analysis?.description || 'CPU and memory usage are within normal ranges.' })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: { background: 'var(--bg-secondary, #16213e)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color, #2a2a4a)' }, children: [(0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }, children: [(0, jsx_runtime_1.jsx)("strong", { children: "CPU" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.cpu ? `${Math.round(metrics.cpu.percent)}%` : '--%' })] }), (0, jsx_runtime_1.jsx)("div", { style: { fontFamily: 'monospace', color: 'var(--accent, #ff8844)', fontSize: '14px', letterSpacing: '2px', marginBottom: '6px' }, children: metrics?.cpu?.bar || '░░░░░░░░░░' }), (0, jsx_runtime_1.jsx)("div", { style: { height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }, children: (0, jsx_runtime_1.jsx)("div", { style: { height: '100%', width: `${Math.min(100, metrics?.cpu?.percent || 0)}%`, background: 'var(--accent, #ff8844)', transition: 'width 0.3s' } }) })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: { background: 'var(--bg-secondary, #16213e)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color, #2a2a4a)' }, children: [(0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }, children: [(0, jsx_runtime_1.jsx)("strong", { children: "Memory" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.memory ? `${Math.round(metrics.memory.percent)}%` : '--%' })] }), (0, jsx_runtime_1.jsx)("div", { style: { fontFamily: 'monospace', color: 'var(--accent, #ff8844)', fontSize: '14px', letterSpacing: '2px', marginBottom: '6px' }, children: metrics?.memory?.bar || '░░░░░░░░░░' }), (0, jsx_runtime_1.jsx)("div", { style: { height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginBottom: '6px' }, children: (0, jsx_runtime_1.jsx)("div", { style: { height: '100%', width: `${Math.min(100, metrics?.memory?.percent || 0)}%`, background: 'var(--accent, #ff8844)', transition: 'width 0.3s' } }) }), (0, jsx_runtime_1.jsxs)("small", { style: { color: 'var(--text-secondary, #a0a0b0)' }, children: [metrics?.memory?.used_str, " used / ", metrics?.memory?.total_str, " total"] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: { background: 'var(--bg-secondary, #16213e)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color, #2a2a4a)' }, children: [(0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }, children: [(0, jsx_runtime_1.jsx)("strong", { children: "Disk" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.disk ? `${Math.round(metrics.disk.percent)}%` : '--%' })] }), (0, jsx_runtime_1.jsx)("div", { style: { fontFamily: 'monospace', color: 'var(--accent, #ff8844)', fontSize: '14px', letterSpacing: '2px', marginBottom: '6px' }, children: metrics?.disk?.bar || '░░░░░░░░░░' }), (0, jsx_runtime_1.jsx)("div", { style: { height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginBottom: '6px' }, children: (0, jsx_runtime_1.jsx)("div", { style: { height: '100%', width: `${Math.min(100, metrics?.disk?.percent || 0)}%`, background: 'var(--accent, #ff8844)', transition: 'width 0.3s' } }) }), (0, jsx_runtime_1.jsxs)("small", { style: { color: 'var(--text-secondary, #a0a0b0)' }, children: [metrics?.disk?.used_str, " used / ", metrics?.disk?.free_str, " free"] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: { background: 'var(--bg-secondary, #16213e)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color, #2a2a4a)' }, children: [(0, jsx_runtime_1.jsx)("strong", { style: { display: 'block', marginBottom: '8px' }, children: "Network" }), (0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }, children: [(0, jsx_runtime_1.jsx)("span", { children: "\u2193 Download" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.network?.download_speed_str || '0 B/s' })] }), (0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px' }, children: [(0, jsx_runtime_1.jsx)("span", { children: "\u2191 Upload" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.network?.upload_speed_str || '0 B/s' })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: { background: 'var(--bg-secondary, #16213e)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color, #2a2a4a)' }, children: [(0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px' }, children: [(0, jsx_runtime_1.jsx)("span", { children: "Battery" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.battery?.percent_str || 'N/A' })] }), (0, jsx_runtime_1.jsxs)("div", { style: { display: 'flex', justifyContent: 'space-between', fontSize: '13px' }, children: [(0, jsx_runtime_1.jsx)("span", { children: "Charging" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.battery?.charging_str || 'No' })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: { background: 'var(--bg-secondary, #16213e)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color, #2a2a4a)' }, children: [(0, jsx_runtime_1.jsx)("strong", { style: { display: 'block', marginBottom: '4px' }, children: "Uptime" }), (0, jsx_runtime_1.jsx)("span", { style: { fontFamily: 'monospace' }, children: metrics?.uptime?.formatted || '0h 00m' })] }), (0, jsx_runtime_1.jsxs)("div", { className: "metric-box", style: { background: 'var(--bg-secondary, #16213e)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color, #2a2a4a)' }, children: [(0, jsx_runtime_1.jsx)("strong", { style: { display: 'block', marginBottom: '4px' }, children: "System" }), (0, jsx_runtime_1.jsx)("span", { children: metrics?.system?.formatted || 'Windows / Linux / macOS' })] })] }));
+};
+exports["default"] = SystemMonitor;
 
 
 /***/ },

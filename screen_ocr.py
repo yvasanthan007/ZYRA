@@ -207,11 +207,11 @@ def get_active_url():
     """
     # Step 1: Try to capture URL from screen via OCR
     print("\n📸 Capturing screen for URL detection...")
-    
+
     image = capture_screen()
     if image is not None:
         print(f"   ✅ Screen captured ({image.size[0]}x{image.size[1]}px)")
-        
+
         text = extract_text_from_image(image)
         if text:
             print(f"   📝 OCR detected text ({len(text)} chars)")
@@ -237,6 +237,10 @@ def get_active_url():
     # Step 3: No URL found anywhere
     print("   ❌ No URL found on screen or in clipboard.")
     return None
+
+
+# Alias for backward compatibility
+get_url_smart = get_active_url
 
 
 # ──────────────────────────────────────────────

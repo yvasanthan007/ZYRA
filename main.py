@@ -24,8 +24,14 @@ from commands.open_app import (
 )
 from commands.close_app import close_app
 from memory import remember, recall
-from backend.server import start_server_thread
+from backend.server import start_server_thread, broadcast_system_monitor_trigger
 from zyra_handler import handle_analyze_link_intent, is_link_analysis_intent
+from system_monitor import (
+    is_system_monitor_intent,
+    format_system_monitor_text,
+    get_voice_summary,
+    get_system_metrics,
+)
 
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
@@ -464,12 +470,24 @@ if __name__ == "__main__":
                     else:
                         speak("I don't know your favorite language yet.")
 
+                elif is_system_monitor_intent(command):
+                    # Start / show System Monitor, print ASCII card, broadcast to dashboard, and speak summary
+                    metrics = get_system_metrics()
+                    report = format_system_monitor_text(metrics)
+                    print(f"\n{report}\n")
+                    try:
+                        broadcast_system_monitor_trigger(metrics)
+                    except Exception:
+                        pass
+                    voice_text = get_voice_summary(metrics)
+                    speak(voice_text)
+
                 elif is_link_analysis_intent(command):
                     # Use the new real-time screen capture link analysis
                     # Captures screen OCR + clipboard, runs 8-check heuristic,
                     # and speaks the exact verdict directly to user
                     result = handle_analyze_link_intent(command)
-                    
+
                     # Print detailed report to console
                     if result.get('success') and result.get('checks'):
                         print(f"\n🔗 URL: {result['url']}")

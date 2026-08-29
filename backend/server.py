@@ -32,6 +32,13 @@ from backend.link_security import (
     format_security_report,
     extract_url,
 )
+from system_monitor import (
+    get_system_metrics,
+    format_system_monitor_text,
+    get_voice_summary,
+    is_system_monitor_intent,
+    start_system_monitor,
+)
 
 app = FastAPI(
     title="ZYRA AI Assistant API",
@@ -54,18 +61,18 @@ DASHBOARD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__f
 # WebSocket connection manager
 class ConnectionManager:
     """Manages WebSocket connections for real-time communication"""
-    
+
     def __init__(self):
         self.active_connections: list[WebSocket] = []
-    
+
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-    
+
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
-    
+
     async def broadcast(self, message: Dict[str, Any]):
         """Send a message to all connected clients"""
         for connection in self.active_connections:
@@ -73,7 +80,7 @@ class ConnectionManager:
                 await connection.send_json(message)
             except Exception:
                 pass
-    
+
     async def send_personal(self, message: Dict[str, Any], websocket: WebSocket):
         """Send a message to a specific client"""
         try:
@@ -82,6 +89,36 @@ class ConnectionManager:
             pass
 
 manager = ConnectionManager()
+
+# Event loop reference for thread-safe cross-thread broadcasting
+_server_loop: Optional[asyncio.AbstractEventLoop] = None
+
+
+@app.on_event("startup")
+async def on_startup():
+    global _server_loop
+    _server_loop = asyncio.get_running_loop()
+
+
+def broadcast_message_sync(message: Dict[str, Any]) -> None:
+    """Thread-safe helper to broadcast a message to all connected clients."""
+    global _server_loop
+    if _server_loop and _server_loop.is_running():
+        try:
+            asyncio.run_coroutine_threadsafe(manager.broadcast(message), _server_loop)
+        except Exception:
+            pass
+
+
+def broadcast_system_monitor_trigger(metrics: Optional[Dict[str, Any]] = None) -> None:
+    """Broadcast system monitor activation to all connected clients."""
+    if metrics is None:
+        metrics = get_system_metrics()
+    broadcast_message_sync({
+        "type": "show_system_monitor",
+        "data": metrics,
+        "formatted": format_system_monitor_text(metrics),
+    })
 
 
 # ========== REST API Endpoints ==========
@@ -109,12 +146,12 @@ async def health_check():
 async def chat_endpoint(data: Dict[str, Any]):
     """
     Send a chat message to Zyra
-    
+
     Request body:
     {
         "message": "Hello Zyra, how are you?"
     }
-    
+
     Response:
     {
         "success": true,
@@ -127,7 +164,7 @@ async def chat_endpoint(data: Dict[str, Any]):
             status_code=400,
             content={"success": False, "error": "Message is required"}
         )
-    
+
     try:
         response = process_chat(message)
         return {"success": True, "response": response}
@@ -142,13 +179,13 @@ async def chat_endpoint(data: Dict[str, Any]):
 async def command_endpoint(data: Dict[str, Any]):
     """
     Execute a Zyra command
-    
+
     Request body:
     {
         "command": "open_chrome",
         "params": {}
     }
-    
+
     Response:
     {
         "success": true,
@@ -157,13 +194,13 @@ async def command_endpoint(data: Dict[str, Any]):
     """
     command = data.get("command", "")
     params = data.get("params", {})
-    
+
     if not command:
         return JSONResponse(
             status_code=400,
             content={"success": False, "error": "Command is required"}
         )
-    
+
     try:
         result = process_command(command, params)
         return result
@@ -178,12 +215,12 @@ async def command_endpoint(data: Dict[str, Any]):
 async def voice_endpoint(data: Dict[str, Any]):
     """
     Process a voice command (transcribed text)
-    
+
     Request body:
     {
         "text": "open chrome"
     }
-    
+
     Response:
     {
         "success": true,
@@ -199,7 +236,7 @@ async def voice_endpoint(data: Dict[str, Any]):
             status_code=400,
             content={"success": False, "error": "Text is required"}
         )
-    
+
     try:
         result = process_voice_command(text)
         return {"success": True, "data": result}
@@ -214,12 +251,12 @@ async def voice_endpoint(data: Dict[str, Any]):
 async def speak_endpoint(data: Dict[str, Any]):
     """
     Make Zyra speak text through TTS
-    
+
     Request body:
     {
         "text": "Hello, I am Zyra"
     }
-    
+
     Response:
     {
         "success": true,
@@ -232,7 +269,7 @@ async def speak_endpoint(data: Dict[str, Any]):
             status_code=400,
             content={"success": False, "error": "Text is required"}
         )
-    
+
     try:
         speak_text(text)
         return {"success": True, "data": "Speaking"}
@@ -276,6 +313,39 @@ async def analyze_link_endpoint(data: Dict[str, Any]):
         )
 
 
+@app.get("/api/system/metrics")
+@app.get("/api/system-metrics")
+async def system_metrics_endpoint():
+    """Get real-time system monitoring metrics."""
+    try:
+        metrics = get_system_metrics()
+        return {"success": True, "data": metrics, "formatted": format_system_monitor_text(metrics)}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.post("/api/system/monitor")
+async def system_monitor_trigger_endpoint():
+    """Trigger and activate System Monitor."""
+    try:
+        metrics = get_system_metrics()
+        formatted = format_system_monitor_text(metrics)
+        await manager.broadcast({
+            "type": "show_system_monitor",
+            "data": metrics,
+            "formatted": formatted,
+        })
+        return {"success": True, "data": metrics, "formatted": formatted}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
 @app.get("/api/commands")
 async def list_commands():
     """List all available Zyra commands"""
@@ -294,13 +364,13 @@ async def list_commands():
 async def websocket_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for real-time communication with Zyra
-    
+
     Message format (JSON):
     {
         "type": "chat|command|voice|speak|remember|recall",
         "data": "..."
     }
-    
+
     Response format:
     {
         "type": "response",
@@ -313,7 +383,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             # Receive message from client
             raw_data = await websocket.receive_text()
-            
+
             try:
                 data = json.loads(raw_data)
             except json.JSONDecodeError:
@@ -322,25 +392,49 @@ async def websocket_endpoint(websocket: WebSocket):
                     websocket
                 )
                 continue
-            
+
             msg_type = data.get("type", "")
             msg_data = data.get("data")
-            
+
             # Process the message through Zyra bridge
             try:
                 result = process_message(msg_type, msg_data)
-                
+
+                # Metrics-type requests answer with their own message type so the
+                # dashboard updates the live monitor card instead of the chat feed.
+                is_metrics_request = msg_type in (
+                    "system_metrics",
+                    "get_system_metrics",
+                    "monitor_system",
+                    "start_monitoring",
+                )
+
                 # Send response back to the client
                 response = {
-                    "type": "response",
+                    "type": "system_metrics" if is_metrics_request else "response",
                     "success": result.get("success", False),
                     "data": result.get("data", result.get("response")),
                 }
                 if "error" in result:
                     response["error"] = result["error"]
-                
+
                 await manager.send_personal(response, websocket)
-                
+
+                # If it's a system monitor intent or action, broadcast card trigger
+                # (covers both voice commands and chat messages like "Monitor my system")
+                chat_monitor_intent = (
+                    msg_type == "chat"
+                    and isinstance(msg_data, str)
+                    and is_system_monitor_intent(msg_data)
+                )
+                if result.get("action") == "system_monitor" or chat_monitor_intent:
+                    metrics = result.get("metrics") or get_system_metrics()
+                    await manager.broadcast({
+                        "type": "show_system_monitor",
+                        "data": metrics,
+                        "formatted": format_system_monitor_text(metrics),
+                    })
+
                 # If it's a voice command with a response, also broadcast to all
                 if msg_type == "voice" and result.get("success"):
                     voice_data = result.get("data", {})
@@ -349,13 +443,13 @@ async def websocket_endpoint(websocket: WebSocket):
                             "type": "voice_response",
                             "data": voice_data["response"]
                         })
-                
+
             except Exception as e:
                 await manager.send_personal(
                     {"type": "error", "success": False, "error": str(e)},
                     websocket
                 )
-    
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
     except Exception as e:
@@ -368,7 +462,7 @@ async def websocket_endpoint(websocket: WebSocket):
 def run_server(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = False):
     """
     Run the FastAPI server
-    
+
     Args:
         host: Host address to bind to
         port: Port to listen on
@@ -378,12 +472,12 @@ def run_server(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = F
         url = f"http://{host}:{port}"
         print(f"\n🌐 Opening dashboard at {url}")
         webbrowser.open(url)
-    
+
     print(f"\n🚀 ZYRA Backend Server running at http://{host}:{port}")
     print(f"📡 WebSocket endpoint: ws://{host}:{port}/ws")
     print(f"📋 API docs: http://{host}:{port}/docs")
     print(f"🔍 Health check: http://{host}:{port}/api/health\n")
-    
+
     uvicorn.run(
         app,
         host=host,
