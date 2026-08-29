@@ -5,6 +5,7 @@ Serves the desktop dashboard and provides API/WebSocket endpoints for Zyra
 import os
 import sys
 import json
+import time
 import asyncio
 import threading
 import webbrowser
@@ -13,7 +14,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
@@ -38,6 +39,23 @@ from system_monitor import (
     get_voice_summary,
     is_system_monitor_intent,
     start_system_monitor,
+)
+from nmap_handler import is_nmap_intent
+from backend.nmap_service import (
+    SCAN_OPERATIONS,
+    build_nmap_command,
+    extract_target,
+    get_result,
+    nmap_available,
+    resolve_operation,
+    run_scan,
+    validate_target,
+)
+from backend.nmap_report import (
+    build_report_data,
+    report_to_json,
+    report_to_pdf,
+    report_to_text,
 )
 
 app = FastAPI(
@@ -114,11 +132,221 @@ def broadcast_system_monitor_trigger(metrics: Optional[Dict[str, Any]] = None) -
     """Broadcast system monitor activation to all connected clients."""
     if metrics is None:
         metrics = get_system_metrics()
-    broadcast_message_sync({
-        "type": "show_system_monitor",
-        "data": metrics,
-        "formatted": format_system_monitor_text(metrics),
-    })
+# ========== Nmap Scan Manager ==========
+# Runs scans in background threads (Nmap can take minutes), tracks live status,
+# and broadcasts progress to the dashboard over WebSocket.
+
+_nmap_lock = threading.Lock()
+_nmap_active: Optional[Dict[str, Any]] = None
+_nmap_last: Optional[Dict[str, Any]] = None
+_nmap_last_error: Optional[str] = None
+
+_NMAP_STAGE_PROGRESS = {
+    "initializing": 8,
+    "scanning": 45,
+    "parsing results": 80,
+    "analyzing": 90,
+    "complete": 100,
+    "error": 100,
+}
+
+
+def _nmap_public_state(state: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Strip non-serializable internals before sending scan state to clients."""
+    if not state:
+        return None
+    return {k: v for k, v in state.items() if not k.startswith("_")}
+
+
+def _nmap_set_state(**updates: Any) -> None:
+    """Update the active scan state and broadcast it to all dashboard clients."""
+    snapshot = None
+    with _nmap_lock:
+        if _nmap_active is None:
+            return
+        _nmap_active.update(updates)
+        stage = str(_nmap_active.get("stage", "")).lower()
+        if stage in _NMAP_STAGE_PROGRESS:
+            _nmap_active["progress"] = _NMAP_STAGE_PROGRESS[stage]
+        snapshot = _nmap_public_state(_nmap_active)
+    if snapshot:
+        broadcast_message_sync({"type": "nmap_status", "data": snapshot})
+
+
+def _nmap_run_worker(scan_id: str, operation_key: str, target: str,
+                     ports: Optional[str], request_text: str) -> None:
+    """Background worker executing the whitelisted Nmap operation."""
+    global _nmap_active, _nmap_last
+    try:
+        command = build_nmap_command(operation_key, target, ports=ports)
+        _nmap_set_state(stage="scanning", command=command)
+
+        result = run_scan(operation_key, target, ports=ports,
+                          request_text=request_text)
+
+        if not result.get("success"):
+            err = result.get("error") or result.get("message") or "Scan failed."
+            with _nmap_lock:
+                if _nmap_active is not None:
+                    _nmap_active.update(status="ERROR", stage="error",
+                                        error=err, progress=100)
+                    snapshot = _nmap_public_state(_nmap_active)
+                    _nmap_active = None
+                else:
+                    snapshot = None
+            broadcast_message_sync({"type": "nmap_status", "data": snapshot})
+            broadcast_message_sync({
+                "type": "nmap_error",
+                "data": {"reason": err, "command": command},
+            })
+            return
+
+        hosts = result.get("hosts", [])
+        total_ports = result.get("open_ports_count",
+                                 sum(len(h.get("ports", [])) for h in hosts))
+        services = set()
+        for h in hosts:
+            for p in h.get("ports", []):
+                if p.get("service"):
+                    services.add(str(p["service"]).lower())
+        summary_text = result.get("summary") or ""
+        if not isinstance(summary_text, str):
+            summary_text = ""
+        hosts_up = result.get("hosts_count", len(hosts))
+        chat_response = result.get("chat_response") or (
+            f"Network scan completed. I discovered {hosts_up} active host(s) and "
+            f"{total_ports} open port(s). I've displayed the detailed results in "
+            "the Nmap Scanner panel, where you can generate or download the "
+            "full report."
+        )
+
+        with _nmap_lock:
+            if _nmap_active is not None:
+                _nmap_active.update({
+                    "status": "COMPLETE",
+                    "stage": "complete",
+                    "progress": 100,
+                    "scan_id": result.get("scan_id"),
+                    "command": result.get("command", command),
+                    "chat_response": chat_response,
+                    "summary": {
+                        "hosts_up": hosts_up,
+                        "hosts_total": hosts_up,
+                        "open_ports": total_ports,
+                        "services": len(services),
+                    },
+                    "hosts": hosts,
+                    "observations": result.get("observations", []),
+                    "analysis": result.get("analysis", {}),
+                    "finished_at": time.time(),
+                })
+                snapshot = _nmap_public_state(_nmap_active)
+                _nmap_last = dict(_nmap_active)
+                _nmap_active = None
+            else:
+                snapshot = None
+        broadcast_message_sync({"type": "nmap_status", "data": snapshot})
+
+    except Exception as e:  # Never let the thread die silently
+        with _nmap_lock:
+            if _nmap_active is not None:
+                _nmap_active.update(status="ERROR", stage="error",
+                                    error=str(e), progress=100)
+                snapshot = _nmap_public_state(_nmap_active)
+                _nmap_active = None
+            else:
+                snapshot = None
+        if snapshot:
+            broadcast_message_sync({"type": "nmap_status", "data": snapshot})
+        broadcast_message_sync({"type": "nmap_error", "data": {"reason": str(e)}})
+
+
+# ========== REST API Endpoints ==========
+
+
+def start_nmap_scan(operation_key: str, target: str, ports: Optional[str] = None,
+                    request_text: str = "") -> Dict[str, Any]:
+    """
+    Validate parameters and launch a background Nmap scan.
+
+    Returns a dict with success flag; on failure includes a user-facing error.
+    """
+    global _nmap_active
+
+    if operation_key not in SCAN_OPERATIONS:
+        return {"success": False,
+                "error": f"Unknown scan operation: '{operation_key}'. Valid: {', '.join(sorted(SCAN_OPERATIONS))}"}
+
+    valid, msg = validate_target(target)
+    if not valid:
+        return {"success": False, "error": msg}
+
+    if ports is not None:
+        ports = str(ports).strip() or None
+        if ports and not all(p.strip().isdigit() or "-" in p for p in ports.split(",")):
+            return {"success": False, "error": f"Invalid port specification: '{ports}'"}
+
+    with _nmap_lock:
+        if _nmap_active is not None:
+            return {"success": False,
+                    "error": "A scan is already running. Wait for it to complete or check its status in the Nmap panel."}
+
+        avail = nmap_available()
+        if not avail.get("available"):
+            return {"success": False,
+                    "error": ("Nmap is not installed or cannot be located. "
+                              "Install Nmap and ensure the 'nmap' executable is on your system PATH."),
+                    "error_kind": "nmap_missing"}
+
+        meta = SCAN_OPERATIONS[operation_key]
+        scan_id = f"nmap_{int(time.time() * 1000)}"
+        command = build_nmap_command(operation_key, target, ports=ports)
+        _nmap_active = {
+            "scan_id": scan_id,
+            "operation": operation_key,
+            "operation_label": meta["label"],
+            "request": request_text or meta["label"],
+            "target": target,
+            "ports": ports,
+            "command": command,
+            "status": "SCANNING",
+            "stage": "initializing",
+            "progress": 8,
+            "started_at": time.time(),
+        }
+        snapshot = _nmap_public_state(_nmap_active)
+
+    broadcast_message_sync({"type": "nmap_status", "data": snapshot})
+
+    threading.Thread(
+        target=_nmap_run_worker,
+        args=(scan_id, operation_key, target, ports, request_text),
+        daemon=True,
+        name=f"ZYRA-Nmap-{scan_id}",
+    ).start()
+    return {"success": True, "scan_id": scan_id, "command": command}
+
+
+def get_nmap_state() -> Dict[str, Any]:
+    """Current Nmap module state for the dashboard (active scan or last result)."""
+    with _nmap_lock:
+        active = _nmap_public_state(_nmap_active)
+        last = _nmap_public_state(_nmap_last)
+    avail = nmap_available()
+    return {
+        "nmap_available": bool(avail.get("available")),
+        "nmap_version": avail.get("version", "unknown"),
+        "active": active,
+        "last": last,
+        "operations": {
+            key: {
+                "label": meta["label"],
+                "description": meta.get("description", ""),
+                "default_target": meta.get("default_target", ""),
+            }
+            for key, meta in SCAN_OPERATIONS.items()
+        },
+    }
 
 
 # ========== REST API Endpoints ==========
@@ -358,6 +586,125 @@ async def list_commands():
     }
 
 
+# ========== Nmap Scanner API ==========
+
+@app.get("/api/nmap/state")
+async def nmap_state_endpoint():
+    """Current Nmap module state: availability, operations, active/last scan."""
+    try:
+        return {"success": True, "data": get_nmap_state()}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+@app.get("/api/nmap/operations")
+async def nmap_operations_endpoint():
+    """List whitelisted Nmap operations available to the dashboard."""
+    return {
+        "success": True,
+        "operations": [
+            {"key": key, "label": meta["label"], "description": meta.get("description", ""),
+             "default_target": meta.get("default_target", "")}
+            for key, meta in SCAN_OPERATIONS.items()
+        ],
+    }
+
+
+@app.post("/api/nmap/scan")
+async def nmap_scan_endpoint(data: Dict[str, Any]):
+    """
+    Start a whitelisted Nmap scan (manual or chat/voice triggered).
+
+    Request body:
+    {
+        "operation": "network_discovery",   // required, whitelisted key
+        "target": "192.168.1.0/24",        // required, validated
+        "ports": "80,443",                 // optional
+        "request_text": "Scan my network"  // optional original user phrasing
+    }
+    """
+    operation = (data.get("operation") or data.get("action") or "").strip()
+    target = (data.get("target") or "").strip()
+    ports = data.get("ports")
+    request_text = (data.get("request_text") or data.get("request") or "").strip()
+
+    if not operation and request_text:
+        op_key, _meta = resolve_operation(request_text)
+        operation = op_key
+    if not target:
+        extracted = extract_target(request_text) if request_text else None
+        if extracted:
+            target = extracted
+
+    if not operation:
+        return JSONResponse(status_code=400, content={
+            "success": False,
+            "error": "Provide a 'operation' (whitelisted scan key) or a 'request_text' describing the scan.",
+        })
+
+    result = start_nmap_scan(operation, target, ports=ports, request_text=request_text)
+    if not result.get("success"):
+        return JSONResponse(status_code=400, content=result)
+
+    with _nmap_lock:
+        state = _nmap_public_state(_nmap_active) or {}
+    return {"success": True, "data": state}
+
+
+@app.get("/api/nmap/result/{scan_id}")
+async def nmap_result_endpoint(scan_id: str):
+    """Fetch a stored scan result by id."""
+    result = get_result(scan_id)
+    if not result:
+        return JSONResponse(status_code=404,
+                            content={"success": False, "error": f"Scan result '{scan_id}' not found or expired."})
+    pub = {k: v for k, v in result.items() if not k.startswith("_")}
+    return {"success": True, "data": pub}
+
+
+@app.get("/api/nmap/report/{scan_id}")
+async def nmap_report_endpoint(scan_id: str, format: str = "json"):
+    """
+    Generate and download a scan report.
+
+    format=json  -> structured machine-readable JSON
+    format=pdf   -> human-readable PDF cybersecurity report
+    format=txt   -> plain-text report
+    """
+    result = get_result(scan_id)
+    if not result:
+        return JSONResponse(status_code=404,
+                            content={"success": False, "error": f"Scan result '{scan_id}' not found or expired. Run a scan first."})
+    fmt = (format or "json").lower()
+    try:
+        report = build_report_data(result)
+        if fmt in ("json",):
+            content = report_to_json(report)
+            return Response(
+                content=content,
+                media_type="application/json",
+                headers={"Content-Disposition": f'attachment; filename="zyra_nmap_report_{scan_id}.json"'},
+            )
+        if fmt in ("pdf",):
+            pdf_bytes = report_to_pdf(report)
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="zyra_nmap_report_{scan_id}.pdf"'},
+            )
+        if fmt in ("txt", "text"):
+            return Response(
+                content=report_to_text(report),
+                media_type="text/plain; charset=utf-8",
+                headers={"Content-Disposition": f'attachment; filename="zyra_nmap_report_{scan_id}.txt"'},
+            )
+        return JSONResponse(status_code=400,
+                            content={"success": False, "error": f"Unsupported format '{format}'. Use json, pdf or txt."})
+    except Exception as e:
+        return JSONResponse(status_code=500,
+                            content={"success": False, "error": f"Report generation failed: {e}"})
+
+
 # ========== WebSocket Endpoint ==========
 
 @app.websocket("/ws")
@@ -435,6 +782,16 @@ async def websocket_endpoint(websocket: WebSocket):
                         "formatted": format_system_monitor_text(metrics),
                     })
 
+                # Nmap intent (chat or voice): launch the whitelisted scan in a
+                # background thread. The thread opens the Nmap Scanner panel and
+                # streams live status into it; no double scan from the chat path.
+                if result.get("action") == "nmap_scan":
+                    launch_nmap_scan(
+                        request_text=result.get("nmap_request") or (
+                            msg_data if isinstance(msg_data, str) else ""
+                        ),
+                    )
+
                 # If it's a voice command with a response, also broadcast to all
                 if msg_type == "voice" and result.get("success"):
                     voice_data = result.get("data", {})
@@ -444,11 +801,38 @@ async def websocket_endpoint(websocket: WebSocket):
                             "data": voice_data["response"]
                         })
 
-            except Exception as e:
-                await manager.send_personal(
-                    {"type": "error", "success": False, "error": str(e)},
-                    websocket
+                # ── Nmap intent from chat or voice ──
+                # Launch the whitelisted scan in a background thread and
+                # auto-open the Nmap Scanner panel on the dashboard.
+                nmap_text = ""
+                if isinstance(msg_data, str):
+                    nmap_text = msg_data
+                elif isinstance(msg_data, dict):
+                    nmap_text = msg_data.get("text") or msg_data.get("message") or ""
+                nmap_intent = (
+                    msg_type in ("chat", "voice")
+                    and bool(nmap_text)
+                    and (result.get("action") == "nmap_scan" or is_nmap_intent(nmap_text))
                 )
+                if nmap_intent:
+                    op_key, op_meta = resolve_operation(nmap_text)
+                    n_target = extract_target(nmap_text) or op_meta.get("default_target", "127.0.0.1")
+                    launch = start_nmap_scan(op_key, n_target, request_text=nmap_text)
+                    if launch.get("success"):
+                        with _nmap_lock:
+                            state = _nmap_public_state(_nmap_active) or {}
+                        await manager.broadcast({
+                            "type": "show_nmap_scanner",
+                            "data": state,
+                        })
+                    else:
+                        await manager.send_personal(
+                            {
+                                "type": "nmap_error",
+                                "data": {"reason": launch.get("error", "Scan could not be started.")},
+                            },
+                            websocket,
+                        )
 
             except Exception as e:
                 await manager.send_personal(

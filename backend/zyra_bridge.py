@@ -43,6 +43,17 @@ from backend.link_security import (
     extract_url,
 )
 
+# ── Nmap Network Scanner Module (backend service layer) ──
+from backend.nmap_service import (
+    is_nmap_intent,
+    resolve_operation,
+    extract_target,
+    validate_target,
+    run_scan,
+    nmap_available,
+    build_nmap_command,
+)
+
 # Command map for executing voice commands programmatically
 COMMAND_MAP = {
     "open_chrome": open_chrome,
@@ -91,6 +102,25 @@ _voice_thread: Optional[threading.Thread] = None
 _voice_running = False
 
 
+def _nmap_starting_message(text: str) -> str:
+    """
+    Build a concise chat/voice response for an Nmap scanning request.
+
+    The scan itself is executed asynchronously by the server (which broadcasts
+    live status + results to the Nmap Scanner panel), so this just confirms
+    what Zyra is about to do.
+    """
+    op_key, op = resolve_operation(text)
+    target = extract_target(text) or op.get("default_target", "127.0.0.1")
+    valid, msg = validate_target(target)
+    if not valid:
+        return f"I couldn't use that target. {msg}"
+    return (
+        f"Running a {op['label']} scan on {target}. I'll show the live results "
+        f"in the Nmap Scanner panel when it completes."
+    )
+
+
 def process_chat(message: str) -> str:
     """
     Process a chat message through Zyra's AI brain.
@@ -113,6 +143,12 @@ def process_chat(message: str) -> str:
     # ── System Monitor ──
     if is_system_monitor_intent(message):
         return format_system_monitor_text()
+
+    # ── Nmap Network Scanner ──
+    # Intent detection is handled by the backend; the actual scan runs in the
+    # server (background thread) which then broadcasts the Nmap Scanner panel.
+    if is_nmap_intent(message):
+        return _nmap_starting_message(message)
 
     answer = ask_ai(message)
     return answer
@@ -221,6 +257,16 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
             "action": "system_monitor",
             "metrics": metrics,
             "formatted": format_system_monitor_text(metrics),
+        }
+
+    # ── Nmap Network Scanner intent ──
+    # The actual scan is executed by the server in a background thread, which
+    # then broadcasts live status + results to the Nmap Scanner panel.
+    if is_nmap_intent(text):
+        return {
+            "response": _nmap_starting_message(text),
+            "action": "nmap_scan",
+            "nmap_request": text,
         }
 
     # Check command map (natural language matching)
@@ -415,6 +461,18 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             "data": metrics,
             "formatted": format_system_monitor_text(metrics),
             "summary": get_voice_summary(metrics),
+        }
+
+    elif message_type == "nmap_status":
+        # Report whether Nmap is installed + list available scan operations.
+        status = nmap_available()
+        return {
+            "success": True,
+            "data": {
+                "available": status.get("available", False),
+                "version": status.get("version", "unknown"),
+                "error": status.get("error"),
+            },
         }
 
     return {"success": False, "error": f"Unknown type: {message_type}"}

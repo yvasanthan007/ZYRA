@@ -32,6 +32,7 @@ from system_monitor import (
     get_voice_summary,
     get_system_metrics,
 )
+from nmap_handler import handle_nmap_intent, is_nmap_intent
 
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
@@ -494,6 +495,12 @@ if __name__ == "__main__":
                         print(f"📈 Risk Score: {result['score']}")
                         print(f"⚖️  Verdict: {result['verdict']}")
                         print(f"🗣️  Speech: {result['speech_text']}")
+
+                elif is_nmap_intent(command):
+                    # Network scanning with Nmap
+                    # Discovers hosts, scans ports, detects services,
+                    # and identifies security vulnerabilities
+                    result = handle_nmap_intent(command)
 
                 elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
                     speak("Goodbye. Have a nice day.")

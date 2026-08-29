@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<?xml-stylesheet href="file:///C:/Program Files (x86)/Nmap/nmap.xsl" type="text/xsl"?>
+<!-- Nmap 7.98 scan initiated Sat Aug 29 19:39:49 2026 as: nmap -oX nmap_scan_20260829_193948.xml -sS -sV -O -A -T4 -p- -&#45;script=default,vuln 10.118.80.90 -->
+<nmaprun scanner="nmap" args="nmap -oX nmap_scan_20260829_193948.xml -sS -sV -O -A -T4 -p- -&#45;script=default,vuln 10.118.80.90" start="1788012589" startstr="Sat Aug 29 19:39:49 2026" version="7.98" xmloutputversion="1.05">
+<scaninfo type="syn" protocol="tcp" numservices="65535" services="1-65535"/>
