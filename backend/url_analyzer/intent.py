@@ -36,6 +36,15 @@ _URL_NOUNS = [
     "domain", "this", "that", "it",
 ]
 
+# Safety-verdict words: when a URL is present together with one of these the
+# message is a link-safety question even without a dedicated verb
+# ("Is https://example.com safe?", "Is this website malicious?").
+_SAFETY_QUESTION_WORDS = [
+    "safe", "unsafe", "suspicious", "dangerous", "legit", "legitimate",
+    "secure", "trustworthy", "malicious", "scam", "fraud", "phish",
+    "compromised", "hacked", "reliable",
+]
+
 _BARE_URL_RE = re.compile(r"(https?://|www\.)\S+", re.IGNORECASE)
 
 
@@ -43,11 +52,15 @@ def is_url_analysis_intent(text: str) -> bool:
     """
     True when the message should activate the URL Analyzer.
 
-    Rules:
-      - A URL is present AND any analysis trigger/verb appears, OR
-      - a URL is present AND an analysis noun appears ("scan this url"), OR
-      - an explicit 'safe/malicious/phishing' question about a link/site,
-        even without a URL in the text (user will be asked for the URL).
+    Rules (strongest first):
+      - A URL is present AND any analysis trigger/verb appears:
+        "Analyze https://example.com", "Check https://example.com"
+      - A URL is present AND a safety-verdict word appears — this catches
+        question form: "Is https://example.com safe?", "Is it secure?",
+        "Is this website malicious?"
+      - A URL is present AND an analysis noun appears ("scan this url")
+      - No URL but an explicit link-safety phrase is present ("check this
+        url for phishing") — the user will be asked for the URL.
     """
     if not text:
         return False
@@ -56,12 +69,11 @@ def is_url_analysis_intent(text: str) -> bool:
     has_url = extract_url(t) is not None or bool(_BARE_URL_RE.search(t))
     has_trigger = any(k in t for k in _ANALYSIS_TRIGGERS)
     has_noun = any(k in t for k in _URL_NOUNS)
+    has_safety_word = any(k in t for k in _SAFETY_QUESTION_WORDS)
 
-    if has_url and has_trigger:
+    if has_url and (has_trigger or has_safety_word or has_noun):
         return True
-    if has_url and has_noun and any(k in t for k in ("safe", "malicious", "phishing", "threat", "check", "scan", "analyze", "analyse")):
-        return True
-    # No URL but a clear link-safety question → intent without target
+    # No URL in the text, but a clear link-safety phrase → ask for the URL.
     if not has_url and has_trigger and has_noun:
         return True
     return False

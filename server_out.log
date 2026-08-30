@@ -1,0 +1,15 @@
+pygame 2.6.1 (SDL 2.28.4, Python 3.13.5)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+INFO:     127.0.0.1:10794 - "POST /api/url/analyze HTTP/1.1" 200 OK
+[URL ANALYZER] on_complete callback failed: cannot access local variable '_url_active' where it is not associated with a value
+INFO:     127.0.0.1:59059 - "POST /api/url/analyze HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:59059 - "GET /api/url/status/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59059 - "GET /api/url/result/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59080 - "GET /api/url/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59100 - "GET /api/url/status/url_20260830_141217_7123f8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59100 - "GET /api/url/result/url_20260830_141217_7123f8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59130 - "GET /api/url/report/url_20260830_141217_7123f8?format=pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64094 - "GET /api/url/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64095 - "POST /api/url/analyze HTTP/1.1" 200 OK
+[URL ANALYZER] on_complete callback failed: cannot access local variable '_url_active' where it is not associated with a value
+INFO:     127.0.0.1:1977 - "POST /api/url/analyze HTTP/1.1" 200 OK

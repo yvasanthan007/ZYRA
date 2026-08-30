@@ -63,7 +63,7 @@ def build_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
         "domain": {
             "registered_domain": domain.get("registered_domain", ""),
             "subdomain_count": domain.get("subdomain_count", 0),
-            "dns": ("Resolved — " + ", ".join((domain.get("ips") or [])[:3]))
+            "dns": ("Resolved - " + ", ".join((domain.get("ips") or [])[:3]))
                     if domain.get("resolved") else "Could not be resolved",
             "whois": "Available" if domain.get("whois_available")
                      else "Information unavailable",
@@ -107,6 +107,18 @@ def report_to_text(report_data: Dict[str, Any]) -> str:
     L.append(f"  Safety Score:   {final.get('safety_score', 0)} / 100")
     L.append(f"  Risk Level:     {final.get('risk_level', '-')}")
     L.append(f"  Classification: {final.get('classification', '-')}")
+    L.append("")
+
+    ui = report_data.get("url_information", {})
+    L.append("URL INFORMATION")
+    L.append("-" * 40)
+    L.append(f"  Protocol:       {ui.get('protocol', '-')}")
+    L.append(f"  Domain:         {ui.get('domain', '-')}")
+    L.append(f"  IP:             {ui.get('ip', '-')}")
+    L.append(f"  Port:           {ui.get('port', '-')}")
+    L.append(f"  Path:           {ui.get('path', '-')}")
+    L.append(f"  Redirects:      {ui.get('redirects', 0)}")
+    L.append("")
 
     ssl = report_data.get("ssl", {})
     L.append("SSL/TLS ANALYSIS")
@@ -257,18 +269,4 @@ def report_filename(result: Dict[str, Any]) -> str:
               or "scan")
     domain = "".join(c for c in str(domain) if c.isalnum() or c in ".-") or "scan"
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    return f"ZYRA_URL_Analysis_{domain}_{stamp}.pdf"
-
-    L.append("")
-
-    ui = report_data.get("url_information", {})
-    L.append("URL INFORMATION")
-    L.append("-" * 40)
-    L.append(f"  Protocol:       {ui.get('protocol', '-')}")
-    L.append(f"  Domain:         {ui.get('domain', '-')}")
-    L.append(f"  IP:             {ui.get('ip', '-')}")
-    L.append(f"  Port:           {ui.get('port', '-')}")
-    L.append(f"  Path:           {ui.get('path', '-')}")
-    L.append(f"  Redirects:      {ui.get('redirects', 0)}")
-    L.append("")
-    return "\n".join(L)
+    return f"ZYRA_URL_Analysis_{domain}_{stamp}"

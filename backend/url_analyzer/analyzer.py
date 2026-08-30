@@ -1,4 +1,4 @@
-﻿"""
+"""
 backend/url_analyzer/analyzer.py â€” URL scan pipeline orchestrator
 
 Runs the full backend analysis pipeline and produces the structured result
@@ -107,14 +107,15 @@ def get_scan_state(scan_id: str):
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def start_scan(url: str, source: str = "panel", on_stage=None,
-               on_complete=None) -> dict:
+               on_complete=None, scan_id: str = None) -> dict:
     """
     Create a scan record and run the analysis in a background thread.
 
     Returns {"success": bool, "scan_id": ..., "error": ...} â€” safe to call
     from async FastAPI handlers.
     """
-    scan_id = f"url_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+    if scan_id is None:
+        scan_id = f"url_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
     state = {
         "scan_id": scan_id,
         "url": (url or "").strip(),
@@ -148,6 +149,26 @@ def start_scan(url: str, source: str = "panel", on_stage=None,
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Redirect probe (SSRF-guarded, no content execution)
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def _run_with_timeout(func, args=(), kwargs=None, timeout=20):
+    """Run func in a worker thread; return its result or None on timeout."""
+    import threading
+    kwargs = kwargs or {}
+    box = {}
+    def _worker():
+        try:
+            box["result"] = func(*args, **kwargs)
+        except Exception as e:  # noqa: BLE001
+            box["error"] = e
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
+        return None, "timeout"
+    if "error" in box:
+        return None, box["error"]
+    return box.get("result"), None
+
 
 def _probe_redirects(url: str, parts: dict, domain_info: dict) -> dict:
     """Follow redirects manually (max 5) with re-validation of each hop."""
@@ -309,7 +330,11 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     # â”€â”€ Stage: CHECKING DNS â”€â”€
     emit("dns", "running")
     try:
-        domain_info = analyze_dns(url, parts)
+        _dns, _derr = _run_with_timeout(analyze_dns, args=(url, parts), timeout=15)
+        if _dns is not None:
+            domain_info = _dns
+        else:
+            raise TimeoutError("DNS analysis timed out.") if _derr == "timeout" else _derr
     except Exception as e:
         domain_info = {
             "hostname": parts["hostname"], "registered_domain": parts["hostname"],
@@ -325,7 +350,11 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     # â”€â”€ Stage: ANALYZING SSL/TLS â”€â”€
     emit("ssl", "running")
     try:
-        ssl_info = analyze_ssl(url, parts)
+        _ssl, _serr = _run_with_timeout(analyze_ssl, args=(url, parts), timeout=15)
+        if _ssl is not None:
+            ssl_info = _ssl
+        else:
+            raise TimeoutError("SSL analysis timed out.") if _serr == "timeout" else _serr
     except Exception as e:
         ssl_info = {
             "checked": False, "status": "unreachable",
@@ -342,7 +371,13 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     # â”€â”€ Stage: ANALYZING REDIRECTS â”€â”€
     emit("redirects", "running")
     try:
-        redirect_info = _probe_redirects(url, parts, domain_info)
+        _redir, _rerr = _run_with_timeout(
+            _probe_redirects, args=(url, parts, domain_info), timeout=20)
+        if _redir is not None:
+            redirect_info = _redir
+        else:
+            reason = "Redirect probe timed out." if _rerr == "timeout" else f"Redirect probe error ({type(_rerr).__name__})."
+            redirect_info = {"chain": [], "note": reason}
     except Exception as e:
         redirect_info = {"chain": [], "note": f"Redirect probe error ({type(e).__name__})."}
     emit("redirects", "fail" if redirect_info.get("blocked") else "done",
@@ -355,7 +390,7 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     # â”€â”€ Stage: CHECKING REPUTATION â”€â”€
     emit("reputation", "running")
     try:
-        reputation = check_reputation(url, parts)
+        reputation = check_reputation(url, parts.get("hostname") or "")
     except Exception as e:
         reputation = {
             "available": False, "provider": None,
@@ -421,8 +456,10 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     if on_complete:
         try:
             on_complete(result)
-        except Exception:
-            pass
+        except Exception as _e:
+            import traceback as _tb
+            print(f"[URL ANALYZER] on_complete callback failed: {_e}")
+            _tb.print_exc()
     return result
 
 

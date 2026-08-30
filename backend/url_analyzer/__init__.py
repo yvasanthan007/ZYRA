@@ -21,6 +21,7 @@ keys: every check runs here, in the backend.
 from backend.url_analyzer.analyzer import (  # noqa: F401
     SCAN_STAGES,
     STAGE_PROGRESS,
+    build_voice_summary,
     get_history,
     get_last_scan,
     get_scan,
@@ -45,6 +46,7 @@ __all__ = [
     "STAGE_PROGRESS",
     "build_chat_ack",
     "build_report_data",
+    "build_voice_summary",
     "extract_target_url",
     "get_history",
     "get_last_scan",

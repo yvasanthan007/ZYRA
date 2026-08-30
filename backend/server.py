@@ -371,6 +371,28 @@ _url_lock = threading.Lock()
 _url_active: Optional[Dict[str, Any]] = None
 _url_last: Optional[Dict[str, Any]] = None
 
+# ── URL analysis rate limiting ──
+# Sliding-window limiter: at most _URL_RATE_MAX scans per _URL_RATE_WINDOW
+# seconds. Applied to every entry point (panel button, chat intent, voice
+# intent) so the analyzer can't be hammered.
+_URL_RATE_MAX = 5
+_URL_RATE_WINDOW = 60.0
+_url_rate_stamps: list = []
+_url_rate_lock = threading.Lock()
+
+
+def _url_rate_allowed() -> bool:
+    """Return True when a new scan may start (enforces a sliding window)."""
+    now = time.time()
+    with _url_rate_lock:
+        _url_rate_stamps[:] = [
+            t for t in _url_rate_stamps if now - t < _URL_RATE_WINDOW
+        ]
+        if len(_url_rate_stamps) >= _URL_RATE_MAX:
+            return False
+        _url_rate_stamps.append(now)
+        return True
+
 
 def _url_public_state(state: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """Strip non-serializable internals before sending scan state to clients."""
@@ -399,8 +421,9 @@ def _url_run_worker(scan_id: str, url: str, source: str) -> None:
             _url_set_state(**stage_update)
 
         def on_complete(result):
+            global _url_active, _url_last
             with _url_lock:
-                if _url_active is not None:
+                if _url_active is not None and _url_active.get("scan_id") == scan_id:
                     _url_active.update({
                         "status": "COMPLETE",
                         "stage": "complete",
@@ -409,7 +432,7 @@ def _url_run_worker(scan_id: str, url: str, source: str) -> None:
                         "progress": 100,
                         "result": result,
                         "scan_id": result.get("scan_id", scan_id),
-                        "chat_response": build_chat_ack(result),
+                        "chat_response": build_chat_ack(result.get("url")),
                         "voice_summary": build_voice_summary(result),
                         "finished_at": time.time(),
                     })
@@ -421,7 +444,7 @@ def _url_run_worker(scan_id: str, url: str, source: str) -> None:
             if snapshot:
                 broadcast_message_sync({"type": "url_status", "data": snapshot})
 
-        start_scan(url, source=source, on_stage=on_stage, on_complete=on_complete)
+        start_scan(url, source=source, on_stage=on_stage, on_complete=on_complete, scan_id=scan_id)
 
     except Exception as e:
         with _url_lock:
@@ -437,23 +460,93 @@ def _url_run_worker(scan_id: str, url: str, source: str) -> None:
         broadcast_message_sync({"type": "url_error", "data": {"reason": str(e)}})
 
 
+# Maximum wall-clock lifetime of a URL scan. The pipeline's own timeouts
+# (DNS/TLS/HTTP) already bound individual network ops, but a hung worker
+# thread must never permanently block all future scans, so this watchdog
+# forcibly clears _url_active once the deadline is exceeded.
+_URL_SCAN_MAX_LIFETIME = 90  # seconds
+
+
+def _url_watchdog(scan_id: str, deadline: float) -> None:
+    """Clear a stuck _url_active once it passes its deadline."""
+    global _url_active
+    while time.time() < deadline:
+        with _url_lock:
+            active = _url_active
+        if active is None or active.get("scan_id") != scan_id:
+            return  # scan finished normally
+        remaining = deadline - time.time()
+        if remaining <= 0:
+            break
+        time.sleep(min(2.0, remaining))
+    snapshot = None
+    with _url_lock:
+        active = _url_active
+        if active is not None and active.get("scan_id") == scan_id:
+            _url_active.update({
+                "status": "ERROR",
+                "stage": "error",
+                "stage_label": "ANALYSIS TIMED OUT",
+                "stage_status": "fail",
+                "progress": 100,
+                "error": "Unable to reach the destination within the allowed time.",
+                "finished_at": time.time(),
+            })
+            snapshot = _url_public_state(_url_active)
+            _url_last = dict(_url_active)
+            _url_active = None
+    if snapshot:
+        broadcast_message_sync({"type": "url_status", "data": snapshot})
+        broadcast_message_sync({
+            "type": "url_error",
+            "data": {"reason": snapshot.get("error", "Scan timed out.")},
+        })
+
+
 def start_url_scan(url: str, source: str = "panel") -> Dict[str, Any]:
     """Validate and launch a background URL analysis scan."""
     global _url_active
     if not url or not url.strip():
         return {"success": False, "error": "Please enter a valid URL."}
 
+    if not _url_rate_allowed():
+        return {
+            "success": False,
+            "error": ("Too many URL analyses in a short time. "
+                      "Please wait a moment before starting another scan."),
+        }
+
+    now = time.time()
     with _url_lock:
         if _url_active is not None:
-            return {"success": False,
-                    "error": "A URL scan is already running. Wait for it to complete."}
+            # Recover from a previously hung scan: if it has exceeded its
+            # max lifetime, treat it as timed out so the dashboard can move on.
+            if now - float(_url_active.get("started_at") or 0) > _URL_SCAN_MAX_LIFETIME:
+                _url_active.update({
+                    "status": "ERROR", "stage": "error",
+                    "stage_label": "ANALYSIS TIMED OUT",
+                    "stage_status": "fail", "progress": 100,
+                    "error": "Unable to reach the destination within the allowed time.",
+                    "finished_at": now,
+                })
+                stale = _url_public_state(_url_active)
+                _url_last = dict(_url_active)
+                _url_active = None
+                broadcast_message_sync({"type": "url_status", "data": stale})
+            else:
+                return {"success": False,
+                        "error": "A URL scan is already running. Wait for it to complete."}
 
-        scan_result = start_scan(url.strip(), source=source)
-        if not scan_result.get("success"):
-            return scan_result
-
-        scan_id = scan_result["scan_id"]
-        state = get_scan_state(scan_id)
+        # Generate the scan id here and pass it through to the worker,
+        # which calls start_scan(scan_id=...) with the callbacks. Do NOT
+        # call start_scan() here — that would spawn a second callback-less
+        # inner thread and desync the scan registry from _url_active.
+        from datetime import datetime as _dt
+        import uuid as _uuid
+        scan_id = f"url_{_dt.now().strftime('%Y%m%d_%H%M%S')}_{_uuid.uuid4().hex[:6]}"
+        from backend.url_analyzer.analyzer import SCAN_STAGES as _URL_STAGES
+        state = {"stages": [{"key": k, "label": l, "status": "pending"}
+                            for k, l in _URL_STAGES]}
         _url_active = {
             "scan_id": scan_id,
             "url": url.strip(),
@@ -468,6 +561,7 @@ def start_url_scan(url: str, source: str = "panel") -> Dict[str, Any]:
             "error": None,
         }
         snapshot = _url_public_state(_url_active)
+        deadline = _url_active["started_at"] + _URL_SCAN_MAX_LIFETIME
 
     broadcast_message_sync({"type": "url_status", "data": snapshot})
 
@@ -476,6 +570,12 @@ def start_url_scan(url: str, source: str = "panel") -> Dict[str, Any]:
         args=(scan_id, url.strip(), source),
         daemon=True,
         name=f"ZYRA-URL-{scan_id}",
+    ).start()
+    threading.Thread(
+        target=_url_watchdog,
+        args=(scan_id, deadline),
+        daemon=True,
+        name=f"ZYRA-URL-WD-{scan_id}",
     ).start()
     return {"success": True, "scan_id": scan_id}
 
@@ -1028,16 +1128,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         "data": metrics,
                         "formatted": format_system_monitor_text(metrics),
                     })
-
-                # Nmap intent (chat or voice): launch the whitelisted scan in a
-                # background thread. The thread opens the Nmap Scanner panel and
-                # streams live status into it; no double scan from the chat path.
-                if result.get("action") == "nmap_scan":
-                    launch_nmap_scan(
-                        request_text=result.get("nmap_request") or (
-                            msg_data if isinstance(msg_data, str) else ""
-                        ),
-                    )
 
                 # If it's a voice command with a response, also broadcast to all
                 if msg_type == "voice" and result.get("success"):
