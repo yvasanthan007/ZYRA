@@ -57,6 +57,21 @@ from backend.nmap_report import (
     report_to_pdf,
     report_to_text,
 )
+from backend.url_analyzer import (
+    SCAN_STAGES,
+    build_chat_ack,
+    build_report_data as url_build_report_data,
+    build_voice_summary,
+    extract_target_url,
+    get_history,
+    get_last_scan,
+    get_scan_state,
+    is_url_analysis_intent,
+    report_filename,
+    report_to_pdf as url_report_to_pdf,
+    report_to_text as url_report_to_text,
+    start_scan,
+)
 
 app = FastAPI(
     title="ZYRA AI Assistant API",
@@ -347,6 +362,122 @@ def get_nmap_state() -> Dict[str, Any]:
             for key, meta in SCAN_OPERATIONS.items()
         },
     }
+
+
+# ========== URL Analyzer Scan Manager ==========
+# Tracks live URL analysis scans and broadcasts progress to the dashboard.
+
+_url_lock = threading.Lock()
+_url_active: Optional[Dict[str, Any]] = None
+_url_last: Optional[Dict[str, Any]] = None
+
+
+def _url_public_state(state: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Strip non-serializable internals before sending scan state to clients."""
+    if not state:
+        return None
+    return {k: v for k, v in state.items() if not k.startswith("_")}
+
+
+def _url_set_state(**updates: Any) -> None:
+    """Update the active URL scan state and broadcast it to all dashboard clients."""
+    snapshot = None
+    with _url_lock:
+        if _url_active is None:
+            return
+        _url_active.update(updates)
+        snapshot = _url_public_state(_url_active)
+    if snapshot:
+        broadcast_message_sync({"type": "url_status", "data": snapshot})
+
+
+def _url_run_worker(scan_id: str, url: str, source: str) -> None:
+    """Background worker executing the URL analysis pipeline."""
+    global _url_active, _url_last
+    try:
+        def on_stage(stage_update, full_state):
+            _url_set_state(**stage_update)
+
+        def on_complete(result):
+            with _url_lock:
+                if _url_active is not None:
+                    _url_active.update({
+                        "status": "COMPLETE",
+                        "stage": "complete",
+                        "stage_label": "ANALYSIS COMPLETE",
+                        "stage_status": "done",
+                        "progress": 100,
+                        "result": result,
+                        "scan_id": result.get("scan_id", scan_id),
+                        "chat_response": build_chat_ack(result),
+                        "voice_summary": build_voice_summary(result),
+                        "finished_at": time.time(),
+                    })
+                    snapshot = _url_public_state(_url_active)
+                    _url_last = dict(_url_active)
+                    _url_active = None
+                else:
+                    snapshot = None
+            if snapshot:
+                broadcast_message_sync({"type": "url_status", "data": snapshot})
+
+        start_scan(url, source=source, on_stage=on_stage, on_complete=on_complete)
+
+    except Exception as e:
+        with _url_lock:
+            if _url_active is not None:
+                _url_active.update(status="ERROR", stage="error",
+                                    error=str(e), progress=100)
+                snapshot = _url_public_state(_url_active)
+                _url_active = None
+            else:
+                snapshot = None
+        if snapshot:
+            broadcast_message_sync({"type": "url_status", "data": snapshot})
+        broadcast_message_sync({"type": "url_error", "data": {"reason": str(e)}})
+
+
+def start_url_scan(url: str, source: str = "panel") -> Dict[str, Any]:
+    """Validate and launch a background URL analysis scan."""
+    global _url_active
+    if not url or not url.strip():
+        return {"success": False, "error": "Please enter a valid URL."}
+
+    with _url_lock:
+        if _url_active is not None:
+            return {"success": False,
+                    "error": "A URL scan is already running. Wait for it to complete."}
+
+        scan_result = start_scan(url.strip(), source=source)
+        if not scan_result.get("success"):
+            return scan_result
+
+        scan_id = scan_result["scan_id"]
+        state = get_scan_state(scan_id)
+        _url_active = {
+            "scan_id": scan_id,
+            "url": url.strip(),
+            "source": source,
+            "status": "RUNNING",
+            "stage": "initializing",
+            "stage_label": "INITIALIZING URL ANALYZER...",
+            "stage_status": "running",
+            "progress": 4,
+            "stages": state.get("stages", []) if state else [],
+            "started_at": time.time(),
+            "error": None,
+        }
+        snapshot = _url_public_state(_url_active)
+
+    broadcast_message_sync({"type": "url_status", "data": snapshot})
+
+    threading.Thread(
+        target=_url_run_worker,
+        args=(scan_id, url.strip(), source),
+        daemon=True,
+        name=f"ZYRA-URL-{scan_id}",
+    ).start()
+    return {"success": True, "scan_id": scan_id}
 
 
 # ========== REST API Endpoints ==========
@@ -705,6 +836,122 @@ async def nmap_report_endpoint(scan_id: str, format: str = "json"):
                             content={"success": False, "error": f"Report generation failed: {e}"})
 
 
+# ========== URL Analyzer API ==========
+
+
+@app.post("/api/url/analyze")
+async def url_analyze_endpoint(data: Dict[str, Any]):
+    """
+    Start a URL security analysis scan.
+
+    Request body:
+    {
+        "url": "https://example.com",
+        "source": "panel" | "chat" | "voice"   // optional, default "panel"
+    }
+
+    Response:
+    {"success": true, "scan_id": "url_..."}
+    """
+    url = (data.get("url") or "").strip()
+    source = (data.get("source") or "panel").strip()
+    if not url:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Provide a 'url' to analyze."}
+        )
+    result = start_url_scan(url, source=source)
+    if not result.get("success"):
+        return JSONResponse(status_code=400, content=result)
+    return {"success": True, "scan_id": result["scan_id"]}
+
+
+@app.get("/api/url/status/{scan_id}")
+async def url_status_endpoint(scan_id: str):
+    """Current live status of a URL scan (for polling fallback)."""
+    state = get_scan_state(scan_id)
+    if not state:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "error": f"Scan '{scan_id}' not found."}
+        )
+    return {"success": True, "data": state}
+
+
+@app.get("/api/url/result/{scan_id}")
+async def url_result_endpoint(scan_id: str):
+    """Fetch a completed scan's full result payload."""
+    state = get_scan_state(scan_id)
+    if not state:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "error": f"Scan '{scan_id}' not found."}
+        )
+    result = state.get("result")
+    if not result:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Scan has not completed yet."}
+        )
+    return {"success": True, "data": result}
+
+
+@app.get("/api/url/report/{scan_id}")
+async def url_report_endpoint(scan_id: str, format: str = "json"):
+    """
+    Generate a URL analysis report.
+
+    format=json  -> structured result payload
+    format=txt   -> plain-text report
+    format=pdf   -> downloadable PDF report
+    """
+    state = get_scan_state(scan_id)
+    if not state:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "error": f"Scan '{scan_id}' not found. Run a scan first."}
+        )
+    result = state.get("result")
+    if not result:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Scan has not completed yet."}
+        )
+    fmt = (format or "json").lower()
+    try:
+        report = url_build_report_data(result)
+        if fmt == "json":
+            return {"success": True, "data": report}
+        if fmt in ("txt", "text"):
+            return Response(
+                content=url_report_to_text(report),
+                media_type="text/plain; charset=utf-8",
+                headers={"Content-Disposition": f'attachment; filename="{report_filename(result)}.txt"'},
+            )
+        if fmt == "pdf":
+            pdf_bytes = url_report_to_pdf(report)
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{report_filename(result)}.pdf"'},
+            )
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": f"Unsupported format '{format}'. Use json, pdf or txt."}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Report generation failed: {e}"}
+        )
+
+
+@app.get("/api/url/history")
+async def url_history_endpoint():
+    """Recent URL scan history for the panel."""
+    return {"success": True, "data": get_history(8)}
+
+
 # ========== WebSocket Endpoint ==========
 
 @app.websocket("/ws")
@@ -830,6 +1077,51 @@ async def websocket_endpoint(websocket: WebSocket):
                             {
                                 "type": "nmap_error",
                                 "data": {"reason": launch.get("error", "Scan could not be started.")},
+                            },
+                            websocket,
+                        )
+
+                # ── URL analysis intent from chat or voice ──
+                # Detect the intent, extract the URL, open the URL Analyzer panel
+                # and start the scan. The panel streams live progress from the
+                # background worker.
+                url_text = ""
+                if isinstance(msg_data, str):
+                    url_text = msg_data
+                elif isinstance(msg_data, dict):
+                    url_text = msg_data.get("text") or msg_data.get("message") or ""
+                url_intent = (
+                    msg_type in ("chat", "voice")
+                    and bool(url_text)
+                    and is_url_analysis_intent(url_text)
+                )
+                if url_intent:
+                    target_url = extract_target_url(url_text)
+                    if target_url:
+                        source = "voice" if msg_type == "voice" else "chat"
+                        launch = start_url_scan(target_url, source=source)
+                        if launch.get("success"):
+                            with _url_lock:
+                                state = _url_public_state(_url_active) or {}
+                            await manager.broadcast({
+                                "type": "show_url_analyzer",
+                                "data": state,
+                                "url": target_url,
+                            })
+                        else:
+                            await manager.send_personal(
+                                {
+                                    "type": "url_error",
+                                    "data": {"reason": launch.get("error", "URL analysis could not be started.")},
+                                },
+                                websocket,
+                            )
+                    else:
+                        await manager.send_personal(
+                            {
+                                "type": "response",
+                                "success": True,
+                                "data": "I detected a URL analysis request, but could not extract a valid URL. Please provide a full URL like https://example.com.",
                             },
                             websocket,
                         )
