@@ -45,9 +45,21 @@ canvas {
   pointer-events: auto;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 16px 28px;
   background: linear-gradient(180deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
+}
+
+/* ZYRA Neural Core at the very top-left, with the feature buttons stacked
+   directly below it (Nmap Scanner, then URL Analyzer). */
+.top-left-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.top-left-stack .top-actions-col {
+  align-items: flex-start;
 }
 
 .top-brand {
@@ -530,10 +542,10 @@ canvas {
 
 .nmap-scanner-card {
   position: absolute;
-  top: 70px;
-  right: 28px;
+  top: 138px;
+  left: 28px;
   width: 360px;
-  max-height: calc(100vh - 190px);
+  max-height: calc(100vh - 220px);
   background: rgba(8, 8, 20, 0.88);
   border: 1px solid rgba(255, 136, 68, 0.28);
   border-radius: 14px;
@@ -839,10 +851,10 @@ canvas {
 
 .url-analyzer-card {
   position: absolute;
-  top: 70px;
-  right: 28px;
+  top: 138px;
+  left: 28px;
   width: 380px;
-  max-height: calc(100vh - 190px);
+  max-height: calc(100vh - 220px);
   background: rgba(8, 8, 20, 0.88);
   border: 1px solid rgba(255, 136, 68, 0.28);
   border-radius: 14px;
@@ -1103,6 +1115,86 @@ canvas {
   color: rgba(255, 200, 200, 0.8);
 }
 
+/* ===== CENTER-TOP SCAN NOTIFICATION (toast) ===== */
+.scan-toast {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 320px;
+  max-width: 560px;
+  padding: 12px 14px 12px 16px;
+  background: rgba(8, 8, 20, 0.92);
+  border: 1px solid rgba(255, 136, 68, 0.45);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.2);
+  pointer-events: auto;
+  z-index: 40;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+}
+.scan-toast.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+.scan-toast-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #ffcc44;
+  background: rgba(255, 204, 68, 0.12);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  box-shadow: 0 0 12px rgba(255, 204, 68, 0.25);
+}
+.scan-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+.scan-toast-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffaa55;
+  margin-bottom: 3px;
+}
+.scan-toast-text {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 221, 153, 0.85);
+  word-wrap: break-word;
+}
+.scan-toast-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 136, 68, 0.12);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  color: #ff8844;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.scan-toast-close:hover {
+  background: rgba(255, 136, 68, 0.25);
+  color: #ffdd99;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   #top-bar { padding: 12px 16px; }
@@ -1117,17 +1209,13 @@ canvas {
 <div id="dashboard-overlay">
   <!-- Top Bar -->
   <div id="top-bar">
-    <div class="top-brand">
-      <span class="top-logo">◈</span>
-      <span class="top-title">ZYRA</span>
-      <span class="top-subtitle">// Neural Core</span>
-    </div>
-    <div class="top-actions">
+    <div class="top-left-stack">
+      <div class="top-brand">
+        <span class="top-logo">◈</span>
+        <span class="top-title">ZYRA</span>
+        <span class="top-subtitle">// Neural Core</span>
+      </div>
       <div class="top-actions-col">
-        <button id="btn-toggle-monitor" class="top-btn" title="Toggle System Monitor">
-          <span class="btn-dot"></span>
-          <span class="btn-text">System Monitor</span>
-        </button>
         <button id="btn-toggle-nmap" class="top-btn" title="Toggle Nmap Scanner">
           <span class="btn-dot nm-dot"></span>
           <span class="btn-text">Nmap Scanner</span>
@@ -1138,6 +1226,24 @@ canvas {
         </button>
       </div>
     </div>
+    <div class="top-actions">
+      <div class="top-actions-col">
+        <button id="btn-toggle-monitor" class="top-btn" title="Toggle System Monitor">
+          <span class="btn-dot"></span>
+          <span class="btn-text">System Monitor</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center-top scan completion notification (auto-hides after 15s) -->
+  <div id="scan-toast" class="scan-toast" role="status" aria-live="polite">
+    <div class="scan-toast-icon">✔</div>
+    <div class="scan-toast-body">
+      <div id="scan-toast-title" class="scan-toast-title">SCAN COMPLETE</div>
+      <div id="scan-toast-text" class="scan-toast-text"></div>
+    </div>
+    <button id="scan-toast-close" class="scan-toast-close" title="Dismiss">✕</button>
   </div>
 
   <!-- System Monitor HUD Card -->
@@ -1340,7 +1446,7 @@ canvas {
   </div>
 
   <!-- URL Analyzer HUD Card -->
- <div id="url-analyzer-card" class="url-analyzer-card" aria-label="URL Analyzer">
+  <div id="url-analyzer-card" class="url-analyzer-card" aria-label="URL Analyzer">
     <div class="url-header">
       <div class="url-title-group">
         <span class="url-pulse-dot"></span>
@@ -1893,6 +1999,36 @@ canvas {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
+  // ===== CENTER-TOP SCAN COMPLETION NOTIFICATION =====
+  // Scan/analysis completion is shown as a centered top toast for 15 seconds
+  // instead of being posted into the chat feed.
+  const SCAN_TOAST_MS = 15000;
+  let scanToastTimer = null;
+
+  function showScanNotification(title, text) {
+    const toast = document.getElementById('scan-toast');
+    const titleEl = document.getElementById('scan-toast-title');
+    const textEl = document.getElementById('scan-toast-text');
+    if (!toast || !titleEl || !textEl) return;
+    titleEl.textContent = title || 'SCAN COMPLETE';
+    textEl.textContent = text || '';
+    toast.classList.add('visible');
+    if (scanToastTimer) clearTimeout(scanToastTimer);
+    scanToastTimer = setTimeout(function () {
+      toast.classList.remove('visible');
+      scanToastTimer = null;
+    }, SCAN_TOAST_MS);
+  }
+
+  const scanToastClose = document.getElementById('scan-toast-close');
+  if (scanToastClose) {
+    scanToastClose.addEventListener('click', function () {
+      const toast = document.getElementById('scan-toast');
+      if (toast) toast.classList.remove('visible');
+      if (scanToastTimer) { clearTimeout(scanToastTimer); scanToastTimer = null; }
+    });
+  }
+
   function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host || '127.0.0.1:8080';
@@ -2323,7 +2459,7 @@ canvas {
   let isNmapOpen = false;
   let nmapScanId = null;
   let nmapOps = {};            // key -> {label, description, default_target, example_command}
-  let nmapLastChatScan = null; // scan_id whose chat_response was already shown
+  let nmapLastChatScan = null; // scan_id whose completion notification was already shown
 
   const NMAP_TRIGGER_PHRASES = [
     'scan my network', 'scan the network', 'scan network', 'network scan',
@@ -2345,12 +2481,14 @@ canvas {
     isNmapOpen = true;
     if (nmapCard) nmapCard.classList.add('visible');
     if (btnToggleNmap) btnToggleNmap.classList.add('active');
+    relayoutLeftPanels();
   }
 
   function closeNmapPanel() {
     isNmapOpen = false;
     if (nmapCard) nmapCard.classList.remove('visible');
     if (btnToggleNmap) btnToggleNmap.classList.remove('active');
+    relayoutLeftPanels();
   }
 
   if (btnToggleNmap) {
@@ -2401,6 +2539,7 @@ canvas {
 
   function updateNmapUI(s) {
     if (!s) return;
+    relayoutLeftPanels(); // keep the stacked URL panel below the growing Nmap panel
     try {
       if (nmErrorCard) nmErrorCard.style.display = 'none';
 
@@ -2474,11 +2613,11 @@ canvas {
       if (s.scan_id) nmapScanId = s.scan_id;
       setNmapButtonsEnabled(st === 'COMPLETE' && !!nmapScanId);
 
-      // Concise chat response on completion (shown once per scan)
+      // Concise completion notification (center-top toast, shown once per scan)
       if (st === 'COMPLETE' && s.chat_response && s.scan_id &&
           nmapLastChatScan !== s.scan_id) {
         nmapLastChatScan = s.scan_id;
-        addMessage(s.chat_response, 'zyra');
+        showScanNotification('NMAP SCAN COMPLETE', s.chat_response);
       }
 
       if (st === 'ERROR' && s.error) {
@@ -2689,8 +2828,25 @@ canvas {
   let isUrlOpen = false;
   let urlScanId = null;
   let urlStagesMap = {};      // key -> stage row element
-  let urlLastChatScan = null; // scan_id whose chat ack was already shown
+  let urlLastChatScan = null; // scan_id whose completion notification was already shown
   let urlReportReady = false; // report generated for current scan
+
+  // Both feature panels open on the left, below their top-bar buttons. When
+  // Nmap and URL panels are visible at the same time, stack the URL panel
+  // below the Nmap panel so neither covers the other.
+  function relayoutLeftPanels() {
+    if (!urlCard || !nmapCard) return;
+    var bothOpen = nmapCard.classList.contains('visible') && urlCard.classList.contains('visible');
+    if (bothOpen) {
+      var stackedTop = nmapCard.offsetTop + nmapCard.offsetHeight + 12;
+      urlCard.style.top = stackedTop + 'px';
+      urlCard.style.maxHeight = Math.max(240, window.innerHeight - stackedTop - 40) + 'px';
+    } else {
+      urlCard.style.top = '';
+      urlCard.style.maxHeight = '';
+    }
+  }
+  window.addEventListener('resize', relayoutLeftPanels);
 
   const URL_TRIGGER_PHRASES = [
     'analyze', 'analyse', 'check this url', 'check the url', 'check url',
@@ -2720,11 +2876,13 @@ canvas {
     isUrlOpen = true;
     if (urlCard) urlCard.classList.add('visible');
     if (btnToggleUrl) btnToggleUrl.classList.add('active');
+    relayoutLeftPanels();
   }
   function closeUrlPanel() {
     isUrlOpen = false;
     if (urlCard) urlCard.classList.remove('visible');
     if (btnToggleUrl) btnToggleUrl.classList.remove('active');
+    relayoutLeftPanels();
   }
   if (btnToggleUrl) {
     btnToggleUrl.addEventListener('click', function () {
@@ -2949,10 +3107,10 @@ canvas {
       if (st === 'COMPLETE' && s.result) {
         renderUrlResult(s.result);
         loadUrlHistory();
-        // Voice summary broadcast (for voice-triggered scans)
+        // Completion notification (center-top toast, shown once per scan)
         if (s.voice_summary && urlLastChatScan !== s.scan_id) {
           urlLastChatScan = s.scan_id;
-          addMessage(s.voice_summary, 'zyra');
+          showScanNotification('URL ANALYSIS COMPLETE', s.voice_summary);
         }
       }
       // Error
