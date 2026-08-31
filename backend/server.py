@@ -81,8 +81,10 @@ from backend.dns_lookup import (
     dns_report_filename,
     dns_report_to_pdf,
     dns_report_to_text,
+    extract_dns_record_type,
     extract_dns_target,
     get_dns_lookup,
+    get_dns_server_info,
     get_scan_state as get_dns_scan_state,
     is_dns_intent,
     start_dns_lookup,
@@ -671,10 +673,14 @@ def _dns_finish(scan_id: str, result: Dict[str, Any]) -> None:
         else:
             snapshot = None
     if snapshot:
+        try:
+            dns_history_add(result)
+        except Exception:  # noqa: BLE001 — history is best-effort
+            pass
         broadcast_message_sync({"type": "dns_status", "data": snapshot})
 
 def _dns_run_worker(lookup_id: str, domain: str, source: str,
-                    extra_on_complete=None) -> None:
+                    record_type: str = None, extra_on_complete=None) -> None:
     """Background worker executing the DNS lookup pipeline."""
     global _dns_active, _dns_last
     try:
@@ -690,7 +696,8 @@ def _dns_run_worker(lookup_id: str, domain: str, source: str,
                     pass
 
         start_dns_lookup(domain, source=source, on_stage=on_stage,
-                         on_complete=on_complete, lookup_id=lookup_id)
+                         on_complete=on_complete, lookup_id=lookup_id,
+                         record_type=record_type)
     except Exception as e:
         with _dns_lock:
             if _dns_active is not None:
@@ -743,6 +750,7 @@ def _dns_watchdog(lookup_id: str, deadline: float) -> None:
 
 
 def start_dns_lookup_job(domain: str, source: str = "panel",
+                         record_type: str = None,
                          extra_on_complete=None) -> Dict[str, Any]:
     """
     Validate and launch a background DNS lookup.
@@ -792,6 +800,7 @@ def start_dns_lookup_job(domain: str, source: str = "panel",
             "stage_label": "INITIALIZING DNS LOOKUP...",
             "stage_status": "running",
             "progress": 5,
+            "record_type": (record_type or "ANY").upper(),
             "stages": [{"key": k, "label": l, "status": "pending"}
                        for k, l in DNS_STAGES],
             "started_at": time.time(),
@@ -804,7 +813,7 @@ def start_dns_lookup_job(domain: str, source: str = "panel",
 
     threading.Thread(
         target=_dns_run_worker,
-        args=(lookup_id, str(domain).strip(), source, extra_on_complete),
+        args=(lookup_id, str(domain).strip(), source, record_type, extra_on_complete),
         daemon=True,
         name=f"ZYRA-DNS-{lookup_id}",
     ).start()
@@ -1305,12 +1314,13 @@ async def dns_lookup_endpoint(data: Dict[str, Any]):
     dashboard clients over WebSocket as `dns_status` messages). The endpoint
     waits for completion (up to ~50s — typical lookups take 1-5s) and returns
     the full structured result: DNS records (A, AAAA, CNAME, MX, NS, TXT,
-    SOA, PTR), DNSSEC status, TTLs, response time, security score (0-100),
-    risk level, findings, warnings and recommendations.
+    SOA, PTR), DNSSEC status, TTLs, response time, resolution status and
+    errors (NXDOMAIN / SERVFAIL / timeout).
     """
     domain = (data.get("domain") or data.get("target") or "").strip()
     text = (data.get("text") or "").strip()
     source = (data.get("source") or "panel").strip().lower() or "panel"
+    record_type = (data.get("record_type") or data.get("query_type") or "ANY").strip().upper()
 
     if not domain and text:
         # Accept raw chat-style input; extract the domain from it.
@@ -1332,7 +1342,9 @@ async def dns_lookup_endpoint(data: Dict[str, Any]):
         holder["result"] = result
         done.set()
 
-    launch = start_dns_lookup_job(domain, source=source, extra_on_complete=_on_done)
+    launch = start_dns_lookup_job(domain, source=source,
+                                  record_type=record_type,
+                                  extra_on_complete=_on_done)
     if not launch.get("success"):
         return JSONResponse(
             status_code=400,
@@ -1429,6 +1441,55 @@ async def dns_report_endpoint(lookup_id: str, format: str = "json"):
 async def dns_history_endpoint():
     """Recent DNS lookup history for the panel."""
     return {"success": True, "data": dns_history_recent(8)}
+
+
+@app.post("/api/dns/report")
+async def dns_report_generate_endpoint(data: Dict[str, Any]):
+    """
+    Generate a DNS lookup report from a result payload the dashboard already
+    holds (panel 'GENERATE REPORT' button).
+
+    Request body:
+        {"domain": "example.com", "result": { ...completed lookup result... }}
+
+    With format=json (default) returns the assembled report structure.
+    With format=txt or format=pdf returns the generated report as a
+    downloadable attachment — so 'DOWNLOAD REPORT' always fetches the real
+    server-generated report, even for lookups no longer in the registry.
+    """
+    result = data.get("result") or {}
+    if not result:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False,
+                     "error": "No DNS lookup result provided."},
+        )
+    fmt = (data.get("format") or "json").strip().lower()
+    try:
+        report = dns_build_report_data(result)
+        if fmt in ("txt", "text"):
+            return Response(
+                content=dns_report_to_text(report),
+                media_type="text/plain; charset=utf-8",
+                headers={"Content-Disposition": f'attachment; filename="{dns_report_filename(result)}.txt"'},
+            )
+        if fmt == "pdf":
+            pdf_bytes = dns_report_to_pdf(report)
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{dns_report_filename(result)}.pdf"'},
+            )
+        return {
+            "success": True,
+            "report_id": f"dns_{result.get('lookup_id', 'manual')}",
+            "data": report,
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Report generation failed: {e}"}
+        )
 
 
 # ========== WebSocket Endpoint ==========
@@ -1568,7 +1629,9 @@ async def websocket_endpoint(websocket: WebSocket):
                     dns_target = extract_dns_target(dns_text)
                     if dns_target:
                         dns_source = "voice" if msg_type == "voice" else "chat"
-                        dns_launch = start_dns_lookup_job(dns_target, source=dns_source)
+                        dns_rtype = extract_dns_record_type(dns_text)
+                        dns_launch = start_dns_lookup_job(
+                            dns_target, source=dns_source, record_type=dns_rtype)
                         if dns_launch.get("success"):
                             with _dns_lock:
                                 dns_state = _dns_public_state(_dns_active) or {}

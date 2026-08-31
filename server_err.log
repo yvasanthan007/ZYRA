@@ -1,28 +1,4 @@
-INFO:     Started server process [31444]
+INFO:     Started server process [23840]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8123 (Press CTRL+C to quit)
-Traceback (most recent call last):
-  File "C:\Users\Rakshanaa\Project\ZYRA\backend\url_analyzer\analyzer.py", line 458, in run_url_scan
-    on_complete(result)
-    ~~~~~~~~~~~^^^^^^^^
-  File "C:\Users\Rakshanaa\Project\ZYRA\backend\server.py", line 403, in on_complete
-    if _url_active is not None:
-       ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable '_url_active' where it is not associated with a value
-Traceback (most recent call last):
-  File "C:\Users\Rakshanaa\Project\ZYRA\backend\url_analyzer\analyzer.py", line 458, in run_url_scan
-    on_complete(result)
-    ~~~~~~~~~~~^^^^^^^^
-  File "C:\Users\Rakshanaa\Project\ZYRA\backend\server.py", line 403, in on_complete
-    if _url_active is not None:
-       ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable '_url_active' where it is not associated with a value
-Traceback (most recent call last):
-  File "C:\Users\Rakshanaa\Project\ZYRA\backend\url_analyzer\analyzer.py", line 458, in run_url_scan
-    on_complete(result)
-    ~~~~~~~~~~~^^^^^^^^
-  File "C:\Users\Rakshanaa\Project\ZYRA\backend\server.py", line 403, in on_complete
-    if _url_active is not None:
-       ^^^^^^^^^^^
-UnboundLocalError: cannot access local variable '_url_active' where it is not associated with a value
+INFO:     Uvicorn running on http://127.0.0.1:8765 (Press CTRL+C to quit)

@@ -7,7 +7,7 @@ summary and the report generator:
 
     INITIALIZING → VALIDATING DOMAIN → RESOLVING DOMAIN →
     QUERYING DNS RECORDS → CHECKING MAIL POLICY → REVERSE DNS →
-    ANALYZING DNSSEC → CALCULATING SECURITY SCORE → COMPLETE
+    ANALYZING DNSSEC → COMPLETE
 
 Every stage emits a live callback so the server can stream real-time
 progress to the dashboard over WebSocket. All analysis happens in the
@@ -21,7 +21,6 @@ from collections import OrderedDict
 from datetime import datetime
 
 from backend.dns_lookup.resolver import resolve_all
-from backend.dns_lookup.scorer import build_recommendation, score_dns
 from backend.dns_lookup.validator import DomainValidationError, validate_domain
 
 # Ordered pipeline stages exposed to the UI
@@ -33,7 +32,6 @@ DNS_STAGES = [
     ("mail", "CHECKING MAIL POLICY (MX / SPF / DMARC)..."),
     ("reverse", "PERFORMING REVERSE DNS (PTR)..."),
     ("dnssec", "ANALYZING DNSSEC..."),
-    ("scoring", "CALCULATING SECURITY SCORE..."),
     ("complete", "DNS LOOKUP COMPLETE"),
 ]
 
@@ -41,11 +39,10 @@ STAGE_PROGRESS = {
     "initializing": 5,
     "validating": 14,
     "resolving": 28,
-    "records": 46,
-    "mail": 58,
-    "reverse": 70,
-    "dnssec": 82,
-    "scoring": 92,
+    "records": 50,
+    "mail": 64,
+    "reverse": 78,
+    "dnssec": 92,
     "complete": 100,
 }
 
@@ -107,7 +104,8 @@ def _stage_update(stage_key: str, status: str = "running",
 # ──────────────────────────────────────────────
 
 def start_dns_lookup(domain: str, source: str = "panel", on_stage=None,
-                     on_complete=None, lookup_id: str = None) -> dict:
+                     on_complete=None, lookup_id: str = None,
+                     record_type: str = None) -> dict:
     """
     Create a lookup record and run the pipeline in a background thread.
 
@@ -139,6 +137,7 @@ def start_dns_lookup(domain: str, source: str = "panel", on_stage=None,
             "source": source,
             "on_stage": on_stage,
             "on_complete": on_complete,
+            "record_type": record_type,
         },
         daemon=True,
         name=f"ZYRA-DNS-{lookup_id}",
@@ -151,7 +150,8 @@ def start_dns_lookup(domain: str, source: str = "panel", on_stage=None,
 # ──────────────────────────────────────────────
 
 def run_dns_lookup(domain: str, lookup_id: str = None, source: str = "panel",
-                   on_stage=None, on_complete=None) -> dict:
+                   on_stage=None, on_complete=None,
+                   record_type: str = None) -> dict:
     """
     Execute the complete DNS lookup pipeline.
 
@@ -161,6 +161,8 @@ def run_dns_lookup(domain: str, lookup_id: str = None, source: str = "panel",
         source      — 'panel' | 'chat' | 'voice'
         on_stage    — callable(stage_update_dict, full_state_dict)
         on_complete — callable(final_result_dict)
+        record_type — nslookup-style record-type filter ('A', 'MX', 'PTR', ...)
+                      or None / 'ANY' for the full lookup of every type
 
     Returns the final result payload.
     """
@@ -220,6 +222,7 @@ def run_dns_lookup(domain: str, lookup_id: str = None, source: str = "panel",
             "domain_display": parts.get("domain_display", target),
             "is_ip": is_ip,
             "apex": apex,
+            "record_type": (record_type or "ANY").upper(),
         })
 
     # ── Stage: QUERY EVERYTHING (resolver runs the real queries) ──
@@ -243,10 +246,20 @@ def run_dns_lookup(domain: str, lookup_id: str = None, source: str = "panel",
     for key in ("resolving", "records", "mail", "reverse", "dnssec"):
         emit(key, "done")
 
-    # ── Stage: CALCULATING SECURITY SCORE ──
-    emit("scoring", "running")
-    scored = score_dns(analysis)
-    emit("scoring", "done")
+    # ── nslookup-style record-type filter ──
+    # When a specific type was requested, keep only that block (plus PTR
+    # context for A/AAAA lookups). 'ANY' or None keeps every record type.
+    requested_type = (record_type or "ANY").upper().strip()
+    if requested_type not in ("ANY", "", "ALL"):
+        filtered = {}
+        if requested_type in analysis.get("records", {}):
+            filtered[requested_type] = analysis["records"][requested_type]
+        elif requested_type == "PTR":
+            ptr = analysis.get("records", {}).get("PTR")
+            if ptr:
+                filtered["PTR"] = ptr
+        analysis["records"] = filtered
+
     emit("complete", "done")
 
     status = "RESOLVED" if analysis["resolution"]["resolved"] else "NOT_RESOLVED"
@@ -259,6 +272,8 @@ def run_dns_lookup(domain: str, lookup_id: str = None, source: str = "panel",
         "domain_display": parts.get("domain_display", target),
         "is_ip": is_ip,
         "apex": apex,
+        "record_type": (record_type or "ANY").upper(),
+        "dns_server": analysis.get("dns_server", {}),
         "status": status,
         "resolution": analysis.get("resolution", {}),
         "records": analysis.get("records", {}),
@@ -268,15 +283,6 @@ def run_dns_lookup(domain: str, lookup_id: str = None, source: str = "panel",
         "wildcard": analysis.get("wildcard"),
         "response_time_ms": analysis.get("response_time_ms"),
         "total_time_ms": analysis.get("total_time_ms"),
-        "score": scored["score"],
-        "risk_level": scored["risk_level"],
-        "risk_level_label": scored["risk_level_label"],
-        "findings": scored["findings"],
-        "warnings": scored["warnings"],
-        "recommendations": scored["recommendations"],
-        "recommendation": build_recommendation(
-            scored["score"], scored["risk_level"], scored["recommendations"]),
-        "summary": {"checks": scored["summary_checks"]},
         "timestamp": timestamp,
         "timestamp_display": datetime.now().strftime("%d %b %Y %H:%M"),
     }
@@ -330,9 +336,8 @@ def build_voice_summary(result: dict) -> str:
     """
     Voice-friendly spoken response after a DNS lookup, e.g.:
 
-      "The DNS lookup is complete. example.com resolved in 24 milliseconds
-       with a DNS security score of 85 out of 100 — low risk. DNSSEC is
-       enabled."
+      "The DNS lookup is complete. example.com resolved in 24 milliseconds.
+       DNSSEC is enabled."
     """
     if not result:
         return "The DNS lookup could not be completed."
@@ -340,10 +345,7 @@ def build_voice_summary(result: dict) -> str:
         return f"The DNS lookup failed. {result.get('error') or 'Please try again.'}"
 
     domain = result.get("domain_display") or "the domain"
-    score = result.get("score", 0)
-    risk = str(result.get("risk_level_label", "MEDIUM")).lower()
     ms = result.get("response_time_ms")
-    dnssec = (result.get("dnssec") or {}).get("status", "NOT_ENABLED")
 
     if not result.get("resolution", {}).get("resolved"):
         return (f"The DNS lookup is complete. {domain} could not be resolved. "
@@ -352,7 +354,4 @@ def build_voice_summary(result: dict) -> str:
     parts = [f"The DNS lookup is complete. {domain} resolved successfully"]
     if ms is not None:
         parts.append(f"in {int(ms) if ms >= 10 else round(ms, 1)} milliseconds")
-    parts.append(f"with a DNS security score of {score} out of 100 — {risk} risk.")
-    parts.append("DNSSEC is enabled." if dnssec.startswith("ENABLED")
-                 else "DNSSEC is not enabled for this domain.")
     return " ".join(parts)

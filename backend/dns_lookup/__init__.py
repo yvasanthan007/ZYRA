@@ -7,7 +7,6 @@ Modules:
     validator   — domain/IP validation, sanitization and internal-host blocking
     resolver    — real DNS record queries via dnspython (A, AAAA, CNAME, MX,
                   NS, TXT/SPF/DMARC, SOA, PTR, DNSSEC) — no shell commands
-    scorer      — transparent DNS security scoring (0-100) from actual results
     analyzer    — lookup pipeline orchestrator + scan registry
     intent      — DNS_LOOKUP intent detection for chat / voice
     report      — structured report + dependency-free PDF
@@ -33,6 +32,7 @@ from backend.dns_lookup.history import (  # noqa: F401
 )
 from backend.dns_lookup.intent import (  # noqa: F401
     build_chat_ack,
+    extract_dns_record_type,
     extract_dns_target,
     is_dns_intent,
 )
@@ -42,8 +42,11 @@ from backend.dns_lookup.report import (  # noqa: F401
     report_to_pdf as dns_report_to_pdf,
     report_to_text as dns_report_to_text,
 )
-from backend.dns_lookup.resolver import resolve_all  # noqa: F401
-from backend.dns_lookup.scorer import score_dns  # noqa: F401
+from backend.dns_lookup.resolver import (  # noqa: F401
+    get_dns_server_info,
+    query_single,
+    resolve_all,
+)
 from backend.dns_lookup.validator import (  # noqa: F401
     DomainValidationError,
     validate_domain,
@@ -62,14 +65,16 @@ __all__ = [
     "dns_report_filename",
     "dns_report_to_pdf",
     "dns_report_to_text",
+    "extract_dns_record_type",
     "extract_dns_target",
     "get_dns_lookup",
+    "get_dns_server_info",
     "get_last_dns_lookup",
     "get_scan_state",
     "is_dns_intent",
+    "query_single",
     "resolve_all",
     "run_dns_lookup",
-    "score_dns",
     "start_dns_lookup",
     "validate_domain",
 ]

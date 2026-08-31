@@ -106,6 +106,31 @@ def extract_dns_target(text: str) -> Optional[str]:
     return None
 
 
+# Record-type keywords -> canonical type (for "check MX record for ..." etc.)
+_RECORD_TYPE_PATTERNS = [
+    ("aaaa", "AAAA"), ("mx record", "MX"), ("mx of", "MX"), ("mx for", "MX"),
+    ("cname", "CNAME"), ("nameserver", "NS"), ("name server", "NS"),
+    ("soa record", "SOA"), ("soa records", "SOA"),
+    ("txt record", "TXT"), ("txt records", "TXT"), ("spf", "TXT"),
+    ("ptr record", "PTR"), ("reverse dns", "PTR"), ("reverse lookup", "PTR"),
+    ("a record", "A"), ("a records", "A"),
+]
+
+
+def extract_dns_record_type(text: str) -> Optional[str]:
+    """
+    Extract an explicit record type from the request text ('MX', 'PTR', ...).
+    Returns None when no specific type is requested (=> full lookup).
+    """
+    if not text:
+        return None
+    t = text.lower().strip()
+    for pattern, rdtype in _RECORD_TYPE_PATTERNS:
+        if pattern in t:
+            return rdtype
+    return None
+
+
 def build_chat_ack(target) -> str:
     """
     Chat acknowledgement sent by ZYRA when the DNS_LOOKUP intent fires.

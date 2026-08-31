@@ -1,7 +1,7 @@
 """
 backend/dns_lookup/report.py — DNS lookup report + PDF
 
-Builds the full "ZYRA DNS SECURITY LOOKUP REPORT" (text + PDF) from a
+Builds the full "ZYRA DNS LOOKUP REPORT" (text + PDF) from a
 completed lookup result. The PDF generator reuses ZYRA's existing
 dependency-free PDF infrastructure from backend/nmap_report.py so no new
 dependencies are introduced.
@@ -20,9 +20,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from backend.nmap_report import _pdf_escape, _wrap  # existing PDF infra
 
-SEVERITY_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
-
-
 def build_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
     """Assemble the complete report structure from a lookup result payload."""
     records = result.get("records", {}) or {}
@@ -30,10 +27,9 @@ def build_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
     dnssec = result.get("dnssec", {}) or {}
     resolution = result.get("resolution", {}) or {}
     reverse = result.get("reverse", {}) or {}
-    findings = result.get("findings", []) or []
 
     return {
-        "title": "ZYRA DNS SECURITY LOOKUP REPORT",
+        "title": "ZYRA DNS LOOKUP REPORT",
         "generated": datetime.now().isoformat(timespec="seconds"),
         "lookup": {
             "lookup_id": result.get("lookup_id", ""),
@@ -42,11 +38,13 @@ def build_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
             "apex": result.get("apex", ""),
             "source": result.get("source", ""),
             "lookup_status": result.get("status", ""),
+            "query_type": result.get("record_type", "ANY"),
+            "dns_server": (result.get("dns_server") or {}).get("description")
+                          or "system/default resolver",
         },
         "final": {
-            "security_score": result.get("score", 0),
-            "risk_level": result.get("risk_level_label", ""),
             "resolution_status": result.get("status", ""),
+            "error": result.get("error"),
         },
         "performance": {
             "response_time_ms": result.get("response_time_ms"),
@@ -80,17 +78,9 @@ def build_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
         },
         "dnssec": {
             "status": (dnssec.get("status") or "NOT_ENABLED"),
-            "dnskey": dnssec.get("dnskey", False),
-            "ds": dnssec.get("ds", False),
-            "validated": dnssec.get("ad_flag", False),
             "detail": dnssec.get("detail", ""),
         },
-        "warnings": result.get("warnings", []) or [],
-        "findings": sorted(
-            findings,
-            key=lambda f: SEVERITY_ORDER.get(f.get("severity", "INFO"), 9),
-        ),
-        "recommendation": result.get("recommendation", "-"),
+        "error": result.get("error"),
     }
 
 
@@ -119,7 +109,7 @@ def report_to_text(report_data: Dict[str, Any]) -> str:
 
     L: List[str] = []
     L.append("=" * 64)
-    L.append(report_data.get("title", "ZYRA DNS SECURITY LOOKUP REPORT"))
+    L.append(report_data.get("title", "ZYRA DNS LOOKUP REPORT"))
     L.append("=" * 64)
     L.append("")
     L.append("LOOKUP INFORMATION")
@@ -129,13 +119,15 @@ def report_to_text(report_data: Dict[str, Any]) -> str:
     L.append(f"  Lookup ID:       {lk.get('lookup_id', '-')}")
     L.append(f"  Timestamp:       {lk.get('timestamp', '-')}")
     L.append(f"  Lookup status:   {lk.get('lookup_status', '-')}")
+    L.append(f"  Query type:      {lk.get('query_type', 'ANY')}")
+    L.append(f"  DNS server:      {lk.get('dns_server', 'system/default resolver')}")
     L.append(f"  Source:          {lk.get('source', '-')}")
     L.append("")
     L.append("RESULT SUMMARY")
     L.append("-" * 40)
     L.append(f"  Resolution:      {fin.get('resolution_status', '-')}")
-    L.append(f"  Security score:  {fin.get('security_score', 0)} / 100")
-    L.append(f"  Risk level:      {fin.get('risk_level', '-')}")
+    if fin.get('error'):
+        L.append(f"  Error:           {fin.get('error')}")
     L.append(f"  Response time:   {perf.get('response_time_ms', '-')} ms")
     L.append(f"  Total time:      {perf.get('total_time_ms', '-')} ms")
     L.append("")
@@ -165,41 +157,16 @@ def report_to_text(report_data: Dict[str, Any]) -> str:
     L.append("DNSSEC")
     L.append("-" * 40)
     L.append(f"  Status:       {sec.get('status', '-')}")
-    L.append(f"  DNSKEY:       {'yes' if sec.get('dnskey') else 'no'}")
-    L.append(f"  DS:           {'yes' if sec.get('ds') else 'no'}")
-    L.append(f"  Validated:    {'yes' if sec.get('validated') else 'no'}")
     for wline in _wrap(str(sec.get("detail", "-")), width=58):
         L.append(f"  {wline}")
     L.append("")
 
-    warnings = report_data.get("warnings", [])
-    L.append("WARNINGS")
-    L.append("-" * 40)
-    if warnings:
-        for w in warnings:
-            for wline in _wrap(f"- {w}", width=58):
-                L.append(f"  {wline}")
-    else:
-        L.append("  No warnings.")
-    L.append("")
-
-    L.append("FINDINGS")
-    L.append("-" * 40)
-    findings = report_data.get("findings", [])
-    if findings:
-        for f in findings:
-            L.append(f"  [{f.get('severity', 'INFO')}] {f.get('title', '')}")
-            for wline in _wrap(str(f.get('detail', '')), width=56):
-                L.append(f"      {wline}")
-    else:
-        L.append("  No security findings — DNS posture looks clean.")
-    L.append("")
-
-    L.append("RECOMMENDATION")
-    L.append("-" * 40)
-    for wline in _wrap(report_data.get("recommendation", "-"), width=58):
-        L.append(f"  {wline}")
-    L.append("")
+    if report_data.get("error"):
+        L.append("ERROR")
+        L.append("-" * 40)
+        for wline in _wrap(str(report_data.get("error")), width=58):
+            L.append(f"  {wline}")
+        L.append("")
 
     L.append("-" * 64)
     L.append("Generated by: ZYRA // NEURAL CORE")

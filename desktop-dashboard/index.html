@@ -971,7 +971,18 @@ canvas {
   border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
 }
 .url-field input::placeholder { color: rgba(255, 136, 68, 0.3); }
-
+/* DNS record-type selector — inherits the same input look (gold accents) */
+.url-field select {
+  width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
+  border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
+  color: #ffcc88; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+  outline: none; transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer; appearance: auto;
+}
+.url-field select:focus {
+  border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
+}
+.url-field select option { background: #0a0a14; color: #ffcc88; }
 .url-analyze-btn {
   width: 100%; padding: 10px 16px; background: rgba(255, 136, 0, 0.15);
   border: 1px solid rgba(255, 136, 0, 0.35); border-radius: 8px;
@@ -1653,6 +1664,20 @@ canvas {
         <label for="dns-input">Enter Domain or IP</label>
         <input id="dns-input" type="text" placeholder="example.com" autocomplete="off" spellcheck="false">
       </div>
+      <div class="url-field">
+        <label for="dns-type">Record Type (nslookup style)</label>
+        <select id="dns-type" class="url-select">
+          <option value="ANY" selected>ANY &mdash; all records</option>
+          <option value="A">A &mdash; IPv4 address</option>
+          <option value="AAAA">AAAA &mdash; IPv6 address</option>
+          <option value="CNAME">CNAME &mdash; canonical name</option>
+          <option value="MX">MX &mdash; mail exchanger</option>
+          <option value="NS">NS &mdash; nameserver</option>
+          <option value="TXT">TXT &mdash; text / SPF</option>
+          <option value="SOA">SOA &mdash; start of authority</option>
+          <option value="PTR">PTR &mdash; reverse lookup</option>
+        </select>
+      </div>
       <button id="dns-lookup-btn" class="url-analyze-btn dns-lookup-btn">LOOKUP DNS</button>
 
       <div class="url-section" id="dns-stages-section" style="display: none;">
@@ -1670,13 +1695,21 @@ canvas {
       <div class="url-section" id="dns-result-section" style="display: none;">
         <div class="url-section-title">Lookup Result</div>
         <div class="url-score-wrap">
-          <div class="url-score" id="dns-score">--</div>
-          <div class="url-score-label" id="dns-risk-label">RISK</div>
+          <div class="url-score" id="dns-score" style="font-size:26px;">--</div>
+          <div class="url-score-label" id="dns-risk-label" style="display:none;">RISK</div>
           <div class="url-score-class" id="dns-status-label">&mdash;</div>
         </div>
         <div class="url-detail-row" style="margin-top: 6px;">
           <span class="url-detail-k">Domain</span>
           <span class="url-detail-v" id="dns-target">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">Query Type</span>
+          <span class="url-detail-v" id="dns-query-type">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">DNS Server</span>
+          <span class="url-detail-v" id="dns-server">&mdash;</span>
         </div>
         <div class="url-detail-row">
           <span class="url-detail-k">Resolution</span>
@@ -1685,10 +1718,6 @@ canvas {
         <div class="url-detail-row">
           <span class="url-detail-k">Response Time</span>
           <span class="url-detail-v" id="dns-response-time">&mdash;</span>
-        </div>
-        <div class="url-detail-row">
-          <span class="url-detail-k">DNSSEC</span>
-          <span class="url-detail-v" id="dns-dnssec-brief">&mdash;</span>
         </div>
       </div>
 
@@ -1700,31 +1729,6 @@ canvas {
       <div class="url-section" id="dns-records-section" style="display: none;">
         <div class="url-section-title">DNS Records</div>
         <div class="dns-records" id="dns-records"></div>
-      </div>
-
-      <div class="url-section" id="dns-mail-section" style="display: none;">
-        <div class="url-section-title">Mail Policy</div>
-        <div class="url-detail-grid" id="dns-mail"></div>
-      </div>
-
-      <div class="url-section" id="dns-dnssec-section" style="display: none;">
-        <div class="url-section-title">DNSSEC</div>
-        <div class="url-detail-grid" id="dns-dnssec"></div>
-      </div>
-
-      <div class="url-section" id="dns-findings-section" style="display: none;">
-        <div class="url-section-title">Security Findings</div>
-        <div class="url-findings" id="dns-findings"></div>
-      </div>
-
-      <div class="url-section" id="dns-warnings-section" style="display: none;">
-        <div class="url-section-title">Warnings</div>
-        <div class="dns-warnings" id="dns-warnings"></div>
-      </div>
-
-      <div class="url-section" id="dns-rec-section" style="display: none;">
-        <div class="url-section-title">Recommendations</div>
-        <div class="url-recommendation" id="dns-recommendation"></div>
       </div>
 
       <div class="url-actions" id="dns-actions" style="display: none;">
@@ -3481,6 +3485,7 @@ canvas {
   const btnToggleDns = document.getElementById('btn-toggle-dns');
   const dnsCloseBtn = document.getElementById('dns-close-btn');
   const dnsInput = document.getElementById('dns-input');
+  const dnsTypeSel = document.getElementById('dns-type');
   const dnsLookupBtn = document.getElementById('dns-lookup-btn');
   const dnsBadge = document.getElementById('dns-badge');
 
@@ -3495,18 +3500,13 @@ canvas {
   const dnsRiskLabel = document.getElementById('dns-risk-label');
   const dnsStatusLabel = document.getElementById('dns-status-label');
   const dnsTargetEl = document.getElementById('dns-target');
+  const dnsQueryTypeEl = document.getElementById('dns-query-type');
+  const dnsServerEl = document.getElementById('dns-server');
   const dnsResolutionEl = document.getElementById('dns-resolution');
   const dnsResponseTime = document.getElementById('dns-response-time');
-  const dnsDnssecBrief = document.getElementById('dns-dnssec-brief');
 
-  const dnsChecksSection = document.getElementById('dns-checks-section');
-  const dnsChecksEl = document.getElementById('dns-checks');
   const dnsRecordsSection = document.getElementById('dns-records-section');
   const dnsRecords = document.getElementById('dns-records');
-  const dnsMailSection = document.getElementById('dns-mail-section');
-  const dnsMail = document.getElementById('dns-mail');
-  const dnsDnssecSection = document.getElementById('dns-dnssec-section');
-  const dnsDnssec = document.getElementById('dns-dnssec');
   const dnsFindingsSection = document.getElementById('dns-findings-section');
   const dnsFindings = document.getElementById('dns-findings');
   const dnsWarningsSection = document.getElementById('dns-warnings-section');
@@ -3593,8 +3593,8 @@ canvas {
   }
 
   function resetDnsResultSections() {
-    [dnsStagesSection, dnsResultSection, dnsChecksSection, dnsRecordsSection,
-     dnsMailSection, dnsDnssecSection, dnsFindingsSection, dnsWarningsSection,
+    [dnsStagesSection, dnsResultSection, dnsRecordsSection,
+     dnsFindingsSection, dnsWarningsSection,
      dnsRecSection, dnsActionsEl].forEach(function (el) {
        if (el) el.style.display = 'none';
     });
@@ -3685,17 +3685,25 @@ canvas {
     if (!r) return;
 
     if (dnsTargetEl) dnsTargetEl.textContent = r.domain_display || r.domain || '—';
+    if (dnsQueryTypeEl) dnsQueryTypeEl.textContent = r.record_type || 'ANY';
+    if (dnsServerEl) {
+      var ds = r.dns_server || {};
+      dnsServerEl.textContent = ds.description || 'system/default resolver';
+    }
 
-    var score = r.score || 0;
+    var statusText = r.status || 'UNKNOWN';
     if (dnsScoreEl) {
-      dnsScoreEl.textContent = score + ' / 100';
+      // Pure nslookup-style status (no security scoring)
+      dnsScoreEl.textContent = statusText === 'RESOLVED' ? 'OK' :
+                               (statusText === 'NOT_RESOLVED' ? 'NXDOMAIN' : 'ERROR');
       dnsScoreEl.classList.remove('safe', 'suspicious', 'danger');
-      if (score >= 70) dnsScoreEl.classList.add('safe');
-      else if (score >= 40) dnsScoreEl.classList.add('suspicious');
+      if (statusText === 'RESOLVED') dnsScoreEl.classList.add('safe');
+      else if (statusText === 'NOT_RESOLVED') dnsScoreEl.classList.add('suspicious');
       else dnsScoreEl.classList.add('danger');
     }
-    if (dnsRiskLabel) dnsRiskLabel.textContent = 'RISK: ' + (r.risk_level_label || r.risk_level || '—');
-    if (dnsStatusLabel) dnsStatusLabel.textContent = r.status || '—';
+    if (dnsRiskLabel) dnsRiskLabel.style.display = 'none';
+    if (dnsStatusLabel) dnsStatusLabel.textContent = statusText === 'RESOLVED'
+      ? 'Domain resolved' : (statusText === 'NOT_RESOLVED' ? 'Domain not resolved' : statusText);
 
     var resolution = r.resolution || {};
     var resolutionText = resolution.resolved
@@ -3706,47 +3714,13 @@ canvas {
     var rt = r.response_time_ms;
     if (dnsResponseTime) dnsResponseTime.textContent = (rt != null) ? (rt + ' ms') : '—';
 
-    var dnssec = r.dnssec || {};
-    var dnssecBrief = dnssec.status || 'NOT_ENABLED';
-    var dnssecText = dnssecBrief === 'NOT_ENABLED' ? 'Not enabled'
-      : dnssecBrief === 'ENABLED_VALIDATED' ? 'Enabled & validated'
-      : dnssecBrief === 'ENABLED' ? 'Enabled'
-      : dnssecBrief === 'PARTIAL' ? 'Partial'
-      : dnssecBrief.replace(/_/g, ' ').toLowerCase();
-    if (dnsDnssecBrief) dnsDnssecBrief.textContent = dnssecText;
-
     if (dnsResultSection) dnsResultSection.style.display = 'block';
 
-    // DNS Summary checklist
-    var checks = (r.summary && r.summary.checks) || [];
-    if (dnsChecksEl) {
-      dnsChecksEl.innerHTML = checks.map(function (c) {
-        var icons = { pass: '&#10003;', fail: '&#10007;', warn: '&#9888;', skip: '&#8212;' };
-        return '<div class="url-check ' + c.status + '"><span class="url-check-icon">' +
-          (icons[c.status] || '&#8212;') + '</span><span>' + escapeHtml(c.name) +
-          (c.detail ? ' \u2014 ' + escapeHtml(c.detail) : '') + '</span></div>';
-      }).join('');
-    }
-        if (dnsChecksSection) dnsChecksSection.style.display = checks.length ? 'block' : 'none';
-
-    // Findings / Warnings / Recommendations panels
-    function renderList(items) {
-      if (!items || !items.length) return '<div class="dns-empty-list">None</div>';
-      return '<ul class="dns-findings-list">' + items.map(function (it) {
-        return '<li>' + escapeHtml(it) + '</li>';
-      }).join('') + '</ul>';
-    }
-    var findings = (r.findings && r.findings.items) || [];
-    var warnings = (r.warnings && r.warnings.items) || [];
-    var recommendations = (r.recommendations && r.recommendations.items) || [];
-
-    var recCount = recommendations.length;
-    if (dnsFindings) dnsFindings.innerHTML = renderList(findings);
-    if (dnsWarnings) dnsWarnings.innerHTML = renderList(warnings);
-        if (dnsRecommendation) dnsRecommendation.innerHTML = renderList(recommendations);
-    if (dnsFindingsSection) dnsFindingsSection.style.display = findings.length ? 'block' : 'none';
-    if (dnsWarningsSection) dnsWarningsSection.style.display = warnings.length ? 'block' : 'none';
-    if (dnsRecSection) dnsRecSection.style.display = recommendations.length ? 'block' : 'none';
+    // Findings / Warnings / Recommendations panels were removed: the DNS
+    // Lookup is a pure nslookup-style tool with no security scoring.
+    if (dnsFindingsSection) dnsFindingsSection.style.display = 'none';
+    if (dnsWarningsSection) dnsWarningsSection.style.display = 'none';
+    if (dnsRecSection) dnsRecSection.style.display = 'none';
 
     // Build the records detail HTML (A, AAAA, CNAME, MX, NS, TXT/SPF, SOA, PTR)
     var recs = r.records || {};
@@ -3763,21 +3737,6 @@ canvas {
         if (dnsRecords) dnsRecords.innerHTML = recordsHtml ? recordsHtml : '<div class="dns-empty-list">No records retrieved</div>';
 
     if (dnsRecordsSection) dnsRecordsSection.style.display = recordsHtml ? 'block' : 'none';
-
-    // DNSSEC detail panel
-    var dnssecDetail = dnssec;
-    var dnssecDetailLines = [];
-    if (dnssecDetail.status) dnssecDetailLines.push('Status: ' + dnssecDetail.status);
-    if (dnssecDetail.ad) dnssecDetailLines.push('AD bit set: Yes');
-    if (dnssecDetail.has_dnskey) dnssecDetailLines.push('DNSKEY record: Present');
-    if (dnssecDetail.has_ds) dnssecDetailLines.push('DS record: Present');
-    if (dnssecDetail.rrsig) dnssecDetailLines.push('RRSIG records: Present');
-    if (dnssecDetail.algo) dnssecDetailLines.push('Algorithm: ' + dnssecDetail.algo);
-    if (dnssecDetail.can_validate !== undefined) dnssecDetailLines.push('Validation: ' + (dnssecDetail.can_validate ? 'Successful' : 'Failed'));
-    if (dnssecDetail.error) dnssecDetailLines.push('Error: ' + dnssecDetail.error);
-    var dnssecDetailText = dnssecDetailLines.length ? dnssecDetailLines.join('\n') : 'DNSSEC information not available';
-    if (dnsDnssec) dnsDnssec.textContent = dnssecDetailText;
-    if (dnsDnssecSection) dnsDnssecSection.style.display = 'block';
 
     if (dnsFindings) dnsFindings.scrollTop = 0;
     dnsCurrentResult = r;
@@ -3844,7 +3803,11 @@ canvas {
       fetch('/api/dns/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: domain, source: 'panel' })
+        body: JSON.stringify({
+          domain: domain,
+          record_type: (dnsTypeSel && dnsTypeSel.value) || 'ANY',
+          source: 'panel'
+        })
       }).then(function (res) { return res.json(); }).then(function (data) {
         if (!data.success) {
           showDnsError(data.error || 'DNS lookup could not be started.');
@@ -3856,23 +3819,6 @@ canvas {
         showDnsError('Could not reach the ZYRA backend: ' + err);
         if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
             });
-    }
-
-    function buildDnsReportObject(r) {
-      return {
-        domain: r.domain_display || r.domain || '',
-        timestamp: new Date().toISOString(),
-        lookup_status: r.status || 'UNKNOWN',
-        response_time_ms: r.response_time_ms || null,
-        resolution: r.resolution || {},
-        dnssec: r.dnssec || {},
-        records: r.records || {},
-        security_score: r.score || 0,
-        risk_level: r.risk_level_label || r.risk_level || '',
-        findings: (r.findings && r.findings.items) || [],
-        warnings: (r.warnings && r.warnings.items) || [],
-        recommendations: (r.recommendations && r.recommendations.items) || []
-      };
     }
 
     function generateDnsReport() {
@@ -3887,7 +3833,7 @@ canvas {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: domain, result: dnsCurrentResult })
       }).then(function (res) { return res.json(); }).then(function (data) {
-        if (data && data.report_id) {
+        if (data && data.success && data.report_id) {
           setDnsButtonsEnabled(true);
           if (dnsDownloadBtn) dnsDownloadBtn.disabled = false;
           if (dnsReportBtn) { dnsReportBtn.disabled = true; dnsReportBtn.textContent = 'REPORT READY'; }
@@ -3903,17 +3849,40 @@ canvas {
 
     function downloadDnsReport() {
       if (!dnsCurrentResult) return;
+      if (dnsDownloadBtn) {
+        if (dnsDownloadBtn.disabled) return;
+        dnsDownloadBtn.disabled = true;
+        dnsDownloadBtn.textContent = 'DOWNLOADING...';
+      }
       if (dnsReportBtn) { dnsReportBtn.disabled = true; dnsReportBtn.textContent = 'GENERATE REPORT'; dnsReportBtn.classList.remove('scanning'); }
-      var report = buildDnsReportObject(dnsCurrentResult);
-      var blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'zyra-dns-report-' + (dnsCurrentResult.domain || 'unknown') + '.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Fetch the real server-generated report (full nslookup-style text:
+      // domain, query type, DNS server, records + TTLs, response time,
+      // timestamp, status/error) and download it as a file.
+      fetch('/api/dns/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: dnsCurrentResult, format: 'txt' })
+      }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var cd = res.headers.get('Content-Disposition') || '';
+        var m = /filename="([^"]+)"/.exec(cd);
+        var fname = (m && m[1]) || 'zyra-dns-report-' + (dnsCurrentResult.domain || 'lookup') + '.txt';
+        return res.text().then(function (text) { return { fname: fname, text: text }; });
+      }).then(function (out) {
+        var blob = new Blob([out.text], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = out.fname;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }).catch(function (err) {
+        showDnsError('Could not download DNS report: ' + err);
+      }).finally(function () {
+        if (dnsDownloadBtn) { dnsDownloadBtn.disabled = false; dnsDownloadBtn.textContent = 'DOWNLOAD REPORT'; }
+      });
     }
 
     if (dnsLookupBtn) {
@@ -3942,10 +3911,10 @@ canvas {
       if (dnsHistoryEmpty) dnsHistoryEmpty.remove();
       if (dnsHistoryEl) {
         dnsHistoryEl.innerHTML = data.data.map(function (h) {
-          var scoreColor = (h.score >= 70) ? '#00ff88' : (h.score >= 40 ? '#ffaa00' : '#ff3333');
+          var stColor = (h.status === 'RESOLVED') ? '#00ff88' : '#ffaa00';
           return '<div class="url-history-item" data-lookup-id="' + escapeHtml(h.lookup_id) + '">'
             + '<span class="url-history-domain">' + escapeHtml(h.domain || '—') + '</span>'
-            + '<span class="url-history-meta">Score: <span style="color:' + scoreColor + ';font-weight:700">' + h.score + '</span> &middot; ' + escapeHtml(h.risk_level_label || h.risk_level || '') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
+            + '<span class="url-history-meta"><span style="color:' + stColor + ';font-weight:700">' + escapeHtml(h.status || '') + '</span> &middot; ' + escapeHtml(h.query_type || 'ANY') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
             + '</div>';
         }).join('');
         dnsHistoryEl.querySelectorAll('.url-history-item').forEach(function (item) {

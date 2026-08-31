@@ -44,11 +44,14 @@ _HOSTNAME_TYPES = {"CNAME", "MX", "NS", "SOA", "PTR"}
 def _clean_value(rdtype: str, value: str) -> str:
     """Normalize a record's text form (strip trailing dot on hostnames)."""
     value = (value or "").strip()
+    if rdtype == "MX" and " " in value:
+        # nslookup-style: "priority exchange" e.g. "10 mail.example.com"
+        prio, _, host = value.partition(" ")
+        stripped = host.rstrip(".")
+        host = stripped if stripped else host
+        return f"{prio} {host}" if host else value
     if rdtype in _HOSTNAME_TYPES and value.endswith("."):
-        # RFC 7505 null MX ("0 .") — keep the dot, it is the actual target
-        tail = value.rsplit(" ", 1)[-1]
-        if len(tail) > 1:
-            value = value[:-1]
+        value = value[:-1]
     return value
 
 
@@ -245,6 +248,33 @@ def _dnskey_via_any_resolver(resolver, apex: str):
     return key_ans, ds_ans
 
 # ──────────────────────────────────────────────
+# Single record-type query (nslookup-style: nslookup -type=MX example.com)
+# ──────────────────────────────────────────────
+
+def query_single(domain: str, rdtype: str) -> Dict:
+    """
+    Run ONE record-type query for a domain (or a reverse PTR query for an
+    IP) and return {"record_type", "block", "query_time_ms", "dns_server"}.
+    Never raises — every failure is captured inside the block.
+    """
+    from backend.dns_lookup.validator import is_ip_address
+
+    rdtype = (rdtype or "A").upper().strip()
+    resolver = _make_resolver()
+    started = time.perf_counter()
+    if rdtype == "PTR" and is_ip_address(domain):
+        block = _reverse_query(resolver, domain)
+    else:
+        block = _query_type(resolver, domain, rdtype)
+    return {
+        "record_type": rdtype,
+        "block": block,
+        "query_time_ms": round((time.perf_counter() - started) * 1000.0, 1),
+        "dns_server": get_dns_server_info(),
+    }
+
+
+# ──────────────────────────────────────────────
 # TXT / SPF / DMARC helpers
 # ──────────────────────────────────────────────
 
@@ -311,6 +341,24 @@ def _wildcard_probe(resolver: dns.resolver.Resolver, domain: str) -> Optional[bo
 # The full resolution pass
 # ──────────────────────────────────────────────
 
+def get_dns_server_info() -> Dict:
+    """
+    Information about the DNS resolver used (nslookup-style 'Server' line).
+    Returns the configured system nameservers — real values from the OS
+    resolver configuration, no hard-coding.
+    """
+    try:
+        resolver = _make_resolver()
+        servers = [str(ns) for ns in (resolver.nameservers or [])]
+    except Exception:  # noqa: BLE001
+        servers = []
+    return {
+        "nameservers": servers,
+        "description": ("system/default resolver (" + ", ".join(servers) + ")")
+                       if servers else "system/default resolver",
+    }
+
+
 def resolve_all(domain: str, is_ip: bool = False, apex: str = None) -> Dict:
     """
     Run every DNS query for the target and return the structured record set,
@@ -324,6 +372,7 @@ def resolve_all(domain: str, is_ip: bool = False, apex: str = None) -> Dict:
     apex = (apex or domain).strip().lower() or domain
 
     out: Dict = {
+        "dns_server": get_dns_server_info(),
         "records": {},
         "resolution": {"resolved": False, "ips": [], "error": None},
         "dnssec": {},
