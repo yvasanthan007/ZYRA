@@ -1441,27 +1441,36 @@ canvas {
 /* Accent color is driven by a CSS variable; existing rules are untouched. */
 :root { --zyra-accent: #ff8800; --zyra-accent-soft: rgba(255,136,68,0.25); --zyra-accent-text: #ffcc88; }
 
-/* Light theme (Blue & White) — additive overrides only, applied on body.zyra-light */
-body.zyra-light { background: #e8eef7 !important; color: #1a2740; }
-body.zyra-light #top-bar { background: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(230,238,250,0.85)); border-bottom: 1px solid rgba(40,90,170,0.18); }
-body.zyra-light .top-title, body.zyra-light .sm-title, body.zyra-light .url-title, body.zyra-light .zs-title { color: #1c4f9c; }
-body.zyra-light .top-subtitle, body.zyra-light .top-btn, body.zyra-light .btn-text, body.zyra-light .url-subtitle, body.zyra-light .nm-subtitle { color: #2a4a7a; }
-body.zyra-light .top-btn { border-color: rgba(40,90,170,0.25); background: rgba(255,255,255,0.5); }
-body.zyra-light .top-btn:hover { background: rgba(40,90,170,0.12); border-color: rgba(40,90,170,0.5); }
-body.zyra-light #bottom-controls { background: linear-gradient(0deg, rgba(232,238,247,0.95) 0%, rgba(232,238,247,0.5) 70%, transparent 100%); }
-body.zyra-light #chat-messages { background: rgba(255,255,255,0.8); border-color: rgba(40,90,170,0.2); color: #1a2740; }
-body.zyra-light #chat-input { background: rgba(255,255,255,0.85); border-color: rgba(40,90,170,0.25); color: #1a2740; }
-body.zyra-light .msg-zyra, body.zyra-light .msg-system { color: #1a2740; }
-body.zyra-light .system-monitor-card, body.zyra-light .nmap-scanner-card, body.zyra-light .url-analyzer-card,
-body.zyra-light #zyra-settings-panel {
-  background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(240,246,252,0.97)); border-color: rgba(40,90,170,0.25); color: #1a2740;
-}
-body.zyra-light .sm-card, body.zyra-light .nm-info-card, body.zyra-light .url-section { background: rgba(245,249,253,0.7); }
-body.zyra-light .sm-badge, body.zyra-light .nm-badge, body.zyra-light .url-badge { color: #1c4f9c; }
-body.zyra-light #zyra-settings-btn { background: rgba(255,255,255,0.8); color: #1c4f9c; border-color: rgba(40,90,170,0.35); }
-body.zyra-light .zs-select, body.zyra-light .zs-input { background: rgba(255,255,255,0.9); color: #1a2740; border-color: rgba(40,90,170,0.25); }
-body.zyra-light .zs-select option { background: #fff; color: #1a2740; }
-body.zyra-light .zs-info { background: rgba(245,249,253,0.7); color: #2a4a7a; }
+/* Light theme presentation matched to the supplied ZYRA reference: cool black
+   surroundings with deep navy glass panels and electric blue controls. The
+   Three.js canvas and neural-core animation are intentionally untouched. */
+body.zyra-light { background: #03070d !important; color: #f4f9ff; }
+body.zyra-light #top-bar { background: linear-gradient(180deg, rgba(2,5,10,.9), rgba(3,7,13,.42) 70%, transparent); border-bottom: 1px solid rgba(67,157,255,.12); }
+body.zyra-light .top-logo, body.zyra-light .top-title { color: #f4f9ff; text-shadow: 0 0 10px rgba(110,190,255,.22); }
+body.zyra-light .top-subtitle { color: rgba(220,238,255,.78); }
+body.zyra-light .top-btn { color: #f4f9ff; background: linear-gradient(180deg, rgba(15,46,83,.8), rgba(5,18,36,.82)); border-color: rgba(91,181,255,.38); box-shadow: 0 0 14px rgba(22,119,255,.18), inset 0 0 12px rgba(52,142,255,.08); }
+body.zyra-light .top-btn:hover, body.zyra-light .top-btn.active { background: rgba(22,84,145,.8); border-color: #5ab7ff; box-shadow: 0 0 18px rgba(22,119,255,.38); }
+body.zyra-light .btn-dot { background: #56bdff; box-shadow: 0 0 9px #1677ff; }
+body.zyra-light #bottom-controls { background: linear-gradient(0deg, rgba(2,6,12,.94), rgba(3,8,16,.58) 70%, transparent); }
+body.zyra-light #chat-messages { background: rgba(5,25,52,.78); border-color: rgba(62,157,255,.38); color: #eaf5ff; box-shadow: 0 0 18px rgba(22,119,255,.12); }
+body.zyra-light .msg.user { background: rgba(22,119,255,.2); border-color: rgba(67,166,255,.38); color: #fff; }
+body.zyra-light .msg.zyra { background: rgba(8,43,82,.62); border-color: rgba(67,166,255,.25); color: #dceeff; }
+body.zyra-light #chat-input { background: rgba(5,24,49,.9); border-color: rgba(70,165,255,.42); color: #fff; box-shadow: 0 0 16px rgba(22,119,255,.12); }
+body.zyra-light #chat-input:focus { border-color: #56bdff; box-shadow: 0 0 0 2px rgba(22,119,255,.2), 0 0 20px rgba(22,119,255,.2); }
+body.zyra-light #chat-input::placeholder { color: rgba(220,238,255,.58); }
+body.zyra-light #chat-send { background: #1677ff; border-color: #56bdff; color: #fff; box-shadow: 0 0 16px rgba(22,119,255,.42); }
+body.zyra-light #chat-send:hover { background: #3998ff; box-shadow: 0 0 22px rgba(80,184,255,.55); }
+body.zyra-light .system-monitor-card, body.zyra-light .nmap-scanner-card, body.zyra-light .url-analyzer-card, body.zyra-light #zyra-settings-panel { background: linear-gradient(180deg, rgba(5,27,57,.96), rgba(2,13,29,.97)); border-color: rgba(71,166,255,.4); color: #eaf5ff; box-shadow: 0 12px 36px rgba(0,0,0,.6), 0 0 24px rgba(22,119,255,.2); }
+body.zyra-light .sm-header, body.zyra-light .nm-header, body.zyra-light .url-header, body.zyra-light .zs-header { background: linear-gradient(90deg, rgba(22,119,255,.22), transparent); border-color: rgba(71,166,255,.25); }
+body.zyra-light .sm-metric-card, body.zyra-light .sm-info-card, body.zyra-light .nm-info-card, body.zyra-light .url-section, body.zyra-light .sm-status-card { background: rgba(5,29,60,.7); border-color: rgba(71,166,255,.2); }
+body.zyra-light .sm-title, body.zyra-light .url-title, body.zyra-light .zs-title, body.zyra-light .zs-section-title, body.zyra-light .sm-card-heading { color: #65c3ff; }
+body.zyra-light .sm-metric-name, body.zyra-light .sm-metric-val, body.zyra-light .url-score, body.zyra-light .zs-label, body.zyra-light .zs-info { color: #eaf5ff; }
+body.zyra-light #zyra-settings-btn { background: rgba(5,28,56,.9); color: #65c3ff; border-color: rgba(71,166,255,.45); box-shadow: 0 0 18px rgba(22,119,255,.24); }
+body.zyra-light .zs-select, body.zyra-light .zs-input { background: rgba(3,17,35,.9); color: #eaf5ff; border-color: rgba(71,166,255,.38); }
+body.zyra-light .zs-select option { background: #061a34; color: #eaf5ff; }
+body.zyra-light .zs-section { border-color: rgba(71,166,255,.2); }
+body.zyra-light .zs-btn { color: #dceeff; background: rgba(22,119,255,.18); border-color: rgba(71,166,255,.4); }
+body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: #65c3ff; }
 
 /* Chat history sidebar (additive) */
 #zyra-chat-sidebar {
@@ -1485,9 +1494,11 @@ body.zyra-light .zs-info { background: rgba(245,249,253,0.7); color: #2a4a7a; }
 .zs-side-item .t { font-size: 12px; color: #ffcc88; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .zs-side-item .d { font-size: 9.5px; color: rgba(255,170,85,0.55); margin-top: 3px; }
 .zs-side-empty { font-size: 11px; color: rgba(255,170,85,0.4); padding: 14px; text-align: center; }
-body.zyra-light #zyra-chat-sidebar { background: linear-gradient(180deg, rgba(255,255,255,0.97), rgba(240,246,252,0.97)); border-color: rgba(40,90,170,0.25); color: #1a2740; }
-body.zyra-light .zs-side-head { color: #1c4f9c; }
-body.zyra-light .zs-side-item { background: rgba(245,249,253,0.7); }
+body.zyra-light #zyra-chat-sidebar { background: linear-gradient(180deg, rgba(5,27,57,.98), rgba(2,13,29,.98)); border-color: rgba(71,166,255,.4); color: #eaf5ff; }
+body.zyra-light .zs-side-head { color: #65c3ff; border-color: rgba(71,166,255,.25); }
+body.zyra-light .zs-side-item { background: rgba(5,29,60,.72); border-color: rgba(71,166,255,.2); }
+body.zyra-light .zs-side-item .t { color: #eaf5ff; }
+body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
 </style>
 </head>
 <body>
