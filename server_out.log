@@ -1,11 +1,18 @@
 pygame 2.6.1 (SDL 2.28.4, Python 3.13.5)
 Hello from the pygame community. https://www.pygame.org/contribute.html
-INFO:     127.0.0.1:54134 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54135 - "POST /api/dns/lookup HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54136 - "POST /api/dns/lookup HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54137 - "POST /api/dns/report HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54138 - "POST /api/dns/report HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54139 - "POST /api/dns/report HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54140 - "GET /api/dns/report/dns_20260831_193229_901798?format=txt HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54141 - "POST /api/dns/lookup HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54142 - "POST /api/dns/lookup HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41135 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41135 - "GET /api/nmap/operations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50955 - "GET /api/url/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:21089 - "GET /api/dns/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25221 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:25221 - "GET /api/nmap/operations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55896 - "GET /api/url/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:3722 - "GET /api/dns/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41888 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:31061 - "GET /api/nmap/operations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42059 - "GET /api/url/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:29080 - "GET /api/dns/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52657 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52657 - "GET /api/nmap/operations HTTP/1.1" 200 OK
+INFO:     127.0.0.1:16533 - "GET /api/url/history HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52821 - "GET /api/dns/history HTTP/1.1" 200 OK
