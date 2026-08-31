@@ -72,6 +72,21 @@ from backend.url_analyzer import (
     report_to_text as url_report_to_text,
     start_scan,
 )
+from backend.dns_lookup import (
+    DNS_STAGES,
+    build_chat_ack as dns_build_chat_ack,
+    build_voice_summary as dns_build_voice_summary,
+    build_dns_report_data as dns_build_report_data,
+    dns_history_recent,
+    dns_report_filename,
+    dns_report_to_pdf,
+    dns_report_to_text,
+    extract_dns_target,
+    get_dns_lookup,
+    get_scan_state as get_dns_scan_state,
+    is_dns_intent,
+    start_dns_lookup,
+)
 
 app = FastAPI(
     title="ZYRA AI Assistant API",
@@ -580,6 +595,228 @@ def start_url_scan(url: str, source: str = "panel") -> Dict[str, Any]:
     return {"success": True, "scan_id": scan_id}
 
 
+# ========== DNS Lookup Scan Manager ==========
+# Tracks live DNS lookups and broadcasts progress to the dashboard, mirroring
+# the URL Analyzer scan manager. Lookup state lives in the backend package
+# registry; this manager owns the dashboard-facing state + broadcasts.
+
+_dns_lock = threading.Lock()
+_dns_active: Optional[Dict[str, Any]] = None
+_dns_last: Optional[Dict[str, Any]] = None
+
+# Rate limiting: DNS lookups are lightweight (pure dnspython queries), but
+# they must still not be hammerable.
+_DNS_RATE_MAX = 10
+_DNS_RATE_WINDOW = 60.0
+_dns_rate_stamps: list = []
+_dns_rate_lock = threading.Lock()
+
+# Longest allowed wall-clock lifetime of one DNS lookup.
+_DNS_LOOKUP_MAX_LIFETIME = 60  # seconds
+
+
+def _dns_rate_allowed() -> bool:
+    """Return True when a new lookup may start (sliding window limiter)."""
+    now = time.time()
+    with _dns_rate_lock:
+        _dns_rate_stamps[:] = [
+            t for t in _dns_rate_stamps if now - t < _DNS_RATE_WINDOW
+        ]
+        if len(_dns_rate_stamps) >= _DNS_RATE_MAX:
+            return False
+        _dns_rate_stamps.append(now)
+        return True
+
+
+def _dns_public_state(state: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Strip non-serializable internals before sending lookup state to clients."""
+    if not state:
+        return None
+    return {k: v for k, v in state.items() if not k.startswith("_")}
+
+
+def _dns_set_state(**updates: Any) -> None:
+    """Update the active DNS lookup state and broadcast it to all clients."""
+    snapshot = None
+    with _dns_lock:
+        if _dns_active is None:
+            return
+        _dns_active.update(updates)
+        snapshot = _dns_public_state(_dns_active)
+    if snapshot:
+        broadcast_message_sync({"type": "dns_status", "data": snapshot})
+
+
+def _dns_finish(scan_id: str, result: Dict[str, Any]) -> None:
+    """Move the finished lookup from _dns_active to _dns_last and broadcast."""
+    global _dns_active, _dns_last
+    error_result = result is not None and not result.get("success")
+    with _dns_lock:
+        if _dns_active is not None and _dns_active.get("lookup_id") == scan_id:
+            _dns_active.update({
+                "status": "ERROR" if error_result else "COMPLETE",
+                "stage": "complete" if not error_result else "error",
+                "stage_label": ("DNS LOOKUP COMPLETE" if not error_result
+                                else "DNS LOOKUP FAILED"),
+                "stage_status": "done" if not error_result else "fail",
+                "progress": 100,
+                "result": result,
+                "chat_response": dns_build_chat_ack(result.get("domain")),
+                "voice_summary": dns_build_voice_summary(result),
+                "finished_at": time.time(),
+            })
+            snapshot = _dns_public_state(_dns_active)
+            _dns_last = dict(_dns_active)
+            _dns_active = None
+        else:
+            snapshot = None
+    if snapshot:
+        broadcast_message_sync({"type": "dns_status", "data": snapshot})
+
+def _dns_run_worker(lookup_id: str, domain: str, source: str,
+                    extra_on_complete=None) -> None:
+    """Background worker executing the DNS lookup pipeline."""
+    global _dns_active, _dns_last
+    try:
+        def on_stage(stage_update, full_state):
+            _dns_set_state(**stage_update)
+
+        def on_complete(result):
+            _dns_finish(lookup_id, result)
+            if extra_on_complete:
+                try:
+                    extra_on_complete(result)
+                except Exception:
+                    pass
+
+        start_dns_lookup(domain, source=source, on_stage=on_stage,
+                         on_complete=on_complete, lookup_id=lookup_id)
+    except Exception as e:
+        with _dns_lock:
+            if _dns_active is not None:
+                _dns_active.update(status="ERROR", stage="error",
+                                   error=str(e), progress=100)
+                snapshot = _dns_public_state(_dns_active)
+                _dns_last = dict(_dns_active)
+                _dns_active = None
+            else:
+                snapshot = None
+        if snapshot:
+            broadcast_message_sync({"type": "dns_status", "data": snapshot})
+        broadcast_message_sync({"type": "dns_error", "data": {"reason": str(e)}})
+
+
+def _dns_watchdog(lookup_id: str, deadline: float) -> None:
+    """Clear a stuck _dns_active once it passes its deadline."""
+    global _dns_active
+    while time.time() < deadline:
+        with _dns_lock:
+            active = _dns_active
+        if active is None or active.get("lookup_id") != lookup_id:
+            return  # lookup finished normally
+        remaining = deadline - time.time()
+        if remaining <= 0:
+            break
+        time.sleep(min(2.0, remaining))
+    snapshot = None
+    with _dns_lock:
+        active = _dns_active
+        if active is not None and active.get("lookup_id") == lookup_id:
+            _dns_active.update({
+                "status": "ERROR",
+                "stage": "error",
+                "stage_label": "DNS LOOKUP TIMED OUT",
+                "stage_status": "fail",
+                "progress": 100,
+                "error": "The DNS resolver did not respond within the allowed time.",
+                "finished_at": time.time(),
+            })
+            snapshot = _dns_public_state(_dns_active)
+            _dns_last = dict(_dns_active)
+            _dns_active = None
+    if snapshot:
+        broadcast_message_sync({"type": "dns_status", "data": snapshot})
+        broadcast_message_sync({
+            "type": "dns_error",
+            "data": {"reason": snapshot.get("error", "DNS lookup timed out.")},
+        })
+
+
+def start_dns_lookup_job(domain: str, source: str = "panel",
+                         extra_on_complete=None) -> Dict[str, Any]:
+    """
+    Validate and launch a background DNS lookup.
+
+    Returns {"success": bool, "lookup_id": ..., "error": ...}.
+    """
+    global _dns_active
+    if not domain or not str(domain).strip():
+        return {"success": False, "error": "Please enter a valid domain."}
+
+    if not _dns_rate_allowed():
+        return {
+            "success": False,
+            "error": ("Too many DNS lookups in a short time. "
+                      "Please wait a moment before starting another one."),
+        }
+
+    now = time.time()
+    with _dns_lock:
+        if _dns_active is not None:
+            # Recover from a previously hung lookup.
+            if now - float(_dns_active.get("started_at") or 0) > _DNS_LOOKUP_MAX_LIFETIME:
+                _dns_active.update({
+                    "status": "ERROR", "stage": "error",
+                    "stage_label": "DNS LOOKUP TIMED OUT",
+                    "stage_status": "fail", "progress": 100,
+                    "error": "The DNS resolver did not respond within the allowed time.",
+                    "finished_at": now,
+                })
+                stale = _dns_public_state(_dns_active)
+                _dns_last = dict(_dns_active)
+                _dns_active = None
+                broadcast_message_sync({"type": "dns_status", "data": stale})
+            else:
+                return {"success": False,
+                        "error": "A DNS lookup is already running. Wait for it to complete."}
+
+        from datetime import datetime as _dt
+        import uuid as _uuid
+        lookup_id = f"dns_{_dt.now().strftime('%Y%m%d_%H%M%S')}_{_uuid.uuid4().hex[:6]}"
+        _dns_active = {
+            "lookup_id": lookup_id,
+            "domain": str(domain).strip(),
+            "source": source,
+            "status": "RUNNING",
+            "stage": "initializing",
+            "stage_label": "INITIALIZING DNS LOOKUP...",
+            "stage_status": "running",
+            "progress": 5,
+            "stages": [{"key": k, "label": l, "status": "pending"}
+                       for k, l in DNS_STAGES],
+            "started_at": time.time(),
+            "error": None,
+        }
+        snapshot = _dns_public_state(_dns_active)
+        deadline = _dns_active["started_at"] + _DNS_LOOKUP_MAX_LIFETIME
+
+    broadcast_message_sync({"type": "dns_status", "data": snapshot})
+
+    threading.Thread(
+        target=_dns_run_worker,
+        args=(lookup_id, str(domain).strip(), source, extra_on_complete),
+        daemon=True,
+        name=f"ZYRA-DNS-{lookup_id}",
+    ).start()
+    threading.Thread(
+        target=_dns_watchdog,
+        args=(lookup_id, deadline),
+        daemon=True,
+        name=f"ZYRA-DNS-WD-{lookup_id}",
+    ).start()
+    return {"success": True, "lookup_id": lookup_id}
+
+
 # ========== REST API Endpoints ==========
 
 @app.get("/")
@@ -1052,6 +1289,148 @@ async def url_history_endpoint():
     return {"success": True, "data": get_history(8)}
 
 
+# ========== DNS Lookup Endpoints ==========
+
+@app.post("/api/dns/lookup")
+async def dns_lookup_endpoint(data: Dict[str, Any]):
+    """
+    Run a real DNS lookup for a domain (or reverse lookup for an IP).
+
+    Request body:
+        {"domain": "example.com"}          # panel / programmatic
+        {"text": "Analyze DNS of example.com"}  # raw chat-style input
+        {"source": "panel"}                # optional: panel | chat | voice
+
+    The lookup runs in a background thread (live progress is streamed to
+    dashboard clients over WebSocket as `dns_status` messages). The endpoint
+    waits for completion (up to ~50s — typical lookups take 1-5s) and returns
+    the full structured result: DNS records (A, AAAA, CNAME, MX, NS, TXT,
+    SOA, PTR), DNSSEC status, TTLs, response time, security score (0-100),
+    risk level, findings, warnings and recommendations.
+    """
+    domain = (data.get("domain") or data.get("target") or "").strip()
+    text = (data.get("text") or "").strip()
+    source = (data.get("source") or "panel").strip().lower() or "panel"
+
+    if not domain and text:
+        # Accept raw chat-style input; extract the domain from it.
+        extracted = extract_dns_target(text)
+        if extracted:
+            domain = extracted
+        elif not is_dns_intent(text):
+            domain = text  # let the validator produce a helpful error
+    if not domain:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Domain is required"},
+        )
+
+    holder: Dict[str, Any] = {"result": None}
+    done = threading.Event()
+
+    def _on_done(result):
+        holder["result"] = result
+        done.set()
+
+    launch = start_dns_lookup_job(domain, source=source, extra_on_complete=_on_done)
+    if not launch.get("success"):
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": launch.get("error", "Lookup could not be started.")},
+        )
+
+    lookup_id = launch.get("lookup_id")
+    done.wait(timeout=50)
+
+    result = holder.get("result")
+    if result is None:
+        # Timed out waiting — check the registry once more before giving up.
+        state = get_dns_scan_state(lookup_id)
+        if state and state.get("result"):
+            result = state["result"]
+    if result is not None and result.get("success"):
+        return {"success": True, "lookup_id": lookup_id, "result": result}
+    if result is not None:
+        # Validation / lookup error surfaced gracefully (never a crash).
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "lookup_id": lookup_id,
+                     "error": result.get("error", "DNS lookup failed.")},
+        )
+
+    # Still running after 50s (rare): report pending state.
+    return JSONResponse(
+        status_code=202,
+        content={"success": True, "lookup_id": lookup_id, "pending": True,
+                 "message": "DNS lookup still running; poll /api/dns/result/<id>."},
+    )
+
+
+@app.get("/api/dns/result/{lookup_id}")
+async def dns_result_endpoint(lookup_id: str):
+    """Full stored result for a completed DNS lookup (panel reopen)."""
+    state = get_dns_scan_state(lookup_id)
+    if not state:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "error": f"Lookup '{lookup_id}' not found."}
+        )
+    return {"success": True, "data": state}
+
+
+@app.get("/api/dns/report/{lookup_id}")
+async def dns_report_endpoint(lookup_id: str, format: str = "json"):
+    """
+    Generate a DNS lookup report.
+
+    format=json  -> structured result payload
+    format=txt   -> plain-text report
+    format=pdf   -> downloadable PDF report
+    """
+    state = get_dns_scan_state(lookup_id)
+    result = None
+    if state:
+        result = state.get("result")
+    if not result:
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "error": f"Lookup '{lookup_id}' not found. Run a lookup first."}
+        )
+    fmt = (format or "json").lower()
+    try:
+        report = dns_build_report_data(result)
+        if fmt == "json":
+            return {"success": True, "data": report}
+        if fmt in ("txt", "text"):
+            return Response(
+                content=dns_report_to_text(report),
+                media_type="text/plain; charset=utf-8",
+                headers={"Content-Disposition": f'attachment; filename="{dns_report_filename(result)}.txt"'},
+            )
+        if fmt == "pdf":
+            pdf_bytes = dns_report_to_pdf(report)
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{dns_report_filename(result)}.pdf"'},
+            )
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": f"Unsupported format '{format}'. Use json, pdf or txt."}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Report generation failed: {e}"}
+        )
+
+
+@app.get("/api/dns/history")
+async def dns_history_endpoint():
+    """Recent DNS lookup history for the panel."""
+    return {"success": True, "data": dns_history_recent(8)}
+
+
 # ========== WebSocket Endpoint ==========
 
 @app.websocket("/ws")
@@ -1167,6 +1546,51 @@ async def websocket_endpoint(websocket: WebSocket):
                             {
                                 "type": "nmap_error",
                                 "data": {"reason": launch.get("error", "Scan could not be started.")},
+                            },
+                            websocket,
+                        )
+
+                # ── DNS lookup intent from chat or voice ──
+                # Detect the intent, extract the domain, open the DNS Lookup
+                # panel and run the real lookup. The panel streams live
+                # progress from the background worker.
+                dns_text = ""
+                if isinstance(msg_data, str):
+                    dns_text = msg_data
+                elif isinstance(msg_data, dict):
+                    dns_text = msg_data.get("text") or msg_data.get("message") or ""
+                dns_intent = (
+                    msg_type in ("chat", "voice")
+                    and bool(dns_text)
+                    and is_dns_intent(dns_text)
+                )
+                if dns_intent:
+                    dns_target = extract_dns_target(dns_text)
+                    if dns_target:
+                        dns_source = "voice" if msg_type == "voice" else "chat"
+                        dns_launch = start_dns_lookup_job(dns_target, source=dns_source)
+                        if dns_launch.get("success"):
+                            with _dns_lock:
+                                dns_state = _dns_public_state(_dns_active) or {}
+                            await manager.broadcast({
+                                "type": "show_dns_lookup",
+                                "data": dns_state,
+                                "domain": dns_target,
+                            })
+                        else:
+                            await manager.send_personal(
+                                {
+                                    "type": "dns_error",
+                                    "data": {"reason": dns_launch.get("error", "DNS lookup could not be started.")},
+                                },
+                                websocket,
+                            )
+                    else:
+                        await manager.send_personal(
+                            {
+                                "type": "response",
+                                "success": True,
+                                "data": "I detected a DNS lookup request, but could not extract a valid domain. Please provide one like: \"Analyze DNS of example.com\".",
                             },
                             websocket,
                         )

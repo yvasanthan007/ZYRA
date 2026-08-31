@@ -18,10 +18,18 @@ the backend, with timeouts and full error handling.
 
 from backend.dns_lookup.analyzer import (  # noqa: F401
     DNS_STAGES,
+    STAGE_PROGRESS,
     build_voice_summary,
+    get_dns_lookup,
+    get_last_dns_lookup,
     get_scan_state,
-    get_last_scan,
     run_dns_lookup,
+    start_dns_lookup,
+)
+from backend.dns_lookup.history import (  # noqa: F401
+    add_entry as dns_history_add,
+    find as dns_history_find,
+    recent as dns_history_recent,
 )
 from backend.dns_lookup.intent import (  # noqa: F401
     build_chat_ack,
@@ -34,18 +42,34 @@ from backend.dns_lookup.report import (  # noqa: F401
     report_to_pdf as dns_report_to_pdf,
     report_to_text as dns_report_to_text,
 )
+from backend.dns_lookup.resolver import resolve_all  # noqa: F401
+from backend.dns_lookup.scorer import score_dns  # noqa: F401
+from backend.dns_lookup.validator import (  # noqa: F401
+    DomainValidationError,
+    validate_domain,
+)
 
 __all__ = [
     "DNS_STAGES",
+    "STAGE_PROGRESS",
+    "DomainValidationError",
     "build_chat_ack",
     "build_dns_report_data",
     "build_voice_summary",
+    "dns_history_add",
+    "dns_history_find",
+    "dns_history_recent",
     "dns_report_filename",
     "dns_report_to_pdf",
     "dns_report_to_text",
     "extract_dns_target",
-    "get_last_scan",
+    "get_dns_lookup",
+    "get_last_dns_lookup",
     "get_scan_state",
     "is_dns_intent",
+    "resolve_all",
     "run_dns_lookup",
+    "score_dns",
+    "start_dns_lookup",
+    "validate_domain",
 ]

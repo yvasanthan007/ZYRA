@@ -1115,6 +1115,92 @@ canvas {
   color: rgba(255, 200, 200, 0.8);
 }
 
+/* ===== DNS LOOKUP PANEL (gold accents; shares the URL panel layout) ===== */
+.dns-dot {
+  background: #ffcc44;
+  box-shadow: 0 0 8px #ffcc44;
+}
+.dns-pulse-dot {
+  background: #ffcc44;
+  box-shadow: 0 0 10px #ffcc44;
+}
+.dns-badge {
+  background: rgba(255, 204, 68, 0.15);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  color: #ffcc44;
+}
+.dns-badge.offline {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: rgba(255, 68, 68, 0.35);
+  color: #ff6666;
+}
+.dns-lookup-btn {
+  background: rgba(255, 204, 68, 0.14);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  color: #ffcc44;
+}
+.dns-lookup-btn:hover {
+  background: rgba(255, 204, 68, 0.25);
+  border-color: rgba(255, 204, 68, 0.65);
+  box-shadow: 0 0 20px rgba(255, 204, 68, 0.2);
+}
+.dns-records { display: flex; flex-direction: column; gap: 6px; }
+.dns-record-block {
+  background: rgba(8, 8, 18, 0.4);
+  border: 1px solid rgba(255, 204, 68, 0.14);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.dns-record-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #ffcc44;
+  padding-bottom: 4px; margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 204, 68, 0.1);
+}
+.dns-record-status { font-size: 9px; letter-spacing: 1px; }
+.dns-record-status.ok { color: #00ff88; }
+.dns-record-status.empty { color: rgba(255, 170, 85, 0.5); }
+.dns-record-status.error { color: #ff5555; }
+.dns-record-row {
+  display: flex; justify-content: space-between; gap: 10px;
+  font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc88; padding: 2px 0; word-break: break-all;
+}
+.dns-record-ttl {
+  flex: none; color: rgba(255, 170, 85, 0.6); font-size: 10px;
+}
+.dns-record-error {
+  font-size: 11px; color: rgba(255, 150, 150, 0.7);
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+.dns-warnings { display: flex; flex-direction: column; gap: 4px; }
+.dns-warning {
+  font-size: 11px; line-height: 1.45; color: rgba(255, 200, 120, 0.85);
+  padding: 5px 8px; border-radius: 6px;
+  background: rgba(255, 170, 0, 0.06);
+  border-left: 2px solid rgba(255, 170, 0, 0.35);
+}
+
+.dns-findings-list, .dns-warning-list, .dns-recommendation-list {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px;
+}
+.dns-findings-list li, .dns-warning-list li {
+  font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc88; padding: 4px 6px; border-radius: 4px;
+  background: rgba(255, 204, 68, 0.06);
+}
+.dns-recommendation-list li {
+  font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc88; padding: 4px 6px; border-radius: 4px;
+  background: rgba(8, 120, 80, 0.12);
+  border-left: 2px solid rgba(0, 255, 136, 0.35);
+}
+.dns-empty-list {
+  font-size: 11px; color: rgba(255, 204, 68, 0.25);
+  font-family: 'Consolas', 'Courier New', monospace; padding: 8px 0;
+}
+
 /* ===== CENTER-TOP SCAN NOTIFICATION (toast) ===== */
 .scan-toast {
   position: absolute;
@@ -1223,6 +1309,10 @@ canvas {
         <button id="btn-toggle-url" class="top-btn" title="Toggle URL Analyzer">
           <span class="btn-dot url-dot"></span>
           <span class="btn-text">URL Analyzer</span>
+        </button>
+        <button id="btn-toggle-dns" class="top-btn" title="Toggle DNS Lookup">
+          <span class="btn-dot dns-dot"></span>
+          <span class="btn-text">DNS Lookup</span>
         </button>
       </div>
     </div>
@@ -1538,6 +1628,120 @@ canvas {
       <div class="url-error-card" id="url-error-card">
         <div class="url-error-title">URL ANALYZER ERROR</div>
         <div class="url-error-reason" id="url-error-reason"></div>
+      </div>
+    </div>
+ </div>
+
+  <!-- DNS Lookup HUD Card -->
+  <div id="dns-lookup-card" class="url-analyzer-card" aria-label="DNS Lookup">
+    <div class="url-header">
+      <div class="url-title-group">
+        <span class="url-pulse-dot dns-pulse-dot"></span>
+        <div>
+          <div class="url-title">DNS LOOKUP</div>
+          <div class="url-subtitle">Domain Intelligence Module</div>
+        </div>
+      </div>
+      <div class="sm-header-actions">
+        <span class="url-badge dns-badge" id="dns-badge">READY</span>
+        <button class="url-btn-close" id="dns-close-btn" title="Close DNS Lookup">&#10005;</button>
+      </div>
+    </div>
+
+    <div class="url-body" id="dns-body">
+      <div class="url-field">
+        <label for="dns-input">Enter Domain or IP</label>
+        <input id="dns-input" type="text" placeholder="example.com" autocomplete="off" spellcheck="false">
+      </div>
+      <button id="dns-lookup-btn" class="url-analyze-btn dns-lookup-btn">LOOKUP DNS</button>
+
+      <div class="url-section" id="dns-stages-section" style="display: none;">
+        <div class="url-section-title">Lookup Progress</div>
+        <div class="url-status-bar">
+          <div class="url-status-row">
+            <span class="url-status-label" id="dns-stage-label">INITIALIZING DNS LOOKUP...</span>
+            <span class="url-status-value" id="dns-progress-val">0%</span>
+          </div>
+          <div class="url-bar-track"><div class="url-bar-fill" id="dns-progress-bar" style="width: 0%;"></div></div>
+        </div>
+        <div class="url-stages" id="dns-stages"></div>
+      </div>
+
+      <div class="url-section" id="dns-result-section" style="display: none;">
+        <div class="url-section-title">Lookup Result</div>
+        <div class="url-score-wrap">
+          <div class="url-score" id="dns-score">--</div>
+          <div class="url-score-label" id="dns-risk-label">RISK</div>
+          <div class="url-score-class" id="dns-status-label">&mdash;</div>
+        </div>
+        <div class="url-detail-row" style="margin-top: 6px;">
+          <span class="url-detail-k">Domain</span>
+          <span class="url-detail-v" id="dns-target">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">Resolution</span>
+          <span class="url-detail-v" id="dns-resolution">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">Response Time</span>
+          <span class="url-detail-v" id="dns-response-time">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">DNSSEC</span>
+          <span class="url-detail-v" id="dns-dnssec-brief">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="url-section" id="dns-checks-section" style="display: none;">
+        <div class="url-section-title">DNS Summary</div>
+        <div class="url-checks" id="dns-checks"></div>
+      </div>
+
+      <div class="url-section" id="dns-records-section" style="display: none;">
+        <div class="url-section-title">DNS Records</div>
+        <div class="dns-records" id="dns-records"></div>
+      </div>
+
+      <div class="url-section" id="dns-mail-section" style="display: none;">
+        <div class="url-section-title">Mail Policy</div>
+        <div class="url-detail-grid" id="dns-mail"></div>
+      </div>
+
+      <div class="url-section" id="dns-dnssec-section" style="display: none;">
+        <div class="url-section-title">DNSSEC</div>
+        <div class="url-detail-grid" id="dns-dnssec"></div>
+      </div>
+
+      <div class="url-section" id="dns-findings-section" style="display: none;">
+        <div class="url-section-title">Security Findings</div>
+        <div class="url-findings" id="dns-findings"></div>
+      </div>
+
+      <div class="url-section" id="dns-warnings-section" style="display: none;">
+        <div class="url-section-title">Warnings</div>
+        <div class="dns-warnings" id="dns-warnings"></div>
+      </div>
+
+      <div class="url-section" id="dns-rec-section" style="display: none;">
+        <div class="url-section-title">Recommendations</div>
+        <div class="url-recommendation" id="dns-recommendation"></div>
+      </div>
+
+      <div class="url-actions" id="dns-actions" style="display: none;">
+        <button id="dns-report-btn" class="url-action-btn" disabled>GENERATE REPORT</button>
+        <button id="dns-download-btn" class="url-action-btn" disabled>DOWNLOAD REPORT</button>
+      </div>
+
+      <div class="url-section" id="dns-history-section">
+        <div class="url-section-title">Recent DNS Lookups</div>
+        <div class="url-history" id="dns-history">
+          <div class="url-history-meta" id="dns-history-empty">No recent lookups.</div>
+        </div>
+      </div>
+
+      <div class="url-error-card" id="dns-error-card">
+        <div class="url-error-title">DNS LOOKUP ERROR</div>
+        <div class="url-error-reason" id="dns-error-reason"></div>
       </div>
     </div>
  </div>
@@ -2088,6 +2292,14 @@ canvas {
             if (data.data) updateUrlUI(data.data);
           } else if (data.type === 'url_error') {
             showUrlError(data.data && data.data.reason);
+          } else if (data.type === 'show_dns_lookup') {
+            openDnsPanel();
+            if (data.domain && dnsInput && !dnsInput.value) dnsInput.value = data.domain;
+            if (data.data) updateDnsUI(data.data);
+          } else if (data.type === 'dns_status') {
+            if (data.data) updateDnsUI(data.data);
+          } else if (data.type === 'dns_error') {
+            showDnsError(data.data && data.data.reason);
           } else if (data.type === 'voice_response') {
             addMessage(data.data, 'zyra');
             if (typeof data.data === 'string' && data.data.toLowerCase().includes('system monitor')) {
@@ -2128,6 +2340,14 @@ canvas {
     if (isNmapRequest(lowerText)) {
       openNmapPanel();
       setNmapStageHint(cleanText);
+    }
+    // DNS lookup requests: open the DNS Lookup panel immediately and prefill
+    // the domain; the backend detects the intent, runs the real lookup and
+    // streams live status back over WebSocket.
+    if (isDnsRequest(lowerText)) {
+      openDnsPanel();
+      const dm = DNS_BARE_TARGET_RE.exec(cleanText);
+      if (dm && dnsInput && !dnsInput.value) dnsInput.value = dm[0].replace(/[.,!?;:]+$/, '');
     }
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       addMessage('Not connected to ZYRA server', 'system');
@@ -2831,19 +3051,43 @@ canvas {
   let urlLastChatScan = null; // scan_id whose completion notification was already shown
   let urlReportReady = false; // report generated for current scan
 
-  // Both feature panels open on the left, below their top-bar buttons. When
-  // Nmap and URL panels are visible at the same time, stack the URL panel
-  // below the Nmap panel so neither covers the other.
+  // All feature panels open on the left, below their top-bar buttons. When
+  // multiple panels are visible at the same time they stack vertically
+  // (Nmap -> URL -> DNS) so none of them covers another.
   function relayoutLeftPanels() {
     if (!urlCard || !nmapCard) return;
-    var bothOpen = nmapCard.classList.contains('visible') && urlCard.classList.contains('visible');
-    if (bothOpen) {
-      var stackedTop = nmapCard.offsetTop + nmapCard.offsetHeight + 12;
-      urlCard.style.top = stackedTop + 'px';
-      urlCard.style.maxHeight = Math.max(240, window.innerHeight - stackedTop - 40) + 'px';
+    var nmapOpen = nmapCard.classList.contains('visible');
+    var urlOpen = urlCard.classList.contains('visible');
+    var dnsOpen = !!(dnsCard && dnsCard.classList.contains('visible'));
+
+    // Bottom edge of the panel stacked above; null when no panel is open above.
+    var cursor = null;
+
+    if (urlOpen) {
+      if (nmapOpen) {
+        var urlTop = nmapCard.offsetTop + nmapCard.offsetHeight + 12;
+        urlCard.style.top = urlTop + 'px';
+        urlCard.style.maxHeight = Math.max(240, window.innerHeight - urlTop - 40) + 'px';
+      } else {
+        urlCard.style.top = '';
+        urlCard.style.maxHeight = '';
+      }
+      cursor = urlCard.offsetTop + urlCard.offsetHeight + 12;
     } else {
       urlCard.style.top = '';
       urlCard.style.maxHeight = '';
+      if (nmapOpen) cursor = nmapCard.offsetTop + nmapCard.offsetHeight + 12;
+    }
+
+    if (dnsCard) {
+      if (dnsOpen && cursor !== null) {
+        var dnsTop = cursor;
+        dnsCard.style.top = dnsTop + 'px';
+        dnsCard.style.maxHeight = Math.max(240, window.innerHeight - dnsTop - 40) + 'px';
+      } else {
+        dnsCard.style.top = '';
+        dnsCard.style.maxHeight = '';
+      }
     }
   }
   window.addEventListener('resize', relayoutLeftPanels);
@@ -3227,8 +3471,509 @@ canvas {
 
   // Load history on init
   loadUrlHistory();
+  // ===== DNS LOOKUP CONTROLLER =====
+  // Mirrors the URL Analyzer controller above. The DNS HTML, CSS and backend
+  // pipeline already exist — this block wires up the DOM, renders the live
+  // streamed state and the final result, and connects the report / history
+  // buttons.
 
-  // Window Dragging Support
+  const dnsCard = document.getElementById('dns-lookup-card');
+  const btnToggleDns = document.getElementById('btn-toggle-dns');
+  const dnsCloseBtn = document.getElementById('dns-close-btn');
+  const dnsInput = document.getElementById('dns-input');
+  const dnsLookupBtn = document.getElementById('dns-lookup-btn');
+  const dnsBadge = document.getElementById('dns-badge');
+
+  const dnsStagesSection = document.getElementById('dns-stages-section');
+  const dnsStagesEl = document.getElementById('dns-stages');
+  const dnsStageLabel = document.getElementById('dns-stage-label');
+  const dnsProgressVal = document.getElementById('dns-progress-val');
+  const dnsProgressBar = document.getElementById('dns-progress-bar');
+
+  const dnsResultSection = document.getElementById('dns-result-section');
+  const dnsScoreEl = document.getElementById('dns-score');
+  const dnsRiskLabel = document.getElementById('dns-risk-label');
+  const dnsStatusLabel = document.getElementById('dns-status-label');
+  const dnsTargetEl = document.getElementById('dns-target');
+  const dnsResolutionEl = document.getElementById('dns-resolution');
+  const dnsResponseTime = document.getElementById('dns-response-time');
+  const dnsDnssecBrief = document.getElementById('dns-dnssec-brief');
+
+  const dnsChecksSection = document.getElementById('dns-checks-section');
+  const dnsChecksEl = document.getElementById('dns-checks');
+  const dnsRecordsSection = document.getElementById('dns-records-section');
+  const dnsRecords = document.getElementById('dns-records');
+  const dnsMailSection = document.getElementById('dns-mail-section');
+  const dnsMail = document.getElementById('dns-mail');
+  const dnsDnssecSection = document.getElementById('dns-dnssec-section');
+  const dnsDnssec = document.getElementById('dns-dnssec');
+  const dnsFindingsSection = document.getElementById('dns-findings-section');
+  const dnsFindings = document.getElementById('dns-findings');
+  const dnsWarningsSection = document.getElementById('dns-warnings-section');
+  const dnsWarnings = document.getElementById('dns-warnings');
+  const dnsRecSection = document.getElementById('dns-rec-section');
+  const dnsRecommendation = document.getElementById('dns-recommendation');
+
+  const dnsActionsEl = document.getElementById('dns-actions');
+  const dnsReportBtn = document.getElementById('dns-report-btn');
+  const dnsDownloadBtn = document.getElementById('dns-download-btn');
+
+  const dnsHistorySection = document.getElementById('dns-history-section');
+  const dnsHistoryEl = document.getElementById('dns-history');
+  const dnsHistoryEmpty = document.getElementById('dns-history-empty');
+
+  const dnsErrorCard = document.getElementById('dns-error-card');
+  const dnsErrorReason = document.getElementById('dns-error-reason');
+
+  let isDnsOpen = false;
+  let dnsLookupId = null;
+  let dnsStagesMap = {};
+  let dnsLastChatScan = null;
+    let dnsReportReady = false;
+  let dnsCurrentResult = null;
+
+  // Regex to extract a bare domain or IPv4 from free-form chat/voice text.
+  const DNS_BARE_TARGET_RE = /((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}|(?:\d{1,3}\.){3}\d{1,3})/i;
+
+  // Detect DNS intent in chat / voice text (mirrors backend is_dns_intent).
+  function isDnsRequest(lowerText) {
+    if (!lowerText) return false;
+    if (lowerText.includes('dns') || lowerText.includes('nslookup') ||
+        lowerText.includes('dnssec') || lowerText.includes('dmarc') ||
+        lowerText.includes('domain lookup') || lowerText.includes('resolve domain')) return true;
+    var dnsKeywords = ['mx record', 'mx records', 'nameserver', 'name server',
+      'spf', 'cname', 'soa record', 'soa records', 'a record', 'a records',
+      'aaaa', 'ptr record', 'reverse dns', 'reverse lookup', 'txt record',
+      'txt records', 'mail exchanger', 'dns record', 'dns records'];
+    for (var i = 0; i < dnsKeywords.length; i++) {
+      if (lowerText.includes(dnsKeywords[i])) return true;
+    }
+    if (DNS_BARE_TARGET_RE.test(lowerText) &&
+        (lowerText.includes('lookup') || lowerText.includes('resolve'))) return true;
+    return false;
+  }
+
+  function openDnsPanel() {
+    isDnsOpen = true;
+    if (dnsCard) dnsCard.classList.add('visible');
+    if (btnToggleDns) btnToggleDns.classList.add('active');
+    relayoutLeftPanels();
+  }
+
+  function closeDnsPanel() {
+    isDnsOpen = false;
+    if (dnsCard) dnsCard.classList.remove('visible');
+    if (btnToggleDns) btnToggleDns.classList.remove('active');
+    relayoutLeftPanels();
+  }
+
+  if (btnToggleDns) {
+    btnToggleDns.addEventListener('click', function () {
+      if (isDnsOpen) closeDnsPanel(); else openDnsPanel();
+    });
+  }
+  if (dnsCloseBtn) dnsCloseBtn.addEventListener('click', closeDnsPanel);
+
+  function setDnsBadge(text) {
+    if (!dnsBadge) return;
+    dnsBadge.textContent = text;
+    dnsBadge.classList.remove('offline');
+  }
+
+  function showDnsError(reason) {
+    if (dnsErrorCard) dnsErrorCard.classList.add('visible');
+    if (dnsErrorReason) dnsErrorReason.textContent = reason || 'DNS lookup could not be completed.';
+    setDnsBadge('ERROR');
+    if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+  }
+
+  function clearDnsError() {
+    if (dnsErrorCard) dnsErrorCard.classList.remove('visible');
+    if (dnsErrorReason) dnsErrorReason.textContent = '';
+  }
+
+  function resetDnsResultSections() {
+    [dnsStagesSection, dnsResultSection, dnsChecksSection, dnsRecordsSection,
+     dnsMailSection, dnsDnssecSection, dnsFindingsSection, dnsWarningsSection,
+     dnsRecSection, dnsActionsEl].forEach(function (el) {
+       if (el) el.style.display = 'none';
+    });
+    dnsStagesMap = {};
+        dnsReportReady = false;
+  }
+
+  function buildDnsStages(stages) {
+    if (!dnsStagesEl) return;
+    dnsStagesEl.innerHTML = '';
+    dnsStagesMap = {};
+    (stages || []).forEach(function (st) {
+      var row = document.createElement('div');
+      row.className = 'url-stage pending';
+      row.innerHTML = '<span class="url-stage-icon">&#9675;</span><span>' + (st.label || st.key) + '</span>';
+      dnsStagesEl.appendChild(row);
+      dnsStagesMap[st.key] = row;
+    });
+  }
+
+  function updateDnsStageRow(key, status) {
+    var row = dnsStagesMap[key];
+    if (!row) return;
+    row.classList.remove('pending', 'running', 'done', 'fail', 'skip');
+    row.classList.add(status);
+    var icon = '&#9675;';
+    if (status === 'done') icon = '&#10003;';
+    else if (status === 'fail') icon = '&#10007;';
+    else if (status === 'skip') icon = '&#8212;';
+    else if (status === 'running') icon = '&#9654;';
+    row.innerHTML = '<span class="url-stage-icon">' + icon + '</span><span>' + row.textContent.replace(/^.*?\s/, '') + '</span>';
+  }
+
+  function setDnsButtonsEnabled(enabled) {
+    if (dnsReportBtn) dnsReportBtn.disabled = !enabled;
+        if (dnsDownloadBtn) dnsDownloadBtn.disabled = !enabled;
+  }
+
+  // Render a single record-type block (A, AAAA, CNAME, MX, NS, TXT, SOA).
+  function dnsRecordBlock(rdtype, block) {
+    if (!block) return '';
+    var status = block.status || 'NOT_FOUND';
+    var statusClass = status === 'OK' ? 'ok' : (status === 'ERROR' ? 'error' : 'empty');
+    var html = '<div class="dns-record-block">';
+    html += '<div class="dns-record-head"><span>' + escapeHtml(rdtype) + '</span>';
+    html += '<span class="dns-record-status ' + statusClass + '">' + escapeHtml(status) + '</span></div>';
+    if (status !== 'OK' && block.error) {
+      html += '<div class="dns-record-error">' + escapeHtml(block.error) + '</div>';
+    } else if (block.records && block.records.length) {
+      block.records.forEach(function(rec) {
+        html += '<div class="dns-record-row"><span>' + escapeHtml(rec.value || '') + '</span>';
+        if (rec.ttl) html += '<span class="dns-record-ttl">TTL ' + rec.ttl + '</span>';
+        html += '</div>';
+      });
+      if (block.ttl) html += '<div class="dns-record-row" style="color:rgba(255,204,68,0.4);justify-content:center"><span class="dns-record-ttl">TTL ' + block.ttl + '</span></div>';
+    }
+    html += '</div>';
+        return html;
+  }
+
+  // Render PTR records (stored as { ip: {records:[...], ...} }).
+  function dnsPtrBlock(ptrDict) {
+    if (!ptrDict || typeof ptrDict !== 'object') return '';
+    var keys = Object.keys(ptrDict);
+    if (!keys.length) return '';
+    var html = '<div class="dns-record-block">';
+    html += '<div class="dns-record-head"><span>PTR (Reverse DNS)</span>';
+    html += '<span class="dns-record-status ok">OK</span></div>';
+    keys.forEach(function(ip) {
+      var block = ptrDict[ip];
+      if (block && block.records && block.records.length) {
+        block.records.forEach(function(rec) {
+          html += '<div class="dns-record-row"><span>' + escapeHtml(ip) + ' \u2192 ' + escapeHtml(rec.value || '') + '</span>';
+          if (rec.ttl) html += '<span class="dns-record-ttl">TTL ' + rec.ttl + '</span>';
+          html += '</div>';
+        });
+      } else {
+        var err = (block && block.error) || 'No PTR record';
+        html += '<div class="dns-record-row"><span>' + escapeHtml(ip) + '</span>';
+        html += '<span class="dns-record-status empty">' + escapeHtml(err) + '</span></div>';
+      }
+    });
+    html += '</div>';
+        return html;
+  }
+
+  function renderDnsResult(r) {
+    if (!r) return;
+
+    if (dnsTargetEl) dnsTargetEl.textContent = r.domain_display || r.domain || '—';
+
+    var score = r.score || 0;
+    if (dnsScoreEl) {
+      dnsScoreEl.textContent = score + ' / 100';
+      dnsScoreEl.classList.remove('safe', 'suspicious', 'danger');
+      if (score >= 70) dnsScoreEl.classList.add('safe');
+      else if (score >= 40) dnsScoreEl.classList.add('suspicious');
+      else dnsScoreEl.classList.add('danger');
+    }
+    if (dnsRiskLabel) dnsRiskLabel.textContent = 'RISK: ' + (r.risk_level_label || r.risk_level || '—');
+    if (dnsStatusLabel) dnsStatusLabel.textContent = r.status || '—';
+
+    var resolution = r.resolution || {};
+    var resolutionText = resolution.resolved
+      ? 'RESOLVED (' + (resolution.ips || []).join(', ') + ')'
+      : (resolution.error || 'NOT RESOLVED');
+    if (dnsResolutionEl) dnsResolutionEl.textContent = resolutionText;
+
+    var rt = r.response_time_ms;
+    if (dnsResponseTime) dnsResponseTime.textContent = (rt != null) ? (rt + ' ms') : '—';
+
+    var dnssec = r.dnssec || {};
+    var dnssecBrief = dnssec.status || 'NOT_ENABLED';
+    var dnssecText = dnssecBrief === 'NOT_ENABLED' ? 'Not enabled'
+      : dnssecBrief === 'ENABLED_VALIDATED' ? 'Enabled & validated'
+      : dnssecBrief === 'ENABLED' ? 'Enabled'
+      : dnssecBrief === 'PARTIAL' ? 'Partial'
+      : dnssecBrief.replace(/_/g, ' ').toLowerCase();
+    if (dnsDnssecBrief) dnsDnssecBrief.textContent = dnssecText;
+
+    if (dnsResultSection) dnsResultSection.style.display = 'block';
+
+    // DNS Summary checklist
+    var checks = (r.summary && r.summary.checks) || [];
+    if (dnsChecksEl) {
+      dnsChecksEl.innerHTML = checks.map(function (c) {
+        var icons = { pass: '&#10003;', fail: '&#10007;', warn: '&#9888;', skip: '&#8212;' };
+        return '<div class="url-check ' + c.status + '"><span class="url-check-icon">' +
+          (icons[c.status] || '&#8212;') + '</span><span>' + escapeHtml(c.name) +
+          (c.detail ? ' \u2014 ' + escapeHtml(c.detail) : '') + '</span></div>';
+      }).join('');
+    }
+        if (dnsChecksSection) dnsChecksSection.style.display = checks.length ? 'block' : 'none';
+
+    // Findings / Warnings / Recommendations panels
+    function renderList(items) {
+      if (!items || !items.length) return '<div class="dns-empty-list">None</div>';
+      return '<ul class="dns-findings-list">' + items.map(function (it) {
+        return '<li>' + escapeHtml(it) + '</li>';
+      }).join('') + '</ul>';
+    }
+    var findings = (r.findings && r.findings.items) || [];
+    var warnings = (r.warnings && r.warnings.items) || [];
+    var recommendations = (r.recommendations && r.recommendations.items) || [];
+
+    var recCount = recommendations.length;
+    if (dnsFindings) dnsFindings.innerHTML = renderList(findings);
+    if (dnsWarnings) dnsWarnings.innerHTML = renderList(warnings);
+        if (dnsRecommendation) dnsRecommendation.innerHTML = renderList(recommendations);
+    if (dnsFindingsSection) dnsFindingsSection.style.display = findings.length ? 'block' : 'none';
+    if (dnsWarningsSection) dnsWarningsSection.style.display = warnings.length ? 'block' : 'none';
+    if (dnsRecSection) dnsRecSection.style.display = recommendations.length ? 'block' : 'none';
+
+    // Build the records detail HTML (A, AAAA, CNAME, MX, NS, TXT/SPF, SOA, PTR)
+    var recs = r.records || {};
+    var recordsHtml = '';
+    recordsHtml += dnsRecordBlock('A', recs.A);
+    recordsHtml += dnsRecordBlock('AAAA', recs.AAAA);
+    recordsHtml += dnsRecordBlock('CNAME', recs.CNAME);
+    recordsHtml += dnsRecordBlock('MX', recs.MX);
+    recordsHtml += dnsRecordBlock('NS', recs.NS);
+    recordsHtml += dnsRecordBlock('TXT / SPF', recs.TXT);
+    recordsHtml += dnsRecordBlock('SOA', recs.SOA);
+    recordsHtml += dnsPtrBlock(recs.PTR);
+
+        if (dnsRecords) dnsRecords.innerHTML = recordsHtml ? recordsHtml : '<div class="dns-empty-list">No records retrieved</div>';
+
+    if (dnsRecordsSection) dnsRecordsSection.style.display = recordsHtml ? 'block' : 'none';
+
+    // DNSSEC detail panel
+    var dnssecDetail = dnssec;
+    var dnssecDetailLines = [];
+    if (dnssecDetail.status) dnssecDetailLines.push('Status: ' + dnssecDetail.status);
+    if (dnssecDetail.ad) dnssecDetailLines.push('AD bit set: Yes');
+    if (dnssecDetail.has_dnskey) dnssecDetailLines.push('DNSKEY record: Present');
+    if (dnssecDetail.has_ds) dnssecDetailLines.push('DS record: Present');
+    if (dnssecDetail.rrsig) dnssecDetailLines.push('RRSIG records: Present');
+    if (dnssecDetail.algo) dnssecDetailLines.push('Algorithm: ' + dnssecDetail.algo);
+    if (dnssecDetail.can_validate !== undefined) dnssecDetailLines.push('Validation: ' + (dnssecDetail.can_validate ? 'Successful' : 'Failed'));
+    if (dnssecDetail.error) dnssecDetailLines.push('Error: ' + dnssecDetail.error);
+    var dnssecDetailText = dnssecDetailLines.length ? dnssecDetailLines.join('\n') : 'DNSSEC information not available';
+    if (dnsDnssec) dnsDnssec.textContent = dnssecDetailText;
+    if (dnsDnssecSection) dnsDnssecSection.style.display = 'block';
+
+    if (dnsFindings) dnsFindings.scrollTop = 0;
+    dnsCurrentResult = r;
+  }
+
+    // Stream progress updates from the backend: stages, progress %, status.
+    function updateDnsUI(s) {
+      if (!s) return;
+      try {
+        if (s.lookup_id) dnsLookupId = s.lookup_id;
+        if (dnsStagesSection) dnsStagesSection.style.display = 'block';
+        if (s.stages && s.stages.length && Object.keys(dnsStagesMap).length === 0) {
+          buildDnsStages(s.stages);
+        }
+        if (s.stage_label) { if (dnsStageLabel) dnsStageLabel.textContent = s.stage_label; }
+        if (s.stage && dnsStagesMap[s.stage]) {
+          updateDnsStageRow(s.stage, s.stage_status || 'running', s.stage_label);
+        }
+        if (s.stages) {
+          var seenCurrent = false;
+          s.stages.forEach(function (st) {
+            if (st.key === s.stage) { seenCurrent = true; return; }
+            if (!seenCurrent && dnsStagesMap[st.key]) {
+              if (st.status === 'pending') updateDnsStageRow(st.key, 'done');
+            }
+          });
+        }
+        var pct = Math.max(0, Math.min(100, s.progress || 0));
+        if (dnsProgressBar) dnsProgressBar.style.width = pct + '%';
+        if (dnsProgressVal) dnsProgressVal.textContent = pct + '%';
+        var st = (s.status || '').toUpperCase();
+        if (st === 'RUNNING') setDnsBadge('SCANNING');
+        else if (st === 'COMPLETE') setDnsBadge('DONE');
+        else if (st === 'ERROR') setDnsBadge('ERROR', 'offline');
+        else setDnsBadge('READY');
+        if (st === 'COMPLETE' && s.result) {
+          renderDnsResult(s.result);
+          if (dnsHistoryEl) loadDnsHistory();
+          if (s.voice_summary && dnsLastChatScan !== s.lookup_id) {
+            dnsLastChatScan = s.lookup_id;
+            showScanNotification('DNS LOOKUP COMPLETE', s.voice_summary);
+          }
+        }
+        if (st === 'ERROR') {
+          showDnsError(s.error || 'DNS lookup failed.');
+        }
+      } catch (err) {
+        console.error('Error updating DNS UI:', err);
+      }
+    }
+
+        function startDnsLookupManual() {
+      var domain = (dnsInput && dnsInput.value || '').trim();
+      if (!domain) { showDnsError('Please enter a valid domain.'); return; }
+      clearDnsError();
+      resetDnsResultSections();
+      if (dnsStagesSection) dnsStagesSection.style.display = 'block';
+      setDnsButtonsEnabled(false);
+      if (dnsLookupBtn) { dnsLookupBtn.disabled = true; dnsLookupBtn.classList.add('scanning'); }
+      setDnsBadge('SCANNING');
+      if (dnsStageLabel) dnsStageLabel.textContent = 'INITIALIZING DNS LOOKUP...';
+      if (dnsProgressBar) dnsProgressBar.style.width = '0%';
+      if (dnsProgressVal) dnsProgressVal.textContent = '0%';
+      fetch('/api/dns/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: domain, source: 'panel' })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (!data.success) {
+          showDnsError(data.error || 'DNS lookup could not be started.');
+          if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+          return;
+        }
+        if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+      }).catch(function (err) {
+        showDnsError('Could not reach the ZYRA backend: ' + err);
+        if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+            });
+    }
+
+    function buildDnsReportObject(r) {
+      return {
+        domain: r.domain_display || r.domain || '',
+        timestamp: new Date().toISOString(),
+        lookup_status: r.status || 'UNKNOWN',
+        response_time_ms: r.response_time_ms || null,
+        resolution: r.resolution || {},
+        dnssec: r.dnssec || {},
+        records: r.records || {},
+        security_score: r.score || 0,
+        risk_level: r.risk_level_label || r.risk_level || '',
+        findings: (r.findings && r.findings.items) || [],
+        warnings: (r.warnings && r.warnings.items) || [],
+        recommendations: (r.recommendations && r.recommendations.items) || []
+      };
+    }
+
+    function generateDnsReport() {
+      if (!dnsCurrentResult || !dnsReportBtn || dnsReportBtn.disabled) return;
+      var btn = dnsReportBtn;
+      btn.disabled = true;
+      btn.textContent = 'GENERATING...';
+      btn.classList.add('scanning');
+      var domain = (dnsInput && dnsInput.value || '').trim() || (dnsCurrentResult.domain_display || dnsCurrentResult.domain || '');
+      fetch('/api/dns/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: domain, result: dnsCurrentResult })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (data && data.report_id) {
+          setDnsButtonsEnabled(true);
+          if (dnsDownloadBtn) dnsDownloadBtn.disabled = false;
+          if (dnsReportBtn) { dnsReportBtn.disabled = true; dnsReportBtn.textContent = 'REPORT READY'; }
+          dnsReportReady = true;
+          if (typeof loadDnsHistory === 'function') loadDnsHistory();
+        } else if (data && data.error) {
+          showDnsError(data.error);
+        }
+      }).catch(function (err) {
+        showDnsError('Could not generate DNS report: ' + err);
+      });
+    }
+
+    function downloadDnsReport() {
+      if (!dnsCurrentResult) return;
+      if (dnsReportBtn) { dnsReportBtn.disabled = true; dnsReportBtn.textContent = 'GENERATE REPORT'; dnsReportBtn.classList.remove('scanning'); }
+      var report = buildDnsReportObject(dnsCurrentResult);
+      var blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'zyra-dns-report-' + (dnsCurrentResult.domain || 'unknown') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    if (dnsLookupBtn) {
+      dnsLookupBtn.addEventListener('click', function () {
+        if (dnsLookupBtn.disabled) return;
+        startDnsLookupManual();
+      });
+    }
+    if (dnsInput) {
+      dnsInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !dnsLookupBtn.disabled) {
+          e.preventDefault();
+          startDnsLookupManual();
+        }
+      });
+    }
+    if (dnsReportBtn) dnsReportBtn.addEventListener('click', generateDnsReport);
+    if (dnsDownloadBtn) dnsDownloadBtn.addEventListener('click', downloadDnsReport);
+
+  function loadDnsHistory() {
+    fetch('/api/dns/history').then(function (res) { return res.json(); }).then(function (data) {
+      if (!data.success || !data.data || !data.data.length) {
+        if (dnsHistoryEl) dnsHistoryEl.innerHTML = '<div class="url-history-meta">No recent lookups.</div>';
+        return;
+      }
+      if (dnsHistoryEmpty) dnsHistoryEmpty.remove();
+      if (dnsHistoryEl) {
+        dnsHistoryEl.innerHTML = data.data.map(function (h) {
+          var scoreColor = (h.score >= 70) ? '#00ff88' : (h.score >= 40 ? '#ffaa00' : '#ff3333');
+          return '<div class="url-history-item" data-lookup-id="' + escapeHtml(h.lookup_id) + '">'
+            + '<span class="url-history-domain">' + escapeHtml(h.domain || '—') + '</span>'
+            + '<span class="url-history-meta">Score: <span style="color:' + scoreColor + ';font-weight:700">' + h.score + '</span> &middot; ' + escapeHtml(h.risk_level_label || h.risk_level || '') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
+            + '</div>';
+        }).join('');
+        dnsHistoryEl.querySelectorAll('.url-history-item').forEach(function (item) {
+          item.addEventListener('click', function () {
+            var lid = item.getAttribute('data-lookup-id');
+            if (lid) reopenDnsLookup(lid);
+          });
+        });
+      }
+    }).catch(function () { /* history is best-effort */ });
+  }
+
+  function reopenDnsLookup(lookupId) {
+    fetch('/api/dns/result/' + lookupId).then(function (res) { return res.json(); }).then(function (data) {
+      if (data.success && data.data) {
+        clearDnsError();
+        resetDnsResultSections();
+        dnsLookupId = lookupId;
+        setDnsBadge('DONE');
+        renderDnsResult(data.data);
+        openDnsPanel();
+      }
+    }).catch(function () { /* ignore */ });
+  }
+
+  // Initial load of DNS history
+  loadDnsHistory();
+
   (function initDraggable() {
     if (!monitorCard) return;
     const smHeader = monitorCard.querySelector('.sm-header');
