@@ -4471,20 +4471,8 @@ body.zyra-light .zs-side-item { background: rgba(245,249,253,0.7); }
     try { zsRecordMessage(text, type); } catch (e) {}
   };
 
-  // ---- Voice: speak ZYRA responses when enabled (additive TTS) ----
-  // The existing WebSocket handler calls addMessage(data,'zyra'); the wrapper
-  // above records it. Here we speak zyra/system messages aloud when enabled.
-  var _origAddMessage2 = addMessage;
-  addMessage = function(text, type) {
-    _origAddMessage2(text, type);
-    try {
-      if (zs.voiceEnabled && type === 'zyra' && window.speechSynthesis) {
-        var u = new SpeechSynthesisUtterance(text);
-        u.volume = Math.max(0, Math.min(1, (zs.voiceVolume||0)/100));
-        window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
-      }
-    } catch (e) {}
-  };
+  // Voice output is handled only by the backend's configured female Edge TTS voice.
+  // Browser-side speech playback is intentionally disabled to prevent duplicates.
 
   // ---- Apply persisted settings on load ----
   zsApplyAll();

@@ -1,8 +1,6 @@
 import asyncio
 import os
 import re
-import subprocess
-import sys
 import tempfile
 
 import edge_tts
@@ -44,8 +42,8 @@ def _sapi_fallback(text):
     Uses the built-in System.Speech on Windows so ZYRA can still speak without
     depending on Microsoft's online endpoint. Returns True on success.
     """
-    if sys.platform != "win32":
-        return False
+    # Disabled: the system SAPI fallback can introduce a second voice.
+    return False
     try:
         safe = text.replace("'", "''")
         ps = (
@@ -135,9 +133,6 @@ def speak(text):
     except Exception as e:
         print(f"TTS Error: {e}")
 
-    # Online Edge TTS failed after retries - fall back to offline SAPI voice.
+    # Keep one voice source: never fall back to the system SAPI voice.
     if not spoke:
-        if not _sapi_fallback(text):
-            print("TTS unavailable: could not speak aloud.")
-        else:
-            print("TTS: used offline voice (Edge TTS unavailable).")
+        print("TTS unavailable: configured Edge voice could not speak aloud.")
