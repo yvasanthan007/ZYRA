@@ -1530,9 +1530,11 @@ async def websocket_endpoint(websocket: WebSocket):
             msg_type = data.get("type", "")
             msg_data = data.get("data")
 
-            # Process the message through Zyra bridge
+            # Process the message through Zyra bridge.
+            # Offloaded to a worker thread so a slow AI/Nmap/DNS call can never
+            # block the event loop (which would freeze all dashboard traffic).
             try:
-                result = process_message(msg_type, msg_data)
+                result = await asyncio.to_thread(process_message, msg_type, msg_data)
 
                 # Metrics-type requests answer with their own message type so the
                 # dashboard updates the live monitor card instead of the chat feed.

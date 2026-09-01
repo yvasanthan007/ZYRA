@@ -588,8 +588,8 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ffcc44;
-  box-shadow: 0 0 10px #ffcc44;
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
   animation: pulseGreen 1.8s infinite;
 }
 
@@ -713,7 +713,7 @@ canvas {
   font-weight: 700;
   letter-spacing: 1px;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffcc44;
+  color: #ffaa55;
 }
 .nm-status.complete { color: #00ff88; }
 .nm-status.error { color: #ff6666; }
@@ -798,7 +798,7 @@ canvas {
   font-size: 11px;
   color: #ffaa55;
 }
-.nm-port-num { color: #ffcc44; }
+.nm-port-num { color: #ffcc66; }
 .nm-port-svc { color: #ff9955; font-weight: 700; }
 .nm-port-ver { color: rgba(255, 136, 68, 0.5); font-size: 10px; }
 
@@ -895,8 +895,8 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ff8800;
-  box-shadow: 0 0 10px #ff8800;
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
   animation: pulseGreen 1.8s infinite;
 }
 .url-title {
@@ -919,9 +919,9 @@ canvas {
   letter-spacing: 1px;
   padding: 3px 8px;
   border-radius: 10px;
-  background: rgba(255, 136, 0, 0.15);
-  border: 1px solid rgba(255, 136, 0, 0.35);
-  color: #ff8800;
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  color: #00ff88;
 }
 .url-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -971,7 +971,7 @@ canvas {
   border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
 }
 .url-field input::placeholder { color: rgba(255, 136, 68, 0.3); }
-/* DNS record-type selector — inherits the same input look (gold accents) */
+/* DNS record-type selector — inherits the same input look (orange accents) */
 .url-field select {
   width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
   border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
@@ -1126,19 +1126,19 @@ canvas {
   color: rgba(255, 200, 200, 0.8);
 }
 
-/* ===== DNS LOOKUP PANEL (gold accents; shares the URL panel layout) ===== */
+/* ===== DNS LOOKUP PANEL (System Monitor accents; shares the URL panel layout) ===== */
 .dns-dot {
   background: #ffcc44;
   box-shadow: 0 0 8px #ffcc44;
 }
 .dns-pulse-dot {
-  background: #ffcc44;
-  box-shadow: 0 0 10px #ffcc44;
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
 }
 .dns-badge {
-  background: rgba(255, 204, 68, 0.15);
-  border: 1px solid rgba(255, 204, 68, 0.4);
-  color: #ffcc44;
+  background: rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  color: #00ff88;
 }
 .dns-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -1146,28 +1146,28 @@ canvas {
   color: #ff6666;
 }
 .dns-lookup-btn {
-  background: rgba(255, 204, 68, 0.14);
-  border: 1px solid rgba(255, 204, 68, 0.4);
-  color: #ffcc44;
+  background: rgba(255, 136, 0, 0.15);
+  border: 1px solid rgba(255, 136, 0, 0.35);
+  color: #ff8800;
 }
 .dns-lookup-btn:hover {
-  background: rgba(255, 204, 68, 0.25);
-  border-color: rgba(255, 204, 68, 0.65);
-  box-shadow: 0 0 20px rgba(255, 204, 68, 0.2);
+  background: rgba(255, 136, 0, 0.25);
+  border-color: rgba(255, 136, 0, 0.6);
+  box-shadow: 0 0 20px rgba(255, 136, 0, 0.2);
 }
 .dns-records { display: flex; flex-direction: column; gap: 6px; }
 .dns-record-block {
   background: rgba(8, 8, 18, 0.4);
-  border: 1px solid rgba(255, 204, 68, 0.14);
+  border: 1px solid rgba(255, 136, 68, 0.14);
   border-radius: 6px;
   padding: 6px 8px;
 }
 .dns-record-head {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: #ffcc44;
+  text-transform: uppercase; color: #ff9944;
   padding-bottom: 4px; margin-bottom: 4px;
-  border-bottom: 1px solid rgba(255, 204, 68, 0.1);
+  border-bottom: 1px solid rgba(255, 136, 68, 0.1);
 }
 .dns-record-status { font-size: 9px; letter-spacing: 1px; }
 .dns-record-status.ok { color: #00ff88; }
@@ -1199,7 +1199,7 @@ canvas {
 .dns-findings-list li, .dns-warning-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
   color: #ffcc88; padding: 4px 6px; border-radius: 4px;
-  background: rgba(255, 204, 68, 0.06);
+  background: rgba(255, 136, 68, 0.06);
 }
 .dns-recommendation-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
@@ -1208,7 +1208,7 @@ canvas {
   border-left: 2px solid rgba(0, 255, 136, 0.35);
 }
 .dns-empty-list {
-  font-size: 11px; color: rgba(255, 204, 68, 0.25);
+  font-size: 11px; color: rgba(255, 136, 68, 0.25);
   font-family: 'Consolas', 'Courier New', monospace; padding: 8px 0;
 }
 
@@ -2634,9 +2634,23 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
     });
   }
 
+  // Candidate hosts: the page origin first (when the dashboard is served by
+  // the ZYRA backend itself), then the backend's fixed default address. This
+  // keeps chat working when the dashboard is opened directly from disk or
+  // from a different dev-server origin.
+  let wsHostCandidates = null;
+  let wsHostIndex = 0;
+  let wsEverOpened = false;
+  let pendingChat = null;
+
   function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host || '127.0.0.1:8080';
+    if (!wsHostCandidates) {
+      wsHostCandidates = [];
+      if (window.location.host) wsHostCandidates.push(window.location.host);
+      if (wsHostCandidates.indexOf('127.0.0.1:8080') === -1) wsHostCandidates.push('127.0.0.1:8080');
+    }
+    const host = wsHostCandidates[wsHostIndex % wsHostCandidates.length];
     const wsUrl = protocol + '//' + host + '/ws';
 
     try {
@@ -2644,16 +2658,34 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
 
       ws.onopen = function() {
         // Connection established silently
+        wsEverOpened = true;
+        connectWebSocket._notified = false;
+        // Deliver a message that was typed before the connection was ready.
+        if (pendingChat) {
+          var msg = pendingChat;
+          pendingChat = null;
+          try {
+            addMessage(msg, 'user');
+            ws.send(JSON.stringify({ type: 'chat', data: msg }));
+          } catch (e) {}
+        }
       };
 
       ws.onclose = function(event) {
-        addMessage('Connection lost. Reconnecting...', 'system');
+        // Rotate to the next candidate host until one connects; after a
+        // successful connection, keep using the host that worked.
+        if (!wsEverOpened) wsHostIndex += 1;
+        // Show the reconnect notice once per outage instead of on every
+        // retry, so the chat feed is not flooded while the backend is down.
+        if (!connectWebSocket._notified) {
+          connectWebSocket._notified = true;
+          addMessage('Connection lost. Reconnecting...', 'system');
+        }
         setTimeout(connectWebSocket, 2000);
       };
 
       ws.onerror = function(error) {
         console.error('WebSocket error:', error);
-        addMessage('Connection error. Retrying...', 'system');
       };
 
       ws.onmessage = function(event) {
@@ -2751,7 +2783,9 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
       if (dm && dnsInput && !dnsInput.value) dnsInput.value = dm[0].replace(/[.,!?;:]+$/, '');
     }
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      addMessage('Not connected to ZYRA server', 'system');
+      // Queue the message so it is delivered as soon as the connection is up.
+      pendingChat = cleanText;
+      addMessage('Not connected to ZYRA server. Your message will be sent once connected.', 'system');
       return;
     }
     addMessage(cleanText, 'user');

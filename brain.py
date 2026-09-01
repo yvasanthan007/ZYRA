@@ -2,6 +2,14 @@ import ollama
 
 MAX_HISTORY = 10
 
+# Bound the AI call so a slow or hung Ollama backend can never stall the
+# dashboard chat forever (the ollama client's default timeout is 600s).
+AI_TIMEOUT_SECONDS = 120
+try:
+    _ai_client = ollama.Client(timeout=AI_TIMEOUT_SECONDS)
+except TypeError:  # older ollama clients that don't accept the timeout kwarg
+    _ai_client = None
+
 # ── Backend Security Analysis Module: persona injection ──
 # Zyra's system instructions now declare that link inspection is a backend-only
 # text task. Whenever the user provides a link or says "Analyse the link" /
@@ -62,14 +70,18 @@ def ask_ai(question):
         conversation[:] = [conversation[0]] + conversation[-MAX_HISTORY:]
 
     try:
-        response = ollama.chat(
-            model="llama3",
-            messages=conversation,
-            options={
+        chat_kwargs = {
+            "model": "llama3",
+            "messages": conversation,
+            "options": {
                 "temperature": 0.4,
                 "num_predict": 100,
             }
-        )
+        }
+        if _ai_client is not None:
+            response = _ai_client.chat(**chat_kwargs)
+        else:
+            response = ollama.chat(**chat_kwargs)
 
         answer = response["message"]["content"].strip()
 
