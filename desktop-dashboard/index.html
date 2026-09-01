@@ -1472,6 +1472,17 @@ body.zyra-light .zs-section { border-color: rgba(71,166,255,.2); }
 body.zyra-light .zs-btn { color: #dceeff; background: rgba(22,119,255,.18); border-color: rgba(71,166,255,.4); }
 body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: #65c3ff; }
 
+/* Light-theme settings controls: blue toggles + blue sliders (dark theme keeps the orange styling) */
+body.zyra-light .zs-toggle { background: rgba(174,194,224,.45); border-color: rgba(146,170,204,.65); }
+body.zyra-light .zs-toggle::after { background: #ffffff; box-shadow: 0 1px 4px rgba(13,47,96,.28); }
+body.zyra-light .zs-toggle.on { background: #1677ff; border-color: #1677ff; }
+body.zyra-light .zs-toggle.on::after { background: #ffffff; }
+body.zyra-light .zs-range { background: linear-gradient(to right, #1677ff var(--zs-range-fill, 80%), rgba(180,205,235,.55) var(--zs-range-fill, 80%)); }
+body.zyra-light .zs-range::-webkit-slider-thumb { background: #1677ff; border-color: #ffffff; box-shadow: 0 0 10px rgba(22,119,255,.45); }
+body.zyra-light .zs-range::-moz-range-thumb { background: #1677ff; border-color: #ffffff; }
+body.zyra-light .zs-range::-moz-range-progress { background: #1677ff; }
+body.zyra-light .zs-range-val { color: #1677ff; }
+
 /* Chat history sidebar (additive) */
 #zyra-chat-sidebar {
   position: fixed; top: 0; left: 0; bottom: 0; width: 280px; z-index: 9050;
@@ -2301,19 +2312,20 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
   const particleOrbitGroup = new THREE.Group();
   mainGroup.add(particleOrbitGroup);
 
-  // Create square particle texture
-  function createSquareTexture() {
+  // Create square particle texture (dark = amber, light = blue/cyan)
+  function createSquareTexture(isLight) {
     const canvas = document.createElement('canvas');
     canvas.width = 16;
     canvas.height = 16;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(255, 180, 80, 1)';
+    ctx.fillStyle = isLight ? 'rgba(90, 195, 255, 1)' : 'rgba(255, 180, 80, 1)';
     ctx.fillRect(2, 2, 12, 12);
-    ctx.fillStyle = 'rgba(255, 220, 150, 0.6)';
+    ctx.fillStyle = isLight ? 'rgba(190, 240, 255, 0.6)' : 'rgba(255, 220, 150, 0.6)';
     ctx.fillRect(4, 4, 8, 8);
     return new THREE.CanvasTexture(canvas);
   }
-  const squareTexture = createSquareTexture();
+  const squareTexture = createSquareTexture(false);
+  const squareTextureLight = createSquareTexture(true);
 
   const orbitParticleCount = 400;
   const orbitParticleGeo = new THREE.BufferGeometry();
@@ -2373,25 +2385,36 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
   mainGroup.add(scatterParticles);
 
   // ===== GLOW SPRITE =====
-  function createGlowTexture() {
+  // Dark = original amber/orange glow, light = cyan/blue glow (same falloff curve)
+  function createGlowTexture(isLight) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
-    grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
-    grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
-    grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
-    grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
+    if (isLight) {
+      grad.addColorStop(0, 'rgba(120, 220, 255, 1)');
+      grad.addColorStop(0.1, 'rgba(40, 165, 255, 0.8)');
+      grad.addColorStop(0.3, 'rgba(22, 119, 255, 0.4)');
+      grad.addColorStop(0.5, 'rgba(15, 77, 200, 0.15)');
+      grad.addColorStop(0.7, 'rgba(5, 40, 120, 0.05)');
+    } else {
+      grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
+      grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
+      grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
+      grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
+      grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
+    }
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
     return new THREE.CanvasTexture(canvas);
   }
+  const glowTextureDark = createGlowTexture(false);
+  const glowTextureLight = createGlowTexture(true);
 
   const glowSpriteMat = new THREE.SpriteMaterial({
-    map: createGlowTexture(),
+    map: glowTextureDark,
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.5,
@@ -2403,7 +2426,7 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
 
   // Smaller inner glow
   const innerGlowMat = new THREE.SpriteMaterial({
-    map: createGlowTexture(),
+    map: glowTextureDark,
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.3,
@@ -2419,6 +2442,59 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
   const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
+
+  // ===== NEURAL CORE THEME COLORS =====
+  // Dark theme keeps the original orange palette; light theme switches the
+  // neural core to the blue/cyan appearance. Only material colors and canvas
+  // textures are swapped here -- geometry, sizes, positions, animation timing
+  // and all movement stay exactly the same.
+  const NEURAL_THEMES = {
+    dark: {
+      stars: 0xff8844, wash: 0x441100,
+      innerCore: 0xff8800, center: 0xffcc44, halo: 0xff6600, outerHalo: 0xff4400,
+      mainWire: 0xff8800, midWire: 0xffaa33, innerMesh1: 0xff9933, innerMesh2: 0xffbb44,
+      orbits: [0xff8800, 0xffaa33, 0xff7700, 0xff9933, 0xffbb44],
+      orbitParticles: 0xffaa44, scatterParticles: 0xff9933,
+      ambient: 0xff6633, point: 0xff8833
+    },
+    light: {
+      stars: 0x3fa8ff, wash: 0x001a44,
+      innerCore: 0x1677ff, center: 0x0a3a8c, halo: 0x00c2ff, outerHalo: 0x1677ff,
+      mainWire: 0x00d0ff, midWire: 0x2ea8ff, innerMesh1: 0x36c9ff, innerMesh2: 0x5fd8ff,
+      orbits: [0x1677ff, 0x2e9bff, 0x0f6fe0, 0x39b1ff, 0x5cc8ff],
+      orbitParticles: 0x33bbff, scatterParticles: 0x1e90ff,
+      ambient: 0x3399ff, point: 0x3399ff
+    }
+  };
+  const orbitMats = [orbit1.material, orbit2.material, orbit3.material, orbit4.material, orbit5.material];
+
+  function applyNeuralTheme(isLight) {
+    const t = isLight ? NEURAL_THEMES.light : NEURAL_THEMES.dark;
+    starMat.color.setHex(t.stars);
+    washMat.color.setHex(t.wash);
+    innerCoreMat.color.setHex(t.innerCore);
+    centerMat.color.setHex(t.center);
+    haloMat.color.setHex(t.halo);
+    outerHaloMat.color.setHex(t.outerHalo);
+    mainWireMat.color.setHex(t.mainWire);
+    midWireMat.color.setHex(t.midWire);
+    innerMesh1Mat.color.setHex(t.innerMesh1);
+    innerMesh2Mat.color.setHex(t.innerMesh2);
+    orbitMats.forEach(function (m, i) { m.color.setHex(t.orbits[i]); });
+    orbitParticleMat.color.setHex(t.orbitParticles);
+    scatterMat.color.setHex(t.scatterParticles);
+    ambientLight.color.setHex(t.ambient);
+    pointLight.color.setHex(t.point);
+    const sqTex = isLight ? squareTextureLight : squareTexture;
+    if (orbitParticleMat.map !== sqTex) { orbitParticleMat.map = sqTex; orbitParticleMat.needsUpdate = true; }
+    if (scatterMat.map !== sqTex) { scatterMat.map = sqTex; scatterMat.needsUpdate = true; }
+    const glowTex = isLight ? glowTextureLight : glowTextureDark;
+    if (glowSpriteMat.map !== glowTex) { glowSpriteMat.map = glowTex; glowSpriteMat.needsUpdate = true; }
+    if (innerGlowMat.map !== glowTex) { innerGlowMat.map = glowTex; innerGlowMat.needsUpdate = true; }
+  }
+  // Exposed so the existing settings theme system (zsApplyTheme) can drive it.
+  window.zyraSetNeuralTheme = applyNeuralTheme;
+  applyNeuralTheme(document.body.classList.contains('zyra-light'));
 
   // ===== ANIMATION =====
   let time = 0;
@@ -4359,7 +4435,12 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
     root.setProperty('--zyra-accent-soft', 'rgba('+r+','+g+','+b+',0.25)');
     root.setProperty('--zyra-accent-text', hex);
   }
-  function zsApplyTheme() { document.body.classList.toggle('zyra-light', zs.theme === 'light'); }
+  function zsApplyTheme() {
+    var light = zs.theme === 'light';
+    document.body.classList.toggle('zyra-light', light);
+    // Drive the existing Three.js neural core palette (orange dark / blue-cyan light).
+    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }
+  }
   function zsApplyFontSize() { document.body.style.zoom = (parseInt(zs.fontSize,10) / 100).toString(); }
 
   function zsApplyAll() { zsApplyTheme(); zsApplyFontSize(); zsApplyAccent(); zsRenderSwatches(); }
@@ -4391,7 +4472,17 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
   if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
   if (zsVoiceToggle) zsVoiceToggle.addEventListener('click', function(){ zs.voiceEnabled = !zs.voiceEnabled; zsApplyVoiceToggle(); zsSave(); });
   function zsApplyVoiceToggle() { if (!zsVoiceToggle) return; zsVoiceToggle.classList.toggle('on', zs.voiceEnabled); zsVoiceToggle.setAttribute('aria-checked', zs.voiceEnabled ? 'true' : 'false'); }
-  if (zsVoiceVol) zsVoiceVol.addEventListener('input', function(){ zs.voiceVolume = parseInt(zsVoiceVol.value,10); if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; zsSave(); });
+  if (zsVoiceVol) zsVoiceVol.addEventListener('input', function(){ zs.voiceVolume = parseInt(zsVoiceVol.value,10); if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; zsUpdateRangeFill(); zsSave(); });
+  // Keep the light-theme blue fill of the volume slider in sync with its value (visual only).
+  function zsUpdateRangeFill() {
+    if (!zsVoiceVol) return;
+    var min = parseFloat(zsVoiceVol.min || '0');
+    var max = parseFloat(zsVoiceVol.max || '100');
+    var val = parseFloat(zsVoiceVol.value);
+    if (isNaN(val)) val = min;
+    var pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+    zsVoiceVol.style.setProperty('--zs-range-fill', pct + '%');
+  }
   if (zsWake) zsWake.addEventListener('change', function(){
     var v = (zsWake.value || '').trim(); if (v) { zs.wakeWord = v; zsSave(); zsStatus('zs-wakeword-status', true); } else zsStatus('zs-wakeword-status', false, 'required');
   });
@@ -4403,7 +4494,7 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
     if (zsFontSel) zsFontSel.value = String(zs.fontSize);
     if (zsVoiceVol) { zsVoiceVol.value = zs.voiceVolume; if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; }
     if (zsWake) zsWake.value = zs.wakeWord;
-    zsApplyVoiceToggle(); zsApplySaveHistToggle(); zsRenderSwatches();
+    zsApplyVoiceToggle(); zsApplySaveHistToggle(); zsRenderSwatches(); zsUpdateRangeFill();
   }
 
   // ---- Chat history (ChatGPT-style sessions in localStorage) ----
@@ -4487,6 +4578,7 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
 
   // ---- Apply persisted settings on load ----
   zsApplyAll();
+  zsUpdateRangeFill();
   zsRenderSessions();
   if (zs.sidebarOpen) zsOpenSidebar();
 })();
