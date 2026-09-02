@@ -26,6 +26,14 @@ from commands.close_app import close_app
 from memory import remember, recall
 from backend.server import start_server_thread, broadcast_system_monitor_trigger
 from zyra_handler import handle_analyze_link_intent, is_link_analysis_intent
+from backend.url_analyzer import (
+    extract_target_url,
+    is_url_analysis_intent,
+)
+from backend.dns_lookup import (
+    extract_dns_target,
+    is_dns_intent,
+)
 from system_monitor import (
     is_system_monitor_intent,
     format_system_monitor_text,
@@ -247,6 +255,185 @@ def start_backend_server():
     print("=" * 50 + "\n")
 
     return server_thread
+
+
+# ========== URL Analyzer Voice Integration ==========
+# Real backend URL scans are streamed to the dashboard panel by the server
+# (start_url_scan broadcasts live status over WebSocket). This voice entry
+# point reuses the existing listen() speech-to-text loop: it detects the
+# URL_ANALYSIS intent, opens the panel, and speaks the result when the scan
+# completes.
+
+
+def _broadcast_url_analyzer(url: str, state=None):
+    """Open the URL Analyzer panel on every connected dashboard client."""
+    try:
+        from backend.server import broadcast_message_sync
+        broadcast_message_sync({"type": "show_url_analyzer", "data": state, "url": url})
+    except Exception:
+        pass
+
+
+def _url_voice_completion_watcher(scan_id: str):
+    """
+    Poll the in-memory scan registry until the analysis finishes, then speak
+    the voice summary (or a failure notice). Best-effort background thread.
+    """
+    try:
+        from backend.url_analyzer import build_voice_summary
+        from backend.url_analyzer.analyzer import get_scan_state
+    except Exception as e:
+        print(f"[URL WATCHER] import error: {e}")
+        return
+
+    deadline = time.time() + 100
+    while time.time() < deadline:
+        try:
+            state = get_scan_state(scan_id)
+        except Exception:
+            state = None
+        if state:
+            status = str(state.get("status") or "").upper()
+            if status == "COMPLETE":
+                result = state.get("result")
+                if result:
+                    try:
+                        speak(build_voice_summary(result))
+                    except Exception:
+                        pass
+                return
+            if status == "ERROR":
+                reason = state.get("error") or "Please try again."
+                speak(f"The URL analysis failed. {reason}")
+                return
+        time.sleep(1.0)
+    speak("The URL analysis could not be completed within the allowed time.")
+
+
+def handle_url_analysis_voice(command: str):
+    """
+    Voice entry point for the ZYRA URL Analyzer.
+
+    When a URL is present in the spoken command it is analyzed for real by the
+    backend: the scan runs in a background thread, live progress streams to
+    the dashboard's URL Analyzer panel, and the spoken summary is delivered on
+    completion. When no URL was spoken it falls back to the existing
+    screen/clipboard link-analysis handler so legacy behavior is preserved.
+    """
+    from backend.server import start_url_scan
+
+    target = extract_target_url(command)
+    if not target:
+        print("   🔗 No URL in the command — falling back to screen/clipboard link analysis.")
+        result = handle_analyze_link_intent(command)
+        if result and result.get("success") and result.get("checks"):
+            print(f"   🔗 URL: {result.get('url')} | Score: {result.get('score')} | Verdict: {result.get('verdict')}")
+        return
+
+    print(f"\n🔗 Starting ZYRA URL Analyzer on: {target}")
+    launch = start_url_scan(target, source="voice")
+    if not launch.get("success"):
+        reason = launch.get("error") or "Please try again."
+        print(f"   ⚠️  URL scan could not start: {reason}")
+        speak(f"I couldn't start the URL analysis. {reason}")
+        return
+
+    _broadcast_url_analyzer(target)
+    print("   📡 URL Analyzer panel open — streaming live progress to the dashboard.")
+    speak(f"Running a security analysis on {target}. Please wait.")
+    threading.Thread(
+        target=_url_voice_completion_watcher,
+        args=(launch["scan_id"],),
+        daemon=True,
+    ).start()
+
+
+# ========== DNS Lookup Voice Integration ==========
+# Real backend DNS lookups are streamed to the dashboard panel by the server
+# (start_dns_lookup_job broadcasts live status over WebSocket). This voice
+# entry point reuses the existing listen() speech-to-text loop: it detects
+# the DNS_LOOKUP intent, opens the panel, and speaks the result when the
+# lookup completes.
+
+
+def _broadcast_dns_lookup(domain: str, state=None):
+    """Open the DNS Lookup panel on every connected dashboard client."""
+    try:
+        from backend.server import broadcast_message_sync
+        broadcast_message_sync({"type": "show_dns_lookup", "data": state, "domain": domain})
+    except Exception:
+        pass
+
+
+def _dns_voice_completion_watcher(lookup_id: str):
+    """
+    Poll the in-memory lookup registry until the lookup finishes, then speak
+    the voice summary (or a failure notice). Best-effort background thread.
+    """
+    try:
+        from backend.dns_lookup import build_voice_summary as build_dns_voice_summary
+        from backend.dns_lookup.analyzer import get_scan_state
+    except Exception as e:
+        print(f"[DNS WATCHER] import error: {e}")
+        return
+
+    deadline = time.time() + 100
+    while time.time() < deadline:
+        try:
+            state = get_scan_state(lookup_id)
+        except Exception:
+            state = None
+        if state:
+            status = str(state.get("status") or "").upper()
+            if status == "COMPLETE":
+                result = state.get("result")
+                if result:
+                    try:
+                        speak(build_dns_voice_summary(result))
+                    except Exception:
+                        pass
+                return
+            if status == "ERROR":
+                reason = state.get("error") or "Please try again."
+                speak(f"The DNS lookup failed. {reason}")
+                return
+        time.sleep(1.0)
+    speak("The DNS lookup could not be completed within the allowed time.")
+
+
+def handle_dns_analysis_voice(command: str):
+    """
+    Voice entry point for the ZYRA DNS Lookup.
+
+    When a domain (or IP) is present in the spoken command a real DNS lookup
+    runs in the backend: progress streams to the dashboard's DNS Lookup
+    panel and the spoken summary is delivered on completion. When no domain
+    was spoken, ZYRA asks for one.
+    """
+    from backend.server import start_dns_lookup_job
+
+    target = extract_dns_target(command)
+    if not target:
+        print("   🌐 No domain in the command — asking the user for one.")
+        speak("DNS Lookup activated. Please tell me the domain you want me to look up, for example, analyze DNS of example dot com.")
+        return
+
+    print(f"\n🌐 Starting ZYRA DNS Lookup on: {target}")
+    launch = start_dns_lookup_job(target, source="voice")
+    if not launch.get("success"):
+        reason = launch.get("error") or "Please try again."
+        print(f"   ⚠️  DNS lookup could not start: {reason}")
+        speak(f"I couldn't start the DNS lookup. {reason}")
+        return
+
+    _broadcast_dns_lookup(target)
+    print("   📡 DNS Lookup panel open — streaming live progress to the dashboard.")
+    speak(f"Looking up DNS records for {target}. Please wait.")
+    threading.Thread(
+        target=_dns_voice_completion_watcher,
+        args=(launch["lookup_id"],),
+        daemon=True,
+    ).start()
 
 
 # ========== Main Entry Point ==========
@@ -482,6 +669,18 @@ if __name__ == "__main__":
                         pass
                     voice_text = get_voice_summary(metrics)
                     speak(voice_text)
+
+                elif is_dns_intent(command):
+                    # ZYRA DNS Lookup — real backend DNS queries streamed live
+                    # to the dashboard panel with the spoken result delivered
+                    # when the lookup completes.
+                    handle_dns_analysis_voice(command)
+
+                elif is_url_analysis_intent(command):
+                    # ZYRA URL Analyzer — real backend scan streamed live to the
+                    # dashboard panel (opens the URL Analyzer on the right) with
+                    # the spoken result delivered when the analysis completes.
+                    handle_url_analysis_voice(command)
 
                 elif is_link_analysis_intent(command):
                     # Use the new real-time screen capture link analysis

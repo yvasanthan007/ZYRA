@@ -43,6 +43,13 @@ from backend.link_security import (
     extract_url,
 )
 
+# ── DNS Lookup Module (real DNS intelligence via dnspython) ──
+from backend.dns_lookup import (
+    build_chat_ack as dns_build_chat_ack,
+    is_dns_intent,
+    extract_dns_target,
+)
+
 # ── Nmap Network Scanner Module (backend service layer) ──
 from backend.nmap_service import (
     is_nmap_intent,
@@ -143,6 +150,14 @@ def process_chat(message: str) -> str:
     # ── System Monitor ──
     if is_system_monitor_intent(message):
         return format_system_monitor_text()
+
+    # ── DNS Lookup ──
+    # Intent detection is handled here; the actual lookup runs in the server
+    # (background thread) which then broadcasts the DNS Lookup panel + live
+    # progress. The acknowledgement keeps ZYRA from hallucinating DNS data.
+    if is_dns_intent(message):
+        target = extract_dns_target(message)
+        return dns_build_chat_ack(target)
 
     # ── Nmap Network Scanner ──
     # Intent detection is handled by the backend; the actual scan runs in the
@@ -257,6 +272,17 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
             "action": "system_monitor",
             "metrics": metrics,
             "formatted": format_system_monitor_text(metrics),
+        }
+
+    # ── DNS Lookup intent ──
+    # The actual lookup is executed by the server in a background thread,
+    # which then broadcasts live status + results to the DNS Lookup panel.
+    if is_dns_intent(text):
+        target = extract_dns_target(text)
+        return {
+            "response": dns_build_chat_ack(target),
+            "action": "dns_lookup",
+            "dns_request": text,
         }
 
     # ── Nmap Network Scanner intent ──

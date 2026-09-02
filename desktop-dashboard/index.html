@@ -45,9 +45,21 @@ canvas {
   pointer-events: auto;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 16px 28px;
   background: linear-gradient(180deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
+}
+
+/* ZYRA Neural Core at the very top-left, with the feature buttons stacked
+   directly below it (Nmap Scanner, then URL Analyzer). */
+.top-left-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.top-left-stack .top-actions-col {
+  align-items: flex-start;
 }
 
 .top-brand {
@@ -530,10 +542,10 @@ canvas {
 
 .nmap-scanner-card {
   position: absolute;
-  top: 70px;
-  right: 28px;
+  top: 138px;
+  left: 28px;
   width: 360px;
-  max-height: calc(100vh - 190px);
+  max-height: calc(100vh - 220px);
   background: rgba(8, 8, 20, 0.88);
   border: 1px solid rgba(255, 136, 68, 0.28);
   border-radius: 14px;
@@ -831,12 +843,673 @@ canvas {
   line-height: 1.45;
 }
 
+/* ===== URL ANALYZER PANEL ===== */
+.url-dot {
+  background: #ff8800;
+  box-shadow: 0 0 8px #ff8800;
+}
+
+.url-analyzer-card {
+  position: absolute;
+  top: 138px;
+  left: 28px;
+  width: 380px;
+  max-height: calc(100vh - 220px);
+  background: rgba(8, 8, 20, 0.88);
+  border: 1px solid rgba(255, 136, 68, 0.28);
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.15);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  z-index: 26;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.97);
+  overflow: hidden;
+}
+.url-analyzer-card.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.url-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(255, 136, 68, 0.08);
+  border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+  user-select: none;
+}
+.url-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.url-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff8800;
+  box-shadow: 0 0 10px #ff8800;
+  animation: pulseGreen 1.8s infinite;
+}
+.url-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ff9944;
+  text-transform: uppercase;
+}
+.url-subtitle {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 136, 68, 0.55);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.url-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(255, 136, 0, 0.15);
+  border: 1px solid rgba(255, 136, 0, 0.35);
+  color: #ff8800;
+}
+.url-badge.offline {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: rgba(255, 68, 68, 0.35);
+  color: #ff6666;
+}
+.url-btn-close {
+  background: none;
+  border: none;
+  color: rgba(255, 136, 68, 0.6);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+.url-btn-close:hover {
+  color: #ff8844;
+  background: rgba(255, 136, 68, 0.15);
+}
+
+.url-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 136, 68, 0.3) transparent;
+}
+.url-body::-webkit-scrollbar { width: 4px; }
+.url-body::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.3); border-radius: 2px; }
+
+.url-field { display: flex; flex-direction: column; gap: 5px; }
+.url-field label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
+}
+.url-field input {
+  width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
+  border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
+  color: #ffcc88; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+  outline: none; transition: border-color 0.3s, box-shadow 0.3s;
+}
+.url-field input:focus {
+  border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
+}
+.url-field input::placeholder { color: rgba(255, 136, 68, 0.3); }
+/* DNS record-type selector — inherits the same input look (gold accents) */
+.url-field select {
+  width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
+  border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
+  color: #ffcc88; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+  outline: none; transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer; appearance: auto;
+}
+.url-field select:focus {
+  border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
+}
+.url-field select option { background: #0a0a14; color: #ffcc88; }
+.url-analyze-btn {
+  width: 100%; padding: 10px 16px; background: rgba(255, 136, 0, 0.15);
+  border: 1px solid rgba(255, 136, 0, 0.35); border-radius: 8px;
+  color: #ff8800; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+  cursor: pointer; transition: all 0.3s; text-transform: uppercase;
+}
+.url-analyze-btn:hover {
+  background: rgba(255, 136, 0, 0.25); border-color: rgba(255, 136, 0, 0.6);
+  box-shadow: 0 0 20px rgba(255, 136, 0, 0.2);
+}
+.url-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.url-analyze-btn.scanning { animation: urlPulse 1.2s infinite; }
+@keyframes urlPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 136, 0, 0.2); }
+  50% { box-shadow: 0 0 24px rgba(255, 136, 0, 0.4); }
+}
+
+.url-stages { display: flex; flex-direction: column; gap: 4px; }
+.url-stage {
+  display: flex; align-items: center; gap: 8px; font-size: 11px;
+  font-family: 'Consolas', 'Courier New', monospace; color: rgba(255, 136, 68, 0.4);
+  transition: color 0.3s;
+}
+.url-stage.running { color: #ffaa55; }
+.url-stage.done { color: #00ff88; }
+.url-stage.fail { color: #ff5555; }
+.url-stage.skip { color: rgba(255, 136, 68, 0.35); }
+.url-stage-icon { width: 14px; text-align: center; font-size: 10px; }
+
+.url-status-bar { display: flex; flex-direction: column; gap: 6px; }
+.url-status-row { display: flex; justify-content: space-between; align-items: center; }
+.url-status-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
+}
+.url-status-value { font-size: 12px; font-weight: 600; color: #ffaa55; }
+.url-status-value.complete { color: #00ff88; }
+.url-status-value.error { color: #ff5555; }
+.url-bar-track {
+  width: 100%; height: 4px; background: rgba(255, 136, 68, 0.1);
+  border-radius: 2px; overflow: hidden;
+}
+.url-bar-fill {
+  height: 100%; background: linear-gradient(90deg, #ff6600, #ff8800);
+  border-radius: 2px; transition: width 0.4s ease;
+}
+
+.url-section {
+  background: rgba(8, 8, 18, 0.55); border: 1px solid rgba(255, 136, 68, 0.12);
+  border-radius: 8px; padding: 10px 12px;
+}
+.url-section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 136, 68, 0.1);
+}
+.url-score-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; }
+.url-score {
+  font-size: 42px; font-weight: 700; color: #ff8800; line-height: 1;
+  text-shadow: 0 0 30px rgba(255, 136, 0, 0.4);
+}
+.url-score.safe { color: #00ff88; text-shadow: 0 0 30px rgba(0, 255, 136, 0.4); }
+.url-score.suspicious { color: #ffaa00; text-shadow: 0 0 30px rgba(255, 170, 0, 0.4); }
+.url-score.danger { color: #ff3333; text-shadow: 0 0 30px rgba(255, 50, 50, 0.4); }
+.url-score-label { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+.url-score-class { font-size: 11px; color: rgba(255, 170, 85, 0.7); text-align: center; margin-top: 2px; }
+
+.url-checks { display: flex; flex-direction: column; gap: 4px; }
+.url-check {
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+.url-check.pass { color: #00ff88; }
+.url-check.fail { color: #ff5555; }
+.url-check.warn { color: #ffaa00; }
+.url-check-icon { width: 16px; text-align: center; }
+
+.url-findings { display: flex; flex-direction: column; gap: 5px; }
+.url-finding {
+  padding: 6px 8px; border-radius: 6px; font-size: 11px; line-height: 1.4;
+  background: rgba(8, 8, 18, 0.4); border-left: 2px solid rgba(255, 136, 68, 0.3);
+}
+.url-finding.HIGH { border-left-color: #ff3333; background: rgba(255, 50, 50, 0.08); }
+.url-finding.MEDIUM { border-left-color: #ffaa00; background: rgba(255, 170, 0, 0.08); }
+.url-finding.LOW { border-left-color: #00ccff; background: rgba(0, 200, 255, 0.05); }
+.url-finding.CRITICAL { border-left-color: #ff0000; background: rgba(255, 0, 0, 0.1); }
+.url-finding-title { font-weight: 600; color: #ffcc88; }
+.url-finding-detail { color: rgba(255, 200, 150, 0.65); margin-top: 2px; }
+
+.url-detail-grid { display: flex; flex-direction: column; gap: 4px; }
+.url-detail-row { display: flex; justify-content: space-between; font-size: 11px; font-family: 'Consolas', 'Courier New', monospace; }
+.url-detail-k { color: rgba(255, 170, 85, 0.6); }
+.url-detail-v { color: #ffcc88; text-align: right; max-width: 60%; word-break: break-all; }
+
+.url-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.url-action-btn {
+  flex: 1; min-width: 100px; padding: 8px 12px; background: rgba(255, 136, 0, 0.12);
+  border: 1px solid rgba(255, 136, 0, 0.3); border-radius: 8px;
+  color: #ff8800; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: all 0.3s; text-transform: uppercase;
+}
+.url-action-btn:hover {
+  background: rgba(255, 136, 0, 0.22); border-color: rgba(255, 136, 0, 0.55);
+  box-shadow: 0 0 16px rgba(255, 136, 0, 0.15);
+}
+.url-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.url-history { display: flex; flex-direction: column; gap: 5px; }
+.url-history-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 8px; background: rgba(8, 8, 18, 0.4);
+  border: 1px solid rgba(255, 136, 68, 0.1); border-radius: 6px;
+  cursor: pointer; transition: all 0.2s;
+}
+.url-history-item:hover { background: rgba(255, 136, 68, 0.08); border-color: rgba(255, 136, 68, 0.2); }
+.url-history-domain {
+  font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc88; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.url-history-meta { font-size: 10px; color: rgba(255, 170, 85, 0.6); }
+
+.url-error-card {
+  background: rgba(255, 68, 68, 0.08); border: 1px solid rgba(255, 68, 68, 0.25);
+  border-radius: 8px; padding: 10px 12px; display: none;
+}
+.url-error-card.visible { display: flex; flex-direction: column; gap: 4px; }
+.url-error-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #ff6666;
+}
+.url-error-reason { font-size: 12px; color: #ff9999; line-height: 1.45; }
+
+.url-recommendation {
+  padding: 8px 10px; background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.15); border-radius: 6px;
+  font-size: 11px; line-height: 1.5; color: rgba(200, 255, 220, 0.8);
+}
+.url-recommendation.danger {
+  background: rgba(255, 50, 50, 0.05); border-color: rgba(255, 50, 50, 0.2);
+  color: rgba(255, 200, 200, 0.8);
+}
+
+/* ===== DNS LOOKUP PANEL (gold accents; shares the URL panel layout) ===== */
+.dns-dot {
+  background: #ffcc44;
+  box-shadow: 0 0 8px #ffcc44;
+}
+.dns-pulse-dot {
+  background: #ffcc44;
+  box-shadow: 0 0 10px #ffcc44;
+}
+.dns-badge {
+  background: rgba(255, 204, 68, 0.15);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  color: #ffcc44;
+}
+.dns-badge.offline {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: rgba(255, 68, 68, 0.35);
+  color: #ff6666;
+}
+.dns-lookup-btn {
+  background: rgba(255, 204, 68, 0.14);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  color: #ffcc44;
+}
+.dns-lookup-btn:hover {
+  background: rgba(255, 204, 68, 0.25);
+  border-color: rgba(255, 204, 68, 0.65);
+  box-shadow: 0 0 20px rgba(255, 204, 68, 0.2);
+}
+.dns-records { display: flex; flex-direction: column; gap: 6px; }
+.dns-record-block {
+  background: rgba(8, 8, 18, 0.4);
+  border: 1px solid rgba(255, 204, 68, 0.14);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.dns-record-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: #ffcc44;
+  padding-bottom: 4px; margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 204, 68, 0.1);
+}
+.dns-record-status { font-size: 9px; letter-spacing: 1px; }
+.dns-record-status.ok { color: #00ff88; }
+.dns-record-status.empty { color: rgba(255, 170, 85, 0.5); }
+.dns-record-status.error { color: #ff5555; }
+.dns-record-row {
+  display: flex; justify-content: space-between; gap: 10px;
+  font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc88; padding: 2px 0; word-break: break-all;
+}
+.dns-record-ttl {
+  flex: none; color: rgba(255, 170, 85, 0.6); font-size: 10px;
+}
+.dns-record-error {
+  font-size: 11px; color: rgba(255, 150, 150, 0.7);
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+.dns-warnings { display: flex; flex-direction: column; gap: 4px; }
+.dns-warning {
+  font-size: 11px; line-height: 1.45; color: rgba(255, 200, 120, 0.85);
+  padding: 5px 8px; border-radius: 6px;
+  background: rgba(255, 170, 0, 0.06);
+  border-left: 2px solid rgba(255, 170, 0, 0.35);
+}
+
+.dns-findings-list, .dns-warning-list, .dns-recommendation-list {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px;
+}
+.dns-findings-list li, .dns-warning-list li {
+  font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc88; padding: 4px 6px; border-radius: 4px;
+  background: rgba(255, 204, 68, 0.06);
+}
+.dns-recommendation-list li {
+  font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+  color: #ffcc88; padding: 4px 6px; border-radius: 4px;
+  background: rgba(8, 120, 80, 0.12);
+  border-left: 2px solid rgba(0, 255, 136, 0.35);
+}
+.dns-empty-list {
+  font-size: 11px; color: rgba(255, 204, 68, 0.25);
+  font-family: 'Consolas', 'Courier New', monospace; padding: 8px 0;
+}
+
+/* ===== CENTER-TOP SCAN NOTIFICATION (toast) ===== */
+.scan-toast {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 320px;
+  max-width: 560px;
+  padding: 12px 14px 12px 16px;
+  background: rgba(8, 8, 20, 0.92);
+  border: 1px solid rgba(255, 136, 68, 0.45);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.2);
+  pointer-events: auto;
+  z-index: 40;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+}
+.scan-toast.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+.scan-toast-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #ffcc44;
+  background: rgba(255, 204, 68, 0.12);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  box-shadow: 0 0 12px rgba(255, 204, 68, 0.25);
+}
+.scan-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+.scan-toast-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffaa55;
+  margin-bottom: 3px;
+}
+.scan-toast-text {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 221, 153, 0.85);
+  word-wrap: break-word;
+}
+.scan-toast-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 136, 68, 0.12);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  color: #ff8844;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.scan-toast-close:hover {
+  background: rgba(255, 136, 68, 0.25);
+  color: #ffdd99;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   #top-bar { padding: 12px 16px; }
   #bottom-controls { padding: 12px 16px 16px; }
   #chat-messages { max-height: 140px; }
 }
+
+/* =====================================================================
+   ZYRA SETTINGS  (additive — does not alter any existing styles)
+   ===================================================================== */
+#zyra-settings-btn {
+  position: fixed; left: 18px; bottom: 18px; z-index: 9000;
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 1px solid rgba(255,136,68,0.35);
+  background: rgba(8,8,18,0.72); color: #ffcc88;
+  font-size: 20px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 18px rgba(255,136,68,0.18);
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s, background .35s;
+  pointer-events: auto;
+}
+#zyra-settings-btn:hover {
+  transform: translateY(-2px) rotate(40deg);
+  border-color: rgba(255,136,68,0.65);
+  box-shadow: 0 0 26px rgba(255,136,68,0.4);
+}
+#zyra-settings-btn:focus-visible { outline: 2px solid rgba(255,136,68,0.6); outline-offset: 2px; }
+
+#zyra-settings-overlay {
+  position: fixed; inset: 0; z-index: 9100;
+  background: radial-gradient(ellipse at center, rgba(8,8,18,0.35) 0%, rgba(8,8,18,0.62) 100%);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+}
+#zyra-settings-overlay.visible { opacity: 1; pointer-events: auto; }
+
+#zyra-settings-panel {
+  width: min(680px, 94vw); max-height: 88vh; overflow-y: auto;
+  background: linear-gradient(180deg, rgba(12,12,24,0.97) 0%, rgba(8,8,18,0.97) 100%);
+  border: 1px solid rgba(255,136,68,0.28); border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 50px rgba(255,136,68,0.12);
+  color: #ffcc88; font-family: 'Consolas','Courier New',monospace;
+  transform: translateY(16px) scale(.97); transition: transform .32s cubic-bezier(.2,.8,.2,1);
+  scrollbar-width: thin; scrollbar-color: rgba(255,136,68,0.4) transparent;
+}
+#zyra-settings-overlay.visible #zyra-settings-panel { transform: translateY(0) scale(1); }
+#zyra-settings-panel::-webkit-scrollbar { width: 6px; }
+#zyra-settings-panel::-webkit-scrollbar-thumb { background: rgba(255,136,68,0.35); border-radius: 3px; }
+
+.zs-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 14px; border-bottom: 1px solid rgba(255,136,68,0.18);
+  background: linear-gradient(90deg, rgba(255,136,68,0.07), transparent);
+}
+.zs-title { font-size: 15px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #ffaa66; }
+.zs-subtitle { font-size: 10px; letter-spacing: 1.5px; color: rgba(255,170,85,0.55); margin-top: 2px; }
+.zs-close {
+  width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+  border: 1px solid rgba(255,136,68,0.25); background: transparent; color: #ffcc88;
+  font-size: 14px; transition: background .25s, border-color .25s;
+}
+.zs-close:hover { background: rgba(255,68,68,0.18); border-color: rgba(255,68,68,0.5); }
+.zs-body { padding: 8px 22px 22px; }
+
+.zs-section { padding: 14px 0; border-bottom: 1px solid rgba(255,136,68,0.12); }
+.zs-section:last-child { border-bottom: none; }
+.zs-section-title {
+  font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #ffaa66; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.zs-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 7px 0; }
+.zs-label { font-size: 12.5px; color: rgba(255,204,136,0.92); }
+.zs-label small { display: block; font-size: 10px; color: rgba(255,170,85,0.5); margin-top: 2px; }
+.zs-control { display: flex; align-items: center; gap: 10px; }
+
+.zs-select, .zs-input {
+  background: rgba(8,8,18,0.7); border: 1px solid rgba(255,136,68,0.25); border-radius: 8px;
+  color: #ffcc88; font-size: 12.5px; font-family: inherit; padding: 8px 10px; outline: none;
+  transition: border-color .25s, box-shadow .25s; min-width: 150px;
+}
+.zs-select:focus, .zs-input:focus {
+  border-color: rgba(255,136,68,0.55); box-shadow: 0 0 12px rgba(255,136,68,0.15);
+}
+.zs-select option { background: #0a0a14; color: #ffcc88; }
+.zs-input { min-width: 180px; }
+
+/* Toggle switch */
+.zs-toggle {
+  position: relative; width: 44px; height: 24px; border-radius: 14px;
+  background: rgba(255,136,68,0.18); border: 1px solid rgba(255,136,68,0.3);
+  cursor: pointer; transition: background .25s, border-color .25s; flex: none;
+}
+.zs-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: #ffcc88; transition: transform .25s cubic-bezier(.2,.8,.2,1), background .25s;
+}
+.zs-toggle.on { background: rgba(255,136,68,0.55); border-color: rgba(255,136,68,0.7); }
+.zs-toggle.on::after { transform: translateX(20px); background: #fff; }
+
+/* Range slider */
+.zs-range {
+  -webkit-appearance: none; appearance: none; width: 150px; height: 5px; border-radius: 4px;
+  background: rgba(255,136,68,0.25); outline: none; cursor: pointer;
+}
+.zs-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%;
+  background: #ffaa55; border: 2px solid #ffcc88; box-shadow: 0 0 10px rgba(255,136,68,0.5);
+}
+.zs-range::-moz-range-thumb {
+  width: 15px; height: 15px; border-radius: 50%; background: #ffaa55; border: 2px solid #ffcc88;
+}
+.zs-range-val { font-size: 11px; color: rgba(255,170,85,0.8); min-width: 34px; text-align: right; }
+
+/* Buttons */
+.zs-btn {
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 11.5px; font-family: inherit;
+  letter-spacing: .5px; border: 1px solid rgba(255,136,68,0.3); background: rgba(255,136,68,0.1);
+  color: #ffcc88; transition: background .25s, border-color .25s, transform .15s;
+}
+.zs-btn:hover { background: rgba(255,136,68,0.22); border-color: rgba(255,136,68,0.55); }
+.zs-btn:active { transform: scale(.97); }
+.zs-btn.danger { border-color: rgba(255,68,68,0.35); color: #ffaaaa; }
+.zs-btn.danger:hover { background: rgba(255,68,68,0.18); border-color: rgba(255,68,68,0.6); }
+.zs-btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.zs-info {
+  font-size: 11px; line-height: 1.6; color: rgba(255,200,140,0.75);
+  background: rgba(8,8,18,0.5); border: 1px solid rgba(255,136,68,0.15);
+  border-radius: 10px; padding: 12px 14px; margin-top: 10px;
+}
+.zs-status { font-size: 10.5px; color: #00ff88; margin-left: 8px; opacity: 0; transition: opacity .3s; }
+.zs-status.show { opacity: 1; }
+.zs-status.err { color: #ff7777; }
+
+/* Color swatches */
+.zs-swatches { display: flex; gap: 8px; }
+.zs-swatch {
+  width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+  transition: transform .2s, border-color .2s;
+}
+.zs-swatch:hover { transform: scale(1.12); }
+.zs-swatch.active { border-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
+
+/* Accent color is driven by a CSS variable; existing rules are untouched. */
+:root { --zyra-accent: #ff8800; --zyra-accent-soft: rgba(255,136,68,0.25); --zyra-accent-text: #ffcc88; }
+
+/* Light theme presentation matched to the supplied ZYRA reference: cool black
+   surroundings with deep navy glass panels and electric blue controls. The
+   Three.js canvas and neural-core animation are intentionally untouched. */
+body.zyra-light { background: #03070d !important; color: #f4f9ff; }
+body.zyra-light #top-bar { background: linear-gradient(180deg, rgba(2,5,10,.9), rgba(3,7,13,.42) 70%, transparent); border-bottom: 1px solid rgba(67,157,255,.12); }
+body.zyra-light .top-logo, body.zyra-light .top-title { color: #f4f9ff; text-shadow: 0 0 10px rgba(110,190,255,.22); }
+body.zyra-light .top-subtitle { color: rgba(220,238,255,.78); }
+body.zyra-light .top-btn { color: #f4f9ff; background: linear-gradient(180deg, rgba(15,46,83,.8), rgba(5,18,36,.82)); border-color: rgba(91,181,255,.38); box-shadow: 0 0 14px rgba(22,119,255,.18), inset 0 0 12px rgba(52,142,255,.08); }
+body.zyra-light .top-btn:hover, body.zyra-light .top-btn.active { background: rgba(22,84,145,.8); border-color: #5ab7ff; box-shadow: 0 0 18px rgba(22,119,255,.38); }
+body.zyra-light .btn-dot { background: #56bdff; box-shadow: 0 0 9px #1677ff; }
+body.zyra-light #bottom-controls { background: linear-gradient(0deg, rgba(2,6,12,.94), rgba(3,8,16,.58) 70%, transparent); }
+body.zyra-light #chat-messages { background: rgba(5,25,52,.78); border-color: rgba(62,157,255,.38); color: #eaf5ff; box-shadow: 0 0 18px rgba(22,119,255,.12); }
+body.zyra-light .msg.user { background: rgba(22,119,255,.2); border-color: rgba(67,166,255,.38); color: #fff; }
+body.zyra-light .msg.zyra { background: rgba(8,43,82,.62); border-color: rgba(67,166,255,.25); color: #dceeff; }
+body.zyra-light #chat-input { background: rgba(5,24,49,.9); border-color: rgba(70,165,255,.42); color: #fff; box-shadow: 0 0 16px rgba(22,119,255,.12); }
+body.zyra-light #chat-input:focus { border-color: #56bdff; box-shadow: 0 0 0 2px rgba(22,119,255,.2), 0 0 20px rgba(22,119,255,.2); }
+body.zyra-light #chat-input::placeholder { color: rgba(220,238,255,.58); }
+body.zyra-light #chat-send { background: #1677ff; border-color: #56bdff; color: #fff; box-shadow: 0 0 16px rgba(22,119,255,.42); }
+body.zyra-light #chat-send:hover { background: #3998ff; box-shadow: 0 0 22px rgba(80,184,255,.55); }
+body.zyra-light .system-monitor-card, body.zyra-light .nmap-scanner-card, body.zyra-light .url-analyzer-card, body.zyra-light #zyra-settings-panel { background: linear-gradient(180deg, rgba(5,27,57,.96), rgba(2,13,29,.97)); border-color: rgba(71,166,255,.4); color: #eaf5ff; box-shadow: 0 12px 36px rgba(0,0,0,.6), 0 0 24px rgba(22,119,255,.2); }
+body.zyra-light .sm-header, body.zyra-light .nm-header, body.zyra-light .url-header, body.zyra-light .zs-header { background: linear-gradient(90deg, rgba(22,119,255,.22), transparent); border-color: rgba(71,166,255,.25); }
+body.zyra-light .sm-metric-card, body.zyra-light .sm-info-card, body.zyra-light .nm-info-card, body.zyra-light .url-section, body.zyra-light .sm-status-card { background: rgba(5,29,60,.7); border-color: rgba(71,166,255,.2); }
+body.zyra-light .sm-title, body.zyra-light .url-title, body.zyra-light .zs-title, body.zyra-light .zs-section-title, body.zyra-light .sm-card-heading { color: #65c3ff; }
+body.zyra-light .sm-metric-name, body.zyra-light .sm-metric-val, body.zyra-light .url-score, body.zyra-light .zs-label, body.zyra-light .zs-info { color: #eaf5ff; }
+body.zyra-light #zyra-settings-btn { background: rgba(5,28,56,.9); color: #65c3ff; border-color: rgba(71,166,255,.45); box-shadow: 0 0 18px rgba(22,119,255,.24); }
+body.zyra-light .zs-select, body.zyra-light .zs-input { background: rgba(3,17,35,.9); color: #eaf5ff; border-color: rgba(71,166,255,.38); }
+body.zyra-light .zs-select option { background: #061a34; color: #eaf5ff; }
+body.zyra-light .zs-section { border-color: rgba(71,166,255,.2); }
+body.zyra-light .zs-btn { color: #dceeff; background: rgba(22,119,255,.18); border-color: rgba(71,166,255,.4); }
+body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: #65c3ff; }
+
+/* Light-theme settings controls: blue toggles + blue sliders (dark theme keeps the orange styling) */
+body.zyra-light .zs-toggle { background: rgba(174,194,224,.45); border-color: rgba(146,170,204,.65); }
+body.zyra-light .zs-toggle::after { background: #ffffff; box-shadow: 0 1px 4px rgba(13,47,96,.28); }
+body.zyra-light .zs-toggle.on { background: #1677ff; border-color: #1677ff; }
+body.zyra-light .zs-toggle.on::after { background: #ffffff; }
+body.zyra-light .zs-range { background: linear-gradient(to right, #1677ff var(--zs-range-fill, 80%), rgba(180,205,235,.55) var(--zs-range-fill, 80%)); }
+body.zyra-light .zs-range::-webkit-slider-thumb { background: #1677ff; border-color: #ffffff; box-shadow: 0 0 10px rgba(22,119,255,.45); }
+body.zyra-light .zs-range::-moz-range-thumb { background: #1677ff; border-color: #ffffff; }
+body.zyra-light .zs-range::-moz-range-progress { background: #1677ff; }
+body.zyra-light .zs-range-val { color: #1677ff; }
+
+/* Chat history sidebar (additive) */
+#zyra-chat-sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 280px; z-index: 9050;
+  background: linear-gradient(180deg, rgba(12,12,24,0.97), rgba(8,8,18,0.97));
+  border-right: 1px solid rgba(255,136,68,0.25);
+  transform: translateX(-100%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+  display: flex; flex-direction: column; color: #ffcc88; font-family: 'Consolas','Courier New',monospace;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
+}
+#zyra-chat-sidebar.open { transform: translateX(0); }
+.zs-side-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 12px; border-bottom: 1px solid rgba(255,136,68,0.18); font-size: 12px; letter-spacing: 2px; color: #ffaa66; }
+.zs-side-head button { background: transparent; border: 1px solid rgba(255,136,68,0.25); color: #ffcc88; border-radius: 7px; width: 26px; height: 26px; cursor: pointer; }
+.zs-side-head button:hover { background: rgba(255,68,68,0.18); }
+.zs-side-new { margin: 12px 14px; padding: 9px; border-radius: 8px; border: 1px dashed rgba(255,136,68,0.4); background: rgba(255,136,68,0.08); color: #ffcc88; cursor: pointer; font-family: inherit; font-size: 12px; }
+.zs-side-new:hover { background: rgba(255,136,68,0.2); }
+.zs-side-list { overflow-y: auto; padding: 4px 10px 14px; display: flex; flex-direction: column; gap: 6px; scrollbar-width: thin; scrollbar-color: rgba(255,136,68,0.35) transparent; }
+.zs-side-item { padding: 10px 12px; border-radius: 9px; background: rgba(8,8,18,0.5); border: 1px solid rgba(255,136,68,0.12); cursor: pointer; transition: background .2s, border-color .2s; }
+.zs-side-item:hover { background: rgba(255,136,68,0.14); border-color: rgba(255,136,68,0.35); }
+.zs-side-item.active { border-color: rgba(255,136,68,0.6); background: rgba(255,136,68,0.18); }
+.zs-side-item .t { font-size: 12px; color: #ffcc88; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zs-side-item .d { font-size: 9.5px; color: rgba(255,170,85,0.55); margin-top: 3px; }
+.zs-side-empty { font-size: 11px; color: rgba(255,170,85,0.4); padding: 14px; text-align: center; }
+body.zyra-light #zyra-chat-sidebar { background: linear-gradient(180deg, rgba(5,27,57,.98), rgba(2,13,29,.98)); border-color: rgba(71,166,255,.4); color: #eaf5ff; }
+body.zyra-light .zs-side-head { color: #65c3ff; border-color: rgba(71,166,255,.25); }
+body.zyra-light .zs-side-item { background: rgba(5,29,60,.72); border-color: rgba(71,166,255,.2); }
+body.zyra-light .zs-side-item .t { color: #eaf5ff; }
+body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
 </style>
 </head>
 <body>
@@ -845,10 +1518,26 @@ canvas {
 <div id="dashboard-overlay">
   <!-- Top Bar -->
   <div id="top-bar">
-    <div class="top-brand">
-      <span class="top-logo">◈</span>
-      <span class="top-title">ZYRA</span>
-      <span class="top-subtitle">// Neural Core</span>
+    <div class="top-left-stack">
+      <div class="top-brand">
+        <span class="top-logo">◈</span>
+        <span class="top-title">ZYRA</span>
+        <span class="top-subtitle">// Neural Core</span>
+      </div>
+      <div class="top-actions-col">
+        <button id="btn-toggle-nmap" class="top-btn" title="Toggle Nmap Scanner">
+          <span class="btn-dot nm-dot"></span>
+          <span class="btn-text">Nmap Scanner</span>
+        </button>
+        <button id="btn-toggle-url" class="top-btn" title="Toggle URL Analyzer">
+          <span class="btn-dot url-dot"></span>
+          <span class="btn-text">URL Analyzer</span>
+        </button>
+        <button id="btn-toggle-dns" class="top-btn" title="Toggle DNS Lookup">
+          <span class="btn-dot dns-dot"></span>
+          <span class="btn-text">DNS Lookup</span>
+        </button>
+      </div>
     </div>
     <div class="top-actions">
       <div class="top-actions-col">
@@ -856,12 +1545,18 @@ canvas {
           <span class="btn-dot"></span>
           <span class="btn-text">System Monitor</span>
         </button>
-        <button id="btn-toggle-nmap" class="top-btn" title="Toggle Nmap Scanner">
-          <span class="btn-dot nm-dot"></span>
-          <span class="btn-text">Nmap Scanner</span>
-        </button>
       </div>
     </div>
+  </div>
+
+  <!-- Center-top scan completion notification (auto-hides after 15s) -->
+  <div id="scan-toast" class="scan-toast" role="status" aria-live="polite">
+    <div class="scan-toast-icon">✔</div>
+    <div class="scan-toast-body">
+      <div id="scan-toast-title" class="scan-toast-title">SCAN COMPLETE</div>
+      <div id="scan-toast-text" class="scan-toast-text"></div>
+    </div>
+    <button id="scan-toast-close" class="scan-toast-close" title="Dismiss">✕</button>
   </div>
 
   <!-- System Monitor HUD Card -->
@@ -1063,6 +1758,209 @@ canvas {
     </div>
   </div>
 
+  <!-- URL Analyzer HUD Card -->
+  <div id="url-analyzer-card" class="url-analyzer-card" aria-label="URL Analyzer">
+    <div class="url-header">
+      <div class="url-title-group">
+        <span class="url-pulse-dot"></span>
+        <div>
+          <div class="url-title">URL ANALYZER</div>
+          <div class="url-subtitle">Security Intelligence Module</div>
+        </div>
+      </div>
+      <div class="sm-header-actions">
+        <span class="url-badge" id="url-badge">READY</span>
+        <button class="url-btn-close" id="url-close-btn" title="Close URL Analyzer">&#10005;</button>
+      </div>
+    </div>
+
+    <div class="url-body" id="url-body">
+      <div class="url-field">
+        <label for="url-input">Enter URL</label>
+        <input id="url-input" type="text" placeholder="https://example.com" autocomplete="off" spellcheck="false">
+      </div>
+      <button id="url-analyze-btn" class="url-analyze-btn">ANALYZE URL</button>
+
+      <div class="url-section" id="url-stages-section" style="display: none;">
+        <div class="url-section-title">Scan Progress</div>
+        <div class="url-status-bar">
+          <div class="url-status-row">
+            <span class="url-status-label" id="url-stage-label">INITIALIZING URL ANALYZER...</span>
+            <span class="url-status-value" id="url-progress-val">0%</span>
+          </div>
+          <div class="url-bar-track"><div class="url-bar-fill" id="url-progress-bar" style="width: 0%;"></div></div>
+        </div>
+        <div class="url-stages" id="url-stages"></div>
+      </div>
+
+      <div class="url-section" id="url-result-section" style="display: none;">
+        <div class="url-section-title">Analysis Result</div>
+        <div class="url-score-wrap">
+          <div class="url-score" id="url-score">--</div>
+          <div class="url-score-label" id="url-risk-label">RISK</div>
+          <div class="url-score-class" id="url-class-label">&mdash;</div>
+        </div>
+        <div class="url-detail-row" style="margin-top: 6px;">
+          <span class="url-detail-k">Target</span>
+          <span class="url-detail-v" id="url-target">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="url-section" id="url-summary-section" style="display: none;">
+        <div class="url-section-title">Scan Summary</div>
+        <div class="url-checks" id="url-checks"></div>
+      </div>
+
+      <div class="url-section" id="url-details-section" style="display: none;">
+        <div class="url-section-title">URL Details</div>
+        <div class="url-detail-grid" id="url-details"></div>
+      </div>
+
+      <div class="url-section" id="url-ssl-section" style="display: none;">
+        <div class="url-section-title">SSL / TLS</div>
+        <div class="url-detail-grid" id="url-ssl"></div>
+      </div>
+
+      <div class="url-section" id="url-threat-section" style="display: none;">
+        <div class="url-section-title">Threat Intelligence</div>
+        <div class="url-detail-grid" id="url-threat"></div>
+      </div>
+
+      <div class="url-section" id="url-findings-section" style="display: none;">
+        <div class="url-section-title">Security Findings</div>
+        <div class="url-findings" id="url-findings"></div>
+      </div>
+
+      <div class="url-section" id="url-recommendation-section" style="display: none;">
+        <div class="url-section-title">Recommendation</div>
+        <div class="url-recommendation" id="url-recommendation"></div>
+      </div>
+
+      <div class="url-actions" id="url-actions" style="display: none;">
+        <button id="url-report-btn" class="url-action-btn" disabled>GENERATE REPORT</button>
+        <button id="url-download-btn" class="url-action-btn" disabled>DOWNLOAD REPORT</button>
+      </div>
+
+      <div class="url-section" id="url-history-section">
+        <div class="url-section-title">Recent URL Scans</div>
+        <div class="url-history" id="url-history">
+          <div class="url-history-meta" id="url-history-empty">No recent scans.</div>
+        </div>
+      </div>
+
+      <div class="url-error-card" id="url-error-card">
+        <div class="url-error-title">URL ANALYZER ERROR</div>
+        <div class="url-error-reason" id="url-error-reason"></div>
+      </div>
+    </div>
+ </div>
+
+  <!-- DNS Lookup HUD Card -->
+  <div id="dns-lookup-card" class="url-analyzer-card" aria-label="DNS Lookup">
+    <div class="url-header">
+      <div class="url-title-group">
+        <span class="url-pulse-dot dns-pulse-dot"></span>
+        <div>
+          <div class="url-title">DNS LOOKUP</div>
+          <div class="url-subtitle">Domain Intelligence Module</div>
+        </div>
+      </div>
+      <div class="sm-header-actions">
+        <span class="url-badge dns-badge" id="dns-badge">READY</span>
+        <button class="url-btn-close" id="dns-close-btn" title="Close DNS Lookup">&#10005;</button>
+      </div>
+    </div>
+
+    <div class="url-body" id="dns-body">
+      <div class="url-field">
+        <label for="dns-input">Enter Domain or IP</label>
+        <input id="dns-input" type="text" placeholder="example.com" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="url-field">
+        <label for="dns-type">Record Type (nslookup style)</label>
+        <select id="dns-type" class="url-select">
+          <option value="ANY" selected>ANY &mdash; all records</option>
+          <option value="A">A &mdash; IPv4 address</option>
+          <option value="AAAA">AAAA &mdash; IPv6 address</option>
+          <option value="CNAME">CNAME &mdash; canonical name</option>
+          <option value="MX">MX &mdash; mail exchanger</option>
+          <option value="NS">NS &mdash; nameserver</option>
+          <option value="TXT">TXT &mdash; text / SPF</option>
+          <option value="SOA">SOA &mdash; start of authority</option>
+          <option value="PTR">PTR &mdash; reverse lookup</option>
+        </select>
+      </div>
+      <button id="dns-lookup-btn" class="url-analyze-btn dns-lookup-btn">LOOKUP DNS</button>
+
+      <div class="url-section" id="dns-stages-section" style="display: none;">
+        <div class="url-section-title">Lookup Progress</div>
+        <div class="url-status-bar">
+          <div class="url-status-row">
+            <span class="url-status-label" id="dns-stage-label">INITIALIZING DNS LOOKUP...</span>
+            <span class="url-status-value" id="dns-progress-val">0%</span>
+          </div>
+          <div class="url-bar-track"><div class="url-bar-fill" id="dns-progress-bar" style="width: 0%;"></div></div>
+        </div>
+        <div class="url-stages" id="dns-stages"></div>
+      </div>
+
+      <div class="url-section" id="dns-result-section" style="display: none;">
+        <div class="url-section-title">Lookup Result</div>
+        <div class="url-score-wrap">
+          <div class="url-score" id="dns-score" style="font-size:26px;">--</div>
+          <div class="url-score-label" id="dns-risk-label" style="display:none;">RISK</div>
+          <div class="url-score-class" id="dns-status-label">&mdash;</div>
+        </div>
+        <div class="url-detail-row" style="margin-top: 6px;">
+          <span class="url-detail-k">Domain</span>
+          <span class="url-detail-v" id="dns-target">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">Query Type</span>
+          <span class="url-detail-v" id="dns-query-type">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">DNS Server</span>
+          <span class="url-detail-v" id="dns-server">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">Resolution</span>
+          <span class="url-detail-v" id="dns-resolution">&mdash;</span>
+        </div>
+        <div class="url-detail-row">
+          <span class="url-detail-k">Response Time</span>
+          <span class="url-detail-v" id="dns-response-time">&mdash;</span>
+        </div>
+      </div>
+
+      <div class="url-section" id="dns-checks-section" style="display: none;">
+        <div class="url-section-title">DNS Summary</div>
+        <div class="url-checks" id="dns-checks"></div>
+      </div>
+
+      <div class="url-section" id="dns-records-section" style="display: none;">
+        <div class="url-section-title">DNS Records</div>
+        <div class="dns-records" id="dns-records"></div>
+      </div>
+
+      <div class="url-actions" id="dns-actions" style="display: none;">
+        <button id="dns-report-btn" class="url-action-btn" disabled>GENERATE REPORT</button>
+        <button id="dns-download-btn" class="url-action-btn" disabled>DOWNLOAD REPORT</button>
+      </div>
+
+      <div class="url-section" id="dns-history-section">
+        <div class="url-section-title">Recent DNS Lookups</div>
+        <div class="url-history" id="dns-history">
+          <div class="url-history-meta" id="dns-history-empty">No recent lookups.</div>
+        </div>
+      </div>
+
+      <div class="url-error-card" id="dns-error-card">
+        <div class="url-error-title">DNS LOOKUP ERROR</div>
+        <div class="url-error-reason" id="dns-error-reason"></div>
+      </div>
+    </div>
+ </div>
   <!-- Bottom Controls -->
   <div id="bottom-controls">
     <div id="chat-container">
@@ -1070,6 +1968,134 @@ canvas {
       <div id="chat-input-row">
         <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
         <button id="chat-send" title="Send message">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ZYRA SETTINGS (additive) ===== -->
+  <button id="zyra-settings-btn" title="ZYRA Settings" aria-label="Open ZYRA Settings">⚙</button>
+
+  <!-- Chat history sidebar (ChatGPT-style, additive) -->
+  <div id="zyra-chat-sidebar" aria-hidden="true">
+    <div class="zs-side-head">
+      <span>🕘 CHAT HISTORY</span>
+      <button id="zyra-chat-sidebar-close" title="Close sidebar">✕</button>
+    </div>
+    <button id="zyra-chat-new" class="zs-side-new">+ New conversation</button>
+    <div id="zyra-chat-sessions" class="zs-side-list"></div>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="zyra-settings-overlay" role="dialog" aria-modal="true" aria-labelledby="zyra-settings-title">
+    <div id="zyra-settings-panel">
+      <div class="zs-header">
+        <div>
+          <div class="zs-title" id="zyra-settings-title">⚙ ZYRA SETTINGS</div>
+          <div class="zs-subtitle">// Neural Core Configuration</div>
+        </div>
+        <button class="zs-close" id="zyra-settings-close" title="Close Settings">✕</button>
+      </div>
+      <div class="zs-body">
+
+        <!-- 1. THEME -->
+        <div class="zs-section">
+          <div class="zs-section-title">🎨 Theme</div>
+          <div class="zs-row">
+            <span class="zs-label">Interface theme<small>Animations stay enabled</small></span>
+            <div class="zs-control">
+              <select id="zs-theme" class="zs-select">
+                <option value="dark">Dark — Black &amp; Orange</option>
+                <option value="light">Light</option>
+              </select>
+            </div>
+          </div>
+          <div class="zs-row">
+            <span class="zs-label">Color scheme<small>Light theme accent palette</small></span>
+            <div class="zs-control">
+              <select id="zs-color-scheme" class="zs-select">
+                <option value="black-blue">Black &amp; Blue</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. APPEARANCE -->
+        <div class="zs-section">
+          <div class="zs-section-title">🖥️ Appearance</div>
+          <div class="zs-row">
+            <span class="zs-label">Font size</span>
+            <div class="zs-control">
+              <select id="zs-fontsize" class="zs-select">
+                <option value="90">Small</option>
+                <option value="100">Default</option>
+                <option value="110">Large</option>
+                <option value="125">Extra Large</option>
+              </select>
+            </div>
+          </div>
+          <div class="zs-row">
+            <span class="zs-label">Accent color</span>
+            <div class="zs-control" id="zs-accent-swatches"></div>
+          </div>
+        </div>
+
+        <!-- 3. VOICE -->
+        <div class="zs-section">
+          <div class="zs-section-title">🎙️ Voice</div>
+          <div class="zs-row">
+            <span class="zs-label">Voice assistant<small>Speak ZYRA responses aloud</small></span>
+            <div class="zs-control"><div class="zs-toggle" id="zs-voice-toggle" role="switch" aria-checked="false"></div></div>
+          </div>
+          <div class="zs-row">
+            <span class="zs-label">Voice volume</span>
+            <div class="zs-control">
+              <input type="range" id="zs-voice-volume" class="zs-range" min="0" max="100" value="80">
+              <span class="zs-range-val" id="zs-voice-volume-val">80%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. AUTHENTICATION -->
+        <div class="zs-section">
+          <div class="zs-section-title">🔐 Authentication</div>
+          <div class="zs-row">
+            <span class="zs-label">Wake word to authenticate<small>Phrase ZYRA listens for</small></span>
+            <div class="zs-control">
+              <input type="text" id="zs-wakeword" class="zs-input" placeholder="e.g. Hey ZYRA" maxlength="40" autocomplete="off">
+              <span class="zs-status" id="zs-wakeword-status">saved</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. CHAT -->
+        <div class="zs-section">
+          <div class="zs-section-title">💬 Chat</div>
+          <div class="zs-row">
+            <span class="zs-label">Save chat history<small>Keep conversations across sessions</small></span>
+            <div class="zs-control"><div class="zs-toggle on" id="zs-savehistory-toggle" role="switch" aria-checked="true"></div></div>
+          </div>
+          <div class="zs-row">
+            <span class="zs-label">Chat sidebar<small>Open the history sidebar</small></span>
+            <div class="zs-control"><button class="zs-btn" id="zs-sidebar-open">Open Sidebar</button></div>
+          </div>
+        </div>
+
+        <!-- 6. DATA & PRIVACY -->
+        <div class="zs-section">
+          <div class="zs-section-title">🔒 Data &amp; Privacy</div>
+          <div class="zs-btn-row">
+            <button class="zs-btn" id="zs-manage-history">Manage Chat History</button>
+            <button class="zs-btn danger" id="zs-clear-history">Clear Chat History</button>
+            <button class="zs-btn danger" id="zs-clear-data">Clear Stored Data</button>
+          </div>
+          <div class="zs-info" id="zs-privacy-info">
+            <strong>Privacy information.</strong> ZYRA stores your settings and (optionally) chat
+            history locally in your browser via <code>localStorage</code>. No data is sent to any
+            third party. Clearing chat history removes saved conversations; clearing stored data
+            resets all ZYRA settings and history on this device.
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -1294,19 +2320,20 @@ canvas {
   const particleOrbitGroup = new THREE.Group();
   mainGroup.add(particleOrbitGroup);
 
-  // Create square particle texture
-  function createSquareTexture() {
+  // Create square particle texture (dark = amber, light = blue/cyan)
+  function createSquareTexture(isLight) {
     const canvas = document.createElement('canvas');
     canvas.width = 16;
     canvas.height = 16;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(255, 180, 80, 1)';
+    ctx.fillStyle = isLight ? 'rgba(90, 195, 255, 1)' : 'rgba(255, 180, 80, 1)';
     ctx.fillRect(2, 2, 12, 12);
-    ctx.fillStyle = 'rgba(255, 220, 150, 0.6)';
+    ctx.fillStyle = isLight ? 'rgba(190, 240, 255, 0.6)' : 'rgba(255, 220, 150, 0.6)';
     ctx.fillRect(4, 4, 8, 8);
     return new THREE.CanvasTexture(canvas);
   }
-  const squareTexture = createSquareTexture();
+  const squareTexture = createSquareTexture(false);
+  const squareTextureLight = createSquareTexture(true);
 
   const orbitParticleCount = 400;
   const orbitParticleGeo = new THREE.BufferGeometry();
@@ -1366,25 +2393,55 @@ canvas {
   mainGroup.add(scatterParticles);
 
   // ===== GLOW SPRITE =====
-  function createGlowTexture() {
+<<<<<<< HEAD
+  // Dark = original amber/orange glow, light = cyan/blue glow (same falloff curve)
+  function createGlowTexture(isLight) {
+=======
+  function createGlowTexture(blue) {
+>>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
-    grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
-    grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
-    grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
-    grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
+<<<<<<< HEAD
+    if (isLight) {
+      grad.addColorStop(0, 'rgba(120, 220, 255, 1)');
+      grad.addColorStop(0.1, 'rgba(40, 165, 255, 0.8)');
+      grad.addColorStop(0.3, 'rgba(22, 119, 255, 0.4)');
+      grad.addColorStop(0.5, 'rgba(15, 77, 200, 0.15)');
+      grad.addColorStop(0.7, 'rgba(5, 40, 120, 0.05)');
+    } else {
+      grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
+      grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
+      grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
+      grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
+      grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
+    }
+=======
+    const glowStops = blue
+      ? ['rgba(180,225,255,1)', 'rgba(80,175,255,.8)', 'rgba(22,119,255,.4)', 'rgba(15,90,220,.15)', 'rgba(6,59,120,.05)']
+      : ['rgba(255,200,100,1)', 'rgba(255,150,50,.8)', 'rgba(255,100,30,.4)', 'rgba(255,80,20,.15)', 'rgba(200,50,10,.05)'];
+    grad.addColorStop(0, glowStops[0]);
+    grad.addColorStop(0.1, glowStops[1]);
+    grad.addColorStop(0.3, glowStops[2]);
+    grad.addColorStop(0.5, glowStops[3]);
+    grad.addColorStop(0.7, glowStops[4]);
+>>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
     return new THREE.CanvasTexture(canvas);
   }
+  const glowTextureDark = createGlowTexture(false);
+  const glowTextureLight = createGlowTexture(true);
 
   const glowSpriteMat = new THREE.SpriteMaterial({
-    map: createGlowTexture(),
+<<<<<<< HEAD
+    map: glowTextureDark,
+=======
+    map: createGlowTexture(false),
+>>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.5,
@@ -1396,7 +2453,11 @@ canvas {
 
   // Smaller inner glow
   const innerGlowMat = new THREE.SpriteMaterial({
-    map: createGlowTexture(),
+<<<<<<< HEAD
+    map: glowTextureDark,
+=======
+    map: createGlowTexture(false),
+>>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.3,
@@ -1412,6 +2473,81 @@ canvas {
   const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
+
+<<<<<<< HEAD
+  // ===== NEURAL CORE THEME COLORS =====
+  // Dark theme keeps the original orange palette; light theme switches the
+  // neural core to the blue/cyan appearance. Only material colors and canvas
+  // textures are swapped here -- geometry, sizes, positions, animation timing
+  // and all movement stay exactly the same.
+  const NEURAL_THEMES = {
+    dark: {
+      stars: 0xff8844, wash: 0x441100,
+      innerCore: 0xff8800, center: 0xffcc44, halo: 0xff6600, outerHalo: 0xff4400,
+      mainWire: 0xff8800, midWire: 0xffaa33, innerMesh1: 0xff9933, innerMesh2: 0xffbb44,
+      orbits: [0xff8800, 0xffaa33, 0xff7700, 0xff9933, 0xffbb44],
+      orbitParticles: 0xffaa44, scatterParticles: 0xff9933,
+      ambient: 0xff6633, point: 0xff8833
+    },
+    light: {
+      stars: 0x3fa8ff, wash: 0x001a44,
+      innerCore: 0x1677ff, center: 0x0a3a8c, halo: 0x00c2ff, outerHalo: 0x1677ff,
+      mainWire: 0x00d0ff, midWire: 0x2ea8ff, innerMesh1: 0x36c9ff, innerMesh2: 0x5fd8ff,
+      orbits: [0x1677ff, 0x2e9bff, 0x0f6fe0, 0x39b1ff, 0x5cc8ff],
+      orbitParticles: 0x33bbff, scatterParticles: 0x1e90ff,
+      ambient: 0x3399ff, point: 0x3399ff
+    }
+  };
+  const orbitMats = [orbit1.material, orbit2.material, orbit3.material, orbit4.material, orbit5.material];
+
+  function applyNeuralTheme(isLight) {
+    const t = isLight ? NEURAL_THEMES.light : NEURAL_THEMES.dark;
+    starMat.color.setHex(t.stars);
+    washMat.color.setHex(t.wash);
+    innerCoreMat.color.setHex(t.innerCore);
+    centerMat.color.setHex(t.center);
+    haloMat.color.setHex(t.halo);
+    outerHaloMat.color.setHex(t.outerHalo);
+    mainWireMat.color.setHex(t.mainWire);
+    midWireMat.color.setHex(t.midWire);
+    innerMesh1Mat.color.setHex(t.innerMesh1);
+    innerMesh2Mat.color.setHex(t.innerMesh2);
+    orbitMats.forEach(function (m, i) { m.color.setHex(t.orbits[i]); });
+    orbitParticleMat.color.setHex(t.orbitParticles);
+    scatterMat.color.setHex(t.scatterParticles);
+    ambientLight.color.setHex(t.ambient);
+    pointLight.color.setHex(t.point);
+    const sqTex = isLight ? squareTextureLight : squareTexture;
+    if (orbitParticleMat.map !== sqTex) { orbitParticleMat.map = sqTex; orbitParticleMat.needsUpdate = true; }
+    if (scatterMat.map !== sqTex) { scatterMat.map = sqTex; scatterMat.needsUpdate = true; }
+    const glowTex = isLight ? glowTextureLight : glowTextureDark;
+    if (glowSpriteMat.map !== glowTex) { glowSpriteMat.map = glowTex; glowSpriteMat.needsUpdate = true; }
+    if (innerGlowMat.map !== glowTex) { innerGlowMat.map = glowTex; innerGlowMat.needsUpdate = true; }
+  }
+  // Exposed so the existing settings theme system (zsApplyTheme) can drive it.
+  window.zyraSetNeuralTheme = applyNeuralTheme;
+  applyNeuralTheme(document.body.classList.contains('zyra-light'));
+=======
+  // Theme changes recolor existing materials only; geometry, motion, and particle
+  // behavior remain unchanged.
+  const coreMaterials = [starMat, innerCoreMat, centerMat, haloMat, outerHaloMat,
+    mainWireMat, midWireMat, innerMesh1Mat, innerMesh2Mat, orbitParticleMat, scatterMat];
+  const coreOrbits = [orbit1, orbit2, orbit3, orbit4, orbit5];
+  const originalCoreColors = coreMaterials.map(function(mat) { return mat.color.getHex(); });
+  const originalOrbitColors = coreOrbits.map(function(orbit) { return orbit.material.color.getHex(); });
+  function applyCoreTheme(isLight) {
+    const blue = [0x1677ff, 0x3998ff, 0x65c3ff, 0x0b55b3, 0x063b78];
+    coreMaterials.forEach(function(mat, index) { mat.color.setHex(isLight ? blue[index % blue.length] : originalCoreColors[index]); });
+    coreOrbits.forEach(function(orbit, index) { orbit.material.color.setHex(isLight ? blue[index % blue.length] : originalOrbitColors[index]); });
+    ambientLight.color.setHex(isLight ? 0x1677ff : 0xff6633);
+    pointLight.color.setHex(isLight ? 0x3998ff : 0xff8833);
+    glowSpriteMat.map = createGlowTexture(isLight); glowSpriteMat.needsUpdate = true;
+    innerGlowMat.map = createGlowTexture(isLight); innerGlowMat.needsUpdate = true;
+  }
+  document.body.addEventListener('zyra-theme-change', function(event) {
+    applyCoreTheme(event.detail && event.detail.theme === 'light');
+  });
+>>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
 
   // ===== ANIMATION =====
   let time = 0;
@@ -1521,6 +2657,36 @@ canvas {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
+  // ===== CENTER-TOP SCAN COMPLETION NOTIFICATION =====
+  // Scan/analysis completion is shown as a centered top toast for 15 seconds
+  // instead of being posted into the chat feed.
+  const SCAN_TOAST_MS = 15000;
+  let scanToastTimer = null;
+
+  function showScanNotification(title, text) {
+    const toast = document.getElementById('scan-toast');
+    const titleEl = document.getElementById('scan-toast-title');
+    const textEl = document.getElementById('scan-toast-text');
+    if (!toast || !titleEl || !textEl) return;
+    titleEl.textContent = title || 'SCAN COMPLETE';
+    textEl.textContent = text || '';
+    toast.classList.add('visible');
+    if (scanToastTimer) clearTimeout(scanToastTimer);
+    scanToastTimer = setTimeout(function () {
+      toast.classList.remove('visible');
+      scanToastTimer = null;
+    }, SCAN_TOAST_MS);
+  }
+
+  const scanToastClose = document.getElementById('scan-toast-close');
+  if (scanToastClose) {
+    scanToastClose.addEventListener('click', function () {
+      const toast = document.getElementById('scan-toast');
+      if (toast) toast.classList.remove('visible');
+      if (scanToastTimer) { clearTimeout(scanToastTimer); scanToastTimer = null; }
+    });
+  }
+
   function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host || '127.0.0.1:8080';
@@ -1572,6 +2738,22 @@ canvas {
             }
           } else if (data.type === 'error') {
             addMessage('Error: ' + (data.error || 'Unknown error'), 'system');
+          } else if (data.type === 'show_url_analyzer') {
+            openUrlPanel();
+            if (data.url && urlInput && !urlInput.value) urlInput.value = data.url;
+            if (data.data) updateUrlUI(data.data);
+          } else if (data.type === 'url_status') {
+            if (data.data) updateUrlUI(data.data);
+          } else if (data.type === 'url_error') {
+            showUrlError(data.data && data.data.reason);
+          } else if (data.type === 'show_dns_lookup') {
+            openDnsPanel();
+            if (data.domain && dnsInput && !dnsInput.value) dnsInput.value = data.domain;
+            if (data.data) updateDnsUI(data.data);
+          } else if (data.type === 'dns_status') {
+            if (data.data) updateDnsUI(data.data);
+          } else if (data.type === 'dns_error') {
+            showDnsError(data.data && data.data.reason);
           } else if (data.type === 'voice_response') {
             addMessage(data.data, 'zyra');
             if (typeof data.data === 'string' && data.data.toLowerCase().includes('system monitor')) {
@@ -1599,11 +2781,27 @@ canvas {
         lowerText.includes('start system monitor')) {
       startSystemMonitor();
     }
+    // URL analysis requests: open the URL Analyzer panel immediately; the
+    // backend detects the intent, launches the scan and streams live
+    // status back over WebSocket.
+    if (isUrlRequest(lowerText)) {
+      openUrlPanel();
+      const m = URL_BARE_RE.exec(cleanText);
+      if (m && urlInput && !urlInput.value) urlInput.value = m[0].replace(/[.,!?;:]+$/, '');
+    }
     // Nmap requests: open the panel immediately; the backend detects the
     // intent, launches the whitelisted scan and streams live status back.
     if (isNmapRequest(lowerText)) {
       openNmapPanel();
       setNmapStageHint(cleanText);
+    }
+    // DNS lookup requests: open the DNS Lookup panel immediately and prefill
+    // the domain; the backend detects the intent, runs the real lookup and
+    // streams live status back over WebSocket.
+    if (isDnsRequest(lowerText)) {
+      openDnsPanel();
+      const dm = DNS_BARE_TARGET_RE.exec(cleanText);
+      if (dm && dnsInput && !dnsInput.value) dnsInput.value = dm[0].replace(/[.,!?;:]+$/, '');
     }
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       addMessage('Not connected to ZYRA server', 'system');
@@ -1935,7 +3133,7 @@ canvas {
   let isNmapOpen = false;
   let nmapScanId = null;
   let nmapOps = {};            // key -> {label, description, default_target, example_command}
-  let nmapLastChatScan = null; // scan_id whose chat_response was already shown
+  let nmapLastChatScan = null; // scan_id whose completion notification was already shown
 
   const NMAP_TRIGGER_PHRASES = [
     'scan my network', 'scan the network', 'scan network', 'network scan',
@@ -1957,12 +3155,14 @@ canvas {
     isNmapOpen = true;
     if (nmapCard) nmapCard.classList.add('visible');
     if (btnToggleNmap) btnToggleNmap.classList.add('active');
+    relayoutLeftPanels();
   }
 
   function closeNmapPanel() {
     isNmapOpen = false;
     if (nmapCard) nmapCard.classList.remove('visible');
     if (btnToggleNmap) btnToggleNmap.classList.remove('active');
+    relayoutLeftPanels();
   }
 
   if (btnToggleNmap) {
@@ -2013,6 +3213,7 @@ canvas {
 
   function updateNmapUI(s) {
     if (!s) return;
+    relayoutLeftPanels(); // keep the stacked URL panel below the growing Nmap panel
     try {
       if (nmErrorCard) nmErrorCard.style.display = 'none';
 
@@ -2086,11 +3287,11 @@ canvas {
       if (s.scan_id) nmapScanId = s.scan_id;
       setNmapButtonsEnabled(st === 'COMPLETE' && !!nmapScanId);
 
-      // Concise chat response on completion (shown once per scan)
+      // Concise completion notification (center-top toast, shown once per scan)
       if (st === 'COMPLETE' && s.chat_response && s.scan_id &&
           nmapLastChatScan !== s.scan_id) {
         nmapLastChatScan = s.scan_id;
-        addMessage(s.chat_response, 'zyra');
+        showScanNotification('NMAP SCAN COMPLETE', s.chat_response);
       }
 
       if (st === 'ERROR' && s.error) {
@@ -2254,7 +3455,944 @@ canvas {
 
   loadNmapOperations();
 
-  // Window Dragging Support
+  // ===== URL ANALYZER CONTROLLER =====
+  const urlCard = document.getElementById('url-analyzer-card');
+  const btnToggleUrl = document.getElementById('btn-toggle-url');
+  const btnCloseUrl = document.getElementById('url-close-btn');
+  const urlInput = document.getElementById('url-input');
+  const urlAnalyzeBtn = document.getElementById('url-analyze-btn');
+  const urlBadge = document.getElementById('url-badge');
+  const urlBody = document.getElementById('url-body');
+
+  const urlStagesSection = document.getElementById('url-stages-section');
+  const urlStagesEl = document.getElementById('url-stages');
+  const urlStageLabel = document.getElementById('url-stage-label');
+  const urlProgressVal = document.getElementById('url-progress-val');
+  const urlProgressBar = document.getElementById('url-progress-bar');
+
+  const urlResultSection = document.getElementById('url-result-section');
+  const urlScoreEl = document.getElementById('url-score');
+  const urlRiskLabel = document.getElementById('url-risk-label');
+  const urlClassLabel = document.getElementById('url-class-label');
+  const urlTargetEl = document.getElementById('url-target');
+
+  const urlSummarySection = document.getElementById('url-summary-section');
+  const urlChecksEl = document.getElementById('url-checks');
+  const urlDetailsSection = document.getElementById('url-details-section');
+  const urlDetailsEl = document.getElementById('url-details');
+  const urlSslSection = document.getElementById('url-ssl-section');
+  const urlSslEl = document.getElementById('url-ssl');
+  const urlThreatSection = document.getElementById('url-threat-section');
+  const urlThreatEl = document.getElementById('url-threat');
+  const urlFindingsSection = document.getElementById('url-findings-section');
+  const urlFindingsEl = document.getElementById('url-findings');
+  const urlRecSection = document.getElementById('url-recommendation-section');
+  const urlRecEl = document.getElementById('url-recommendation');
+  const urlActionsEl = document.getElementById('url-actions');
+  const urlReportBtn = document.getElementById('url-report-btn');
+  const urlDownloadBtn = document.getElementById('url-download-btn');
+
+  const urlHistorySection = document.getElementById('url-history-section');
+  const urlHistoryEl = document.getElementById('url-history');
+  const urlHistoryEmpty = document.getElementById('url-history-empty');
+
+  const urlErrorCard = document.getElementById('url-error-card');
+  const urlErrorReason = document.getElementById('url-error-reason');
+
+  let isUrlOpen = false;
+  let urlScanId = null;
+  let urlStagesMap = {};      // key -> stage row element
+  let urlLastChatScan = null; // scan_id whose completion notification was already shown
+  let urlReportReady = false; // report generated for current scan
+
+  // All feature panels open on the left, below their top-bar buttons. When
+  // multiple panels are visible at the same time they stack vertically
+  // (Nmap -> URL -> DNS) so none of them covers another.
+  function relayoutLeftPanels() {
+    if (!urlCard || !nmapCard) return;
+    var nmapOpen = nmapCard.classList.contains('visible');
+    var urlOpen = urlCard.classList.contains('visible');
+    var dnsOpen = !!(dnsCard && dnsCard.classList.contains('visible'));
+
+    // Bottom edge of the panel stacked above; null when no panel is open above.
+    var cursor = null;
+
+    if (urlOpen) {
+      if (nmapOpen) {
+        var urlTop = nmapCard.offsetTop + nmapCard.offsetHeight + 12;
+        urlCard.style.top = urlTop + 'px';
+        urlCard.style.maxHeight = Math.max(240, window.innerHeight - urlTop - 40) + 'px';
+      } else {
+        urlCard.style.top = '';
+        urlCard.style.maxHeight = '';
+      }
+      cursor = urlCard.offsetTop + urlCard.offsetHeight + 12;
+    } else {
+      urlCard.style.top = '';
+      urlCard.style.maxHeight = '';
+      if (nmapOpen) cursor = nmapCard.offsetTop + nmapCard.offsetHeight + 12;
+    }
+
+    if (dnsCard) {
+      if (dnsOpen && cursor !== null) {
+        var dnsTop = cursor;
+        dnsCard.style.top = dnsTop + 'px';
+        dnsCard.style.maxHeight = Math.max(240, window.innerHeight - dnsTop - 40) + 'px';
+      } else {
+        dnsCard.style.top = '';
+        dnsCard.style.maxHeight = '';
+      }
+    }
+  }
+  window.addEventListener('resize', relayoutLeftPanels);
+
+  const URL_TRIGGER_PHRASES = [
+    'analyze', 'analyse', 'check this url', 'check the url', 'check url',
+    'check whether', 'is this website', 'is this link', 'is this site',
+    'scan this url', 'scan the url', 'scan url', 'check this website',
+    'check this site', 'phishing', 'is it safe', 'is this safe',
+    'malicious', 'for threats', 'this link safe', 'website safe',
+  ];
+  // Safety-verdict words: "Is https://example.com safe?" style questions.
+  const URL_SAFETY_WORDS = [
+    'safe', 'unsafe', 'suspicious', 'dangerous', 'legit', 'secure',
+    'trustworthy', 'malicious', 'scam', 'fraud', 'phish', 'threat',
+  ];
+  const URL_BARE_RE = /(https?:\/\/|www\.)\S+/i;
+
+  function isUrlRequest(lowerText) {
+    if (URL_BARE_RE.test(lowerText)) {
+      return URL_TRIGGER_PHRASES.some(function (p) { return lowerText.includes(p); })
+        || URL_SAFETY_WORDS.some(function (w) { return lowerText.includes(w); })
+        || /\b(url|link|website|site|this|that|it)\b/.test(lowerText);
+    }
+    return URL_TRIGGER_PHRASES.some(function (p) { return lowerText.includes(p); })
+      && /\b(url|link|website|site|this|that|it)\b/.test(lowerText);
+  }
+
+  function openUrlPanel() {
+    isUrlOpen = true;
+    if (urlCard) urlCard.classList.add('visible');
+    if (btnToggleUrl) btnToggleUrl.classList.add('active');
+    relayoutLeftPanels();
+  }
+  function closeUrlPanel() {
+    isUrlOpen = false;
+    if (urlCard) urlCard.classList.remove('visible');
+    if (btnToggleUrl) btnToggleUrl.classList.remove('active');
+    relayoutLeftPanels();
+  }
+  if (btnToggleUrl) {
+    btnToggleUrl.addEventListener('click', function () {
+      if (isUrlOpen) closeUrlPanel(); else openUrlPanel();
+    });
+  }
+  if (btnCloseUrl) btnCloseUrl.addEventListener('click', closeUrlPanel);
+
+  function setUrlBadge(text, cls) {
+    if (!urlBadge) return;
+    urlBadge.textContent = text;
+    urlBadge.classList.remove('offline');
+    if (cls === 'offline') urlBadge.classList.add('offline');
+  }
+
+  function showUrlError(reason) {
+    if (urlErrorCard) urlErrorCard.classList.add('visible');
+    if (urlErrorReason) urlErrorReason.textContent = reason || 'URL analysis could not be completed.';
+    setUrlBadge('ERROR', 'offline');
+    if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = false; urlAnalyzeBtn.classList.remove('scanning'); }
+  }
+  function clearUrlError() {
+    if (urlErrorCard) urlErrorCard.classList.remove('visible');
+    if (urlErrorReason) urlErrorReason.textContent = '';
+  }
+
+  function resetUrlResultSections() {
+    [urlStagesSection, urlResultSection, urlSummarySection, urlDetailsSection,
+     urlSslSection, urlThreatSection, urlFindingsSection, urlRecSection,
+     urlActionsEl].forEach(function (el) {
+      if (el) el.style.display = 'none';
+    });
+    urlStagesMap = {};
+    urlReportReady = false;
+  }
+
+  function buildUrlStages(stages) {
+    if (!urlStagesEl) return;
+    urlStagesEl.innerHTML = '';
+    urlStagesMap = {};
+    (stages || []).forEach(function (st) {
+      const row = document.createElement('div');
+      row.className = 'url-stage pending';
+      row.innerHTML = '<span class="url-stage-icon">&#9675;</span><span>' + (st.label || st.key) + '</span>';
+      urlStagesEl.appendChild(row);
+      urlStagesMap[st.key] = row;
+    });
+  }
+
+  function updateUrlStageRow(key, status, detail) {
+    const row = urlStagesMap[key];
+    if (!row) return;
+    row.classList.remove('pending', 'running', 'done', 'fail', 'skip');
+    row.classList.add(status);
+    let icon = '&#9675;';
+    if (status === 'done') icon = '&#10003;';
+    else if (status === 'fail') icon = '&#10007;';
+    else if (status === 'skip') icon = '&#8212;';
+    else if (status === 'running') icon = '&#9654;';
+    row.innerHTML = '<span class="url-stage-icon">' + icon + '</span><span>' + (detail || row.textContent.replace(/^.*?\s/, '')) + '</span>';
+  }
+
+  function setUrlButtonsEnabled(enabled) {
+    if (urlReportBtn) urlReportBtn.disabled = !enabled;
+    if (urlDownloadBtn) urlDownloadBtn.disabled = !enabled;
+  }
+
+  function urlDetailRow(k, v) {
+    const val = (v === null || v === undefined || v === '') ? '—' : String(v);
+    return '<div class="url-detail-row"><span class="url-detail-k">' + k + '</span><span class="url-detail-v">' + escapeHtml(val) + '</span></div>';
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderUrlResult(r) {
+    if (!r) return;
+    if (urlTargetEl) urlTargetEl.textContent = r.display_url || r.url || '—';
+
+    const score = r.score;
+    if (urlScoreEl) {
+      urlScoreEl.textContent = score + ' / 100';
+      urlScoreEl.classList.remove('safe', 'suspicious', 'danger');
+      if (score >= 70) urlScoreEl.classList.add('safe');
+      else if (score >= 40) urlScoreEl.classList.add('suspicious');
+      else urlScoreEl.classList.add('danger');
+    }
+    if (urlRiskLabel) urlRiskLabel.textContent = 'RISK: ' + (r.risk_level_label || r.risk_level || '—');
+    if (urlClassLabel) urlClassLabel.textContent = r.classification_summary || r.classification_label || '—';
+
+    if (urlResultSection) urlResultSection.style.display = 'block';
+
+    // Scan summary checklist
+    const checks = (r.summary && r.summary.checks) || [];
+    if (urlChecksEl) {
+      urlChecksEl.innerHTML = checks.map(function (c) {
+        const icons = { pass: '&#10003;', fail: '&#10007;', warn: '&#9888;', skip: '&#8212;' };
+        return '<div class="url-check ' + c.status + '"><span class="url-check-icon">' + (icons[c.status] || '&#8212;') + '</span><span>' + escapeHtml(c.name) + (c.detail ? ' — ' + escapeHtml(c.detail) : '') + '</span></div>';
+      }).join('');
+    }
+    if (urlSummarySection) urlSummarySection.style.display = checks.length ? 'block' : 'none';
+
+    // URL details
+    const ud = r.url_details || {};
+    if (urlDetailsEl) {
+      urlDetailsEl.innerHTML = [
+        urlDetailRow('Protocol', ud.protocol),
+        urlDetailRow('Domain', ud.domain),
+        urlDetailRow('Registered Domain', ud.registered_domain),
+        urlDetailRow('IP Address', ud.ip_address),
+        urlDetailRow('Port', ud.port || (ud.protocol === 'HTTPS' ? 443 : 80)),
+        urlDetailRow('Path', ud.path),
+        urlDetailRow('Query', ud.query),
+        urlDetailRow('Fragment', ud.fragment),
+        urlDetailRow('Redirects', ud.redirects),
+      ].join('');
+    }
+    if (urlDetailsSection) urlDetailsSection.style.display = 'block';
+
+    // SSL / TLS
+    const ssl = r.ssl || {};
+    if (urlSslEl) {
+      urlSslEl.innerHTML = [
+        urlDetailRow('Status', ssl.status),
+        urlDetailRow('HTTPS', ssl.https_enabled ? 'Enabled' : 'Disabled'),
+        urlDetailRow('Valid', ssl.valid),
+        urlDetailRow('Issuer', ssl.issuer),
+        urlDetailRow('Subject', ssl.subject),
+        urlDetailRow('Expires', ssl.expires),
+        urlDetailRow('Expires In', ssl.expires_in_days != null ? ssl.expires_in_days + ' day(s)' : '—'),
+        urlDetailRow('TLS Version', ssl.tls_version),
+        urlDetailRow('Cipher', ssl.cipher),
+        urlDetailRow('Error', ssl.error),
+      ].join('');
+    }
+    if (urlSslSection) urlSslSection.style.display = 'block';
+
+    // Threat intelligence
+    const rep = r.reputation || {};
+    if (urlThreatEl) {
+      urlThreatEl.innerHTML = [
+        urlDetailRow('Provider', rep.provider),
+        urlDetailRow('Reputation', rep.reputation),
+        urlDetailRow('Malware', rep.malware),
+        urlDetailRow('Phishing', rep.phishing),
+        urlDetailRow('Note', rep.note),
+      ].join('');
+    }
+    if (urlThreatSection) urlThreatSection.style.display = 'block';
+
+    // Security findings
+    const findings = r.findings || [];
+    if (urlFindingsEl) {
+      urlFindingsEl.innerHTML = findings.length ? findings.map(function (f) {
+        return '<div class="url-finding ' + (f.severity || 'INFO') + '">'
+          + '<div class="url-finding-title">[' + escapeHtml(f.severity || 'INFO') + '] ' + escapeHtml(f.title || '') + '</div>'
+          + (f.detail ? '<div class="url-finding-detail">' + escapeHtml(f.detail) + '</div>' : '')
+          + '</div>';
+      }).join('') : '<div class="url-history-meta">No suspicious indicators were detected during this scan.</div>';
+    }
+    if (urlFindingsSection) urlFindingsSection.style.display = 'block';
+
+    // Recommendation
+    if (urlRecEl) {
+      urlRecEl.textContent = r.recommendation || '—';
+      urlRecEl.classList.remove('danger');
+      if (r.classification === 'MALICIOUS' || r.classification === 'SUSPICIOUS') urlRecEl.classList.add('danger');
+    }
+    if (urlRecSection) urlRecSection.style.display = 'block';
+
+    // Report actions
+    if (urlActionsEl) urlActionsEl.style.display = 'flex';
+    setUrlButtonsEnabled(true);
+    urlReportReady = false;
+    if (urlReportBtn) urlReportBtn.textContent = 'GENERATE REPORT';
+  }
+
+  function updateUrlUI(s) {
+    if (!s) return;
+    try {
+      if (s.scan_id) urlScanId = s.scan_id;
+
+      // Stages section visible while running
+      if (urlStagesSection) urlStagesSection.style.display = 'block';
+
+      // Build stage rows once
+      if (s.stages && s.stages.length && Object.keys(urlStagesMap).length === 0) {
+        buildUrlStages(s.stages);
+      }
+
+      // Current stage
+      if (s.stage_label) { if (urlStageLabel) urlStageLabel.textContent = s.stage_label; }
+      if (s.stage && urlStagesMap[s.stage]) {
+        updateUrlStageRow(s.stage, s.stage_status || 'running', s.stage_label);
+      }
+      // Mark prior stages done
+      if (s.stages) {
+        let seenCurrent = false;
+        s.stages.forEach(function (st) {
+          if (st.key === s.stage) { seenCurrent = true; return; }
+          if (!seenCurrent && urlStagesMap[st.key]) {
+            if (st.status === 'pending') updateUrlStageRow(st.key, 'done');
+          }
+        });
+      }
+
+      // Progress
+      const pct = Math.max(0, Math.min(100, s.progress || 0));
+      if (urlProgressBar) urlProgressBar.style.width = pct + '%';
+      if (urlProgressVal) urlProgressVal.textContent = pct + '%';
+
+      // Badge
+      const st = (s.status || '').toUpperCase();
+      if (st === 'RUNNING') setUrlBadge('SCANNING');
+      else if (st === 'COMPLETE') setUrlBadge('DONE');
+      else if (st === 'ERROR') setUrlBadge('ERROR', 'offline');
+      else setUrlBadge('READY');
+
+      // Completion -> render full result
+      if (st === 'COMPLETE' && s.result) {
+        renderUrlResult(s.result);
+        loadUrlHistory();
+        // Completion notification (center-top toast, shown once per scan)
+        if (s.voice_summary && urlLastChatScan !== s.scan_id) {
+          urlLastChatScan = s.scan_id;
+          showScanNotification('URL ANALYSIS COMPLETE', s.voice_summary);
+        }
+      }
+      // Error
+      if (st === 'ERROR') {
+        showUrlError(s.error || 'URL analysis failed.');
+      }
+    } catch (err) {
+      console.error('Error updating URL UI:', err);
+    }
+  }
+
+  function startUrlScanManual() {
+    const url = (urlInput && urlInput.value || '').trim();
+    if (!url) { showUrlError('Please enter a valid URL.'); return; }
+    clearUrlError();
+    resetUrlResultSections();
+    if (urlStagesSection) urlStagesSection.style.display = 'block';
+    if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = true; urlAnalyzeBtn.classList.add('scanning'); }
+    setUrlBadge('SCANNING');
+    if (urlStageLabel) urlStageLabel.textContent = 'INITIALIZING URL ANALYZER...';
+    if (urlProgressBar) urlProgressBar.style.width = '0%';
+    if (urlProgressVal) urlProgressVal.textContent = '0%';
+
+    fetch('/api/url/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url, source: 'panel' }),
+    }).then(function (res) { return res.json(); }).then(function (data) {
+      if (!data.success) {
+        showUrlError(data.error || 'URL analysis could not be started.');
+        if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = false; urlAnalyzeBtn.classList.remove('scanning'); }
+        return;
+      }
+      urlScanId = data.scan_id;
+      if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = false; urlAnalyzeBtn.classList.remove('scanning'); }
+    }).catch(function (err) {
+      showUrlError('Could not reach the ZYRA backend: ' + err);
+      if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = false; urlAnalyzeBtn.classList.remove('scanning'); }
+    });
+  }
+
+  function generateUrlReport() {
+    if (!urlScanId) return;
+    if (urlReportBtn) { urlReportBtn.disabled = true; urlReportBtn.textContent = 'GENERATING REPORT...'; }
+    fetch('/api/url/report/' + urlScanId + '?format=txt', { method: 'GET' })
+      .then(function (res) { return res.text(); })
+      .then(function (text) {
+        urlReportReady = true;
+        if (urlReportBtn) { urlReportBtn.disabled = false; urlReportBtn.textContent = 'REPORT READY'; }
+        if (urlDownloadBtn) urlDownloadBtn.disabled = false;
+        // Brief confirmation in chat
+        addMessage('URL analysis report generated. Click DOWNLOAD REPORT to save the PDF.', 'zyra');
+      }).catch(function (err) {
+        if (urlReportBtn) { urlReportBtn.disabled = false; urlReportBtn.textContent = 'GENERATE REPORT'; }
+        showUrlError('Report generation failed: ' + err);
+      });
+  }
+
+  function downloadUrlReport() {
+    if (!urlScanId) return;
+    window.open('/api/url/report/' + urlScanId + '?format=pdf', '_blank');
+  }
+
+  function loadUrlHistory() {
+    fetch('/api/url/history').then(function (res) { return res.json(); }).then(function (data) {
+      if (!data.success || !data.data || !data.data.length) {
+        if (urlHistoryEl) urlHistoryEl.innerHTML = '<div class="url-history-meta">No recent scans.</div>';
+        return;
+      }
+      if (urlHistoryEmpty) urlHistoryEmpty.remove();
+      if (urlHistoryEl) {
+        urlHistoryEl.innerHTML = data.data.map(function (h) {
+          const cls = (h.classification === 'MALICIOUS') ? 'danger'
+                    : (h.classification === 'SUSPICIOUS') ? 'suspicious' : 'safe';
+          const scoreColor = (h.score >= 70) ? '#00ff88' : (h.score >= 40 ? '#ffaa00' : '#ff3333');
+          return '<div class="url-history-item" data-scan-id="' + escapeHtml(h.scan_id) + '">'
+            + '<span class="url-history-domain">' + escapeHtml(h.domain || h.url || '—') + '</span>'
+            + '<span class="url-history-meta">Score: <span style="color:' + scoreColor + ';font-weight:700">' + h.score + '</span> &middot; ' + escapeHtml(h.classification_label || h.classification || '') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
+            + '</div>';
+        }).join('');
+        // Click to reopen
+        urlHistoryEl.querySelectorAll('.url-history-item').forEach(function (item) {
+          item.addEventListener('click', function () {
+            const sid = item.getAttribute('data-scan-id');
+            if (sid) reopenUrlScan(sid);
+          });
+        });
+      }
+    }).catch(function () { /* history is best-effort */ });
+  }
+
+  function reopenUrlScan(scanId) {
+    fetch('/api/url/result/' + scanId).then(function (res) { return res.json(); }).then(function (data) {
+      if (data.success && data.data) {
+        clearUrlError();
+        resetUrlResultSections();
+        urlScanId = scanId;
+        setUrlBadge('DONE');
+        renderUrlResult(data.data);
+        openUrlPanel();
+      }
+    }).catch(function () { /* ignore */ });
+  }
+
+  // Event wiring
+  if (urlAnalyzeBtn) urlAnalyzeBtn.addEventListener('click', startUrlScanManual);
+  if (urlInput) {
+    urlInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); startUrlScanManual(); }
+    });
+  }
+  if (urlReportBtn) urlReportBtn.addEventListener('click', generateUrlReport);
+  if (urlDownloadBtn) urlDownloadBtn.addEventListener('click', downloadUrlReport);
+
+  // Load history on init
+  loadUrlHistory();
+  // ===== DNS LOOKUP CONTROLLER =====
+  // Mirrors the URL Analyzer controller above. The DNS HTML, CSS and backend
+  // pipeline already exist — this block wires up the DOM, renders the live
+  // streamed state and the final result, and connects the report / history
+  // buttons.
+
+  const dnsCard = document.getElementById('dns-lookup-card');
+  const btnToggleDns = document.getElementById('btn-toggle-dns');
+  const dnsCloseBtn = document.getElementById('dns-close-btn');
+  const dnsInput = document.getElementById('dns-input');
+  const dnsTypeSel = document.getElementById('dns-type');
+  const dnsLookupBtn = document.getElementById('dns-lookup-btn');
+  const dnsBadge = document.getElementById('dns-badge');
+
+  const dnsStagesSection = document.getElementById('dns-stages-section');
+  const dnsStagesEl = document.getElementById('dns-stages');
+  const dnsStageLabel = document.getElementById('dns-stage-label');
+  const dnsProgressVal = document.getElementById('dns-progress-val');
+  const dnsProgressBar = document.getElementById('dns-progress-bar');
+
+  const dnsResultSection = document.getElementById('dns-result-section');
+  const dnsScoreEl = document.getElementById('dns-score');
+  const dnsRiskLabel = document.getElementById('dns-risk-label');
+  const dnsStatusLabel = document.getElementById('dns-status-label');
+  const dnsTargetEl = document.getElementById('dns-target');
+  const dnsQueryTypeEl = document.getElementById('dns-query-type');
+  const dnsServerEl = document.getElementById('dns-server');
+  const dnsResolutionEl = document.getElementById('dns-resolution');
+  const dnsResponseTime = document.getElementById('dns-response-time');
+
+  const dnsRecordsSection = document.getElementById('dns-records-section');
+  const dnsRecords = document.getElementById('dns-records');
+  const dnsFindingsSection = document.getElementById('dns-findings-section');
+  const dnsFindings = document.getElementById('dns-findings');
+  const dnsWarningsSection = document.getElementById('dns-warnings-section');
+  const dnsWarnings = document.getElementById('dns-warnings');
+  const dnsRecSection = document.getElementById('dns-rec-section');
+  const dnsRecommendation = document.getElementById('dns-recommendation');
+
+  const dnsActionsEl = document.getElementById('dns-actions');
+  const dnsReportBtn = document.getElementById('dns-report-btn');
+  const dnsDownloadBtn = document.getElementById('dns-download-btn');
+
+  const dnsHistorySection = document.getElementById('dns-history-section');
+  const dnsHistoryEl = document.getElementById('dns-history');
+  const dnsHistoryEmpty = document.getElementById('dns-history-empty');
+
+  const dnsErrorCard = document.getElementById('dns-error-card');
+  const dnsErrorReason = document.getElementById('dns-error-reason');
+
+  let isDnsOpen = false;
+  let dnsLookupId = null;
+  let dnsStagesMap = {};
+  let dnsLastChatScan = null;
+    let dnsReportReady = false;
+  let dnsCurrentResult = null;
+
+  // Regex to extract a bare domain or IPv4 from free-form chat/voice text.
+  const DNS_BARE_TARGET_RE = /((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}|(?:\d{1,3}\.){3}\d{1,3})/i;
+
+  // Detect DNS intent in chat / voice text (mirrors backend is_dns_intent).
+  function isDnsRequest(lowerText) {
+    if (!lowerText) return false;
+    if (lowerText.includes('dns') || lowerText.includes('nslookup') ||
+        lowerText.includes('dnssec') || lowerText.includes('dmarc') ||
+        lowerText.includes('domain lookup') || lowerText.includes('resolve domain')) return true;
+    var dnsKeywords = ['mx record', 'mx records', 'nameserver', 'name server',
+      'spf', 'cname', 'soa record', 'soa records', 'a record', 'a records',
+      'aaaa', 'ptr record', 'reverse dns', 'reverse lookup', 'txt record',
+      'txt records', 'mail exchanger', 'dns record', 'dns records'];
+    for (var i = 0; i < dnsKeywords.length; i++) {
+      if (lowerText.includes(dnsKeywords[i])) return true;
+    }
+    if (DNS_BARE_TARGET_RE.test(lowerText) &&
+        (lowerText.includes('lookup') || lowerText.includes('resolve'))) return true;
+    return false;
+  }
+
+  function openDnsPanel() {
+    isDnsOpen = true;
+    if (dnsCard) dnsCard.classList.add('visible');
+    if (btnToggleDns) btnToggleDns.classList.add('active');
+    relayoutLeftPanels();
+  }
+
+  function closeDnsPanel() {
+    isDnsOpen = false;
+    if (dnsCard) dnsCard.classList.remove('visible');
+    if (btnToggleDns) btnToggleDns.classList.remove('active');
+    relayoutLeftPanels();
+  }
+
+  if (btnToggleDns) {
+    btnToggleDns.addEventListener('click', function () {
+      if (isDnsOpen) closeDnsPanel(); else openDnsPanel();
+    });
+  }
+  if (dnsCloseBtn) dnsCloseBtn.addEventListener('click', closeDnsPanel);
+
+  function setDnsBadge(text) {
+    if (!dnsBadge) return;
+    dnsBadge.textContent = text;
+    dnsBadge.classList.remove('offline');
+  }
+
+  function showDnsError(reason) {
+    if (dnsErrorCard) dnsErrorCard.classList.add('visible');
+    if (dnsErrorReason) dnsErrorReason.textContent = reason || 'DNS lookup could not be completed.';
+    setDnsBadge('ERROR');
+    if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+  }
+
+  function clearDnsError() {
+    if (dnsErrorCard) dnsErrorCard.classList.remove('visible');
+    if (dnsErrorReason) dnsErrorReason.textContent = '';
+  }
+
+  function resetDnsResultSections() {
+    [dnsStagesSection, dnsResultSection, dnsRecordsSection,
+     dnsFindingsSection, dnsWarningsSection,
+     dnsRecSection, dnsActionsEl].forEach(function (el) {
+       if (el) el.style.display = 'none';
+    });
+    dnsStagesMap = {};
+        dnsReportReady = false;
+  }
+
+  function buildDnsStages(stages) {
+    if (!dnsStagesEl) return;
+    dnsStagesEl.innerHTML = '';
+    dnsStagesMap = {};
+    (stages || []).forEach(function (st) {
+      var row = document.createElement('div');
+      row.className = 'url-stage pending';
+      row.innerHTML = '<span class="url-stage-icon">&#9675;</span><span>' + (st.label || st.key) + '</span>';
+      dnsStagesEl.appendChild(row);
+      dnsStagesMap[st.key] = row;
+    });
+  }
+
+  function updateDnsStageRow(key, status) {
+    var row = dnsStagesMap[key];
+    if (!row) return;
+    row.classList.remove('pending', 'running', 'done', 'fail', 'skip');
+    row.classList.add(status);
+    var icon = '&#9675;';
+    if (status === 'done') icon = '&#10003;';
+    else if (status === 'fail') icon = '&#10007;';
+    else if (status === 'skip') icon = '&#8212;';
+    else if (status === 'running') icon = '&#9654;';
+    row.innerHTML = '<span class="url-stage-icon">' + icon + '</span><span>' + row.textContent.replace(/^.*?\s/, '') + '</span>';
+  }
+
+  function setDnsButtonsEnabled(enabled) {
+    if (dnsReportBtn) dnsReportBtn.disabled = !enabled;
+        if (dnsDownloadBtn) dnsDownloadBtn.disabled = !enabled;
+  }
+
+  // Render a single record-type block (A, AAAA, CNAME, MX, NS, TXT, SOA).
+  function dnsRecordBlock(rdtype, block) {
+    if (!block) return '';
+    var status = block.status || 'NOT_FOUND';
+    var statusClass = status === 'OK' ? 'ok' : (status === 'ERROR' ? 'error' : 'empty');
+    var html = '<div class="dns-record-block">';
+    html += '<div class="dns-record-head"><span>' + escapeHtml(rdtype) + '</span>';
+    html += '<span class="dns-record-status ' + statusClass + '">' + escapeHtml(status) + '</span></div>';
+    if (status !== 'OK' && block.error) {
+      html += '<div class="dns-record-error">' + escapeHtml(block.error) + '</div>';
+    } else if (block.records && block.records.length) {
+      block.records.forEach(function(rec) {
+        html += '<div class="dns-record-row"><span>' + escapeHtml(rec.value || '') + '</span>';
+        if (rec.ttl) html += '<span class="dns-record-ttl">TTL ' + rec.ttl + '</span>';
+        html += '</div>';
+      });
+      if (block.ttl) html += '<div class="dns-record-row" style="color:rgba(255,204,68,0.4);justify-content:center"><span class="dns-record-ttl">TTL ' + block.ttl + '</span></div>';
+    }
+    html += '</div>';
+        return html;
+  }
+
+  // Render PTR records (stored as { ip: {records:[...], ...} }).
+  function dnsPtrBlock(ptrDict) {
+    if (!ptrDict || typeof ptrDict !== 'object') return '';
+    var keys = Object.keys(ptrDict);
+    if (!keys.length) return '';
+    var html = '<div class="dns-record-block">';
+    html += '<div class="dns-record-head"><span>PTR (Reverse DNS)</span>';
+    html += '<span class="dns-record-status ok">OK</span></div>';
+    keys.forEach(function(ip) {
+      var block = ptrDict[ip];
+      if (block && block.records && block.records.length) {
+        block.records.forEach(function(rec) {
+          html += '<div class="dns-record-row"><span>' + escapeHtml(ip) + ' \u2192 ' + escapeHtml(rec.value || '') + '</span>';
+          if (rec.ttl) html += '<span class="dns-record-ttl">TTL ' + rec.ttl + '</span>';
+          html += '</div>';
+        });
+      } else {
+        var err = (block && block.error) || 'No PTR record';
+        html += '<div class="dns-record-row"><span>' + escapeHtml(ip) + '</span>';
+        html += '<span class="dns-record-status empty">' + escapeHtml(err) + '</span></div>';
+      }
+    });
+    html += '</div>';
+        return html;
+  }
+
+  function renderDnsResult(r) {
+    if (!r) return;
+
+    if (dnsTargetEl) dnsTargetEl.textContent = r.domain_display || r.domain || '—';
+    if (dnsQueryTypeEl) dnsQueryTypeEl.textContent = r.record_type || 'ANY';
+    if (dnsServerEl) {
+      var ds = r.dns_server || {};
+      dnsServerEl.textContent = ds.description || 'system/default resolver';
+    }
+
+    var statusText = r.status || 'UNKNOWN';
+    if (dnsScoreEl) {
+      // Pure nslookup-style status (no security scoring)
+      dnsScoreEl.textContent = statusText === 'RESOLVED' ? 'OK' :
+                               (statusText === 'NOT_RESOLVED' ? 'NXDOMAIN' : 'ERROR');
+      dnsScoreEl.classList.remove('safe', 'suspicious', 'danger');
+      if (statusText === 'RESOLVED') dnsScoreEl.classList.add('safe');
+      else if (statusText === 'NOT_RESOLVED') dnsScoreEl.classList.add('suspicious');
+      else dnsScoreEl.classList.add('danger');
+    }
+    if (dnsRiskLabel) dnsRiskLabel.style.display = 'none';
+    if (dnsStatusLabel) dnsStatusLabel.textContent = statusText === 'RESOLVED'
+      ? 'Domain resolved' : (statusText === 'NOT_RESOLVED' ? 'Domain not resolved' : statusText);
+
+    var resolution = r.resolution || {};
+    var resolutionText = resolution.resolved
+      ? 'RESOLVED (' + (resolution.ips || []).join(', ') + ')'
+      : (resolution.error || 'NOT RESOLVED');
+    if (dnsResolutionEl) dnsResolutionEl.textContent = resolutionText;
+
+    var rt = r.response_time_ms;
+    if (dnsResponseTime) dnsResponseTime.textContent = (rt != null) ? (rt + ' ms') : '—';
+
+    if (dnsResultSection) dnsResultSection.style.display = 'block';
+
+    // Findings / Warnings / Recommendations panels were removed: the DNS
+    // Lookup is a pure nslookup-style tool with no security scoring.
+    if (dnsFindingsSection) dnsFindingsSection.style.display = 'none';
+    if (dnsWarningsSection) dnsWarningsSection.style.display = 'none';
+    if (dnsRecSection) dnsRecSection.style.display = 'none';
+
+    // Build the records detail HTML (A, AAAA, CNAME, MX, NS, TXT/SPF, SOA, PTR)
+    var recs = r.records || {};
+    var recordsHtml = '';
+    recordsHtml += dnsRecordBlock('A', recs.A);
+    recordsHtml += dnsRecordBlock('AAAA', recs.AAAA);
+    recordsHtml += dnsRecordBlock('CNAME', recs.CNAME);
+    recordsHtml += dnsRecordBlock('MX', recs.MX);
+    recordsHtml += dnsRecordBlock('NS', recs.NS);
+    recordsHtml += dnsRecordBlock('TXT / SPF', recs.TXT);
+    recordsHtml += dnsRecordBlock('SOA', recs.SOA);
+    recordsHtml += dnsPtrBlock(recs.PTR);
+
+        if (dnsRecords) dnsRecords.innerHTML = recordsHtml ? recordsHtml : '<div class="dns-empty-list">No records retrieved</div>';
+
+    if (dnsRecordsSection) dnsRecordsSection.style.display = recordsHtml ? 'block' : 'none';
+
+    if (dnsFindings) dnsFindings.scrollTop = 0;
+    dnsCurrentResult = r;
+  }
+
+    // Stream progress updates from the backend: stages, progress %, status.
+    function updateDnsUI(s) {
+      if (!s) return;
+      try {
+        if (s.lookup_id) dnsLookupId = s.lookup_id;
+        if (dnsStagesSection) dnsStagesSection.style.display = 'block';
+        if (s.stages && s.stages.length && Object.keys(dnsStagesMap).length === 0) {
+          buildDnsStages(s.stages);
+        }
+        if (s.stage_label) { if (dnsStageLabel) dnsStageLabel.textContent = s.stage_label; }
+        if (s.stage && dnsStagesMap[s.stage]) {
+          updateDnsStageRow(s.stage, s.stage_status || 'running', s.stage_label);
+        }
+        if (s.stages) {
+          var seenCurrent = false;
+          s.stages.forEach(function (st) {
+            if (st.key === s.stage) { seenCurrent = true; return; }
+            if (!seenCurrent && dnsStagesMap[st.key]) {
+              if (st.status === 'pending') updateDnsStageRow(st.key, 'done');
+            }
+          });
+        }
+        var pct = Math.max(0, Math.min(100, s.progress || 0));
+        if (dnsProgressBar) dnsProgressBar.style.width = pct + '%';
+        if (dnsProgressVal) dnsProgressVal.textContent = pct + '%';
+        var st = (s.status || '').toUpperCase();
+        if (st === 'RUNNING') setDnsBadge('SCANNING');
+        else if (st === 'COMPLETE') setDnsBadge('DONE');
+        else if (st === 'ERROR') setDnsBadge('ERROR', 'offline');
+        else setDnsBadge('READY');
+        if (st === 'COMPLETE' && s.result) {
+          renderDnsResult(s.result);
+          if (dnsHistoryEl) loadDnsHistory();
+          if (s.voice_summary && dnsLastChatScan !== s.lookup_id) {
+            dnsLastChatScan = s.lookup_id;
+            showScanNotification('DNS LOOKUP COMPLETE', s.voice_summary);
+          }
+        }
+        if (st === 'ERROR') {
+          showDnsError(s.error || 'DNS lookup failed.');
+        }
+      } catch (err) {
+        console.error('Error updating DNS UI:', err);
+      }
+    }
+
+        function startDnsLookupManual() {
+      var domain = (dnsInput && dnsInput.value || '').trim();
+      if (!domain) { showDnsError('Please enter a valid domain.'); return; }
+      clearDnsError();
+      resetDnsResultSections();
+      if (dnsStagesSection) dnsStagesSection.style.display = 'block';
+      setDnsButtonsEnabled(false);
+      if (dnsLookupBtn) { dnsLookupBtn.disabled = true; dnsLookupBtn.classList.add('scanning'); }
+      setDnsBadge('SCANNING');
+      if (dnsStageLabel) dnsStageLabel.textContent = 'INITIALIZING DNS LOOKUP...';
+      if (dnsProgressBar) dnsProgressBar.style.width = '0%';
+      if (dnsProgressVal) dnsProgressVal.textContent = '0%';
+      fetch('/api/dns/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          domain: domain,
+          record_type: (dnsTypeSel && dnsTypeSel.value) || 'ANY',
+          source: 'panel'
+        })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (!data.success) {
+          showDnsError(data.error || 'DNS lookup could not be started.');
+          if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+          return;
+        }
+        if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+      }).catch(function (err) {
+        showDnsError('Could not reach the ZYRA backend: ' + err);
+        if (dnsLookupBtn) { dnsLookupBtn.disabled = false; dnsLookupBtn.classList.remove('scanning'); }
+            });
+    }
+
+    function generateDnsReport() {
+      if (!dnsCurrentResult || !dnsReportBtn || dnsReportBtn.disabled) return;
+      var btn = dnsReportBtn;
+      btn.disabled = true;
+      btn.textContent = 'GENERATING...';
+      btn.classList.add('scanning');
+      var domain = (dnsInput && dnsInput.value || '').trim() || (dnsCurrentResult.domain_display || dnsCurrentResult.domain || '');
+      fetch('/api/dns/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: domain, result: dnsCurrentResult })
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        if (data && data.success && data.report_id) {
+          setDnsButtonsEnabled(true);
+          if (dnsDownloadBtn) dnsDownloadBtn.disabled = false;
+          if (dnsReportBtn) { dnsReportBtn.disabled = true; dnsReportBtn.textContent = 'REPORT READY'; }
+          dnsReportReady = true;
+          if (typeof loadDnsHistory === 'function') loadDnsHistory();
+        } else if (data && data.error) {
+          showDnsError(data.error);
+        }
+      }).catch(function (err) {
+        showDnsError('Could not generate DNS report: ' + err);
+      });
+    }
+
+    function downloadDnsReport() {
+      if (!dnsCurrentResult) return;
+      if (dnsDownloadBtn) {
+        if (dnsDownloadBtn.disabled) return;
+        dnsDownloadBtn.disabled = true;
+        dnsDownloadBtn.textContent = 'DOWNLOADING...';
+      }
+      if (dnsReportBtn) { dnsReportBtn.disabled = true; dnsReportBtn.textContent = 'GENERATE REPORT'; dnsReportBtn.classList.remove('scanning'); }
+      // Fetch the real server-generated report (full nslookup-style text:
+      // domain, query type, DNS server, records + TTLs, response time,
+      // timestamp, status/error) and download it as a file.
+      fetch('/api/dns/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: dnsCurrentResult, format: 'txt' })
+      }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var cd = res.headers.get('Content-Disposition') || '';
+        var m = /filename="([^"]+)"/.exec(cd);
+        var fname = (m && m[1]) || 'zyra-dns-report-' + (dnsCurrentResult.domain || 'lookup') + '.txt';
+        return res.text().then(function (text) { return { fname: fname, text: text }; });
+      }).then(function (out) {
+        var blob = new Blob([out.text], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = out.fname;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }).catch(function (err) {
+        showDnsError('Could not download DNS report: ' + err);
+      }).finally(function () {
+        if (dnsDownloadBtn) { dnsDownloadBtn.disabled = false; dnsDownloadBtn.textContent = 'DOWNLOAD REPORT'; }
+      });
+    }
+
+    if (dnsLookupBtn) {
+      dnsLookupBtn.addEventListener('click', function () {
+        if (dnsLookupBtn.disabled) return;
+        startDnsLookupManual();
+      });
+    }
+    if (dnsInput) {
+      dnsInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !dnsLookupBtn.disabled) {
+          e.preventDefault();
+          startDnsLookupManual();
+        }
+      });
+    }
+    if (dnsReportBtn) dnsReportBtn.addEventListener('click', generateDnsReport);
+    if (dnsDownloadBtn) dnsDownloadBtn.addEventListener('click', downloadDnsReport);
+
+  function loadDnsHistory() {
+    fetch('/api/dns/history').then(function (res) { return res.json(); }).then(function (data) {
+      if (!data.success || !data.data || !data.data.length) {
+        if (dnsHistoryEl) dnsHistoryEl.innerHTML = '<div class="url-history-meta">No recent lookups.</div>';
+        return;
+      }
+      if (dnsHistoryEmpty) dnsHistoryEmpty.remove();
+      if (dnsHistoryEl) {
+        dnsHistoryEl.innerHTML = data.data.map(function (h) {
+          var stColor = (h.status === 'RESOLVED') ? '#00ff88' : '#ffaa00';
+          return '<div class="url-history-item" data-lookup-id="' + escapeHtml(h.lookup_id) + '">'
+            + '<span class="url-history-domain">' + escapeHtml(h.domain || '—') + '</span>'
+            + '<span class="url-history-meta"><span style="color:' + stColor + ';font-weight:700">' + escapeHtml(h.status || '') + '</span> &middot; ' + escapeHtml(h.query_type || 'ANY') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
+            + '</div>';
+        }).join('');
+        dnsHistoryEl.querySelectorAll('.url-history-item').forEach(function (item) {
+          item.addEventListener('click', function () {
+            var lid = item.getAttribute('data-lookup-id');
+            if (lid) reopenDnsLookup(lid);
+          });
+        });
+      }
+    }).catch(function () { /* history is best-effort */ });
+  }
+
+  function reopenDnsLookup(lookupId) {
+    fetch('/api/dns/result/' + lookupId).then(function (res) { return res.json(); }).then(function (data) {
+      if (data.success && data.data) {
+        clearDnsError();
+        resetDnsResultSections();
+        dnsLookupId = lookupId;
+        setDnsBadge('DONE');
+        renderDnsResult(data.data);
+        openDnsPanel();
+      }
+    }).catch(function () { /* ignore */ });
+  }
+
+  // Initial load of DNS history
+  loadDnsHistory();
+
   (function initDraggable() {
     if (!monitorCard) return;
     const smHeader = monitorCard.querySelector('.sm-header');
@@ -2304,6 +4442,221 @@ canvas {
   setTimeout(function() {
     addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
   }, 1500);
+
+  // ===================================================================
+  // ===== ZYRA SETTINGS  (additive — self-contained) =====
+  // ===================================================================
+  var ZS_KEY = 'zyra_settings_v1';
+  var ZS_CHAT_KEY = 'zyra_chat_sessions_v1';
+  var ZS_DEFAULTS = {
+    theme: 'dark', colorScheme: 'black-blue', fontSize: '100', accent: '#ff8800',
+    voiceEnabled: true, voiceVolume: 80, wakeWord: 'Hey ZYRA',
+    saveHistory: true, sidebarOpen: false
+  };
+  var zs = JSON.parse(JSON.stringify(ZS_DEFAULTS));
+  try { var saved = JSON.parse(localStorage.getItem(ZS_KEY) || '{}'); if (saved) for (var k in ZS_DEFAULTS) if (k in saved) zs[k] = saved[k]; } catch (e) {}
+
+  function zsSave() { try { localStorage.setItem(ZS_KEY, JSON.stringify(zs)); } catch (e) {} }
+  function zsStatus(id, ok, txt) {
+    var el = document.getElementById(id); if (!el) return;
+    el.textContent = txt || (ok ? 'saved' : 'error');
+    el.classList.toggle('err', !ok); el.classList.add('show');
+    clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('show'); }, 1600);
+  }
+
+  // Accent presets + active swatch rendering
+  var ZS_ACCENTS = ['#ff8800', '#ff5544', '#22cc88', '#3aa0ff', '#b266ff', '#ffcc33'];
+  var zsAccentBox = document.getElementById('zs-accent-swatches');
+  if (zsAccentBox) {
+    ZS_ACCENTS.forEach(function(c){
+      var s = document.createElement('div'); s.className = 'zs-swatch'; s.style.background = c; s.dataset.color = c; s.title = c;
+      s.addEventListener('click', function(){ zs.accent = c; zsApplyAccent(); zsSave(); zsRenderSwatches(); });
+      zsAccentBox.appendChild(s);
+    });
+  }
+  function zsRenderSwatches() {
+    if (!zsAccentBox) return;
+    zsAccentBox.querySelectorAll('.zs-swatch').forEach(function(s){
+      s.classList.toggle('active', s.dataset.color.toLowerCase() === String(zs.accent).toLowerCase());
+    });
+  }
+  function zsApplyAccent() {
+    var hex = String(zs.accent || '#ff8800');
+    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    var root = document.documentElement.style;
+    root.setProperty('--zyra-accent', hex);
+    root.setProperty('--zyra-accent-soft', 'rgba('+r+','+g+','+b+',0.25)');
+    root.setProperty('--zyra-accent-text', hex);
+  }
+  function zsApplyTheme() {
+<<<<<<< HEAD
+    var light = zs.theme === 'light';
+    document.body.classList.toggle('zyra-light', light);
+    // Drive the existing Three.js neural core palette (orange dark / blue-cyan light).
+    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }
+=======
+    var isLight = zs.theme === 'light';
+    document.body.classList.toggle('zyra-light', isLight);
+    document.body.dispatchEvent(new CustomEvent('zyra-theme-change', { detail: { theme: isLight ? 'light' : 'dark' }));
+>>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
+  }
+  function zsApplyFontSize() { document.body.style.zoom = (parseInt(zs.fontSize,10) / 100).toString(); }
+
+  function zsApplyAll() { zsApplyTheme(); zsApplyFontSize(); zsApplyAccent(); zsRenderSwatches(); }
+
+  // ---- Modal open/close ----
+  var zsBtn = document.getElementById('zyra-settings-btn');
+  var zsOverlay = document.getElementById('zyra-settings-overlay');
+  var zsClose = document.getElementById('zyra-settings-close');
+  function zsOpenModal() {
+    if (!zsOverlay) return;
+    zsOverlay.classList.add('visible');
+    zsSyncControls();
+  }
+  function zsCloseModal() { if (zsOverlay) zsOverlay.classList.remove('visible'); }
+  if (zsBtn) zsBtn.addEventListener('click', zsOpenModal);
+  if (zsClose) zsClose.addEventListener('click', zsCloseModal);
+  if (zsOverlay) zsOverlay.addEventListener('click', function(e){ if (e.target === zsOverlay) zsCloseModal(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && zsOverlay && zsOverlay.classList.contains('visible')) zsCloseModal(); });
+
+  // ---- Bind controls ----
+  var zsThemeSel = document.getElementById('zs-theme');
+  var zsColorSchemeSel = document.getElementById('zs-color-scheme');
+  var zsFontSel = document.getElementById('zs-fontsize');
+  var zsVoiceToggle = document.getElementById('zs-voice-toggle');
+  var zsVoiceVol = document.getElementById('zs-voice-volume');
+  var zsVoiceVolVal = document.getElementById('zs-voice-volume-val');
+  var zsWake = document.getElementById('zs-wakeword');
+  var zsSaveHistToggle = document.getElementById('zs-savehistory-toggle');
+  function zsThemeChanged() { zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); }
+  if (zsThemeSel) {
+    zsThemeSel.addEventListener('change', zsThemeChanged);
+    zsThemeSel.addEventListener('input', zsThemeChanged);
+  }
+  function zsColorSchemeChanged() { zs.colorScheme = zsColorSchemeSel.value; zsApplyTheme(); zsSave(); }
+  if (zsColorSchemeSel) {
+    zsColorSchemeSel.addEventListener('change', zsColorSchemeChanged);
+    zsColorSchemeSel.addEventListener('input', zsColorSchemeChanged);
+  }
+  // Keep programmatic selector changes in sync as well as normal user changes.
+  // This also supports automation and restores the core palette immediately.
+  setInterval(function(){
+    if (zsThemeSel && zsThemeSel.value !== zs.theme) zsThemeChanged();
+    if (zsColorSchemeSel && zsColorSchemeSel.value !== (zs.colorScheme || 'black-blue')) zsColorSchemeChanged();
+  }, 100);
+  if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
+  if (zsVoiceToggle) zsVoiceToggle.addEventListener('click', function(){ zs.voiceEnabled = !zs.voiceEnabled; zsApplyVoiceToggle(); zsSave(); });
+  function zsApplyVoiceToggle() { if (!zsVoiceToggle) return; zsVoiceToggle.classList.toggle('on', zs.voiceEnabled); zsVoiceToggle.setAttribute('aria-checked', zs.voiceEnabled ? 'true' : 'false'); }
+  if (zsVoiceVol) zsVoiceVol.addEventListener('input', function(){ zs.voiceVolume = parseInt(zsVoiceVol.value,10); if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; zsUpdateRangeFill(); zsSave(); });
+  // Keep the light-theme blue fill of the volume slider in sync with its value (visual only).
+  function zsUpdateRangeFill() {
+    if (!zsVoiceVol) return;
+    var min = parseFloat(zsVoiceVol.min || '0');
+    var max = parseFloat(zsVoiceVol.max || '100');
+    var val = parseFloat(zsVoiceVol.value);
+    if (isNaN(val)) val = min;
+    var pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+    zsVoiceVol.style.setProperty('--zs-range-fill', pct + '%');
+  }
+  if (zsWake) zsWake.addEventListener('change', function(){
+    var v = (zsWake.value || '').trim(); if (v) { zs.wakeWord = v; zsSave(); zsStatus('zs-wakeword-status', true); } else zsStatus('zs-wakeword-status', false, 'required');
+  });
+  if (zsSaveHistToggle) zsSaveHistToggle.addEventListener('click', function(){ zs.saveHistory = !zs.saveHistory; zsApplySaveHistToggle(); zsSave(); });
+  function zsApplySaveHistToggle() { if (!zsSaveHistToggle) return; zsSaveHistToggle.classList.toggle('on', zs.saveHistory); zsSaveHistToggle.setAttribute('aria-checked', zs.saveHistory ? 'true' : 'false'); }
+
+  function zsSyncControls() {
+    if (zsThemeSel) zsThemeSel.value = zs.theme;
+    if (zsColorSchemeSel) zsColorSchemeSel.value = zs.colorScheme || 'black-blue';
+    if (zsFontSel) zsFontSel.value = String(zs.fontSize);
+    if (zsVoiceVol) { zsVoiceVol.value = zs.voiceVolume; if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; }
+    if (zsWake) zsWake.value = zs.wakeWord;
+    zsApplyVoiceToggle(); zsApplySaveHistToggle(); zsRenderSwatches(); zsUpdateRangeFill();
+  }
+
+  // ---- Chat history (ChatGPT-style sessions in localStorage) ----
+  var zsSessions = [];
+  try { zsSessions = JSON.parse(localStorage.getItem(ZS_CHAT_KEY) || '[]') || []; } catch (e) { zsSessions = []; }
+  var zsActiveSessionId = null;
+  function zsSaveSessions() { try { localStorage.setItem(ZS_CHAT_KEY, JSON.stringify(zsSessions.slice(0, 50))); } catch (e) {} }
+  function zsNewSession() {
+    var s = { id: 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), title: 'New conversation', ts: Date.now(), messages: [] };
+    zsSessions.unshift(s); zsActiveSessionId = s.id; zsSaveSessions(); zsRenderSessions(); return s;
+  }
+  function zsCurrentSession() {
+    if (!zsActiveSessionId) { var s = zsNewSession(); return s; }
+    for (var i=0;i<zsSessions.length;i++) if (zsSessions[i].id === zsActiveSessionId) return zsSessions[i];
+    return zsNewSession();
+  }
+  function zsRecordMessage(text, type) {
+    if (!zs.saveHistory) return;
+    var s = zsCurrentSession();
+    s.messages.push({ text: text, type: type, ts: Date.now() });
+    if (type === 'user' && s.title === 'New conversation') s.title = (text.slice(0,40) || 'New conversation');
+    s.ts = Date.now(); zsSaveSessions(); zsRenderSessions();
+  }
+  function zsRenderSessions() {
+    var list = document.getElementById('zyra-chat-sessions'); if (!list) return;
+    if (!zsSessions.length) { list.innerHTML = '<div class="zs-side-empty">No saved conversations yet.</div>'; return; }
+    list.innerHTML = '';
+    zsSessions.forEach(function(s){
+      var d = new Date(s.ts);
+      var item = document.createElement('div');
+      item.className = 'zs-side-item' + (s.id === zsActiveSessionId ? ' active' : '');
+      item.innerHTML = '<div class="t">' + escapeHtml(s.title) + '</div><div class="d">' + d.toLocaleString() + '</div>';
+      item.addEventListener('click', function(){ zsLoadSession(s.id); });
+      list.appendChild(item);
+    });
+  }
+  function zsLoadSession(id) {
+    zsActiveSessionId = id; zsRenderSessions();
+    if (!chatMessages) return;
+    chatMessages.innerHTML = '';
+    var s = null;
+    for (var i=0;i<zsSessions.length;i++) if (zsSessions[i].id === id) s = zsSessions[i];
+    if (s) s.messages.forEach(function(m){ addMessage(m.text, m.type); });
+    zsCloseSidebar();
+  }
+
+  // ---- Sidebar open/close ----
+  var zsSidebar = document.getElementById('zyra-chat-sidebar');
+  var zsSidebarClose = document.getElementById('zyra-chat-sidebar-close');
+  var zsSidebarNew = document.getElementById('zyra-chat-new');
+  var zsSidebarOpenBtn = document.getElementById('zs-sidebar-open');
+  function zsOpenSidebar() { if (zsSidebar) { zsSidebar.classList.add('open'); zs.sidebarOpen = true; zsSave(); zsRenderSessions(); } }
+  function zsCloseSidebar() { if (zsSidebar) { zsSidebar.classList.remove('open'); zs.sidebarOpen = false; zsSave(); } }
+  if (zsSidebarOpenBtn) zsSidebarOpenBtn.addEventListener('click', zsOpenSidebar);
+  if (zsSidebarClose) zsSidebarClose.addEventListener('click', zsCloseSidebar);
+  if (zsSidebarNew) zsSidebarNew.addEventListener('click', function(){ zsNewSession(); if (chatMessages) chatMessages.innerHTML = ''; addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra'); zsCloseSidebar(); });
+
+  // ---- Data & Privacy actions ----
+  var zsManageBtn = document.getElementById('zs-manage-history');
+  var zsClearHistBtn = document.getElementById('zs-clear-history');
+  var zsClearDataBtn = document.getElementById('zs-clear-data');
+  if (zsManageBtn) zsManageBtn.addEventListener('click', zsOpenSidebar);
+  if (zsClearHistBtn) zsClearHistBtn.addEventListener('click', function(){
+    zsSessions = []; zsActiveSessionId = null; zsSaveSessions(); zsRenderSessions(); zsStatus('zs-wakeword-status', true, 'history cleared');
+  });
+  if (zsClearDataBtn) zsClearDataBtn.addEventListener('click', function(){
+    try { localStorage.removeItem(ZS_KEY); localStorage.removeItem(ZS_CHAT_KEY); } catch (e) {}
+    zs = JSON.parse(JSON.stringify(ZS_DEFAULTS)); zsApplyAll(); zsSyncControls(); zsSessions = []; zsActiveSessionId = null; zsRenderSessions(); zsStatus('zs-wakeword-status', true, 'all data cleared');
+  });
+
+  // ---- Wrap addMessage so every message is recorded into history ----
+  // (function declaration in this scope is reassignable)
+  var _origAddMessage = addMessage;
+  addMessage = function(text, type) {
+    _origAddMessage(text, type);
+    try { zsRecordMessage(text, type); } catch (e) {}
+  };
+
+  // Voice output is handled only by the backend's configured female Edge TTS voice.
+  // Browser-side speech playback is intentionally disabled to prevent duplicates.
+
+  // ---- Apply persisted settings on load ----
+  zsApplyAll();
+  zsUpdateRangeFill();
+  zsRenderSessions();
+  if (zs.sidebarOpen) zsOpenSidebar();
 })();
 </script>
 </body>
