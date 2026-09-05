@@ -88,6 +88,16 @@ python start_zyra.py
 - ✅ Input validation
 - ✅ Clear error messages when AI is unavailable
 - ✅ Security persona injection to prevent LLM from fabricating link analyses
+- ✅ **Thread-safe conversations** — voice loop, web API and desktop bridge can chat concurrently without corrupting context
+- ✅ **Automatic model discovery** — picks the configured Ollama model or falls back to any installed one instead of hard-failing on "llama3"
+- ✅ **Long-term memory integration** — remembered facts are injected into every prompt so Zyra answers from what she knows
+- ✅ **Configurable via environment variables**:
+  - `ZYRA_OLLAMA_MODEL`, `ZYRA_OLLAMA_HOST`
+  - `ZYRA_AI_TEMPERATURE`, `ZYRA_AI_NUM_PREDICT`
+  - `ZYRA_AI_MAX_HISTORY`, `ZYRA_AI_TIMEOUT_SECONDS`
+  - `ZYRA_AI_MAX_RESPONSE_CHARS`, `ZYRA_AI_MEMORY`
+- ✅ **Retry with backoff** for transient Ollama failures + response hardening (ANSI/control chars stripped, capped length)
+
 
 ### 5. **Main Application (main.py)**
 - ✅ Fixed import inconsistencies
@@ -109,6 +119,13 @@ python start_zyra.py
 - ✅ Backend-only link security integration
 - ✅ Memory (remember/recall) support
 - ✅ Text-to-speech integration
+
+### 8. **Memory Store (memory.py)**
+- ✅ **Atomic writes** — temp-file + os.replace, no more corrupted JSON on crash
+- ✅ **Thread-safe** read-modify-write (concurrent remember/recall from all modules)
+- ✅ **Self-healing** — damaged store is backed up and recovered automatically
+- ✅ **Path resilient** — resolves memory/data.json from the module location (works from any working directory)
+- ✅ Extended API: forget(), remember_many(), all_memory(), clear_memory(), stats()
 
 ## Voice Commands
 
