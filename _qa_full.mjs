@@ -20,7 +20,7 @@ export default async function run(page, ui) {
   try {
     await page.waitForFunction(() => document.getElementById('url-analyzer-card').classList.contains('visible'), { timeout: 15000 });
     out.panelOpenedFromChat = true;
-  } catch(e) { out.panelOpenedFromChat = false; }
+  } catch (e) { out.panelOpenedFromChat = false; }
 
   if (out.panelOpenedFromChat) {
     out.urlInputAutoFilled = await page.evaluate(() => document.getElementById('url-input').value);
@@ -34,7 +34,7 @@ export default async function run(page, ui) {
       return s && s.style.display !== 'none' && document.getElementById('url-score').textContent.trim() !== '--';
     }, { timeout: 80000 });
     completed = true;
-  } catch(e) { completed = false; }
+  } catch (e) { completed = false; }
   out.completed = completed;
 
   if (completed) {
