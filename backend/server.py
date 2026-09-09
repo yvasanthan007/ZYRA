@@ -90,6 +90,12 @@ from backend.dns_lookup import (
     start_dns_lookup,
 )
 
+try:
+    from backend.ml_phishing import analyze_url_ml, model_info as ml_model_info
+except Exception:  # ML layer optional — the rest of the API keeps working
+    analyze_url_ml = None
+    ml_model_info = None
+
 app = FastAPI(
     title="ZYRA AI Assistant API",
     description="Backend API for ZYRA - Your AI Desktop Assistant",
@@ -1296,6 +1302,41 @@ async def url_report_endpoint(scan_id: str, format: str = "json"):
 async def url_history_endpoint():
     """Recent URL scan history for the panel."""
     return {"success": True, "data": get_history(8)}
+
+
+# ========== ML Phishing Classifier API ==========
+
+@app.post("/api/ml/phishing")
+async def ml_phishing_check(data: Dict[str, Any]):
+    """
+    Instant ML-only phishing check for a URL (lexical model — no DNS/HTTP
+    probes). Returns phishing probability, verdict and top signals.
+    """
+    if analyze_url_ml is None:
+        return JSONResponse(status_code=503, content={
+            "success": False,
+            "error": "ML phishing model unavailable (scikit-learn missing or "
+                     "model not trained). Run: python -m backend.ml_phishing.train",
+        })
+    url = str(data.get("url") or "").strip()
+    if not url:
+        return JSONResponse(status_code=400, content={
+            "success": False, "error": "A 'url' field is required."})
+    try:
+        result = analyze_url_ml(url)
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={
+            "success": False, "error": f"ML analysis failed ({type(exc).__name__})."})
+    return {"success": True, "data": result}
+
+
+@app.get("/api/ml/phishing/model")
+async def ml_phishing_model_info():
+    """Metadata for the ML phishing model: algorithm, metrics, dataset."""
+    if ml_model_info is None:
+        return JSONResponse(status_code=503, content={
+            "success": False, "error": "ML phishing model unavailable."})
+    return {"success": True, "data": ml_model_info()}
 
 
 # ========== DNS Lookup Endpoints ==========

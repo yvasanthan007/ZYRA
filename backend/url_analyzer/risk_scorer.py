@@ -57,9 +57,14 @@ def _risk_level(score: int) -> str:
 
 
 def score_scan(findings: list, domain_info: dict = None,
-               ssl_info: dict = None, reputation: dict = None) -> dict:
+               ssl_info: dict = None, reputation: dict = None,
+               ml_analysis: dict = None) -> dict:
     """
     Compute the transparent safety score.
+
+    ml_analysis: predictor.analyze_url_ml() payload (optional). The ML
+    classifier can only LOWER the score / raise the classification — it
+    never makes a flagged URL look safer.
 
     Returns {score, risk_level, risk_level_label, classification,
              classification_label, classification_summary, reasoning}.
@@ -132,6 +137,37 @@ def score_scan(findings: list, domain_info: dict = None,
         score = min(score, 18)
         reasoning.append(
             "Score capped at 18: threat intelligence reported malicious activity."
+        )
+
+    # ── ML phishing classifier: probabilistic floor / cap ──
+    # Tiers match predictor.py _VERDICT_TIERS: >=0.90 forces MALICIOUS with a
+    # hard score cap; >=0.75 raises a clean/unknown URL to SUSPICIOUS; lower
+    # probabilities only add a reasoning line (advisory).
+    ml_available = bool(ml_analysis and ml_analysis.get("available"))
+    ml_prob = 0.0
+    if ml_available:
+        try:
+            ml_prob = float(ml_analysis.get("probability") or 0.0)
+        except (TypeError, ValueError):
+            ml_prob = 0.0
+    if ml_available and ml_prob >= 0.55:
+        algo = ml_analysis.get("algorithm") or "ML classifier"
+        reasoning.append(
+            f"ML phishing classifier ({algo}) estimated a "
+            f"{int(round(ml_prob * 100))}% phishing probability from URL structure."
+        )
+    if ml_available and ml_prob >= 0.90:
+        classification = "MALICIOUS"
+        if score > 15:
+            score = 15
+            reasoning.append(
+                "Score capped at 15: ML classifier reports very high phishing "
+                "probability."
+            )
+    elif ml_available and ml_prob >= 0.75 and classification in ("LIKELY_SAFE", "UNKNOWN"):
+        classification = "SUSPICIOUS"
+        reasoning.append(
+            "Classification raised to SUSPICIOUS by the ML phishing classifier."
         )
 
     score = max(0, min(100, int(score)))

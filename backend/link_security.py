@@ -559,6 +559,40 @@ def analyze_url_security(url):
         else:
             domain_notes.append(f"VirusTotal backend scan clean ({detail} vendors)")
 
+    # ── ML phishing classifier (offline lexical model) ──
+    try:
+        from backend.ml_phishing import analyze_url_ml as _ml_analyze
+        _ml_result = _ml_analyze(original_url)
+    except Exception:
+        _ml_result = None
+    if _ml_result and _ml_result.get("available"):
+        try:
+            _ml_prob = float(_ml_result.get("probability") or 0.0)
+        except (TypeError, ValueError):
+            _ml_prob = 0.0
+        _ml_pct = int(round(_ml_prob * 100))
+        if _ml_prob >= 0.90:
+            risk = max(risk, 9)
+            findings.append(
+                f"Machine-learning classifier: {_ml_pct}% phishing probability — "
+                "the lexical patterns of this URL strongly match known phishing lures."
+            )
+        elif _ml_prob >= 0.75:
+            risk += 3
+            findings.append(
+                f"Machine-learning classifier: elevated {_ml_pct}% phishing "
+                "probability for this link's structure."
+            )
+        elif _ml_prob >= 0.55:
+            risk += 1
+            findings.append(
+                f"Machine-learning classifier: mildly suspicious structure "
+                f"({_ml_pct}% phishing probability)."
+            )
+        else:
+            domain_notes.append(
+                f"ML classifier: {_ml_pct}% phishing probability (low)")
+
     # ── Verdict & risk mapping ──
     if risk >= 8:
         verdict, risk_score = "PHISHING DETECTED", "Critical"

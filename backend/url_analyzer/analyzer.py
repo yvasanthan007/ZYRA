@@ -37,6 +37,11 @@ from backend.url_analyzer.validator import (
     validate_url,
 )
 
+try:
+    from backend.ml_phishing import analyze_url_ml
+except Exception:  # ML layer optional — heuristic engine keeps working
+    analyze_url_ml = None
+
 # Ordered scan stages exposed to the UI
 SCAN_STAGES = [
     ("initializing", "INITIALIZING URL ANALYZER..."),
@@ -414,13 +419,29 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
         }]
     emit("threats", "done", f"{len(findings)} finding(s)")
 
-    emit("structure", "running")
+    # ── ML phishing classifier (offline lexical model, no network) ──
+    ml_info = None
+    if analyze_url_ml is not None:
+        emit("structure", "running", "ML phishing classifier")
+        try:
+            ml_info = analyze_url_ml(url)
+        except Exception as e:
+            ml_info = {"available": False,
+                       "note": f"ML classifier error ({type(e).__name__})."}
+        if ml_info and ml_info.get("available"):
+            try:
+                _ml_prob = float(ml_info.get("probability") or 0.0)
+            except (TypeError, ValueError):
+                _ml_prob = 0.0
+            if _ml_prob >= 0.55:
+                findings.append(_ml_finding(ml_info))
     emit("structure", "done")
 
     # â”€â”€ Stage: CALCULATING RISK SCORE â”€â”€
     emit("scoring", "running")
     try:
-        scored = score_scan(findings, domain_info, ssl_info, reputation)
+        scored = score_scan(findings, domain_info, ssl_info, reputation,
+                            ml_analysis=ml_info)
     except Exception:
         scored = {
             "score": 0, "risk_level": "CRITICAL", "risk_level_label": "CRITICAL",
@@ -435,6 +456,7 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     result = _build_result(
         scan_id, url, parts, domain_info, ssl_info, redirect_info,
         reputation, findings, scored, recommendation, timestamp, source,
+        ml_info,
     )
 
     state = state_of()
@@ -463,9 +485,55 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     return result
 
 
+def _ml_finding(ml_info: dict) -> dict:
+    """Convert the ML classifier payload into a transparent finding."""
+    prob = float(ml_info.get("probability") or 0.0)
+    pct = int(round(prob * 100))
+    severity = "CRITICAL" if prob >= 0.90 else ("HIGH" if prob >= 0.75 else "MEDIUM")
+    signals = ml_info.get("top_signals") or []
+    sig_txt = ""
+    if signals:
+        names = ", ".join(s.get("feature", "?") for s in signals[:3])
+        sig_txt = f" Most influential features: {names}."
+    return {
+        "id": "ml_phishing_classifier",
+        "severity": severity,
+        "category": "ml",
+        "title": f"ML classifier: {pct}% phishing probability",
+        "detail": (
+            f"The machine-learning phishing classifier "
+            f"({ml_info.get('algorithm') or 'ensemble'}, trained on lexical "
+            f"URL patterns) scored this URL at {pct}% phishing probability."
+            + sig_txt
+        ),
+        "score_impact": {"CRITICAL": 40, "HIGH": 22, "MEDIUM": 10}[severity],
+        "positive": False,
+    }
+
+
+def _ml_summary_check(ml_info) -> dict:
+    """Summary-checklist entry for the ML phishing classifier."""
+    if not (ml_info and ml_info.get("available")):
+        return {"name": "ML Phishing Model", "status": "warn",
+                "detail": "Model unavailable"}
+    try:
+        prob = float(ml_info.get("probability") or 0.0)
+    except (TypeError, ValueError):
+        prob = 0.0
+    pct = int(round(prob * 100))
+    if prob >= 0.55:
+        return {"name": "ML Phishing Model", "status": "fail",
+                "detail": f"{pct}% phishing probability"}
+    if prob >= 0.35:
+        return {"name": "ML Phishing Model", "status": "warn",
+                "detail": f"Low-confidence result ({pct}%)"}
+    return {"name": "ML Phishing Model", "status": "pass",
+            "detail": f"No phishing pattern ({100 - pct}% confidence)"}
+
+
 def _build_result(scan_id, url, parts, domain_info, ssl_info, redirect_info,
                   reputation, findings, scored, recommendation, timestamp,
-                  source) -> dict:
+                  source, ml_info=None) -> dict:
     """Assemble the final structured result payload for UI/report/voice."""
     hostname = parts.get("hostname") or ""
     dom = split_domain(hostname)
@@ -492,6 +560,7 @@ def _build_result(scan_id, url, parts, domain_info, ssl_info, redirect_info,
          "status": "warn" if not domain_info.get("whois_available") else "pass",
          "detail": "Information unavailable" if not domain_info.get("whois_available") else None},
     ]
+    summary_checks.append(_ml_summary_check(ml_info))
 
     result = {
         "success": True,
@@ -507,6 +576,8 @@ def _build_result(scan_id, url, parts, domain_info, ssl_info, redirect_info,
         "classification_label": scored["classification_label"],
         "classification_summary": scored["classification_summary"],
         "reasoning": scored["reasoning"],
+        "ml_phishing": ml_info or {"available": False,
+                                   "note": "ML classifier unavailable"},
         "summary": {"checks": summary_checks},
         "url_details": {
             "protocol": (parts.get("scheme") or "").upper(),
@@ -535,7 +606,7 @@ def _build_result(scan_id, url, parts, domain_info, ssl_info, redirect_info,
     return result
 
 
-def build_voice_summary(result: dict) -> str:
+def _voice_summary_text(result: dict) -> str:
     """
     Voice-friendly spoken response after an analysis, per the ZYRA spec:
 
@@ -584,6 +655,26 @@ def build_voice_summary(result: dict) -> str:
         f"detected. Always verify the destination before entering "
         f"credentials."
     )
+
+def build_voice_summary(result: dict) -> str:
+    """
+    Voice summary with an ML sentence appended when the phishing classifier
+    flagged the URL (probability >= 55%).
+    """
+    text = _voice_summary_text(result)
+    ml = (result or {}).get("ml_phishing") or {}
+    if ml.get("available"):
+        try:
+            prob = float(ml.get("probability") or 0.0)
+        except (TypeError, ValueError):
+            prob = 0.0
+        if prob >= 0.55:
+            text += (
+                f" The machine learning classifier also estimates a "
+                f"{int(round(prob * 100))} percent phishing probability."
+            )
+    return text
+
 
 def get_last_scan():
     """Most recent scan state id, or None."""

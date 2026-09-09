@@ -193,6 +193,8 @@ main.py                 # Entry point - voice loop + server startup
 - `POST /api/voice` - Process voice command
 - `POST /api/speak` - Text-to-speech
 - `POST /api/analyze-link` - Analyze URL security
+- `POST /api/ml/phishing` - Instant ML phishing probability for a URL
+- `GET /api/ml/phishing/model` - ML phishing model metadata
 - `GET /api/commands` - List all commands
 
 ### WebSocket
@@ -237,6 +239,38 @@ Key Observations:
 Recommendation:
 Do not click or enter credentials — close the page and report the source of this link.
 ```
+
+## ML Phishing Classifier
+
+On top of the rule-based engine, ZYRA includes a trained machine-learning
+phishing classifier (`backend/ml_phishing/`):
+
+- **Model**: scikit-learn RandomForest (300 trees), automatically selected
+  against a LogisticRegression baseline on a stratified 80/20 hold-out
+  (metrics are stored in `backend/ml_phishing/models/model_meta.json`).
+- **Features**: 28 offline lexical/host features (raw IP host, typosquat
+  signals, hostname entropy, subdomain burial, credential/urgency keywords,
+  misplaced brand tokens, punycode, encoding obfuscation, ...). No DNS or
+  HTTP lookups are performed, so inference is instant and privacy-safe.
+- **Verdict tiers**: ≥90% → PHISHING, ≥75% → LIKELY_PHISHING,
+  ≥55% → SUSPICIOUS, ≥35% → UNSURE, else SAFE.
+- **Integration**: runs as a stage of every URL scan (`/api/url/analyze`),
+  adds a transparent finding + reasoning lines, and can only raise the risk
+  classification (never make a flagged URL look safer). Also exposed
+  standalone via `POST /api/ml/phishing`. The voice flow
+  (`backend/link_security.py`) uses the same probability to escalate
+  verdicts, and the voice summary mentions the model when it flags a URL.
+- **Training data**: the bundled model is trained on a deterministic seed
+  dataset of realistic URL patterns (2400 URLs). For production accuracy,
+  retrain on real data (e.g. a PhishTank + Tranco export):
+
+  ```bash
+  python -m backend.ml_phishing.train                     # rebuild seed model
+  python -m backend.ml_phishing.train --csv dataset.csv   # url,label rows
+  ```
+
+- **Environment**: `ZYRA_ML_DISABLE=1` turns the layer off at runtime,
+  `ZYRA_ML_MODEL=/path/model.joblib` loads a custom model.
 
 ## Troubleshooting
 
