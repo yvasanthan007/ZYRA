@@ -1972,17 +1972,23 @@ body.zyra-light .zs-side-item .d { color: rgba(220,238,255,.58); }
     </div>
   </div>
 
-  <!-- ===== ZYRA SETTINGS (additive) ===== -->
-  <button id="zyra-settings-btn" title="ZYRA Settings" aria-label="Open ZYRA Settings">⚙</button>
-
   <!-- Chat history sidebar (ChatGPT-style, additive) -->
-  <div id="zyra-chat-sidebar" aria-hidden="true">
-    <div class="zs-side-head">
-      <span>🕘 CHAT HISTORY</span>
-      <button id="zyra-chat-sidebar-close" title="Close sidebar">✕</button>
+  <div id="zyra-chat-sidebar" aria-hidden="false">
+    <div class="zsb-top">
+      <div class="zsb-top-row">
+        <button id="zyra-chat-new" class="zsb-new-btn" title="New Chat"><span class="zi">＋</span><span class="zt">New Chat</span></button>
+        <button id="zyra-chat-collapse" class="zsb-icon-btn zsb-collapse-btn" title="Collapse sidebar">‹</button>
+        <button id="zyra-chat-expand" class="zsb-icon-btn zsb-expand-btn" title="Expand sidebar">›</button>
+      </div>
+      <div class="zsb-search-row">
+        <input id="zyra-chat-search" type="text" placeholder="Search chats" autocomplete="off">
+      </div>
     </div>
-    <button id="zyra-chat-new" class="zs-side-new">+ New conversation</button>
-    <div id="zyra-chat-sessions" class="zs-side-list"></div>
+    <div id="zyra-chat-sessions" class="zsb-list"></div>
+    <div class="zsb-footer">
+      <button id="zyra-settings-btn" title="ZYRA Settings" aria-label="Open ZYRA Settings">⚙</button>
+      <span class="zsb-footer-label">Settings</span>
+    </div>
   </div>
 
   <!-- Settings modal -->
