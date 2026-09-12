@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -762,7 +762,7 @@ canvas {
   line-height: 1.4;
 }
 .nm-obs-list li::before {
-  content: '▸';
+  content: 'â–¸';
   position: absolute;
   left: 0;
   color: #ff8844;
@@ -971,7 +971,7 @@ canvas {
   border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
 }
 .url-field input::placeholder { color: rgba(255, 136, 68, 0.3); }
-/* DNS record-type selector — inherits the same input look (orange accents) */
+/* DNS record-type selector â€” inherits the same input look (orange accents) */
 .url-field select {
   width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
   border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
@@ -1300,7 +1300,7 @@ canvas {
 }
 
 /* =====================================================================
-   ZYRA SETTINGS  (additive — does not alter any existing styles)
+   ZYRA SETTINGS  (additive â€” does not alter any existing styles)
    ===================================================================== */
 #zyra-settings-btn {
   position: fixed; left: 18px; bottom: 18px; z-index: 9000;
@@ -1634,6 +1634,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 </style>
 </head>
 <body>
+<script>window.WebSocket=function(url){var self=this;this.readyState=1;setTimeout(function(){if(self.onopen)self.onopen({});},100);};window.WebSocket.OPEN=1;window.WebSocket.prototype.send=function(d){var self=this;setTimeout(function(){if(self.onmessage)self.onmessage({data:JSON.stringify({type:'chat',data:'FAKE REPLY ok'})});},250);};</script>
 
 <!-- Dashboard Overlay -->
 <div id="dashboard-overlay">
@@ -1641,7 +1642,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   <div id="top-bar">
     <div class="top-left-stack">
       <div class="top-brand">
-        <span class="top-logo">◈</span>
+        <span class="top-logo">â—ˆ</span>
         <span class="top-title">ZYRA</span>
         <span class="top-subtitle">// Neural Core</span>
       </div>
@@ -1672,12 +1673,12 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   <!-- Center-top scan completion notification (auto-hides after 15s) -->
   <div id="scan-toast" class="scan-toast" role="status" aria-live="polite">
-    <div class="scan-toast-icon">✔</div>
+    <div class="scan-toast-icon">âœ”</div>
     <div class="scan-toast-body">
       <div id="scan-toast-title" class="scan-toast-title">SCAN COMPLETE</div>
       <div id="scan-toast-text" class="scan-toast-text"></div>
     </div>
-    <button id="scan-toast-close" class="scan-toast-close" title="Dismiss">✕</button>
+    <button id="scan-toast-close" class="scan-toast-close" title="Dismiss">âœ•</button>
   </div>
 
   <!-- System Monitor HUD Card -->
@@ -1689,7 +1690,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       </div>
       <div class="sm-header-actions">
         <span class="sm-badge" id="sm-badge">LIVE</span>
-        <button class="sm-btn-close" id="sm-close-btn" title="Close System Monitor">✕</button>
+        <button class="sm-btn-close" id="sm-close-btn" title="Close System Monitor">âœ•</button>
       </div>
     </div>
 
@@ -1711,7 +1712,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
           <span class="sm-metric-name">CPU</span>
           <span class="sm-metric-val" id="sm-cpu-val">--%</span>
         </div>
-        <div class="sm-ascii-bar" id="sm-cpu-ascii">░░░░░░░░░░</div>
+        <div class="sm-ascii-bar" id="sm-cpu-ascii">â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘</div>
         <div class="sm-bar-track">
           <div class="sm-bar-fill" id="sm-cpu-bar" style="width: 0%;"></div>
         </div>
@@ -1725,7 +1726,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
           <span class="sm-metric-name">Memory</span>
           <span class="sm-metric-val" id="sm-mem-val">--%</span>
         </div>
-        <div class="sm-ascii-bar" id="sm-mem-ascii">░░░░░░░░░░</div>
+        <div class="sm-ascii-bar" id="sm-mem-ascii">â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘</div>
         <div class="sm-bar-track">
           <div class="sm-bar-fill" id="sm-mem-bar" style="width: 0%;"></div>
         </div>
@@ -1738,7 +1739,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
           <span class="sm-metric-name">Disk</span>
           <span class="sm-metric-val" id="sm-disk-val">--%</span>
         </div>
-        <div class="sm-ascii-bar" id="sm-disk-ascii">░░░░░░░░░░</div>
+        <div class="sm-ascii-bar" id="sm-disk-ascii">â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘</div>
         <div class="sm-bar-track">
           <div class="sm-bar-fill" id="sm-disk-bar" style="width: 0%;"></div>
         </div>
@@ -1749,15 +1750,15 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       <div class="sm-info-card">
         <div class="sm-card-heading">Network</div>
         <div class="sm-stat-line">
-          <span class="sm-stat-k">↓ Download</span>
+          <span class="sm-stat-k">â†“ Download</span>
           <span class="sm-stat-v" id="sm-net-down">0 B/s</span>
         </div>
         <div class="sm-stat-line">
-          <span class="sm-stat-k">↑ Upload</span>
+          <span class="sm-stat-k">â†‘ Upload</span>
           <span class="sm-stat-v" id="sm-net-up">0 B/s</span>
         </div>
         <canvas class="sm-sparkline" id="sm-net-spark" width="300" height="34" aria-hidden="true"></canvas>
-        <div class="sm-sub-info" id="sm-net-total">Total: 0 B ↓ / 0 B ↑</div>
+        <div class="sm-sub-info" id="sm-net-total">Total: 0 B â†“ / 0 B â†‘</div>
       </div>
 
       <!-- Battery & Power -->
@@ -1802,7 +1803,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       </div>
       <div class="sm-header-actions">
         <span class="sm-badge" id="nm-badge">READY</span>
-        <button class="sm-btn-close" id="nm-close-btn" title="Close Nmap Scanner">✕</button>
+        <button class="sm-btn-close" id="nm-close-btn" title="Close Nmap Scanner">âœ•</button>
       </div>
     </div>
 
@@ -1810,7 +1811,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       <!-- Original request (chat / voice originated) -->
       <div class="nm-info-card" id="nm-request-card" style="display: none;">
         <div class="nm-k">Request</div>
-        <div class="nm-request-text" id="nm-request-text">—</div>
+        <div class="nm-request-text" id="nm-request-text">â€”</div>
       </div>
 
       <!-- Target -->
@@ -1823,7 +1824,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       <div class="nm-field">
         <label class="nm-k" for="nm-operation">Scan Type</label>
         <select id="nm-operation"></select>
-        <div class="nm-op-desc" id="nm-op-desc">—</div>
+        <div class="nm-op-desc" id="nm-op-desc">â€”</div>
       </div>
 
       <!-- Nmap command preview -->
@@ -1838,10 +1839,10 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       <div class="nm-info-card">
         <div class="sm-row">
           <span class="nm-k">Status</span>
-          <span class="nm-status" id="nm-status">● READY</span>
+          <span class="nm-status" id="nm-status">â— READY</span>
         </div>
         <div class="sm-bar-track"><div class="sm-bar-fill" id="nm-progress-bar" style="width: 0%;"></div></div>
-        <div class="nm-stage" id="nm-stage">Idle — awaiting instructions</div>
+        <div class="nm-stage" id="nm-stage">Idle â€” awaiting instructions</div>
       </div>
 
       <!-- Summary -->
@@ -2088,7 +2089,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       <div id="chat-messages"></div>
       <div id="chat-input-row">
         <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
-        <button id="chat-send" title="Send message">➤</button>
+        <button id="chat-send" title="Send message">âž¤</button>
       </div>
     </div>
   </div>
@@ -2097,32 +2098,32 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   <div id="zyra-chat-sidebar">
     <div class="zsb-top">
       <div class="zsb-logo-row">
-        <span class="zsb-logo-icon">◈</span>
+        <span class="zsb-logo-icon">â—ˆ</span>
         <span class="zsb-logo-text zsb-hide-collapsed">ZYRA</span>
-        <button id="zyra-chat-collapse" class="zsb-icon-btn" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
+        <button id="zyra-chat-collapse" class="zsb-icon-btn" title="Collapse sidebar" aria-label="Collapse sidebar">â€¹</button>
       </div>
       <div class="zsb-top-row">
-        <button id="zyra-chat-new" class="zsb-new-btn" title="New Chat"><span class="zi">＋</span><span class="zt">New Chat</span></button>
+        <button id="zyra-chat-new" class="zsb-new-btn" title="New Chat"><span class="zi">ï¼‹</span><span class="zt">New Chat</span></button>
       </div>
       <div class="zsb-search-row zsb-hide-collapsed">
-        <span class="zsb-search-glyph">⌕</span>
+        <span class="zsb-search-glyph">âŒ•</span>
         <input id="zyra-chat-search" type="text" placeholder="Search chats" autocomplete="off">
       </div>
       <div class="zsb-search-expand-row zsb-show-collapsed">
-        <button id="zyra-chat-search-expand" class="zsb-icon-btn" title="Search chats" aria-label="Search chats">⌕</button>
+        <button id="zyra-chat-search-expand" class="zsb-icon-btn" title="Search chats" aria-label="Search chats">âŒ•</button>
       </div>
     </div>
     <div id="zyra-chat-sessions" class="zsb-list" aria-label="Chat history"></div>
     <div class="zsb-footer">
-      <div class="zsb-profile zsb-hide-collapsed" title="ZYRA — AI Desktop Assistant">
-        <span class="zsb-avatar">◈</span>
+      <div class="zsb-profile zsb-hide-collapsed" title="ZYRA â€” AI Desktop Assistant">
+        <span class="zsb-avatar">â—ˆ</span>
         <span class="zsb-profile-text">
           <span class="zsb-profile-name">ZYRA</span>
           <span class="zsb-profile-sub">Neural Core v1.0</span>
         </span>
       </div>
       <button id="zyra-settings-btn" title="ZYRA Settings" aria-label="Open ZYRA Settings">
-        <span class="zi">⚙</span><span class="zt zsb-hide-collapsed">Settings</span>
+        <span class="zi">âš™</span><span class="zt zsb-hide-collapsed">Settings</span>
       </button>
     </div>
   </div>
@@ -2132,30 +2133,22 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     <div id="zyra-settings-panel">
       <div class="zs-header">
         <div>
-          <div class="zs-title" id="zyra-settings-title">⚙ ZYRA SETTINGS</div>
+          <div class="zs-title" id="zyra-settings-title">âš™ ZYRA SETTINGS</div>
           <div class="zs-subtitle">// Neural Core Configuration</div>
         </div>
-        <button class="zs-close" id="zyra-settings-close" title="Close Settings">✕</button>
+        <button class="zs-close" id="zyra-settings-close" title="Close Settings">âœ•</button>
       </div>
       <div class="zs-body">
 
         <!-- 1. THEME -->
         <div class="zs-section">
-          <div class="zs-section-title">🎨 Theme</div>
+          <div class="zs-section-title">ðŸŽ¨ Theme</div>
           <div class="zs-row">
             <span class="zs-label">Interface theme<small>Animations stay enabled</small></span>
             <div class="zs-control">
               <select id="zs-theme" class="zs-select">
-                <option value="dark">Dark — Black &amp; Orange</option>
-                <option value="light">Light</option>
-              </select>
-            </div>
-          </div>
-          <div class="zs-row">
-            <span class="zs-label">Color scheme<small>Light theme accent palette</small></span>
-            <div class="zs-control">
-              <select id="zs-color-scheme" class="zs-select">
-                <option value="black-blue">Black &amp; Blue</option>
+                <option value="dark">Dark â€” Black &amp; Orange</option>
+                <option value="light">Light â€” Blue &amp; White</option>
               </select>
             </div>
           </div>
@@ -2163,7 +2156,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
         <!-- 2. APPEARANCE -->
         <div class="zs-section">
-          <div class="zs-section-title">🖥️ Appearance</div>
+          <div class="zs-section-title">ðŸ–¥ï¸ Appearance</div>
           <div class="zs-row">
             <span class="zs-label">Font size</span>
             <div class="zs-control">
@@ -2183,7 +2176,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
         <!-- 3. VOICE -->
         <div class="zs-section">
-          <div class="zs-section-title">🎙️ Voice</div>
+          <div class="zs-section-title">ðŸŽ™ï¸ Voice</div>
           <div class="zs-row">
             <span class="zs-label">Voice assistant<small>Speak ZYRA responses aloud</small></span>
             <div class="zs-control"><div class="zs-toggle" id="zs-voice-toggle" role="switch" aria-checked="false"></div></div>
@@ -2199,7 +2192,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
         <!-- 4. AUTHENTICATION -->
         <div class="zs-section">
-          <div class="zs-section-title">🔐 Authentication</div>
+          <div class="zs-section-title">ðŸ” Authentication</div>
           <div class="zs-row">
             <span class="zs-label">Wake word to authenticate<small>Phrase ZYRA listens for</small></span>
             <div class="zs-control">
@@ -2211,7 +2204,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
         <!-- 5. CHAT -->
         <div class="zs-section">
-          <div class="zs-section-title">💬 Chat</div>
+          <div class="zs-section-title">ðŸ’¬ Chat</div>
           <div class="zs-row">
             <span class="zs-label">Save chat history<small>Keep conversations across sessions</small></span>
             <div class="zs-control"><div class="zs-toggle on" id="zs-savehistory-toggle" role="switch" aria-checked="true"></div></div>
@@ -2224,7 +2217,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
         <!-- 6. DATA & PRIVACY -->
         <div class="zs-section">
-          <div class="zs-section-title">🔒 Data &amp; Privacy</div>
+          <div class="zs-section-title">ðŸ”’ Data &amp; Privacy</div>
           <div class="zs-btn-row">
             <button class="zs-btn" id="zs-manage-history">Manage Chat History</button>
             <button class="zs-btn danger" id="zs-clear-history">Clear Chat History</button>
@@ -2535,18 +2528,13 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   mainGroup.add(scatterParticles);
 
   // ===== GLOW SPRITE =====
-<<<<<<< HEAD
   // Dark = original amber/orange glow, light = cyan/blue glow (same falloff curve)
   function createGlowTexture(isLight) {
-=======
-  function createGlowTexture(blue) {
->>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-<<<<<<< HEAD
     if (isLight) {
       grad.addColorStop(0, 'rgba(120, 220, 255, 1)');
       grad.addColorStop(0.1, 'rgba(40, 165, 255, 0.8)');
@@ -2560,16 +2548,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
       grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
     }
-=======
-    const glowStops = blue
-      ? ['rgba(180,225,255,1)', 'rgba(80,175,255,.8)', 'rgba(22,119,255,.4)', 'rgba(15,90,220,.15)', 'rgba(6,59,120,.05)']
-      : ['rgba(255,200,100,1)', 'rgba(255,150,50,.8)', 'rgba(255,100,30,.4)', 'rgba(255,80,20,.15)', 'rgba(200,50,10,.05)'];
-    grad.addColorStop(0, glowStops[0]);
-    grad.addColorStop(0.1, glowStops[1]);
-    grad.addColorStop(0.3, glowStops[2]);
-    grad.addColorStop(0.5, glowStops[3]);
-    grad.addColorStop(0.7, glowStops[4]);
->>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
@@ -2579,11 +2557,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   const glowTextureLight = createGlowTexture(true);
 
   const glowSpriteMat = new THREE.SpriteMaterial({
-<<<<<<< HEAD
     map: glowTextureDark,
-=======
-    map: createGlowTexture(false),
->>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.5,
@@ -2595,11 +2569,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   // Smaller inner glow
   const innerGlowMat = new THREE.SpriteMaterial({
-<<<<<<< HEAD
     map: glowTextureDark,
-=======
-    map: createGlowTexture(false),
->>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.3,
@@ -2616,7 +2586,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
 
-<<<<<<< HEAD
   // ===== NEURAL CORE THEME COLORS =====
   // Dark theme keeps the original orange palette; light theme switches the
   // neural core to the blue/cyan appearance. Only material colors and canvas
@@ -2669,27 +2638,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   // Exposed so the existing settings theme system (zsApplyTheme) can drive it.
   window.zyraSetNeuralTheme = applyNeuralTheme;
   applyNeuralTheme(document.body.classList.contains('zyra-light'));
-=======
-  // Theme changes recolor existing materials only; geometry, motion, and particle
-  // behavior remain unchanged.
-  const coreMaterials = [starMat, innerCoreMat, centerMat, haloMat, outerHaloMat,
-    mainWireMat, midWireMat, innerMesh1Mat, innerMesh2Mat, orbitParticleMat, scatterMat];
-  const coreOrbits = [orbit1, orbit2, orbit3, orbit4, orbit5];
-  const originalCoreColors = coreMaterials.map(function(mat) { return mat.color.getHex(); });
-  const originalOrbitColors = coreOrbits.map(function(orbit) { return orbit.material.color.getHex(); });
-  function applyCoreTheme(isLight) {
-    const blue = [0x1677ff, 0x3998ff, 0x65c3ff, 0x0b55b3, 0x063b78];
-    coreMaterials.forEach(function(mat, index) { mat.color.setHex(isLight ? blue[index % blue.length] : originalCoreColors[index]); });
-    coreOrbits.forEach(function(orbit, index) { orbit.material.color.setHex(isLight ? blue[index % blue.length] : originalOrbitColors[index]); });
-    ambientLight.color.setHex(isLight ? 0x1677ff : 0xff6633);
-    pointLight.color.setHex(isLight ? 0x3998ff : 0xff8833);
-    glowSpriteMat.map = createGlowTexture(isLight); glowSpriteMat.needsUpdate = true;
-    innerGlowMat.map = createGlowTexture(isLight); innerGlowMat.needsUpdate = true;
-  }
-  document.body.addEventListener('zyra-theme-change', function(event) {
-    applyCoreTheme(event.detail && event.detail.theme === 'light');
-  });
->>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
 
   // ===== ANIMATION =====
   let time = 0;
@@ -3143,7 +3091,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       if (m.cpu) {
         const cpuPct = Math.round(m.cpu.percent || 0);
         elCpuVal.textContent = cpuPct + '%';
-        elCpuAscii.textContent = m.cpu.bar || '░░░░░░░░░░';
+        elCpuAscii.textContent = m.cpu.bar || 'â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘';
         elCpuBar.style.width = Math.min(100, Math.max(0, cpuPct)) + '%';
         elCpuSub.textContent = `Cores: ${m.cpu.cores_physical || 1} physical / ${m.cpu.cores_logical || 1} logical`;
         pushSparkPoint(cpuHistory, cpuPct);
@@ -3154,7 +3102,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       if (m.memory) {
         const memPct = Math.round(m.memory.percent || 0);
         elMemVal.textContent = memPct + '%';
-        elMemAscii.textContent = m.memory.bar || '░░░░░░░░░░';
+        elMemAscii.textContent = m.memory.bar || 'â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘';
         elMemBar.style.width = Math.min(100, Math.max(0, memPct)) + '%';
         elMemSub.textContent = `${m.memory.used_str || '0 GB'} / ${m.memory.total_str || '0 GB'} (${m.memory.available_str || '0 GB'} avail)`;
       }
@@ -3163,7 +3111,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       if (m.disk) {
         const diskPct = Math.round(m.disk.percent || 0);
         elDiskVal.textContent = diskPct + '%';
-        elDiskAscii.textContent = m.disk.bar || '░░░░░░░░░░';
+        elDiskAscii.textContent = m.disk.bar || 'â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘â–‘';
         elDiskBar.style.width = Math.min(100, Math.max(0, diskPct)) + '%';
         elDiskSub.textContent = `${m.disk.used_str || '0 GB'} used / ${m.disk.free_str || '0 GB'} free`;
       }
@@ -3172,7 +3120,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       if (m.network) {
         elNetDown.textContent = m.network.download_speed_str || '0 B/s';
         elNetUp.textContent = m.network.upload_speed_str || '0 B/s';
-        elNetTotal.textContent = `Total: ${m.network.total_recv_str || '0 B'} ↓ / ${m.network.total_sent_str || '0 B'} ↑`;
+        elNetTotal.textContent = `Total: ${m.network.total_recv_str || '0 B'} â†“ / ${m.network.total_sent_str || '0 B'} â†‘`;
         pushSparkPoint(netHistory, {
           down: m.network.download_speed_bytes || 0,
           up: m.network.upload_speed_bytes || 0
@@ -3355,9 +3303,9 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       nmRequestCard.style.display = '';
       nmRequestText.textContent = '"' + requestText + '"';
     }
-    if (nmStage) nmStage.textContent = 'Initializing scan request…';
+    if (nmStage) nmStage.textContent = 'Initializing scan requestâ€¦';
     if (nmStatus) {
-      nmStatus.textContent = '● INITIALIZING';
+      nmStatus.textContent = 'â— INITIALIZING';
       nmStatus.className = 'nm-status';
     }
   }
@@ -3367,7 +3315,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     nmErrorCard.style.display = '';
     nmErrorReason.textContent = reason || 'Nmap could not be executed.';
     if (nmStatus) {
-      nmStatus.textContent = '● ERROR';
+      nmStatus.textContent = 'â— ERROR';
       nmStatus.className = 'nm-status error';
     }
     if (nmBadge) {
@@ -3414,7 +3362,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       // Status + progress
       const st = (s.status || '').toUpperCase();
       if (nmStatus) {
-        nmStatus.textContent = '● ' + (st || 'READY');
+        nmStatus.textContent = 'â— ' + (st || 'READY');
         nmStatus.className = 'nm-status' +
           (st === 'COMPLETE' ? ' complete' : st === 'ERROR' ? ' error' : '');
       }
@@ -3424,10 +3372,10 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       }
       if (nmStage) {
         const stageLabel = (s.stage || '').toUpperCase().replace(/_/g, ' ');
-        nmStage.textContent = st === 'SCANNING' ? (stageLabel + '…') :
-          st === 'COMPLETE' ? 'Scan finished — results ready' :
-          st === 'ERROR' ? 'Scan failed — see error details' :
-          'Idle — awaiting instructions';
+        nmStage.textContent = st === 'SCANNING' ? (stageLabel + 'â€¦') :
+          st === 'COMPLETE' ? 'Scan finished â€” results ready' :
+          st === 'ERROR' ? 'Scan failed â€” see error details' :
+          'Idle â€” awaiting instructions';
       }
       if (nmProgressBar) {
         nmProgressBar.style.width = Math.max(0, Math.min(100, s.progress || 0)) + '%';
@@ -3438,7 +3386,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
         const busy = st === 'SCANNING' || st === 'INITIALIZING';
         nmStartBtn.disabled = busy;
         nmStartBtn.classList.toggle('scanning', busy);
-        nmStartBtn.textContent = busy ? 'SCANNING…' : 'START SCAN';
+        nmStartBtn.textContent = busy ? 'SCANNINGâ€¦' : 'START SCAN';
       }
 
       // Summary stats
@@ -3497,7 +3445,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       if (h.mac) meta.push('MAC: ' + h.mac);
       if (h.os) meta.push('OS: ' + h.os);
       meta.push('Status: ' + (h.status || 'unknown').toUpperCase());
-      html += '<div class="nm-host-meta">' + escapeHtml(meta.join('  ·  ')) + '</div>';
+      html += '<div class="nm-host-meta">' + escapeHtml(meta.join('  Â·  ')) + '</div>';
       if (Array.isArray(h.ports) && h.ports.length) {
         html += '<div class="nm-host-ports">';
         h.ports.forEach(function (p) {
@@ -3567,7 +3515,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     }
     nmErrorCard.style.display = 'none';
     setNmapStageHint('');
-    nmStage.textContent = 'Validating target and preparing scan…';
+    nmStage.textContent = 'Validating target and preparing scanâ€¦';
     fetch('/api/nmap/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3594,7 +3542,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     if (!nmapScanId) return;
     nmResultsCard.style.display = '';
     nmResultsTitle.textContent = 'Network Security Scan Report';
-    nmResults.innerHTML = '<div class="nm-stage">Generating report…</div>';
+    nmResults.innerHTML = '<div class="nm-stage">Generating reportâ€¦</div>';
     fetch('/api/nmap/report/' + nmapScanId + '?format=txt')
       .then(function (r) {
         if (!r.ok) throw new Error('Report generation failed (' + r.status + ')');
@@ -3825,7 +3773,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   }
 
   function urlDetailRow(k, v) {
-    const val = (v === null || v === undefined || v === '') ? '—' : String(v);
+    const val = (v === null || v === undefined || v === '') ? 'â€”' : String(v);
     return '<div class="url-detail-row"><span class="url-detail-k">' + k + '</span><span class="url-detail-v">' + escapeHtml(val) + '</span></div>';
   }
   function escapeHtml(s) {
@@ -3836,7 +3784,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   function renderUrlResult(r) {
     if (!r) return;
-    if (urlTargetEl) urlTargetEl.textContent = r.display_url || r.url || '—';
+    if (urlTargetEl) urlTargetEl.textContent = r.display_url || r.url || 'â€”';
 
     const score = r.score;
     if (urlScoreEl) {
@@ -3846,8 +3794,8 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       else if (score >= 40) urlScoreEl.classList.add('suspicious');
       else urlScoreEl.classList.add('danger');
     }
-    if (urlRiskLabel) urlRiskLabel.textContent = 'RISK: ' + (r.risk_level_label || r.risk_level || '—');
-    if (urlClassLabel) urlClassLabel.textContent = r.classification_summary || r.classification_label || '—';
+    if (urlRiskLabel) urlRiskLabel.textContent = 'RISK: ' + (r.risk_level_label || r.risk_level || 'â€”');
+    if (urlClassLabel) urlClassLabel.textContent = r.classification_summary || r.classification_label || 'â€”';
 
     if (urlResultSection) urlResultSection.style.display = 'block';
 
@@ -3856,7 +3804,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     if (urlChecksEl) {
       urlChecksEl.innerHTML = checks.map(function (c) {
         const icons = { pass: '&#10003;', fail: '&#10007;', warn: '&#9888;', skip: '&#8212;' };
-        return '<div class="url-check ' + c.status + '"><span class="url-check-icon">' + (icons[c.status] || '&#8212;') + '</span><span>' + escapeHtml(c.name) + (c.detail ? ' — ' + escapeHtml(c.detail) : '') + '</span></div>';
+        return '<div class="url-check ' + c.status + '"><span class="url-check-icon">' + (icons[c.status] || '&#8212;') + '</span><span>' + escapeHtml(c.name) + (c.detail ? ' â€” ' + escapeHtml(c.detail) : '') + '</span></div>';
       }).join('');
     }
     if (urlSummarySection) urlSummarySection.style.display = checks.length ? 'block' : 'none';
@@ -3888,7 +3836,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
         urlDetailRow('Issuer', ssl.issuer),
         urlDetailRow('Subject', ssl.subject),
         urlDetailRow('Expires', ssl.expires),
-        urlDetailRow('Expires In', ssl.expires_in_days != null ? ssl.expires_in_days + ' day(s)' : '—'),
+        urlDetailRow('Expires In', ssl.expires_in_days != null ? ssl.expires_in_days + ' day(s)' : 'â€”'),
         urlDetailRow('TLS Version', ssl.tls_version),
         urlDetailRow('Cipher', ssl.cipher),
         urlDetailRow('Error', ssl.error),
@@ -3923,7 +3871,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
     // Recommendation
     if (urlRecEl) {
-      urlRecEl.textContent = r.recommendation || '—';
+      urlRecEl.textContent = r.recommendation || 'â€”';
       urlRecEl.classList.remove('danger');
       if (r.classification === 'MALICIOUS' || r.classification === 'SUSPICIOUS') urlRecEl.classList.add('danger');
     }
@@ -4061,7 +4009,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
                     : (h.classification === 'SUSPICIOUS') ? 'suspicious' : 'safe';
           const scoreColor = (h.score >= 70) ? '#00ff88' : (h.score >= 40 ? '#ffaa00' : '#ff3333');
           return '<div class="url-history-item" data-scan-id="' + escapeHtml(h.scan_id) + '">'
-            + '<span class="url-history-domain">' + escapeHtml(h.domain || h.url || '—') + '</span>'
+            + '<span class="url-history-domain">' + escapeHtml(h.domain || h.url || 'â€”') + '</span>'
             + '<span class="url-history-meta">Score: <span style="color:' + scoreColor + ';font-weight:700">' + h.score + '</span> &middot; ' + escapeHtml(h.classification_label || h.classification || '') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
             + '</div>';
         }).join('');
@@ -4103,7 +4051,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   loadUrlHistory();
   // ===== DNS LOOKUP CONTROLLER =====
   // Mirrors the URL Analyzer controller above. The DNS HTML, CSS and backend
-  // pipeline already exist — this block wires up the DOM, renders the live
+  // pipeline already exist â€” this block wires up the DOM, renders the live
   // streamed state and the final result, and connects the report / history
   // buttons.
 
@@ -4310,7 +4258,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   function renderDnsResult(r) {
     if (!r) return;
 
-    if (dnsTargetEl) dnsTargetEl.textContent = r.domain_display || r.domain || '—';
+    if (dnsTargetEl) dnsTargetEl.textContent = r.domain_display || r.domain || 'â€”';
     if (dnsQueryTypeEl) dnsQueryTypeEl.textContent = r.record_type || 'ANY';
     if (dnsServerEl) {
       var ds = r.dns_server || {};
@@ -4338,7 +4286,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     if (dnsResolutionEl) dnsResolutionEl.textContent = resolutionText;
 
     var rt = r.response_time_ms;
-    if (dnsResponseTime) dnsResponseTime.textContent = (rt != null) ? (rt + ' ms') : '—';
+    if (dnsResponseTime) dnsResponseTime.textContent = (rt != null) ? (rt + ' ms') : 'â€”';
 
     if (dnsResultSection) dnsResultSection.style.display = 'block';
 
@@ -4539,7 +4487,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
         dnsHistoryEl.innerHTML = data.data.map(function (h) {
           var stColor = (h.status === 'RESOLVED') ? '#00ff88' : '#ffaa00';
           return '<div class="url-history-item" data-lookup-id="' + escapeHtml(h.lookup_id) + '">'
-            + '<span class="url-history-domain">' + escapeHtml(h.domain || '—') + '</span>'
+            + '<span class="url-history-domain">' + escapeHtml(h.domain || 'â€”') + '</span>'
             + '<span class="url-history-meta"><span style="color:' + stColor + ';font-weight:700">' + escapeHtml(h.status || '') + '</span> &middot; ' + escapeHtml(h.query_type || 'ANY') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
             + '</div>';
         }).join('');
@@ -4622,12 +4570,12 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   }, 1500);
 
   // ===================================================================
-  // ===== ZYRA SETTINGS  (additive — self-contained) =====
+  // ===== ZYRA SETTINGS  (additive â€” self-contained) =====
   // ===================================================================
   var ZS_KEY = 'zyra_settings_v1';
   var ZS_CHAT_KEY = 'zyra_chat_sessions_v1';
   var ZS_DEFAULTS = {
-    theme: 'dark', colorScheme: 'black-blue', fontSize: '100', accent: '#ff8800',
+    theme: 'dark', fontSize: '100', accent: '#ff8800',
     voiceEnabled: true, voiceVolume: 80, wakeWord: 'Hey ZYRA',
     saveHistory: true, sidebarOpen: true, sidebarCollapsed: false
   };
@@ -4667,16 +4615,10 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     root.setProperty('--zyra-accent-text', hex);
   }
   function zsApplyTheme() {
-<<<<<<< HEAD
     var light = zs.theme === 'light';
     document.body.classList.toggle('zyra-light', light);
     // Drive the existing Three.js neural core palette (orange dark / blue-cyan light).
     if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }
-=======
-    var isLight = zs.theme === 'light';
-    document.body.classList.toggle('zyra-light', isLight);
-    document.body.dispatchEvent(new CustomEvent('zyra-theme-change', { detail: { theme: isLight ? 'light' : 'dark' }));
->>>>>>> a29be3dc60710d4ce21fdc93a70f084846fa1784
   }
   function zsApplyFontSize() { document.body.style.zoom = (parseInt(zs.fontSize,10) / 100).toString(); }
 
@@ -4699,29 +4641,13 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   // ---- Bind controls ----
   var zsThemeSel = document.getElementById('zs-theme');
-  var zsColorSchemeSel = document.getElementById('zs-color-scheme');
   var zsFontSel = document.getElementById('zs-fontsize');
   var zsVoiceToggle = document.getElementById('zs-voice-toggle');
   var zsVoiceVol = document.getElementById('zs-voice-volume');
   var zsVoiceVolVal = document.getElementById('zs-voice-volume-val');
   var zsWake = document.getElementById('zs-wakeword');
   var zsSaveHistToggle = document.getElementById('zs-savehistory-toggle');
-  function zsThemeChanged() { zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); }
-  if (zsThemeSel) {
-    zsThemeSel.addEventListener('change', zsThemeChanged);
-    zsThemeSel.addEventListener('input', zsThemeChanged);
-  }
-  function zsColorSchemeChanged() { zs.colorScheme = zsColorSchemeSel.value; zsApplyTheme(); zsSave(); }
-  if (zsColorSchemeSel) {
-    zsColorSchemeSel.addEventListener('change', zsColorSchemeChanged);
-    zsColorSchemeSel.addEventListener('input', zsColorSchemeChanged);
-  }
-  // Keep programmatic selector changes in sync as well as normal user changes.
-  // This also supports automation and restores the core palette immediately.
-  setInterval(function(){
-    if (zsThemeSel && zsThemeSel.value !== zs.theme) zsThemeChanged();
-    if (zsColorSchemeSel && zsColorSchemeSel.value !== (zs.colorScheme || 'black-blue')) zsColorSchemeChanged();
-  }, 100);
+  if (zsThemeSel) zsThemeSel.addEventListener('change', function(){ zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); });
   if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
   if (zsVoiceToggle) zsVoiceToggle.addEventListener('click', function(){ zs.voiceEnabled = !zs.voiceEnabled; zsApplyVoiceToggle(); zsSave(); });
   function zsApplyVoiceToggle() { if (!zsVoiceToggle) return; zsVoiceToggle.classList.toggle('on', zs.voiceEnabled); zsVoiceToggle.setAttribute('aria-checked', zs.voiceEnabled ? 'true' : 'false'); }
@@ -4744,7 +4670,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   function zsSyncControls() {
     if (zsThemeSel) zsThemeSel.value = zs.theme;
-    if (zsColorSchemeSel) zsColorSchemeSel.value = zs.colorScheme || 'black-blue';
     if (zsFontSel) zsFontSel.value = String(zs.fontSize);
     if (zsVoiceVol) { zsVoiceVol.value = zs.voiceVolume; if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; }
     if (zsWake) zsWake.value = zs.wakeWord;
@@ -4773,7 +4698,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   function zsSmartTitle(text) {
     var raw = String(text || '').toLowerCase().replace(/[^a-z0-9.\s-]/g, ' ').replace(/\s+/g, ' ').trim();
     var has = function(re){ return re.test(raw); };
-    // Intent rules → canonical short names
+    // Intent rules â†’ canonical short names
     if (has(/\b(scan|scanning)\b/) && has(/\b(network|net|subnet|lan|wifi|wi-fi)\b/)) return 'Network Scan';
     if (has(/\b(nmap|port scanning|open ports?)\b/)) return 'Port Scan';
     if ((has(/\b(url|website|site|link|domain)\b/) || has(/\b[a-z0-9-]+\.(com|net|org|io|edu|gov|co|in|dev|ai|xyz|info|biz|online)\b/)) && has(/\b(safe|safety|secure|security|check|malicious|phish|reputation|analyze|analysis|scam|trust)\b/)) return 'URL Security Check';
@@ -4858,10 +4783,10 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     item.className = 'zsb-item' + (s.id === zsActiveSessionId ? ' active' : '');
     item.setAttribute('data-sid', s.id);
     item.title = s.title || 'Untitled chat';
-    var ico = document.createElement('span'); ico.className = 'zi'; ico.textContent = '💬';
+    var ico = document.createElement('span'); ico.className = 'zi'; ico.textContent = 'ðŸ’¬';
     var t = document.createElement('span'); t.className = 'zt'; t.textContent = s.title || 'Untitled chat';
     var kebab = document.createElement('button');
-    kebab.className = 'zsb-kebab zsb-hide-collapsed'; kebab.textContent = '⋮';
+    kebab.className = 'zsb-kebab zsb-hide-collapsed'; kebab.textContent = 'â‹®';
     kebab.title = 'Chat options';
     kebab.setAttribute('aria-label', 'Chat options');
     kebab.addEventListener('click', function(e){ e.stopPropagation(); zsOpenMenu(s, kebab); });
@@ -4894,11 +4819,11 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     zsMenu = document.createElement('div'); zsMenu.className = 'zsb-menu';
     var renameBtn = document.createElement('button');
     renameBtn.className = 'zsb-menu-btn';
-    renameBtn.innerHTML = '✏️ <span>Rename</span>';
+    renameBtn.innerHTML = 'âœï¸ <span>Rename</span>';
     renameBtn.addEventListener('click', function(){ zsCloseMenu(); zsStartRename(s.id); });
     var delBtn = document.createElement('button');
     delBtn.className = 'zsb-menu-btn danger';
-    delBtn.innerHTML = '🗑️ <span>Delete</span>';
+    delBtn.innerHTML = 'ðŸ—‘ï¸ <span>Delete</span>';
     // Two-step confirmation so a chat can never be deleted accidentally.
     delBtn.addEventListener('click', function(){
       zsMenu.innerHTML = '';
@@ -4907,11 +4832,11 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       warn.textContent = 'Delete this chat permanently?';
       var yes = document.createElement('button');
       yes.className = 'zsb-menu-btn danger zsb-menu-confirm';
-      yes.innerHTML = '🗑️ <span>Yes, delete</span>';
+      yes.innerHTML = 'ðŸ—‘ï¸ <span>Yes, delete</span>';
       yes.addEventListener('click', function(){ zsCloseMenu(); zsDeleteSession(s.id); });
       var no = document.createElement('button');
       no.className = 'zsb-menu-btn';
-      no.innerHTML = '↩️ <span>Cancel</span>';
+      no.innerHTML = 'â†©ï¸ <span>Cancel</span>';
       no.addEventListener('click', function(){ zsCloseMenu(); });
       zsMenu.appendChild(warn); zsMenu.appendChild(yes); zsMenu.appendChild(no);
     });
@@ -4981,7 +4906,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     var collapsed = zs.sidebarCollapsed === true;
     if (zsSidebar) zsSidebar.classList.toggle('collapsed', collapsed);
     if (zsCollapseBtn) {
-      zsCollapseBtn.textContent = collapsed ? '›' : '‹';
+      zsCollapseBtn.textContent = collapsed ? 'â€º' : 'â€¹';
       zsCollapseBtn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
     }
   }
@@ -5060,3 +4985,4 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 </script>
 </body>
 </html>
+
