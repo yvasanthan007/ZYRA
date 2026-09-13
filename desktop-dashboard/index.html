@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1298,6 +1298,817 @@ canvas {
   #bottom-controls { padding: 12px 16px 16px; }
   #chat-messages { max-height: 140px; }
 }
+
+/* =====================================================================
+   ZYRA SETTINGS  (additive only — does not alter any existing rule)
+   ===================================================================== */
+
+/* Settings gear: pinned to the very bottom of the left side. */
+#settings-dock {
+  position: fixed;
+  left: 28px;
+  bottom: 28px;
+  z-index: 40;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+#settings-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 136, 68, 0.12);
+  border: 1px solid rgba(255, 136, 68, 0.35);
+  color: #ffaa55;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+/* The glowing pulse is drawn on a pseudo-element so the button's own hit-box
+   stays static — a scale() animation on the button would make it perpetually
+   "unstable" for pointer automation. */
+#settings-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 0 rgba(255, 136, 68, 0);
+  animation: pulseLogoGlow 3s infinite ease-in-out;
+}
+@keyframes pulseLogoGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 136, 68, 0.25); }
+  50% { box-shadow: 0 0 18px rgba(255, 136, 68, 0.85); }
+}
+#settings-btn:hover {
+  background: rgba(255, 136, 68, 0.25);
+  border-color: rgba(255, 136, 68, 0.6);
+  color: #ffdd99;
+  box-shadow: 0 0 18px rgba(255, 136, 68, 0.35);
+  transform: translateY(-2px);
+}
+#settings-btn {
+  position: relative;
+}
+#settings-btn:focus-visible {
+  outline: 2px solid rgba(255, 170, 85, 0.8);
+  outline-offset: 3px;
+}
+
+/* Subtle overlay — the dashboard stays visible behind it. */
+#settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(8, 8, 18, 0.55);
+  backdrop-filter: blur(3px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+#settings-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+
+/* Centered settings panel */
+#settings-panel {
+  width: 100%;
+  max-width: 720px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(12, 12, 24, 0.94);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 40px rgba(255, 136, 68, 0.15), 0 20px 60px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  color: #ffaa55;
+  transform: translateY(10px) scale(0.985);
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+#settings-overlay.open #settings-panel {
+  transform: translateY(0) scale(1);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+  background: linear-gradient(180deg, rgba(255, 136, 68, 0.08) 0%, transparent 100%);
+  flex: 0 0 auto;
+}
+.settings-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #ffaa55;
+  text-transform: uppercase;
+}
+.settings-header-logo {
+  font-size: 17px;
+  color: #ff8844;
+  text-shadow: 0 0 10px rgba(255, 136, 68, 0.7);
+}
+#settings-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 136, 68, 0.1);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  color: #ffaa55;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+#settings-close:hover {
+  background: rgba(255, 136, 68, 0.25);
+  color: #ffdd99;
+  box-shadow: 0 0 14px rgba(255, 136, 68, 0.3);
+}
+
+.settings-body {
+  padding: 18px 20px 24px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 136, 68, 0.35) transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.settings-body::-webkit-scrollbar { width: 5px; }
+.settings-body::-webkit-scrollbar-track { background: transparent; }
+.settings-body::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.35); border-radius: 3px; }
+
+.settings-section {
+  background: rgba(255, 136, 68, 0.05);
+  border: 1px solid rgba(255, 136, 68, 0.16);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.settings-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffaa55;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 136, 68, 0.12);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 0;
+  min-height: 38px;
+}
+.settings-row + .settings-row {
+  border-top: 1px solid rgba(255, 136, 68, 0.08);
+}
+.settings-label {
+  font-size: 13px;
+  color: #ffcc88;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.settings-label small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 136, 68, 0.55);
+  margin-top: 3px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.settings-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* Theme choice buttons */
+.settings-theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(8, 8, 18, 0.6);
+  border: 1px solid rgba(255, 136, 68, 0.25);
+  border-radius: 10px;
+  color: #ffcc88;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s ease;
+}
+.theme-card:hover {
+  border-color: rgba(255, 136, 68, 0.55);
+  background: rgba(255, 136, 68, 0.12);
+}
+.theme-card.active {
+  border-color: #ff8844;
+  background: rgba(255, 136, 68, 0.18);
+  color: #ffdd99;
+  box-shadow: 0 0 14px rgba(255, 136, 68, 0.25);
+}
+.theme-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex: 0 0 auto;
+}
+.theme-swatch.dark { background: linear-gradient(135deg, #080812 55%, #ff8844 55%); }
+.theme-swatch.light { background: linear-gradient(135deg, #ffffff 55%, #2f6fed 55%); }
+
+/* Range sliders */
+input[type="range"].settings-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 150px;
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255, 136, 68, 0.2);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].settings-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ff8844;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 10px rgba(255, 136, 68, 0.6);
+  cursor: pointer;
+}
+input[type="range"].settings-range::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: #ff8844;
+  box-shadow: 0 0 10px rgba(255, 136, 68, 0.6);
+  cursor: pointer;
+}
+.settings-value {
+  min-width: 46px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffaa55;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toggle switch */
+.settings-toggle {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  border-radius: 13px;
+  background: rgba(255, 136, 68, 0.15);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.25s ease;
+  flex: 0 0 auto;
+}
+.settings-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 136, 68, 0.65);
+  transition: all 0.25s ease;
+}
+.settings-toggle.on {
+  background: rgba(255, 136, 68, 0.35);
+  border-color: rgba(255, 136, 68, 0.7);
+  box-shadow: 0 0 12px rgba(255, 136, 68, 0.3);
+}
+.settings-toggle.on::after {
+  left: 24px;
+  background: #ffbb66;
+  box-shadow: 0 0 8px rgba(255, 187, 102, 0.8);
+}
+
+/* Inputs / selects / color */
+.settings-input,
+.settings-select {
+  padding: 7px 12px;
+  background: rgba(8, 8, 18, 0.7);
+  border: 1px solid rgba(255, 136, 68, 0.25);
+  border-radius: 8px;
+  color: #ffcc88;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.25s ease;
+}
+.settings-input { width: 170px; }
+.settings-input:focus,
+.settings-select:focus {
+  border-color: rgba(255, 136, 68, 0.6);
+  box-shadow: 0 0 14px rgba(255, 136, 68, 0.15);
+}
+.settings-input::placeholder { color: rgba(255, 136, 68, 0.35); }
+.settings-select option { background: #0c0c18; color: #ffcc88; }
+input[type="color"].settings-color {
+  width: 42px;
+  height: 30px;
+  padding: 2px;
+  background: rgba(8, 8, 18, 0.7);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Action buttons */
+.settings-action-btn {
+  padding: 8px 14px;
+  background: rgba(255, 136, 68, 0.12);
+  border: 1px solid rgba(255, 136, 68, 0.35);
+  border-radius: 8px;
+  color: #ffaa55;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.settings-action-btn:hover {
+  background: rgba(255, 136, 68, 0.24);
+  border-color: rgba(255, 136, 68, 0.6);
+  color: #ffdd99;
+  box-shadow: 0 0 14px rgba(255, 136, 68, 0.2);
+}
+.settings-action-btn.danger {
+  background: rgba(255, 68, 68, 0.12);
+  border-color: rgba(255, 68, 68, 0.4);
+  color: #ff8888;
+}
+.settings-action-btn.danger:hover {
+  background: rgba(255, 68, 68, 0.24);
+  border-color: rgba(255, 68, 68, 0.7);
+  color: #ffbb;
+  box-shadow: 0 0 14px rgba(255, 68, 68, 0.25);
+}
+.settings-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* Privacy info text */
+.settings-info {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 204, 136, 0.75);
+  background: rgba(8, 8, 18, 0.5);
+  border: 1px solid rgba(255, 136, 68, 0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.settings-info.hidden { display: none; }
+.settings-info ul { margin: 6px 0 0 16px; }
+
+/* Chat history sidebar (toggleable, off by default) */
+#chat-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 268px;
+  z-index: 30;
+  background: rgba(10, 10, 20, 0.9);
+  border-right: 1px solid rgba(255, 136, 68, 0.2);
+  backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  pointer-events: auto;
+}
+#chat-sidebar.open { transform: translateX(0); }
+#chat-sidebar .cs-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 136, 68, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+#chat-sidebar .cs-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffaa55;
+}
+#chat-sidebar .cs-header-actions { display: flex; gap: 8px; }
+#chat-sidebar .cs-new-btn,
+#chat-sidebar .cs-close-btn {
+  background: rgba(255, 136, 68, 0.12);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  border-radius: 7px;
+  color: #ffaa55;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 9px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+#chat-sidebar .cs-close-btn { padding: 5px 8px; font-size: 12px; }
+#chat-sidebar .cs-new-btn:hover,
+#chat-sidebar .cs-close-btn:hover {
+  background: rgba(255, 136, 68, 0.25);
+  color: #ffdd99;
+}
+#chat-sidebar .cs-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 136, 68, 0.3) transparent;
+}
+#chat-sidebar .cs-list::-webkit-scrollbar { width: 4px; }
+#chat-sidebar .cs-list::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.3); border-radius: 2px; }
+.cs-item {
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: rgba(255, 136, 68, 0.06);
+  border: 1px solid rgba(255, 136, 68, 0.14);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.cs-item:hover {
+  background: rgba(255, 136, 68, 0.16);
+  border-color: rgba(255, 136, 68, 0.4);
+}
+.cs-item.active {
+  background: rgba(255, 136, 68, 0.2);
+  border-color: #ff8844;
+}
+.cs-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffcc88;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cs-item-meta {
+  font-size: 10px;
+  color: rgba(255, 136, 68, 0.55);
+  margin-top: 4px;
+}
+.cs-empty {
+  font-size: 11.5px;
+  color: rgba(255, 136, 68, 0.5);
+  text-align: center;
+  padding: 18px 10px;
+}
+
+/* Toast confirming a settings action */
+#settings-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translate(-50%, 16px);
+  z-index: 1000;
+  padding: 10px 18px;
+  background: rgba(12, 12, 24, 0.95);
+  border: 1px solid rgba(255, 136, 68, 0.4);
+  border-radius: 10px;
+  color: #ffcc88;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 0 22px rgba(255, 136, 68, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+#settings-toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 768px) {
+  #settings-dock { left: 16px; bottom: 16px; }
+  #settings-panel { max-height: 90vh; }
+  .settings-theme-grid { grid-template-columns: 1fr; }
+  .settings-input { width: 130px; }
+  input[type="range"].settings-range { width: 110px; }
+}
+
+/* =====================================================================
+   LIGHT THEME  — Blue & White.
+   Scoped to body.theme-light, so the default (dark / black & orange)
+   ZYRA look is completely untouched when the class is absent.
+   ===================================================================== */
+body.theme-light {
+  background: #f4f7fd;
+  color: #2f6fed;
+  cursor: crosshair;
+}
+body.theme-light #settings-overlay { background: rgba(20, 40, 90, 0.35); }
+body.theme-light #settings-panel {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(47, 111, 237, 0.3);
+  box-shadow: 0 0 40px rgba(47, 111, 237, 0.15), 0 20px 60px rgba(20, 40, 90, 0.25);
+  color: #2f6fed;
+}
+body.theme-light .settings-header {
+  border-bottom-color: rgba(47, 111, 237, 0.2);
+  background: linear-gradient(180deg, rgba(47, 111, 237, 0.08) 0%, transparent 100%);
+}
+body.theme-light .settings-header-title { color: #2f6fed; }
+body.theme-light .settings-header-logo { color: #2f6fed; text-shadow: 0 0 10px rgba(47, 111, 237, 0.5); }
+body.theme-light #settings-close {
+  background: rgba(47, 111, 237, 0.08);
+  border-color: rgba(47, 111, 237, 0.3);
+  color: #2f6fed;
+}
+body.theme-light #settings-close:hover { background: rgba(47, 111, 237, 0.2); color: #1b4bb8; }
+body.theme-light .settings-section {
+  background: rgba(47, 111, 237, 0.04);
+  border-color: rgba(47, 111, 237, 0.18);
+}
+body.theme-light .settings-section-title {
+  color: #2f6fed;
+  border-bottom-color: rgba(47, 111, 237, 0.15);
+}
+body.theme-light .settings-row + .settings-row { border-top-color: rgba(47, 111, 237, 0.1); }
+body.theme-light .settings-label { color: #24487f; }
+body.theme-light .settings-label small { color: rgba(47, 111, 237, 0.65); }
+body.theme-light .theme-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(47, 111, 237, 0.28);
+  color: #24487f;
+}
+body.theme-light .theme-card:hover { background: rgba(47, 111, 237, 0.1); border-color: rgba(47, 111, 237, 0.6); }
+body.theme-light .theme-card.active {
+  border-color: #2f6fed;
+  background: rgba(47, 111, 237, 0.14);
+  color: #1b4bb8;
+  box-shadow: 0 0 14px rgba(47, 111, 237, 0.25);
+}
+body.theme-light input[type="range"].settings-range { background: rgba(47, 111, 237, 0.22); }
+body.theme-light input[type="range"].settings-range::-webkit-slider-thumb {
+  background: #2f6fed;
+  box-shadow: 0 0 10px rgba(47, 111, 237, 0.55);
+}
+body.theme-light input[type="range"].settings-range::-moz-range-thumb {
+  background: #2f6fed;
+  box-shadow: 0 0 10px rgba(47, 111, 237, 0.55);
+}
+body.theme-light .settings-value { color: #2f6fed; }
+body.theme-light .settings-toggle {
+  background: rgba(47, 111, 237, 0.15);
+  border-color: rgba(47, 111, 237, 0.35);
+}
+body.theme-light .settings-toggle::after { background: rgba(47, 111, 237, 0.6); }
+body.theme-light .settings-toggle.on {
+  background: rgba(47, 111, 237, 0.35);
+  border-color: rgba(47, 111, 237, 0.75);
+  box-shadow: 0 0 12px rgba(47, 111, 237, 0.3);
+}
+body.theme-light .settings-toggle.on::after { background: #4d86ff; box-shadow: 0 0 8px rgba(77, 134, 255, 0.8); }
+body.theme-light .settings-input,
+body.theme-light .settings-select {
+  background: #ffffff;
+  border-color: rgba(47, 111, 237, 0.3);
+  color: #24487f;
+}
+body.theme-light .settings-input::placeholder { color: rgba(47, 111, 237, 0.4); }
+body.theme-light .settings-select option { background: #ffffff; color: #24487f; }
+body.theme-light input[type="color"].settings-color {
+  background: #ffffff;
+  border-color: rgba(47, 111, 237, 0.3);
+}
+body.theme-light .settings-action-btn {
+  background: rgba(47, 111, 237, 0.1);
+  border-color: rgba(47, 111, 237, 0.35);
+  color: #2f6fed;
+}
+body.theme-light .settings-action-btn:hover {
+  background: rgba(47, 111, 237, 0.2);
+  border-color: rgba(47, 111, 237, 0.65);
+  color: #1b4bb8;
+}
+body.theme-light .settings-action-btn.danger {
+  background: rgba(214, 45, 45, 0.1);
+  border-color: rgba(214, 45, 45, 0.4);
+  color: #c62828;
+}
+body.theme-light .settings-action-btn.danger:hover { background: rgba(214, 45, 45, 0.2); color: #a51f1f; }
+body.theme-light .settings-info {
+  background: rgba(47, 111, 237, 0.05);
+  border-color: rgba(47, 111, 237, 0.15);
+  color: #3f5f95;
+}
+body.theme-light #settings-btn {
+  background: rgba(47, 111, 237, 0.1);
+  border-color: rgba(47, 111, 237, 0.35);
+  color: #2f6fed;
+}
+body.theme-light #settings-btn::before {
+  animation: pulseLogoLight 3s infinite ease-in-out;
+}
+body.theme-light #settings-btn:hover {
+  background: rgba(47, 111, 237, 0.22);
+  border-color: rgba(47, 111, 237, 0.65);
+  color: #1b4bb8;
+  box-shadow: 0 0 18px rgba(47, 111, 237, 0.3);
+}
+@keyframes pulseLogoLight {
+  0%, 100% { box-shadow: 0 0 6px rgba(47, 111, 237, 0.25); }
+  50% { box-shadow: 0 0 18px rgba(47, 111, 237, 0.8); }
+}
+
+/* Light theme — dashboard surfaces (top bar, chat, cards, panels) */
+body.theme-light #top-bar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.35) 70%, transparent 100%);
+}
+body.theme-light #bottom-controls {
+  background: linear-gradient(0deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.35) 70%, transparent 100%);
+}
+body.theme-light .top-logo { color: #2f6fed; text-shadow: 0 0 10px rgba(47, 111, 237, 0.5); }
+body.theme-light .top-title { color: #24487f; }
+body.theme-light .top-subtitle { color: rgba(47, 111, 237, 0.7); }
+body.theme-light .top-btn {
+  background: rgba(47, 111, 237, 0.09);
+  border-color: rgba(47, 111, 237, 0.3);
+  color: #2f6fed;
+}
+body.theme-light .top-btn:hover {
+  background: rgba(47, 111, 237, 0.2);
+  border-color: rgba(47, 111, 237, 0.6);
+  color: #1b4bb8;
+  box-shadow: 0 0 16px rgba(47, 111, 237, 0.2);
+}
+body.theme-light #chat-messages {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(47, 111, 237, 0.2);
+  scrollbar-color: rgba(47, 111, 237, 0.3) transparent;
+}
+body.theme-light #chat-messages::-webkit-scrollbar-thumb { background: rgba(47, 111, 237, 0.3); }
+body.theme-light .msg.user {
+  background: rgba(47, 111, 237, 0.12);
+  border-color: rgba(47, 111, 237, 0.25);
+  color: #24487f;
+}
+body.theme-light .msg.zyra {
+  background: rgba(47, 111, 237, 0.05);
+  border-color: rgba(47, 111, 237, 0.12);
+  color: #2f6fed;
+}
+body.theme-light .msg.zyra .zyra-label { color: #2f6fed; }
+body.theme-light .msg.system {
+  background: rgba(214, 45, 45, 0.07);
+  border-color: rgba(214, 45, 45, 0.18);
+  color: #c62828;
+}
+body.theme-light #chat-input {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(47, 111, 237, 0.28);
+  color: #24487f;
+}
+body.theme-light #chat-input:focus {
+  border-color: rgba(47, 111, 237, 0.65);
+  box-shadow: 0 0 20px rgba(47, 111, 237, 0.12);
+}
+body.theme-light #chat-input::placeholder { color: rgba(47, 111, 237, 0.45); }
+body.theme-light #chat-send {
+  background: rgba(47, 111, 237, 0.12);
+  border-color: rgba(47, 111, 237, 0.35);
+  color: #2f6fed;
+}
+body.theme-light #chat-send:hover {
+  background: rgba(47, 111, 237, 0.25);
+  color: #1b4bb8;
+  box-shadow: 0 0 16px rgba(47, 111, 237, 0.25);
+}
+body.theme-light .system-monitor-card,
+body.theme-light .url-analyzer-card,
+body.theme-light .nmap-scanner-card {
+  background: rgba(255, 255, 255, 0.93);
+  border-color: rgba(47, 111, 237, 0.25);
+  box-shadow: 0 0 30px rgba(47, 111, 237, 0.12), 0 12px 40px rgba(20, 40, 90, 0.15);
+}
+body.theme-light .scan-toast {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(47, 111, 237, 0.3);
+}
+body.theme-light #chat-sidebar {
+  background: rgba(255, 255, 255, 0.94);
+  border-right-color: rgba(47, 111, 237, 0.2);
+}
+body.theme-light #chat-sidebar .cs-title { color: #2f6fed; }
+body.theme-light #chat-sidebar .cs-new-btn,
+body.theme-light #chat-sidebar .cs-close-btn {
+  background: rgba(47, 111, 237, 0.1);
+  border-color: rgba(47, 111, 237, 0.3);
+  color: #2f6fed;
+}
+body.theme-light .cs-item {
+  background: rgba(47, 111, 237, 0.05);
+  border-color: rgba(47, 111, 237, 0.15);
+}
+body.theme-light .cs-item:hover { background: rgba(47, 111, 237, 0.14); border-color: rgba(47, 111, 237, 0.45); }
+body.theme-light .cs-item.active { background: rgba(47, 111, 237, 0.18); border-color: #2f6fed; }
+body.theme-light .cs-item-title { color: #24487f; }
+body.theme-light .cs-item-meta { color: rgba(47, 111, 237, 0.6); }
+body.theme-light .cs-empty { color: rgba(47, 111, 237, 0.55); }
+body.theme-light #settings-toast {
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(47, 111, 237, 0.4);
+  color: #24487f;
+  box-shadow: 0 0 22px rgba(47, 111, 237, 0.18);
+}
+
+/* Accent colour override — driven by the Appearance > Accent Color setting.
+   Applied only when the user picks a custom accent, via --zyra-accent. */
+body[data-accent-custom="1"] #settings-btn,
+body[data-accent-custom="1"] .top-btn,
+body[data-accent-custom="1"] .settings-action-btn {
+  border-color: var(--zyra-accent-border);
+  color: var(--zyra-accent);
+}
+body[data-accent-custom="1"] #settings-btn:hover,
+body[data-accent-custom="1"] .top-btn:hover,
+body[data-accent-custom="1"] .settings-action-btn:hover {
+  background: var(--zyra-accent-soft);
+  border-color: var(--zyra-accent);
+}
+body[data-accent-custom="1"] .settings-section-title,
+body[data-accent-custom="1"] .settings-value,
+body[data-accent-custom="1"] .top-title {
+  color: var(--zyra-accent);
+}
+body[data-accent-custom="1"] .settings-toggle.on {
+  background: var(--zyra-accent-soft);
+  border-color: var(--zyra-accent);
+}
+body[data-accent-custom="1"] .settings-toggle.on::after { background: var(--zyra-accent); }
+body[data-accent-custom="1"] input[type="range"].settings-range::-webkit-slider-thumb { background: var(--zyra-accent); }
+body[data-accent-custom="1"] input[type="range"].settings-range::-moz-range-thumb { background: var(--zyra-accent); }
+body[data-accent-custom="1"] .theme-card.active {
+  border-color: var(--zyra-accent);
+  color: var(--zyra-accent);
+}
+
+/* Font-size setting — scales only the ZYRA chat + panel text, via a
+   class on <body>, so default appearance is byte-for-byte unchanged. */
+body.font-sm .msg { font-size: 12px; }
+body.font-md .msg { font-size: 13px; }
+body.font-lg .msg { font-size: 15px; }
+body.font-xl .msg { font-size: 17px; }
+body.font-sm .settings-label { font-size: 12px; }
+body.font-lg .settings-label { font-size: 14px; }
+body.font-xl .settings-label { font-size: 15px; }
+body.font-sm .cs-item-title { font-size: 11px; }
+body.font-lg .cs-item-title { font-size: 13px; }
+body.font-xl .cs-item-title { font-size: 14px; }
 </style>
 </head>
 <body>
@@ -1749,17 +2560,179 @@ canvas {
       </div>
     </div>
  </div>
-  <!-- Bottom Controls -->
-  <div id="bottom-controls">
-    <div id="chat-container">
-      <div id="chat-messages"></div>
-      <div id="chat-input-row">
-        <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
-        <button id="chat-send" title="Send message">➤</button>
+    <!-- Bottom Controls -->
+   <div id="bottom-controls">
+      <div id="chat-container">
+        <div id="chat-messages"></div>
+        <div id="chat-input-row">
+          <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
+          <button id="chat-send" title="Send message">➤</button>
+        </div>
       </div>
-    </div>
+   </div>
+
+    <!-- ===== SETTINGS GEAR — bottom-most position on the left side ===== -->
+   <div id="settings-dock">
+      <button id="settings-btn" type="button" title="Settings" aria-label="Open Settings" aria-haspopup="dialog" aria-expanded="false">⚙️</button>
+   </div>
   </div>
-</div>
+
+  <!-- ===== CHAT HISTORY SIDEBAR (hidden until enabled in Settings > Chat) ===== -->
+  <div id="chat-sidebar" aria-label="Chat History">
+   <div class="cs-header">
+      <span class="cs-title">Chat History</span>
+      <span class="cs-header-actions">
+        <button id="cs-new-chat" class="cs-new-btn" type="button" title="Start a new chat">+ New</button>
+        <button id="cs-close" class="cs-close-btn" type="button" title="Close history">✕</button>
+      </span>
+   </div>
+   <div class="cs-list" id="cs-list">
+      <div class="cs-empty">No saved conversations yet.</div>
+   </div>
+  </div>
+
+  <!-- ===== CENTERED SETTINGS PANEL ===== -->
+  <div id="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-heading">
+   <div id="settings-panel">
+      <div class="settings-header">
+        <span class="settings-header-title" id="settings-heading">
+          <span class="settings-header-logo">⚙️</span> Settings
+        </span>
+        <button id="settings-close" type="button" title="Close Settings" aria-label="Close Settings">✕</button>
+      </div>
+
+      <div class="settings-body">
+
+        <!-- 1. THEME -->
+        <div class="settings-section">
+          <div class="settings-section-title">🎨 Theme</div>
+          <div class="settings-theme-grid">
+            <button class="theme-card" type="button" data-theme-value="dark">
+              <span class="theme-swatch dark"></span>
+              <span>Dark — Black &amp; Orange</span>
+            </button>
+            <button class="theme-card" type="button" data-theme-value="light">
+              <span class="theme-swatch light"></span>
+              <span>Light — Blue &amp; White</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. APPEARANCE -->
+        <div class="settings-section">
+          <div class="settings-section-title">🖥️ Appearance</div>
+          <div class="settings-row">
+            <span class="settings-label">Font Size</span>
+            <span class="settings-control">
+              <input id="set-font-size" class="settings-range" type="range" min="0" max="3" step="1" value="1" aria-label="Font Size">
+              <span class="settings-value" id="set-font-size-val">Medium</span>
+            </span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Accent Color</span>
+            <span class="settings-control">
+              <input id="set-accent" class="settings-color" type="color" value="#ff8844" aria-label="Accent Color">
+              <button id="set-accent-reset" class="settings-action-btn" type="button">Reset</button>
+            </span>
+          </div>
+        </div>
+
+        <!-- 3. VOICE -->
+        <div class="settings-section">
+          <div class="settings-section-title">🎙️ Voice</div>
+          <div class="settings-row">
+            <span class="settings-label">Voice Assistant</span>
+            <span class="settings-control">
+              <button id="set-voice-toggle" class="settings-toggle" type="button" role="switch" aria-checked="true" aria-label="Voice Assistant"></button>
+            </span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Voice Volume</span>
+            <span class="settings-control">
+              <input id="set-voice-volume" class="settings-range" type="range" min="0" max="100" step="1" value="80" aria-label="Voice Volume">
+              <span class="settings-value" id="set-voice-volume-val">80%</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- 4. AUTHENTICATION -->
+        <div class="settings-section">
+          <div class="settings-section-title">🔐 Authentication</div>
+          <div class="settings-row">
+            <span class="settings-label">Wake Word to Authenticate
+              <small>Say this word to unlock ZYRA by voice.</small>
+            </span>
+            <span class="settings-control">
+              <input id="set-wake-word" class="settings-input" type="text" placeholder="e.g. zyra" autocomplete="off" spellcheck="false" aria-label="Wake Word to Authenticate">
+            </span>
+          </div>
+        </div>
+
+        <!-- 5. CHAT -->
+        <div class="settings-section">
+          <div class="settings-section-title">💬 Chat</div>
+          <div class="settings-row">
+            <span class="settings-label">Save Chat History
+              <small>Keep conversations so they can be reopened later.</small>
+            </span>
+            <span class="settings-control">
+              <button id="set-save-history" class="settings-toggle" type="button" role="switch" aria-checked="true" aria-label="Save Chat History"></button>
+            </span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Chat Sidebar
+              <small>Show the conversation list beside the dashboard.</small>
+            </span>
+            <span class="settings-control">
+              <button id="set-chat-sidebar" class="settings-toggle" type="button" role="switch" aria-checked="false" aria-label="Chat Sidebar"></button>
+            </span>
+          </div>
+        </div>
+
+        <!-- 6. DATA & PRIVACY -->
+        <div class="settings-section">
+          <div class="settings-section-title">🔒 Data &amp; Privacy</div>
+          <div class="settings-row">
+            <span class="settings-label">Manage Chat History</span>
+            <span class="settings-control">
+              <button id="set-manage-history" class="settings-action-btn" type="button">Manage</button>
+            </span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Clear Chat History</span>
+            <span class="settings-control">
+              <button id="set-clear-history" class="settings-action-btn danger" type="button">Clear</button>
+            </span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Clear Stored Data</span>
+            <span class="settings-control">
+              <button id="set-clear-data" class="settings-action-btn danger" type="button">Clear</button>
+            </span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Privacy Information</span>
+            <span class="settings-control">
+              <button id="set-privacy-info-toggle" class="settings-action-btn" type="button">Show</button>
+            </span>
+          </div>
+          <div class="settings-info hidden" id="set-privacy-info">
+            <strong>Your data stays with you.</strong>
+            <ul>
+              <li>Settings and chat history are stored locally in this browser only — never uploaded.</li>
+              <li>Scans, URL analysis and DNS lookups are processed locally by your ZYRA backend.</li>
+              <li>Voice input is only used while the voice assistant is enabled.</li>
+              <li>Use <em>Clear Chat History</em> or <em>Clear Stored Data</em> to erase everything at any time.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+   </div>
+  </div>
+
+  <!-- Action confirmation toast -->
+  <div id="settings-toast" role="status" aria-live="polite"></div>
 
 
 <script>
@@ -2235,6 +3208,10 @@ canvas {
     }
     chatMessages.appendChild(msg);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Settings > Chat: persist the message when "Save Chat History" is on.
+    if (typeof window.__zyraOnMessageLogged === 'function') {
+      window.__zyraOnMessageLogged(text, type);
+    }
   }
 
   // ===== CENTER-TOP SCAN COMPLETION NOTIFICATION =====
@@ -4030,6 +5007,513 @@ canvas {
   setTimeout(function() {
     addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
   }, 1500);
+
+  // =====================================================================
+  // ===== ZYRA SETTINGS MODULE ==========================================
+  // Additive only. Owns the gear icon, the centered settings panel and the
+  // optional chat-history sidebar. It never touches the holographic core,
+  // the scanner/analyzer/monitor panels or the existing chat behaviour.
+  // =====================================================================
+  (function initSettings() {
+    var STORAGE_KEY = 'zyra.settings';
+    var HISTORY_KEY = 'zyra.chatHistory';
+
+    var FONT_SIZES = [
+      { cls: 'font-sm', label: 'Small' },
+      { cls: 'font-md', label: 'Medium' },
+      { cls: 'font-lg', label: 'Large' },
+      { cls: 'font-xl', label: 'Extra Large' }
+    ];
+    var FONT_CLASSES = ['font-sm', 'font-md', 'font-lg', 'font-xl'];
+
+    // Defaults — dark theme (current look), animations always on.
+    var DEFAULTS = {
+      theme: 'dark',
+      fontSize: 1,
+      accent: '#ff8844',
+      accentCustom: false,
+      voiceEnabled: true,
+      voiceVolume: 80,
+      wakeWord: 'zyra',
+      saveChatHistory: true,
+      chatSidebar: false
+    };
+
+    var settings = loadSettings();
+
+    // ---------- persistence ----------
+    function loadSettings() {
+      var out = {};
+      for (var k in DEFAULTS) {
+        if (Object.prototype.hasOwnProperty.call(DEFAULTS, k)) out[k] = DEFAULTS[k];
+      }
+      try {
+        var raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          var saved = JSON.parse(raw);
+          for (var key in saved) {
+            if (Object.prototype.hasOwnProperty.call(saved, key) && key in DEFAULTS) {
+              out[key] = saved[key];
+            }
+          }
+        }
+      } catch (e) { /* storage unavailable — fall back to defaults */ }
+      return out;
+    }
+
+    function saveSettings() {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      } catch (e) { /* storage unavailable */ }
+    }
+
+    // ---------- element handles ----------
+    var btnSettings = document.getElementById('settings-btn');
+    var overlay = document.getElementById('settings-overlay');
+    var btnCloseSettings = document.getElementById('settings-close');
+    var toastEl = document.getElementById('settings-toast');
+
+    var fontRange = document.getElementById('set-font-size');
+    var fontVal = document.getElementById('set-font-size-val');
+    var accentInput = document.getElementById('set-accent');
+    var accentReset = document.getElementById('set-accent-reset');
+
+    var voiceToggle = document.getElementById('set-voice-toggle');
+    var volumeRange = document.getElementById('set-voice-volume');
+    var volumeVal = document.getElementById('set-voice-volume-val');
+
+    var wakeInput = document.getElementById('set-wake-word');
+
+    var saveHistoryToggle = document.getElementById('set-save-history');
+    var sidebarToggle = document.getElementById('set-chat-sidebar');
+
+    var manageHistoryBtn = document.getElementById('set-manage-history');
+    var clearHistoryBtn = document.getElementById('set-clear-history');
+    var clearDataBtn = document.getElementById('set-clear-data');
+    var privacyToggle = document.getElementById('set-privacy-info-toggle');
+    var privacyInfo = document.getElementById('set-privacy-info');
+
+    var sidebar = document.getElementById('chat-sidebar');
+    var csList = document.getElementById('cs-list');
+    var csClose = document.getElementById('cs-close');
+    var csNew = document.getElementById('cs-new-chat');
+
+    var toastTimer = null;
+    function showToast(message) {
+      if (!toastEl) return;
+      toastEl.textContent = message;
+      toastEl.classList.add('visible');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toastEl.classList.remove('visible');
+        toastTimer = null;
+      }, 2600);
+    }
+
+    // ---------- hex helpers for the accent colour ----------
+    function hexToRgb(hex) {
+      var h = String(hex || '').replace('#', '');
+      if (h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+      if (h.length !== 6 || !/^[0-9a-f]{6}$/i.test(h)) return null;
+      return {
+        r: parseInt(h.substring(0, 2), 16),
+        g: parseInt(h.substring(2, 4), 16),
+        b: parseInt(h.substring(4, 6), 16)
+      };
+    }
+
+    var DEFAULT_ACCENT = DEFAULTS.accent.toLowerCase();
+
+    // Custom accent is applied via CSS variables and opt-in data attribute,
+    // so ZYRA's original palette is untouched until the user changes it.
+    function applyAccent() {
+      var body = document.body;
+      var isDefault = String(settings.accent || '').toLowerCase() === DEFAULT_ACCENT;
+      if (isDefault) {
+        body.removeAttribute('data-accent-custom');
+        body.style.removeProperty('--zyra-accent');
+        body.style.removeProperty('--zyra-accent-soft');
+        body.style.removeProperty('--zyra-accent-border');
+        return;
+      }
+      var rgb = hexToRgb(settings.accent);
+      if (!rgb) { body.removeAttribute('data-accent-custom'); return; }
+      body.setAttribute('data-accent-custom', '1');
+      body.style.setProperty('--zyra-accent', settings.accent);
+      body.style.setProperty('--zyra-accent-soft', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.18)');
+      body.style.setProperty('--zyra-accent-border', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.55)');
+    }
+
+    // ---------- apply theme ----------
+    function applyTheme() {
+      document.body.classList.toggle('theme-light', settings.theme === 'light');
+      var cards = document.querySelectorAll('.theme-card');
+      for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.toggle('active', cards[i].getAttribute('data-theme-value') === settings.theme);
+      }
+    }
+
+    // ---------- apply font size ----------
+    function applyFontSize() {
+      var idx = Math.max(0, Math.min(FONT_SIZES.length - 1, Number(settings.fontSize) || 0));
+      var body = document.body;
+      body.classList.remove.apply(body.classList, FONT_CLASSES);
+      body.classList.add(FONT_SIZES[idx].cls);
+      if (fontRange) fontRange.value = String(idx);
+      if (fontVal) fontVal.textContent = FONT_SIZES[idx].label;
+    }
+
+    // ---------- toggle helper ----------
+    function setToggle(el, on) {
+      if (!el) return;
+      el.classList.toggle('on', !!on);
+      el.setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+
+    // ---------- apply voice ----------
+    function applyVoice() {
+      setToggle(voiceToggle, settings.voiceEnabled);
+      if (volumeRange) volumeRange.value = String(settings.voiceVolume);
+      if (volumeVal) volumeVal.textContent = settings.voiceVolume + '%';
+    }
+
+    // ================= CHAT HISTORY =================
+    // Stored as an array of conversations so previous chats can be reopened
+    // from the sidebar, ChatGPT-style.
+    var conversations = [];
+    var activeConvId = null;
+
+    function loadHistory() {
+      try {
+        var raw = window.localStorage.getItem(HISTORY_KEY);
+        conversations = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(conversations)) conversations = [];
+      } catch (e) {
+        conversations = [];
+      }
+      activeConvId = conversations.length ? conversations[0].id : null;
+    }
+
+    function persistHistory() {
+      try {
+        window.localStorage.setItem(HISTORY_KEY, JSON.stringify(conversations));
+      } catch (e) { /* storage unavailable */ }
+    }
+
+    function newConversationId() {
+      return 'c' + Date.now() + Math.floor(Math.random() * 1000);
+    }
+
+    function getActiveConversation(createIfMissing) {
+      for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id === activeConvId) return conversations[i];
+      }
+      if (!createIfMissing) return null;
+      var conv = { id: newConversationId(), title: 'New chat', updated: Date.now(), messages: [] };
+      conversations.unshift(conv);
+      activeConvId = conv.id;
+      return conv;
+    }
+
+    // Called from addMessage() via window.__zyraOnMessageLogged.
+    window.__zyraOnMessageLogged = function (text, type) {
+      if (!settings.saveChatHistory) return;
+      if (type === 'system') return; // connection notices are not conversation content
+      var conv = getActiveConversation(true);
+      if (!conv) return;
+      conv.messages.push({ type: type, text: String(text), time: Date.now() });
+      conv.updated = Date.now();
+      if (type === 'user' && (!conv.title || conv.title === 'New chat')) {
+        var t = String(text).replace(/\s+/g, ' ').trim();
+        conv.title = t.length > 42 ? t.slice(0, 42) + '…' : (t || 'New chat');
+      }
+      // Keep the most recent conversation first, bounded in size.
+      conversations.sort(function (a, b) { return (b.updated || 0) - (a.updated || 0); });
+      if (conversations.length > 60) conversations.length = 60;
+      persistHistory();
+      renderHistory();
+    };
+
+    function formatWhen(ts) {
+      if (!ts) return '';
+      try {
+        return new Date(ts).toLocaleString();
+      } catch (e) { return ''; }
+    }
+
+    function renderHistory() {
+      if (!csList) return;
+      if (!conversations.length) {
+        csList.innerHTML = '<div class="cs-empty">No saved conversations yet.</div>';
+        return;
+      }
+      csList.innerHTML = '';
+      conversations.forEach(function (conv) {
+        var item = document.createElement('div');
+        item.className = 'cs-item' + (conv.id === activeConvId ? ' active' : '');
+        item.setAttribute('data-conv-id', conv.id);
+
+        var title = document.createElement('div');
+        title.className = 'cs-item-title';
+        title.textContent = conv.title || 'New chat';
+
+        var meta = document.createElement('div');
+        meta.className = 'cs-item-meta';
+        meta.textContent = (conv.messages ? conv.messages.length : 0) + ' messages · ' + formatWhen(conv.updated);
+
+        item.appendChild(title);
+        item.appendChild(meta);
+        item.addEventListener('click', function () { openConversation(conv.id); });
+        csList.appendChild(item);
+      });
+    }
+
+    // Re-open a saved conversation in the existing chat feed.
+    function openConversation(convId) {
+      var conv = null;
+      for (var i = 0; i < conversations.length; i++) {
+        if (conversations[i].id === convId) { conv = conversations[i]; break; }
+      }
+      if (!conv) return;
+      activeConvId = conv.id;
+
+      chatMessages.innerHTML = '';
+      (conv.messages || []).forEach(function (m) {
+        var msg = document.createElement('div');
+        msg.className = 'msg ' + m.type;
+        if (m.type === 'zyra') {
+          msg.innerHTML = '<div class="zyra-label">ZYRA</div>' + m.text;
+        } else {
+          msg.textContent = m.text;
+        }
+        chatMessages.appendChild(msg);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      renderHistory();
+    }
+
+    function startNewConversation() {
+      activeConvId = null;
+      chatMessages.innerHTML = '';
+      renderHistory();
+      showToast('Started a new chat');
+    }
+
+    // ---------- apply sidebar visibility ----------
+    function applySidebar() {
+      setToggle(sidebarToggle, settings.chatSidebar);
+      if (sidebar) sidebar.classList.toggle('open', !!settings.chatSidebar);
+      if (settings.chatSidebar) renderHistory();
+    }
+
+    function closeSidebar() {
+      settings.chatSidebar = false;
+      saveSettings();
+      applySidebar();
+    }
+
+    // ================= PANEL OPEN / CLOSE =================
+    function openSettings() {
+      if (!overlay) return;
+      overlay.classList.add('open');
+      if (btnSettings) btnSettings.setAttribute('aria-expanded', 'true');
+      // Refresh controls from the persisted state each time it opens.
+      applyTheme();
+      applyFontSize();
+      applyVoice();
+      applyAccent();
+      applySidebar();
+      if (accentInput) accentInput.value = settings.accent;
+      if (wakeInput) wakeInput.value = settings.wakeWord;
+      setToggle(saveHistoryToggle, settings.saveChatHistory);
+      if (btnCloseSettings) btnCloseSettings.focus();
+    }
+
+    function closeSettings() {
+      if (!overlay) return;
+      overlay.classList.remove('open');
+      if (btnSettings) {
+        btnSettings.setAttribute('aria-expanded', 'false');
+        btnSettings.focus();
+      }
+    }
+
+    if (btnSettings) {
+      btnSettings.addEventListener('click', function () {
+        if (overlay && overlay.classList.contains('open')) closeSettings();
+        else openSettings();
+      });
+    }
+    if (btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettings);
+
+    // Click the dimmed backdrop (not the panel) to close.
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeSettings();
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay && overlay.classList.contains('open')) closeSettings();
+    });
+
+    // ================= THEME =================
+    var themeCards = document.querySelectorAll('.theme-card');
+    for (var tc = 0; tc < themeCards.length; tc++) {
+      themeCards[tc].addEventListener('click', function () {
+        settings.theme = this.getAttribute('data-theme-value') || 'dark';
+        saveSettings();
+        applyTheme();
+        showToast(settings.theme === 'light' ? 'Light theme applied' : 'Dark theme applied');
+      });
+    }
+
+    // ================= APPEARANCE =================
+    if (fontRange) {
+      fontRange.addEventListener('input', function () {
+        settings.fontSize = Number(this.value) || 0;
+        saveSettings();
+        applyFontSize();
+      });
+    }
+    if (accentInput) {
+      accentInput.addEventListener('input', function () {
+        settings.accent = this.value;
+        settings.accentCustom = String(this.value).toLowerCase() !== DEFAULT_ACCENT;
+        saveSettings();
+        applyAccent();
+      });
+    }
+    if (accentReset) {
+      accentReset.addEventListener('click', function () {
+        settings.accent = DEFAULTS.accent;
+        settings.accentCustom = false;
+        saveSettings();
+        if (accentInput) accentInput.value = DEFAULTS.accent;
+        applyAccent();
+        showToast('Accent colour reset');
+      });
+    }
+
+    // ================= VOICE =================
+    if (voiceToggle) {
+      voiceToggle.addEventListener('click', function () {
+        settings.voiceEnabled = !settings.voiceEnabled;
+        saveSettings();
+        applyVoice();
+        showToast('Voice assistant ' + (settings.voiceEnabled ? 'enabled' : 'disabled'));
+      });
+    }
+    if (volumeRange) {
+      volumeRange.addEventListener('input', function () {
+        settings.voiceVolume = Math.max(0, Math.min(100, Number(this.value) || 0));
+        saveSettings();
+        if (volumeVal) volumeVal.textContent = settings.voiceVolume + '%';
+      });
+    }
+
+    // ================= AUTHENTICATION =================
+    if (wakeInput) {
+      wakeInput.addEventListener('change', function () {
+        var v = String(this.value || '').trim();
+        settings.wakeWord = v || DEFAULTS.wakeWord;
+        this.value = settings.wakeWord;
+        saveSettings();
+        showToast('Wake word saved');
+      });
+      wakeInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
+      });
+    }
+
+    // ================= CHAT =================
+    if (saveHistoryToggle) {
+      saveHistoryToggle.addEventListener('click', function () {
+        settings.saveChatHistory = !settings.saveChatHistory;
+        saveSettings();
+        setToggle(saveHistoryToggle, settings.saveChatHistory);
+        showToast('Chat history saving ' + (settings.saveChatHistory ? 'on' : 'off'));
+      });
+    }
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', function () {
+        settings.chatSidebar = !settings.chatSidebar;
+        saveSettings();
+        applySidebar();
+      });
+    }
+    if (csClose) csClose.addEventListener('click', closeSidebar);
+    if (csNew) csNew.addEventListener('click', startNewConversation);
+
+    // ================= DATA & PRIVACY =================
+    if (manageHistoryBtn) {
+      manageHistoryBtn.addEventListener('click', function () {
+        settings.chatSidebar = true;
+        saveSettings();
+        applySidebar();
+        closeSettings();
+      });
+    }
+    if (clearHistoryBtn) {
+      clearHistoryBtn.addEventListener('click', function () {
+        if (!window.confirm('Clear all saved chat history? This cannot be undone.')) return;
+        conversations = [];
+        activeConvId = null;
+        persistHistory();
+        renderHistory();
+        chatMessages.innerHTML = '';
+        showToast('Chat history cleared');
+      });
+    }
+    if (clearDataBtn) {
+      clearDataBtn.addEventListener('click', function () {
+        if (!window.confirm('Clear all stored ZYRA data (settings + chat history)? This cannot be undone.')) return;
+        try {
+          window.localStorage.removeItem(HISTORY_KEY);
+          window.localStorage.removeItem(STORAGE_KEY);
+        } catch (e) { /* storage unavailable */ }
+        conversations = [];
+        activeConvId = null;
+        // Restore factory defaults in-place.
+        for (var k in DEFAULTS) {
+          if (Object.prototype.hasOwnProperty.call(DEFAULTS, k)) settings[k] = DEFAULTS[k];
+        }
+        applyTheme();
+        applyFontSize();
+        applyVoice();
+        applyAccent();
+        applySidebar();
+        if (accentInput) accentInput.value = DEFAULTS.accent;
+        if (wakeInput) wakeInput.value = DEFAULTS.wakeWord;
+        setToggle(saveHistoryToggle, settings.saveChatHistory);
+        if (privacyInfo) privacyInfo.classList.add('hidden');
+        if (privacyToggle) privacyToggle.textContent = 'Show';
+        showToast('All stored data cleared');
+      });
+    }
+    if (privacyToggle && privacyInfo) {
+      privacyToggle.addEventListener('click', function () {
+        var hidden = privacyInfo.classList.toggle('hidden');
+        privacyToggle.textContent = hidden ? 'Show' : 'Hide';
+      });
+    }
+
+    // ================= INITIAL APPLY =================
+    loadHistory();
+    applyTheme();
+    applyFontSize();
+    applyVoice();
+    applyAccent();
+    applySidebar();
+    if (accentInput) accentInput.value = settings.accent;
+    if (wakeInput) wakeInput.value = settings.wakeWord;
+    setToggle(saveHistoryToggle, settings.saveChatHistory);
+    renderHistory();
+
+    // If history was being saved, continue the most recent conversation.
+    if (settings.saveChatHistory && conversations.length) {
+      openConversation(conversations[0].id);
+    }
+  })();
 })();
 </script>
 </body>
