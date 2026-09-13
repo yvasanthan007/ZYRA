@@ -1764,6 +1764,36 @@ canvas {
 
 <script>
 (function() {
+  // ===== BACKEND CONNECTION BASE =====
+  // When this dashboard is served by the ZYRA FastAPI backend
+  // (http://127.0.0.1:8080) every request stays same-origin (API_BASE = '')
+  // — behavior identical to before. When the page is opened directly from
+  // disk (file://) or hosted by any other origin (e.g. a static dev server),
+  // every request is redirected to the local backend instead, so chat and
+  // all feature panels stay connected.
+  let API_BASE = '';
+  (function resolveApiBase() {
+    if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
+      API_BASE = 'http://127.0.0.1:8080';
+      return;
+    }
+    // Served over HTTP — but is this origin actually the ZYRA backend?
+    // (e.g. a static dev server on :5500 is not). Probe once; if the ZYRA
+    // health signature is missing, rebind all requests to the backend.
+    fetch('/api/health')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.zyra) API_BASE = 'http://127.0.0.1:8080';
+      })
+      .catch(function () { API_BASE = 'http://127.0.0.1:8080'; });
+  })();
+
+  // Build an absolute backend URL for API paths. Same-origin when served
+  // by the backend; falls back to http://127.0.0.1:8080 otherwise.
+  function apiUrl(path) {
+    return API_BASE + path;
+  }
+
   // ===== THREE.JS VISUALIZATION =====
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x080812);
@@ -2238,9 +2268,15 @@ canvas {
   }
 
   function connectWebSocket() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host || '127.0.0.1:8080';
-    const wsUrl = protocol + '//' + host + '/ws';
+    let wsUrl;
+    if (API_BASE) {
+      // Page is not served by the backend (file:// or other origin):
+      // connect the socket straight to the ZYRA backend.
+      wsUrl = API_BASE.replace(/^http/, 'ws') + '/ws';
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = protocol + '//' + window.location.host + '/ws';
+    }
 
     try {
       ws = new WebSocket(wsUrl);
@@ -2276,6 +2312,8 @@ canvas {
             if (data.data) updateNmapUI(data.data);
           } else if (data.type === 'nmap_error') {
             showNmapError(data.data && data.data.reason);
+          } else if (data.type === 'thinking') {
+            addMessage('ZYRA is thinking…', 'system');
           } else if (data.type === 'response' && data.success) {
             // Metric payloads (objects) belong to the live monitor, not the chat feed
             if (data.data && typeof data.data === 'object' && data.data.cpu) {
@@ -2593,7 +2631,7 @@ canvas {
     }
 
     // Fallback REST fetch if WebSocket isn't open
-    fetch('/api/system/metrics')
+    fetch(apiUrl('/api/system/metrics'))
       .then(res => res.json())
       .then(json => {
         if (json && json.success && json.data) {
@@ -2912,7 +2950,7 @@ canvas {
   }
 
   function loadNmapOperations() {
-    fetch('/api/nmap/operations')
+    fetch(apiUrl('/api/nmap/operations'))
       .then(function (r) { return r.json(); })
       .then(function (json) {
         if (!json || !json.success || !Array.isArray(json.operations)) return;
@@ -2942,7 +2980,7 @@ canvas {
     nmErrorCard.style.display = 'none';
     setNmapStageHint('');
     nmStage.textContent = 'Validating target and preparing scan…';
-    fetch('/api/nmap/scan', {
+    fetch(apiUrl('/api/nmap/scan'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2969,7 +3007,7 @@ canvas {
     nmResultsCard.style.display = '';
     nmResultsTitle.textContent = 'Network Security Scan Report';
     nmResults.innerHTML = '<div class="nm-stage">Generating report…</div>';
-    fetch('/api/nmap/report/' + nmapScanId + '?format=txt')
+    fetch(apiUrl('/api/nmap/report/' + nmapScanId + '?format=txt'))
       .then(function (r) {
         if (!r.ok) throw new Error('Report generation failed (' + r.status + ')');
         return r.text();
@@ -2984,7 +3022,7 @@ canvas {
 
   function downloadNmapReport(format) {
     if (!nmapScanId) return;
-    window.open('/api/nmap/report/' + nmapScanId + '?format=' + format, '_blank');
+    window.open(apiUrl('/api/nmap/report/' + nmapScanId + '?format=' + format), '_blank');
   }
 
   if (nmStartBtn) nmStartBtn.addEventListener('click', startNmapScanManual);
@@ -3382,7 +3420,7 @@ canvas {
     if (urlProgressBar) urlProgressBar.style.width = '0%';
     if (urlProgressVal) urlProgressVal.textContent = '0%';
 
-    fetch('/api/url/analyze', {
+    fetch(apiUrl('/api/url/analyze'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: url, source: 'panel' }),
@@ -3403,7 +3441,7 @@ canvas {
   function generateUrlReport() {
     if (!urlScanId) return;
     if (urlReportBtn) { urlReportBtn.disabled = true; urlReportBtn.textContent = 'GENERATING REPORT...'; }
-    fetch('/api/url/report/' + urlScanId + '?format=txt', { method: 'GET' })
+    fetch(apiUrl('/api/url/report/' + urlScanId + '?format=txt'), { method: 'GET' })
       .then(function (res) { return res.text(); })
       .then(function (text) {
         urlReportReady = true;
@@ -3419,11 +3457,11 @@ canvas {
 
   function downloadUrlReport() {
     if (!urlScanId) return;
-    window.open('/api/url/report/' + urlScanId + '?format=pdf', '_blank');
+    window.open(apiUrl('/api/url/report/' + urlScanId + '?format=pdf'), '_blank');
   }
 
   function loadUrlHistory() {
-    fetch('/api/url/history').then(function (res) { return res.json(); }).then(function (data) {
+    fetch(apiUrl('/api/url/history')).then(function (res) { return res.json(); }).then(function (data) {
       if (!data.success || !data.data || !data.data.length) {
         if (urlHistoryEl) urlHistoryEl.innerHTML = '<div class="url-history-meta">No recent scans.</div>';
         return;
@@ -3451,7 +3489,7 @@ canvas {
   }
 
   function reopenUrlScan(scanId) {
-    fetch('/api/url/result/' + scanId).then(function (res) { return res.json(); }).then(function (data) {
+    fetch(apiUrl('/api/url/result/' + scanId)).then(function (res) { return res.json(); }).then(function (data) {
       if (data.success && data.data) {
         clearUrlError();
         resetUrlResultSections();
@@ -3800,7 +3838,7 @@ canvas {
       if (dnsStageLabel) dnsStageLabel.textContent = 'INITIALIZING DNS LOOKUP...';
       if (dnsProgressBar) dnsProgressBar.style.width = '0%';
       if (dnsProgressVal) dnsProgressVal.textContent = '0%';
-      fetch('/api/dns/lookup', {
+      fetch(apiUrl('/api/dns/lookup'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -3828,7 +3866,7 @@ canvas {
       btn.textContent = 'GENERATING...';
       btn.classList.add('scanning');
       var domain = (dnsInput && dnsInput.value || '').trim() || (dnsCurrentResult.domain_display || dnsCurrentResult.domain || '');
-      fetch('/api/dns/report', {
+      fetch(apiUrl('/api/dns/report'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: domain, result: dnsCurrentResult })
@@ -3858,7 +3896,7 @@ canvas {
       // Fetch the real server-generated report (full nslookup-style text:
       // domain, query type, DNS server, records + TTLs, response time,
       // timestamp, status/error) and download it as a file.
-      fetch('/api/dns/report', {
+      fetch(apiUrl('/api/dns/report'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ result: dnsCurrentResult, format: 'txt' })
@@ -3903,7 +3941,7 @@ canvas {
     if (dnsDownloadBtn) dnsDownloadBtn.addEventListener('click', downloadDnsReport);
 
   function loadDnsHistory() {
-    fetch('/api/dns/history').then(function (res) { return res.json(); }).then(function (data) {
+    fetch(apiUrl('/api/dns/history')).then(function (res) { return res.json(); }).then(function (data) {
       if (!data.success || !data.data || !data.data.length) {
         if (dnsHistoryEl) dnsHistoryEl.innerHTML = '<div class="url-history-meta">No recent lookups.</div>';
         return;
@@ -3928,7 +3966,7 @@ canvas {
   }
 
   function reopenDnsLookup(lookupId) {
-    fetch('/api/dns/result/' + lookupId).then(function (res) { return res.json(); }).then(function (data) {
+    fetch(apiUrl('/api/dns/result/' + lookupId)).then(function (res) { return res.json(); }).then(function (data) {
       if (data.success && data.data) {
         clearDnsError();
         resetDnsResultSections();

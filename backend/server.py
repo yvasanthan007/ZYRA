@@ -18,6 +18,19 @@ from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 
+# ── Windows console safety ──
+# The server prints emoji banners (🚀 📡 …). When stdout is redirected to a
+# file/pipe or launched by an IDE/service, Python falls back to the legacy
+# cp1252 codec, and printing an emoji raises UnicodeEncodeError — killing the
+# server before it can bind its port. Reconfigure the standard streams to
+# UTF-8 with replacement so startup logs can never crash the backend.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 # Add parent directory to path for importing Zyra modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -871,7 +884,9 @@ async def chat_endpoint(data: Dict[str, Any]):
         )
 
     try:
-        response = process_chat(message)
+        # Ollama inference is blocking (30s+); keep the event loop free.
+        loop = asyncio.get_running_loop()
+        response = await loop.run_in_executor(None, lambda: process_chat(message))
         return {"success": True, "response": response}
     except Exception as e:
         return JSONResponse(
@@ -943,7 +958,9 @@ async def voice_endpoint(data: Dict[str, Any]):
         )
 
     try:
-        result = process_voice_command(text)
+        # Blocking AI/bridge work — run off the event loop.
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, lambda: process_voice_command(text))
         return {"success": True, "data": result}
     except Exception as e:
         return JSONResponse(
@@ -1008,7 +1025,9 @@ async def analyze_link_endpoint(data: Dict[str, Any]):
             content={"success": False, "error": "Provide 'url' or 'text' containing a URL"}
         )
     try:
-        analysis = analyze_url_security(target)
+        # Network-bound security analysis — keep off the event loop.
+        loop = asyncio.get_running_loop()
+        analysis = await loop.run_in_executor(None, lambda: analyze_url_security(target))
         report = format_security_report(analysis)
         return {"success": True, "report": report, "analysis": analysis}
     except Exception as e:
@@ -1530,9 +1549,29 @@ async def websocket_endpoint(websocket: WebSocket):
             msg_type = data.get("type", "")
             msg_data = data.get("data")
 
-            # Process the message through Zyra bridge
+            # ── Immediate feedback for interactive messages ──
+            # Ollama inference can take 30+ seconds; tell the dashboard
+            # ZYRA is working so the chat doesn't look dead.
+            if msg_type in ("chat", "voice"):
+                try:
+                    await manager.send_personal(
+                        {"type": "thinking", "data": "ZYRA is thinking…"},
+                        websocket,
+                    )
+                except Exception:
+                    pass
+
+            # Process the message through Zyra bridge in a worker thread.
+            # NEVER call process_message() directly here: it performs
+            # blocking work (Ollama inference can take 30s+) which would
+            # freeze the entire event loop — stalling every other request,
+            # breaking WebSocket keep-alive pings, and causing uvicorn to
+            # close the dashboard's socket mid-chat.
             try:
-                result = process_message(msg_type, msg_data)
+                loop = asyncio.get_running_loop()
+                result = await loop.run_in_executor(
+                    None, lambda: process_message(msg_type, msg_data)
+                )
 
                 # Metrics-type requests answer with their own message type so the
                 # dashboard updates the live monitor card instead of the chat feed.
