@@ -2085,7 +2085,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   const starMat = new THREE.PointsMaterial({
-    color: 0x4488ff,
+    color: 0xff8844,
     size: 0.06,
     transparent: true,
     opacity: 0.4,
@@ -2098,7 +2098,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   // ===== AMBIENT BLUE WASH =====
   const washGeo = new THREE.SphereGeometry(12, 32, 32);
   const washMat = new THREE.MeshBasicMaterial({
-    color: 0x001144,
+    color: 0x441100,
     transparent: true,
     opacity: 0.08,
     side: THREE.BackSide
@@ -2113,7 +2113,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   // Solid Inner Core with Halo
   const innerCoreGeo = new THREE.SphereGeometry(0.5, 48, 48);
   const innerCoreMat = new THREE.MeshBasicMaterial({
-    color: 0x0088ff,
+    color: 0xff8800,
     transparent: true,
     opacity: 0.85
   });
@@ -2122,13 +2122,13 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
 
   // Brighter center
   const centerGeo = new THREE.SphereGeometry(0.25, 32, 32);
-  const centerMat = new THREE.MeshBasicMaterial({ color: 0x44ccff });
+  const centerMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
   const center = new THREE.Mesh(centerGeo, centerMat);
   coreGroup.add(center);
 
   // Core glow halo
   const haloMat = new THREE.MeshBasicMaterial({
-    color: 0x0066ff,
+    color: 0xff6600,
     transparent: true,
     opacity: 0.12,
     side: THREE.BackSide
@@ -2138,7 +2138,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
 
   // Outer glow layer
   const outerHaloMat = new THREE.MeshBasicMaterial({
-    color: 0x0044ff,
+    color: 0xff4400,
     transparent: true,
     opacity: 0.05,
     side: THREE.BackSide
@@ -2153,7 +2153,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   // Outer geodesic - IcosahedronGeometry subdivision 3 for dense mesh
   const mainWireGeo = new THREE.IcosahedronGeometry(2.2, 3);
   const mainWireMat = new THREE.MeshBasicMaterial({
-    color: 0x0088ff,
+    color: 0xff8800,
     wireframe: true,
     transparent: true,
     opacity: 0.2
@@ -2164,7 +2164,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   // Brighter outer wireframe (subdivision 2)
   const midWireGeo = new THREE.IcosahedronGeometry(2.0, 2);
   const midWireMat = new THREE.MeshBasicMaterial({
-    color: 0x33aaff,
+    color: 0xffaa33,
     wireframe: true,
     transparent: true,
     opacity: 0.15
@@ -2179,7 +2179,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   // Inner mesh 1
   const innerMesh1Geo = new THREE.IcosahedronGeometry(1.5, 2);
   const innerMesh1Mat = new THREE.MeshBasicMaterial({
-    color: 0x3399ff,
+    color: 0xff9933,
     wireframe: true,
     transparent: true,
     opacity: 0.1
@@ -2190,7 +2190,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   // Inner mesh 2 (tighter)
   const innerMesh2Geo = new THREE.IcosahedronGeometry(1.1, 1);
   const innerMesh2Mat = new THREE.MeshBasicMaterial({
-    color: 0x44bbff,
+    color: 0xffbb44,
     wireframe: true,
     transparent: true,
     opacity: 0.08
@@ -2222,26 +2222,26 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   }
 
   // 3 Major orbits
-  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0x0088ff, 0.35);
+  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0xff8800, 0.35);
   orbitGroup.add(orbit1);
 
-  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0x33aaff, 0.3);
+  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0xffaa33, 0.3);
   orbit2.rotation.x = THREE.MathUtils.degToRad(35);
   orbit2.rotation.z = THREE.MathUtils.degToRad(20);
   orbitGroup.add(orbit2);
 
-  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0x0077ff, 0.25);
+  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0xff7700, 0.25);
   orbit3.rotation.x = THREE.MathUtils.degToRad(-25);
   orbit3.rotation.z = THREE.MathUtils.degToRad(45);
   orbitGroup.add(orbit3);
 
   // 2 Minor orbits
-  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0x3399ff, 0.15);
+  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0xff9933, 0.15);
   orbit4.rotation.x = THREE.MathUtils.degToRad(60);
   orbit4.rotation.z = THREE.MathUtils.degToRad(-10);
   orbitGroup.add(orbit4);
 
-  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0x44bbff, 0.12);
+  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0xffbb44, 0.12);
   orbit5.rotation.x = THREE.MathUtils.degToRad(-50);
   orbit5.rotation.z = THREE.MathUtils.degToRad(30);
   orbitGroup.add(orbit5);
@@ -2250,19 +2250,20 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   const particleOrbitGroup = new THREE.Group();
   mainGroup.add(particleOrbitGroup);
 
-  // Create square particle texture
-  function createSquareTexture() {
+  // Create square particle texture (dark = orange, light = blue/cyan)
+  function createSquareTexture(isLight) {
     const canvas = document.createElement('canvas');
     canvas.width = 16;
     canvas.height = 16;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(80, 180, 255, 1)';
+    ctx.fillStyle = isLight ? 'rgba(80, 180, 255, 1)' : 'rgba(255, 180, 80, 1)';
     ctx.fillRect(2, 2, 12, 12);
-    ctx.fillStyle = 'rgba(150, 220, 255, 0.6)';
+    ctx.fillStyle = isLight ? 'rgba(150, 220, 255, 0.6)' : 'rgba(255, 220, 150, 0.6)';
     ctx.fillRect(4, 4, 8, 8);
     return new THREE.CanvasTexture(canvas);
   }
-  const squareTexture = createSquareTexture();
+  const squareTexture = createSquareTexture(false);
+  const squareTextureLight = createSquareTexture(true);
 
   const orbitParticleCount = 400;
   const orbitParticleGeo = new THREE.BufferGeometry();
@@ -2281,7 +2282,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
 
   const orbitParticleMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0x44aaff,
+    color: 0xffaa44,
     size: 0.08,
     transparent: true,
     opacity: 0.7,
@@ -2310,7 +2311,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
 
   const scatterMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0x3399ff,
+    color: 0xff9933,
     size: 0.05,
     transparent: true,
     opacity: 0.5,
@@ -2322,25 +2323,35 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   mainGroup.add(scatterParticles);
 
   // ===== GLOW SPRITE =====
-  function createGlowTexture() {
+  function createGlowTexture(isLight) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    grad.addColorStop(0, 'rgba(100, 200, 255, 1)');
-    grad.addColorStop(0.1, 'rgba(50, 150, 255, 0.8)');
-    grad.addColorStop(0.3, 'rgba(30, 100, 255, 0.4)');
-    grad.addColorStop(0.5, 'rgba(20, 80, 255, 0.15)');
-    grad.addColorStop(0.7, 'rgba(10, 50, 200, 0.05)');
+    if (isLight) {
+      grad.addColorStop(0, 'rgba(100, 200, 255, 1)');
+      grad.addColorStop(0.1, 'rgba(50, 150, 255, 0.8)');
+      grad.addColorStop(0.3, 'rgba(30, 100, 255, 0.4)');
+      grad.addColorStop(0.5, 'rgba(20, 80, 255, 0.15)');
+      grad.addColorStop(0.7, 'rgba(10, 50, 200, 0.05)');
+    } else {
+      grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
+      grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
+      grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
+      grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
+      grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
+    }
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
     return new THREE.CanvasTexture(canvas);
   }
+  const glowTextureDark = createGlowTexture(false);
+  const glowTextureLight = createGlowTexture(true);
 
   const glowSpriteMat = new THREE.SpriteMaterial({
-    map: createGlowTexture(),
+    map: glowTextureDark,
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.5,
@@ -2352,7 +2363,7 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
 
   // Smaller inner glow
   const innerGlowMat = new THREE.SpriteMaterial({
-    map: createGlowTexture(),
+    map: glowTextureDark,
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.3,
@@ -2363,11 +2374,61 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
   mainGroup.add(innerGlow);
 
   // ===== LIGHTING =====
-  const ambientLight = new THREE.AmbientLight(0x3366ff, 0.15);
+  const ambientLight = new THREE.AmbientLight(0xff6633, 0.15);
   scene.add(ambientLight);
-  const pointLight = new THREE.PointLight(0x3388ff, 0.6, 12);
+  const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
+
+  // ===== THEME-DRIVEN NEURAL CORE PALETTE =====
+  // Dark theme keeps the original orange/amber palette; light theme uses blue/cyan.
+  const NEURAL_THEMES = {
+    dark: {
+      stars: 0xff8844, wash: 0x441100,
+      innerCore: 0xff8800, center: 0xffcc44, halo: 0xff6600, outerHalo: 0xff4400,
+      mainWire: 0xff8800, midWire: 0xffaa33, innerMesh1: 0xff9933, innerMesh2: 0xffbb44,
+      orbits: [0xff8800, 0xffaa33, 0xff7700, 0xff9933, 0xffbb44],
+      orbitParticles: 0xffaa44, scatterParticles: 0xff9933,
+      ambient: 0xff6633, point: 0xff8833
+    },
+    light: {
+      stars: 0x3fa8ff, wash: 0x001a44,
+      innerCore: 0x1677ff, center: 0x0a3a8c, halo: 0x00c2ff, outerHalo: 0x1677ff,
+      mainWire: 0x00d0ff, midWire: 0x2ea8ff, innerMesh1: 0x36c9ff, innerMesh2: 0x5fd8ff,
+      orbits: [0x1677ff, 0x2e9bff, 0x0f6fe0, 0x39b1ff, 0x5cc8ff],
+      orbitParticles: 0x33bbff, scatterParticles: 0x1e90ff,
+      ambient: 0x3399ff, point: 0x3399ff
+    }
+  };
+  const orbitMats = [orbit1.material, orbit2.material, orbit3.material, orbit4.material, orbit5.material];
+
+  function applyNeuralTheme(isLight) {
+    const t = isLight ? NEURAL_THEMES.light : NEURAL_THEMES.dark;
+    starMat.color.setHex(t.stars);
+    washMat.color.setHex(t.wash);
+    innerCoreMat.color.setHex(t.innerCore);
+    centerMat.color.setHex(t.center);
+    haloMat.color.setHex(t.halo);
+    outerHaloMat.color.setHex(t.outerHalo);
+    mainWireMat.color.setHex(t.mainWire);
+    midWireMat.color.setHex(t.midWire);
+    innerMesh1Mat.color.setHex(t.innerMesh1);
+    innerMesh2Mat.color.setHex(t.innerMesh2);
+    orbitMats.forEach(function (m, i) { m.color.setHex(t.orbits[i]); });
+    orbitParticleMat.color.setHex(t.orbitParticles);
+    scatterMat.color.setHex(t.scatterParticles);
+    ambientLight.color.setHex(t.ambient);
+    pointLight.color.setHex(t.point);
+    const sq = isLight ? squareTextureLight : squareTexture;
+    if (orbitParticleMat.map !== sq) { orbitParticleMat.map = sq; orbitParticleMat.needsUpdate = true; }
+    if (scatterMat.map !== sq) { scatterMat.map = sq; scatterMat.needsUpdate = true; }
+    const gl = isLight ? glowTextureLight : glowTextureDark;
+    if (glowSpriteMat.map !== gl) { glowSpriteMat.map = gl; glowSpriteMat.needsUpdate = true; }
+    if (innerGlowMat.map !== gl) { innerGlowMat.map = gl; innerGlowMat.needsUpdate = true; }
+  }
+  // Exposed so the settings theme system (zsApplyTheme) can drive it.
+  window.zyraSetNeuralTheme = applyNeuralTheme;
+  applyNeuralTheme(document.body.classList.contains('zyra-light'));
 
   // ===== ANIMATION =====
   let time = 0;
@@ -4306,7 +4367,12 @@ body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: 
     root.setProperty('--zyra-accent-soft', 'rgba('+r+','+g+','+b+',0.25)');
     root.setProperty('--zyra-accent-text', hex);
   }
-  function zsApplyTheme() { document.body.classList.toggle('zyra-light', zs.theme === 'light'); }
+  function zsApplyTheme() {
+    var light = zs.theme === 'light';
+    document.body.classList.toggle('zyra-light', light);
+    // Drive the neural core palette (orange dark / blue light).
+    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }
+  }
   function zsApplyFontSize() { document.body.style.zoom = (parseInt(zs.fontSize,10) / 100).toString(); }
 
   function zsApplyAll() { zsApplyTheme(); zsApplyFontSize(); zsApplyAccent(); zsRenderSwatches(); }
