@@ -1,0 +1,21 @@
+{
+  "name": "zyra-desktop",
+  "productName": "ZYRA",
+  "version": "1.0.0",
+  "description": "ZYRA AI Assistant — Desktop Application (Electron wrapper around the existing ZYRA web app)",
+  "main": "desktop/main.js",
+  "author": "Vasanthan Y",
+  "license": "MIT",
+  "scripts": {
+    "desktop:dev": "electron .",
+    "desktop:start": "electron .",
+    "desktop:build": "electron-builder --win",
+    "desktop:build:win": "electron-builder --win",
+    "desktop:build:linux": "electron-builder --linux",
+    "desktop:build:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}
