@@ -8,13 +8,13 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  background: #080812;
+  background: #020814;
   overflow: hidden;
   width: 100vw;
   height: 100vh;
   cursor: crosshair;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #4488FF;
+  color: #008CFF;
 }
 canvas {
   display: block;
@@ -47,7 +47,7 @@ canvas {
   justify-content: space-between;
   align-items: flex-start;
   padding: 16px 28px;
-  background: linear-gradient(180deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
+  background: linear-gradient(180deg, rgba(2,8,20,0.85) 0%, rgba(2,8,20,0.3) 70%, transparent 100%);
 }
 
 /* ZYRA Neural Core at the very top-left, with the feature buttons stacked
@@ -69,24 +69,24 @@ canvas {
 }
 .top-logo {
   font-size: 18px;
-  color: #4488FF;
-  text-shadow: 0 0 10px RGBA(68, 136, 255, 0.7);
+  color: #008CFF;
+  text-shadow: 0 0 10px rgba(0, 140, 255, 0.7);
   animation: pulseLogo 3s infinite ease-in-out;
 }
 @keyframes pulseLogo {
   0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 16px RGBA(68, 136, 255, 1); }
+  50% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 16px rgba(0, 140, 255, 1); }
 }
 .top-title {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 3px;
-  color: #55AAFF;
+  color: #19A9FF;
 }
 .top-subtitle {
   font-size: 11px;
   letter-spacing: 2px;
-  color: RGBA(68, 136, 255, 0.6);
+  color: rgba(0, 140, 255, 0.6);
   text-transform: uppercase;
 }
 
@@ -96,10 +96,10 @@ canvas {
   gap: 12px;
 }
 .top-btn {
-  background: RGBA(68, 136, 255, 0.12);
-  border: 1px solid RGBA(68, 136, 255, 0.35);
+  background: rgba(0, 140, 255, 0.12);
+  border: 1px solid rgba(0, 140, 255, 0.35);
   border-radius: 20px;
-  color: #55AAFF;
+  color: #19A9FF;
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -111,23 +111,23 @@ canvas {
   backdrop-filter: blur(8px);
 }
 .top-btn:hover {
-  background: RGBA(68, 136, 255, 0.25);
-  border-color: RGBA(68, 136, 255, 0.6);
-  color: #99DDFF;
-  box-shadow: 0 0 16px RGBA(68, 136, 255, 0.25);
+  background: rgba(0, 140, 255, 0.25);
+  border-color: rgba(0, 140, 255, 0.6);
+  color: #EAF8FF;
+  box-shadow: 0 0 16px rgba(0, 140, 255, 0.25);
   transform: translateY(-1px);
 }
 .top-btn.active {
-  background: RGBA(68, 136, 255, 0.3);
-  border-color: #4488FF;
-  box-shadow: 0 0 16px RGBA(68, 136, 255, 0.35);
+  background: rgba(0, 140, 255, 0.3);
+  border-color: #008CFF;
+  box-shadow: 0 0 16px rgba(0, 140, 255, 0.35);
 }
 .btn-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #4488FF;
-  box-shadow: 0 0 8px #4488FF;
+  background: #008CFF;
+  box-shadow: 0 0 8px #008CFF;
   animation: blinkDot 2s infinite;
 }
 @keyframes blinkDot {
@@ -143,11 +143,11 @@ canvas {
   width: 330px;
   max-height: calc(100vh - 200px);
   background: rgba(8, 8, 20, 0.88);
-  border: 1px solid RGBA(68, 136, 255, 0.28);
+  border: 1px solid rgba(0, 140, 255, 0.28);
   border-radius: 14px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 140, 255, 0.15);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -170,8 +170,8 @@ canvas {
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  background: RGBA(68, 136, 255, 0.08);
-  border-bottom: 1px solid RGBA(68, 136, 255, 0.18);
+  background: rgba(0, 140, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 140, 255, 0.18);
   cursor: grab;
   user-select: none;
 }
@@ -199,7 +199,7 @@ canvas {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #4499FF;
+  color: #19A9FF;
   text-transform: uppercase;
 }
 .sm-header-actions {
@@ -225,7 +225,7 @@ canvas {
 .sm-btn-close {
   background: none;
   border: none;
-  color: RGBA(68, 136, 255, 0.6);
+  color: rgba(0, 140, 255, 0.6);
   font-size: 14px;
   cursor: pointer;
   padding: 4px 6px;
@@ -234,8 +234,8 @@ canvas {
   transition: all 0.2s;
 }
 .sm-btn-close:hover {
-  color: #4488FF;
-  background: RGBA(68, 136, 255, 0.15);
+  color: #008CFF;
+  background: rgba(0, 140, 255, 0.15);
 }
 
 .sm-body {
@@ -245,14 +245,14 @@ canvas {
   flex-direction: column;
   gap: 12px;
   scrollbar-width: thin;
-  scrollbar-color: RGBA(68, 136, 255, 0.3) transparent;
+  scrollbar-color: rgba(0, 140, 255, 0.3) transparent;
 }
 .sm-body::-webkit-scrollbar { width: 4px; }
-.sm-body::-webkit-scrollbar-thumb { background: RGBA(68, 136, 255, 0.3); border-radius: 2px; }
+.sm-body::-webkit-scrollbar-thumb { background: rgba(0, 140, 255, 0.3); border-radius: 2px; }
 
 .sm-metric-card, .sm-info-card {
-  background: rgba(8, 8, 18, 0.55);
-  border: 1px solid RGBA(68, 136, 255, 0.12);
+  background: rgba(2, 8, 20, 0.55);
+  border: 1px solid rgba(0, 140, 255, 0.12);
   border-radius: 8px;
   padding: 10px 12px;
   display: flex;
@@ -268,20 +268,20 @@ canvas {
 .sm-metric-name {
   font-size: 13px;
   font-weight: 600;
-  color: #66BBFF;
+  color: #55D6FF;
 }
 .sm-metric-val {
   font-size: 14px;
   font-weight: 700;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #44AAFF;
+  color: #19A9FF;
 }
 
 .sm-ascii-bar {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.2;
-  color: #4488FF;
+  color: #008CFF;
   letter-spacing: 2px;
   user-select: none;
   word-break: break-all;
@@ -290,29 +290,29 @@ canvas {
 .sm-bar-track {
   width: 100%;
   height: 4px;
-  background: RGBA(68, 136, 255, 0.12);
+  background: rgba(0, 140, 255, 0.12);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 2px;
 }
 .sm-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4488FF, #66CCFF);
+  background: linear-gradient(90deg, #008CFF, #55D6FF);
   border-radius: 2px;
-  box-shadow: 0 0 8px RGBA(68, 136, 255, 0.6);
+  box-shadow: 0 0 8px rgba(0, 140, 255, 0.6);
   transition: width 0.4s ease;
 }
 
 .sm-sub-info {
   font-size: 11px;
-  color: rgba(255, 180, 100, 0.65);
+  color: rgba(25, 169, 255, 0.65);
 }
 
 .sm-card-heading {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #4488FF;
+  color: #008CFF;
   text-transform: uppercase;
   margin-bottom: 2px;
 }
@@ -323,25 +323,25 @@ canvas {
   font-size: 12px;
 }
 .sm-stat-k {
-  color: rgba(255, 180, 100, 0.7);
+  color: rgba(25, 169, 255, 0.7);
 }
 .sm-stat-v {
   font-family: 'Consolas', monospace;
   font-weight: 600;
-  color: #88CCFF;
+  color: #80DFFF;
 }
 
 .sm-uptime-val, .sm-sys-val {
   font-size: 12px;
   font-family: 'Consolas', monospace;
-  color: #88CCFF;
+  color: #80DFFF;
   word-break: break-word;
 }
 
 /* System Health Analysis Card */
 .sm-status-card {
   background: rgba(14, 14, 30, 0.75);
-  border: 1px solid RGBA(68, 136, 255, 0.2);
+  border: 1px solid rgba(0, 140, 255, 0.2);
   border-left: 3px solid #00ff88;
   border-radius: 8px;
   padding: 10px 12px;
@@ -359,7 +359,7 @@ canvas {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #55AAFF;
+  color: #19A9FF;
   text-transform: uppercase;
 }
 .sm-status-badge {
@@ -379,12 +379,12 @@ canvas {
 .sm-status-badge.low {
   background: rgba(0, 204, 255, 0.16);
   border: 1px solid rgba(0, 204, 255, 0.4);
-  color: #00ccff;
+  color: #55D6FF;
 }
 .sm-status-badge.elevated {
-  background: rgba(255, 170, 0, 0.18);
-  border: 1px solid rgba(255, 170, 0, 0.45);
-  color: #ffaa00;
+  background: rgba(25, 169, 255, 0.18);
+  border: 1px solid rgba(25, 169, 255, 0.45);
+  color: #19A9FF;
 }
 .sm-status-badge.warning {
   background: rgba(255, 68, 68, 0.2);
@@ -394,7 +394,7 @@ canvas {
 .sm-status-desc {
   font-size: 11px;
   line-height: 1.4;
-  color: rgba(255, 200, 150, 0.85);
+  color: rgba(128, 223, 255, 0.85);
 }
 
 /* Live sparkline graphs inside the monitor card */
@@ -413,7 +413,7 @@ canvas {
   justify-content: center;
   align-items: center;
   padding: 20px 28px 28px;
-  background: linear-gradient(0deg, rgba(8,8,18,0.85) 0%, rgba(8,8,18,0.3) 70%, transparent 100%);
+  background: linear-gradient(0deg, rgba(2,8,20,0.85) 0%, rgba(2,8,20,0.3) 70%, transparent 100%);
 }
 
 #chat-container {
@@ -428,19 +428,19 @@ canvas {
   max-height: 200px;
   overflow-y: auto;
   padding: 12px 16px;
-  background: rgba(8,8,18,0.6);
-  border: 1px solid RGBA(68,136,255,0.15);
+  background: rgba(2,8,20,0.6);
+  border: 1px solid rgba(0,140,255,0.15);
   border-radius: 12px;
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
   gap: 8px;
   scrollbar-width: thin;
-  scrollbar-color: RGBA(68,136,255,0.3) transparent;
+  scrollbar-color: rgba(0,140,255,0.3) transparent;
 }
 #chat-messages::-webkit-scrollbar { width: 4px; }
 #chat-messages::-webkit-scrollbar-track { background: transparent; }
-#chat-messages::-webkit-scrollbar-thumb { background: RGBA(68,136,255,0.3); border-radius: 2px; }
+#chat-messages::-webkit-scrollbar-thumb { background: rgba(0,140,255,0.3); border-radius: 2px; }
 
 .msg {
   font-size: 13px;
@@ -455,22 +455,22 @@ canvas {
   to { opacity: 1; transform: translateY(0); }
 }
 .msg.user {
-  background: RGBA(68,136,255,0.12);
-  border: 1px solid RGBA(68,136,255,0.2);
-  color: #88CCFF;
+  background: rgba(0,140,255,0.12);
+  border: 1px solid rgba(0,140,255,0.2);
+  color: #80DFFF;
   align-self: flex-end;
   text-align: right;
 }
 .msg.zyra {
-  background: RGBA(68,136,255,0.06);
-  border: 1px solid RGBA(68,136,255,0.1);
-  color: #55AAFF;
+  background: rgba(0,140,255,0.06);
+  border: 1px solid rgba(0,140,255,0.1);
+  color: #19A9FF;
   align-self: flex-start;
 }
 .msg.zyra .zyra-label {
   font-size: 10px;
   font-weight: 600;
-  color: #4488FF;
+  color: #008CFF;
   letter-spacing: 1px;
   margin-bottom: 4px;
 }
@@ -492,29 +492,29 @@ canvas {
 #chat-input {
   flex: 1;
   padding: 12px 18px;
-  background: rgba(8,8,18,0.7);
-  border: 1px solid RGBA(68,136,255,0.2);
+  background: rgba(2,8,20,0.7);
+  border: 1px solid rgba(0,140,255,0.2);
   border-radius: 25px;
-  color: #88CCFF;
+  color: #80DFFF;
   font-size: 14px;
   outline: none;
   transition: border-color 0.3s;
   backdrop-filter: blur(10px);
 }
 #chat-input:focus {
-  border-color: RGBA(68,136,255,0.5);
-  box-shadow: 0 0 20px RGBA(68,136,255,0.08);
+  border-color: rgba(0,140,255,0.5);
+  box-shadow: 0 0 20px rgba(0,140,255,0.08);
 }
 #chat-input::placeholder {
-  color: RGBA(68,136,255,0.3);
+  color: rgba(0,140,255,0.3);
 }
 #chat-send {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: RGBA(68,136,255,0.15);
-  border: 1px solid RGBA(68,136,255,0.3);
-  color: #4488FF;
+  background: rgba(0,140,255,0.15);
+  border: 1px solid rgba(0,140,255,0.3);
+  color: #008CFF;
   font-size: 18px;
   cursor: pointer;
   display: flex;
@@ -523,9 +523,9 @@ canvas {
   transition: all 0.3s;
 }
 #chat-send:hover {
-  background: RGBA(68,136,255,0.25);
-  border-color: RGBA(68,136,255,0.5);
-  box-shadow: 0 0 20px RGBA(68,136,255,0.15);
+  background: rgba(0,140,255,0.25);
+  border-color: rgba(0,140,255,0.5);
+  box-shadow: 0 0 20px rgba(0,140,255,0.15);
 }
 
 /* ===== NMAP SCANNER HUD CARD ===== */
@@ -536,8 +536,8 @@ canvas {
   gap: 8px;
 }
 .nm-dot {
-  background: #44CCFF;
-  box-shadow: 0 0 8px #44CCFF;
+  background: #55D6FF;
+  box-shadow: 0 0 8px #55D6FF;
 }
 
 .nmap-scanner-card {
@@ -547,11 +547,11 @@ canvas {
   width: 360px;
   max-height: calc(100vh - 220px);
   background: rgba(8, 8, 20, 0.88);
-  border: 1px solid RGBA(68, 136, 255, 0.28);
+  border: 1px solid rgba(0, 140, 255, 0.28);
   border-radius: 14px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 140, 255, 0.15);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -573,14 +573,14 @@ canvas {
   justify-content: space-between;
   align-items: center;
   padding: 12px 18px;
-  background: RGBA(68, 136, 255, 0.08);
-  border-bottom: 1px solid RGBA(68, 136, 255, 0.18);
+  background: rgba(0, 140, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 140, 255, 0.18);
   user-select: none;
 }
 .nm-subtitle {
   font-size: 9px;
   letter-spacing: 1.5px;
-  color: RGBA(68, 136, 255, 0.55);
+  color: rgba(0, 140, 255, 0.55);
   text-transform: uppercase;
   margin-top: 2px;
 }
@@ -588,8 +588,8 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #44CCFF;
-  box-shadow: 0 0 10px #44CCFF;
+  background: #55D6FF;
+  box-shadow: 0 0 10px #55D6FF;
   animation: pulseGreen 1.8s infinite;
 }
 
@@ -600,14 +600,14 @@ canvas {
   flex-direction: column;
   gap: 12px;
   scrollbar-width: thin;
-  scrollbar-color: RGBA(68, 136, 255, 0.3) transparent;
+  scrollbar-color: rgba(0, 140, 255, 0.3) transparent;
 }
 .nm-body::-webkit-scrollbar { width: 4px; }
-.nm-body::-webkit-scrollbar-thumb { background: RGBA(68, 136, 255, 0.3); border-radius: 2px; }
+.nm-body::-webkit-scrollbar-thumb { background: rgba(0, 140, 255, 0.3); border-radius: 2px; }
 
 .nm-info-card {
-  background: rgba(8, 8, 18, 0.55);
-  border: 1px solid RGBA(68, 136, 255, 0.12);
+  background: rgba(2, 8, 20, 0.55);
+  border: 1px solid rgba(0, 140, 255, 0.12);
   border-radius: 8px;
   padding: 10px 12px;
   display: flex;
@@ -619,11 +619,11 @@ canvas {
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(255, 170, 85, 0.75);
+  color: rgba(85, 214, 255, 0.75);
 }
 .nm-request-text {
   font-size: 12px;
-  color: #88CCFF;
+  color: #80DFFF;
   font-style: italic;
 }
 
@@ -636,10 +636,10 @@ canvas {
 .nm-field select {
   width: 100%;
   padding: 9px 12px;
-  background: rgba(8, 8, 18, 0.7);
-  border: 1px solid RGBA(68, 136, 255, 0.25);
+  background: rgba(2, 8, 20, 0.7);
+  border: 1px solid rgba(0, 140, 255, 0.25);
   border-radius: 8px;
-  color: #88CCFF;
+  color: #80DFFF;
   font-size: 13px;
   font-family: 'Consolas', 'Courier New', monospace;
   outline: none;
@@ -647,25 +647,25 @@ canvas {
 }
 .nm-field input:focus,
 .nm-field select:focus {
-  border-color: RGBA(68, 136, 255, 0.55);
-  box-shadow: 0 0 14px RGBA(68, 136, 255, 0.12);
+  border-color: rgba(0, 140, 255, 0.55);
+  box-shadow: 0 0 14px rgba(0, 140, 255, 0.12);
 }
 .nm-field select { cursor: pointer; }
 .nm-field select option {
-  background: #0d0d1c;
-  color: #88CCFF;
+  background: #041225;
+  color: #80DFFF;
 }
 .nm-op-desc {
   font-size: 10px;
-  color: RGBA(68, 136, 255, 0.55);
+  color: rgba(0, 140, 255, 0.55);
 }
 
 .nm-command {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 11px;
-  color: #44AAFF;
-  background: rgba(8, 8, 18, 0.7);
-  border: 1px dashed RGBA(68, 136, 255, 0.3);
+  color: #19A9FF;
+  background: rgba(2, 8, 20, 0.7);
+  border: 1px dashed rgba(0, 140, 255, 0.3);
   border-radius: 6px;
   padding: 8px 10px;
   word-break: break-all;
@@ -673,10 +673,10 @@ canvas {
 }
 
 .nm-btn {
-  background: RGBA(68, 136, 255, 0.12);
-  border: 1px solid RGBA(68, 136, 255, 0.35);
+  background: rgba(0, 140, 255, 0.12);
+  border: 1px solid rgba(0, 140, 255, 0.35);
   border-radius: 10px;
-  color: #55AAFF;
+  color: #19A9FF;
   padding: 9px 14px;
   font-size: 12px;
   font-weight: 700;
@@ -685,27 +685,27 @@ canvas {
   transition: all 0.3s ease;
 }
 .nm-btn:hover:not(:disabled) {
-  background: RGBA(68, 136, 255, 0.25);
-  border-color: RGBA(68, 136, 255, 0.6);
-  color: #99DDFF;
-  box-shadow: 0 0 16px RGBA(68, 136, 255, 0.25);
+  background: rgba(0, 140, 255, 0.25);
+  border-color: rgba(0, 140, 255, 0.6);
+  color: #EAF8FF;
+  box-shadow: 0 0 16px rgba(0, 140, 255, 0.25);
 }
 .nm-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 .nm-btn-primary {
-  background: RGBA(68, 136, 255, 0.22);
-  border-color: RGBA(68, 136, 255, 0.55);
-  color: #77CCFF;
-  text-shadow: 0 0 8px RGBA(68, 136, 255, 0.5);
+  background: rgba(0, 140, 255, 0.22);
+  border-color: rgba(0, 140, 255, 0.55);
+  color: #80DFFF;
+  text-shadow: 0 0 8px rgba(0, 140, 255, 0.5);
 }
 .nm-btn-primary.scanning {
   animation: nmPulseBtn 1.4s infinite;
 }
 @keyframes nmPulseBtn {
-  0%, 100% { box-shadow: 0 0 6px RGBA(68, 136, 255, 0.2); }
-  50% { box-shadow: 0 0 18px RGBA(68, 136, 255, 0.55); }
+  0%, 100% { box-shadow: 0 0 6px rgba(0, 140, 255, 0.2); }
+  50% { box-shadow: 0 0 18px rgba(0, 140, 255, 0.55); }
 }
 
 .nm-status {
@@ -713,13 +713,13 @@ canvas {
   font-weight: 700;
   letter-spacing: 1px;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #44CCFF;
+  color: #55D6FF;
 }
 .nm-status.complete { color: #00ff88; }
 .nm-status.error { color: #ff6666; }
 .nm-stage {
   font-size: 10px;
-  color: RGBA(68, 136, 255, 0.6);
+  color: rgba(0, 140, 255, 0.6);
 }
 
 .nm-summary-row {
@@ -728,8 +728,8 @@ canvas {
 }
 .nm-stat {
   flex: 1;
-  background: rgba(8, 8, 18, 0.55);
-  border: 1px solid RGBA(68, 136, 255, 0.12);
+  background: rgba(2, 8, 20, 0.55);
+  border: 1px solid rgba(0, 140, 255, 0.12);
   border-radius: 8px;
   padding: 8px 6px;
   text-align: center;
@@ -738,13 +738,13 @@ canvas {
   font-size: 18px;
   font-weight: 700;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #44AAFF;
+  color: #19A9FF;
 }
 .nm-stat-k {
   font-size: 8.5px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: RGBA(68, 136, 255, 0.55);
+  color: rgba(0, 140, 255, 0.55);
   margin-top: 2px;
 }
 
@@ -756,7 +756,7 @@ canvas {
 }
 .nm-obs-list li {
   font-size: 11px;
-  color: #77BBFF;
+  color: #80DFFF;
   padding-left: 14px;
   position: relative;
   line-height: 1.4;
@@ -765,26 +765,26 @@ canvas {
   content: '▸';
   position: absolute;
   left: 0;
-  color: #4488FF;
+  color: #008CFF;
 }
 
 .nm-host {
-  border: 1px solid RGBA(68, 136, 255, 0.14);
+  border: 1px solid rgba(0, 140, 255, 0.14);
   border-radius: 6px;
   padding: 8px 10px;
   margin-bottom: 8px;
-  background: rgba(8, 8, 18, 0.4);
+  background: rgba(2, 8, 20, 0.4);
 }
 .nm-host:last-child { margin-bottom: 0; }
 .nm-host-ip {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 13px;
   font-weight: 700;
-  color: #66CCFF;
+  color: #55D6FF;
 }
 .nm-host-meta {
   font-size: 10px;
-  color: RGBA(68, 136, 255, 0.6);
+  color: rgba(0, 140, 255, 0.6);
   margin-top: 2px;
 }
 .nm-host-ports {
@@ -796,23 +796,23 @@ canvas {
 .nm-port-line {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 11px;
-  color: #55AAFF;
+  color: #19A9FF;
 }
-.nm-port-num { color: #44CCFF; }
-.nm-port-svc { color: #5599FF; font-weight: 700; }
-.nm-port-ver { color: RGBA(68, 136, 255, 0.5); font-size: 10px; }
+.nm-port-num { color: #55D6FF; }
+.nm-port-svc { color: #19A9FF; font-weight: 700; }
+.nm-port-ver { color: rgba(0, 140, 255, 0.5); font-size: 10px; }
 
 .nm-report-pre {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 10.5px;
   line-height: 1.5;
-  color: #77BBFF;
+  color: #80DFFF;
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 260px;
   overflow-y: auto;
-  background: rgba(8, 8, 18, 0.5);
-  border: 1px solid RGBA(68, 136, 255, 0.12);
+  background: rgba(2, 8, 20, 0.5);
+  border: 1px solid rgba(0, 140, 255, 0.12);
   border-radius: 6px;
   padding: 10px;
   user-select: text;
@@ -845,8 +845,8 @@ canvas {
 
 /* ===== URL ANALYZER PANEL ===== */
 .url-dot {
-  background: #0088FF;
-  box-shadow: 0 0 8px #0088FF;
+  background: #19A9FF;
+  box-shadow: 0 0 8px #19A9FF;
 }
 
 .url-analyzer-card {
@@ -856,11 +856,11 @@ canvas {
   width: 380px;
   max-height: calc(100vh - 220px);
   background: rgba(8, 8, 20, 0.88);
-  border: 1px solid RGBA(68, 136, 255, 0.28);
+  border: 1px solid rgba(0, 140, 255, 0.28);
   border-radius: 14px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 140, 255, 0.15);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -882,8 +882,8 @@ canvas {
   justify-content: space-between;
   align-items: center;
   padding: 12px 18px;
-  background: RGBA(68, 136, 255, 0.08);
-  border-bottom: 1px solid RGBA(68, 136, 255, 0.18);
+  background: rgba(0, 140, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 140, 255, 0.18);
   user-select: none;
 }
 .url-title-group {
@@ -895,21 +895,21 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #0088FF;
-  box-shadow: 0 0 10px #0088FF;
+  background: #19A9FF;
+  box-shadow: 0 0 10px #19A9FF;
   animation: pulseGreen 1.8s infinite;
 }
 .url-title {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #4499FF;
+  color: #19A9FF;
   text-transform: uppercase;
 }
 .url-subtitle {
   font-size: 9px;
   letter-spacing: 1.5px;
-  color: RGBA(68, 136, 255, 0.55);
+  color: rgba(0, 140, 255, 0.55);
   text-transform: uppercase;
   margin-top: 2px;
 }
@@ -921,7 +921,7 @@ canvas {
   border-radius: 10px;
   background: RGBA(0, 136, 255, 0.15);
   border: 1px solid RGBA(0, 136, 255, 0.35);
-  color: #0088FF;
+  color: #19A9FF;
 }
 .url-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -931,7 +931,7 @@ canvas {
 .url-btn-close {
   background: none;
   border: none;
-  color: RGBA(68, 136, 255, 0.6);
+  color: rgba(0, 140, 255, 0.6);
   font-size: 14px;
   cursor: pointer;
   padding: 4px 6px;
@@ -940,8 +940,8 @@ canvas {
   transition: all 0.2s;
 }
 .url-btn-close:hover {
-  color: #4488FF;
-  background: RGBA(68, 136, 255, 0.15);
+  color: #008CFF;
+  background: rgba(0, 140, 255, 0.15);
 }
 
 .url-body {
@@ -951,42 +951,42 @@ canvas {
   flex-direction: column;
   gap: 12px;
   scrollbar-width: thin;
-  scrollbar-color: RGBA(68, 136, 255, 0.3) transparent;
+  scrollbar-color: rgba(0, 140, 255, 0.3) transparent;
 }
 .url-body::-webkit-scrollbar { width: 4px; }
-.url-body::-webkit-scrollbar-thumb { background: RGBA(68, 136, 255, 0.3); border-radius: 2px; }
+.url-body::-webkit-scrollbar-thumb { background: rgba(0, 140, 255, 0.3); border-radius: 2px; }
 
 .url-field { display: flex; flex-direction: column; gap: 5px; }
 .url-field label {
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
+  text-transform: uppercase; color: rgba(85, 214, 255, 0.75);
 }
 .url-field input {
-  width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
-  border: 1px solid RGBA(68, 136, 255, 0.25); border-radius: 8px;
-  color: #88CCFF; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+  width: 100%; padding: 9px 12px; background: rgba(2, 8, 20, 0.7);
+  border: 1px solid rgba(0, 140, 255, 0.25); border-radius: 8px;
+  color: #80DFFF; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
   outline: none; transition: border-color 0.3s, box-shadow 0.3s;
 }
 .url-field input:focus {
-  border-color: RGBA(68, 136, 255, 0.55); box-shadow: 0 0 14px RGBA(68, 136, 255, 0.12);
+  border-color: rgba(0, 140, 255, 0.55); box-shadow: 0 0 14px rgba(0, 140, 255, 0.12);
 }
-.url-field input::placeholder { color: RGBA(68, 136, 255, 0.3); }
+.url-field input::placeholder { color: rgba(0, 140, 255, 0.3); }
 /* DNS record-type selector — inherits the same input look (gold accents) */
 .url-field select {
-  width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
-  border: 1px solid RGBA(68, 136, 255, 0.25); border-radius: 8px;
-  color: #88CCFF; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+  width: 100%; padding: 9px 12px; background: rgba(2, 8, 20, 0.7);
+  border: 1px solid rgba(0, 140, 255, 0.25); border-radius: 8px;
+  color: #80DFFF; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
   outline: none; transition: border-color 0.3s, box-shadow 0.3s;
   cursor: pointer; appearance: auto;
 }
 .url-field select:focus {
-  border-color: RGBA(68, 136, 255, 0.55); box-shadow: 0 0 14px RGBA(68, 136, 255, 0.12);
+  border-color: rgba(0, 140, 255, 0.55); box-shadow: 0 0 14px rgba(0, 140, 255, 0.12);
 }
-.url-field select option { background: #0a0a14; color: #88CCFF; }
+.url-field select option { background: #041225; color: #80DFFF; }
 .url-analyze-btn {
   width: 100%; padding: 10px 16px; background: RGBA(0, 136, 255, 0.15);
   border: 1px solid RGBA(0, 136, 255, 0.35); border-radius: 8px;
-  color: #0088FF; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+  color: #19A9FF; font-size: 12px; font-weight: 700; letter-spacing: 2px;
   cursor: pointer; transition: all 0.3s; text-transform: uppercase;
 }
 .url-analyze-btn:hover {
@@ -1003,53 +1003,53 @@ canvas {
 .url-stages { display: flex; flex-direction: column; gap: 4px; }
 .url-stage {
   display: flex; align-items: center; gap: 8px; font-size: 11px;
-  font-family: 'Consolas', 'Courier New', monospace; color: RGBA(68, 136, 255, 0.4);
+  font-family: 'Consolas', 'Courier New', monospace; color: rgba(0, 140, 255, 0.4);
   transition: color 0.3s;
 }
-.url-stage.running { color: #55AAFF; }
+.url-stage.running { color: #19A9FF; }
 .url-stage.done { color: #00ff88; }
 .url-stage.fail { color: #ff5555; }
-.url-stage.skip { color: RGBA(68, 136, 255, 0.35); }
+.url-stage.skip { color: rgba(0, 140, 255, 0.35); }
 .url-stage-icon { width: 14px; text-align: center; font-size: 10px; }
 
 .url-status-bar { display: flex; flex-direction: column; gap: 6px; }
 .url-status-row { display: flex; justify-content: space-between; align-items: center; }
 .url-status-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
+  text-transform: uppercase; color: rgba(85, 214, 255, 0.75);
 }
-.url-status-value { font-size: 12px; font-weight: 600; color: #55AAFF; }
+.url-status-value { font-size: 12px; font-weight: 600; color: #19A9FF; }
 .url-status-value.complete { color: #00ff88; }
 .url-status-value.error { color: #ff5555; }
 .url-bar-track {
-  width: 100%; height: 4px; background: RGBA(68, 136, 255, 0.1);
+  width: 100%; height: 4px; background: rgba(0, 140, 255, 0.1);
   border-radius: 2px; overflow: hidden;
 }
 .url-bar-fill {
-  height: 100%; background: linear-gradient(90deg, #0066FF, #0088FF);
+  height: 100%; background: linear-gradient(90deg, #008CFF, #19A9FF);
   border-radius: 2px; transition: width 0.4s ease;
 }
 
 .url-section {
-  background: rgba(8, 8, 18, 0.55); border: 1px solid RGBA(68, 136, 255, 0.12);
+  background: rgba(2, 8, 20, 0.55); border: 1px solid rgba(0, 140, 255, 0.12);
   border-radius: 8px; padding: 10px 12px;
 }
 .url-section-title {
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
+  text-transform: uppercase; color: rgba(85, 214, 255, 0.75);
   margin-bottom: 8px; padding-bottom: 6px;
-  border-bottom: 1px solid RGBA(68, 136, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 140, 255, 0.1);
 }
 .url-score-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; }
 .url-score {
-  font-size: 42px; font-weight: 700; color: #0088FF; line-height: 1;
+  font-size: 42px; font-weight: 700; color: #19A9FF; line-height: 1;
   text-shadow: 0 0 30px RGBA(0, 136, 255, 0.4);
 }
 .url-score.safe { color: #00ff88; text-shadow: 0 0 30px rgba(0, 255, 136, 0.4); }
-.url-score.suspicious { color: #ffaa00; text-shadow: 0 0 30px rgba(255, 170, 0, 0.4); }
+.url-score.suspicious { color: #19A9FF; text-shadow: 0 0 30px rgba(25, 169, 255, 0.4); }
 .url-score.danger { color: #ff3333; text-shadow: 0 0 30px rgba(255, 50, 50, 0.4); }
 .url-score-label { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-.url-score-class { font-size: 11px; color: rgba(255, 170, 85, 0.7); text-align: center; margin-top: 2px; }
+.url-score-class { font-size: 11px; color: rgba(85, 214, 255, 0.7); text-align: center; margin-top: 2px; }
 
 .url-checks { display: flex; flex-direction: column; gap: 4px; }
 .url-check {
@@ -1058,31 +1058,31 @@ canvas {
 }
 .url-check.pass { color: #00ff88; }
 .url-check.fail { color: #ff5555; }
-.url-check.warn { color: #ffaa00; }
+.url-check.warn { color: #19A9FF; }
 .url-check-icon { width: 16px; text-align: center; }
 
 .url-findings { display: flex; flex-direction: column; gap: 5px; }
 .url-finding {
   padding: 6px 8px; border-radius: 6px; font-size: 11px; line-height: 1.4;
-  background: rgba(8, 8, 18, 0.4); border-left: 2px solid RGBA(68, 136, 255, 0.3);
+  background: rgba(2, 8, 20, 0.4); border-left: 2px solid rgba(0, 140, 255, 0.3);
 }
 .url-finding.HIGH { border-left-color: #ff3333; background: rgba(255, 50, 50, 0.08); }
-.url-finding.MEDIUM { border-left-color: #ffaa00; background: rgba(255, 170, 0, 0.08); }
-.url-finding.LOW { border-left-color: #00ccff; background: rgba(0, 200, 255, 0.05); }
+.url-finding.MEDIUM { border-left-color: #19A9FF; background: rgba(25, 169, 255, 0.08); }
+.url-finding.LOW { border-left-color: #55D6FF; background: rgba(85, 214, 255, 0.05); }
 .url-finding.CRITICAL { border-left-color: #ff0000; background: rgba(255, 0, 0, 0.1); }
-.url-finding-title { font-weight: 600; color: #88CCFF; }
-.url-finding-detail { color: rgba(255, 200, 150, 0.65); margin-top: 2px; }
+.url-finding-title { font-weight: 600; color: #80DFFF; }
+.url-finding-detail { color: rgba(128, 223, 255, 0.65); margin-top: 2px; }
 
 .url-detail-grid { display: flex; flex-direction: column; gap: 4px; }
 .url-detail-row { display: flex; justify-content: space-between; font-size: 11px; font-family: 'Consolas', 'Courier New', monospace; }
-.url-detail-k { color: rgba(255, 170, 85, 0.6); }
-.url-detail-v { color: #88CCFF; text-align: right; max-width: 60%; word-break: break-all; }
+.url-detail-k { color: rgba(85, 214, 255, 0.6); }
+.url-detail-v { color: #80DFFF; text-align: right; max-width: 60%; word-break: break-all; }
 
 .url-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .url-action-btn {
   flex: 1; min-width: 100px; padding: 8px 12px; background: RGBA(0, 136, 255, 0.12);
   border: 1px solid RGBA(0, 136, 255, 0.3); border-radius: 8px;
-  color: #0088FF; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  color: #19A9FF; font-size: 11px; font-weight: 700; letter-spacing: 1px;
   cursor: pointer; transition: all 0.3s; text-transform: uppercase;
 }
 .url-action-btn:hover {
@@ -1094,16 +1094,16 @@ canvas {
 .url-history { display: flex; flex-direction: column; gap: 5px; }
 .url-history-item {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 8px; background: rgba(8, 8, 18, 0.4);
-  border: 1px solid RGBA(68, 136, 255, 0.1); border-radius: 6px;
+  padding: 6px 8px; background: rgba(2, 8, 20, 0.4);
+  border: 1px solid rgba(0, 140, 255, 0.1); border-radius: 6px;
   cursor: pointer; transition: all 0.2s;
 }
-.url-history-item:hover { background: RGBA(68, 136, 255, 0.08); border-color: RGBA(68, 136, 255, 0.2); }
+.url-history-item:hover { background: rgba(0, 140, 255, 0.08); border-color: rgba(0, 140, 255, 0.2); }
 .url-history-domain {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #88CCFF; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #80DFFF; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.url-history-meta { font-size: 10px; color: rgba(255, 170, 85, 0.6); }
+.url-history-meta { font-size: 10px; color: rgba(85, 214, 255, 0.6); }
 
 .url-error-card {
   background: rgba(255, 68, 68, 0.08); border: 1px solid rgba(255, 68, 68, 0.25);
@@ -1123,22 +1123,22 @@ canvas {
 }
 .url-recommendation.danger {
   background: rgba(255, 50, 50, 0.05); border-color: rgba(255, 50, 50, 0.2);
-  color: rgba(255, 200, 200, 0.8);
+  color: rgba(234, 248, 255, 0.8);
 }
 
 /* ===== DNS LOOKUP PANEL (gold accents; shares the URL panel layout) ===== */
 .dns-dot {
-  background: #44CCFF;
-  box-shadow: 0 0 8px #44CCFF;
+  background: #55D6FF;
+  box-shadow: 0 0 8px #55D6FF;
 }
 .dns-pulse-dot {
-  background: #44CCFF;
-  box-shadow: 0 0 10px #44CCFF;
+  background: #55D6FF;
+  box-shadow: 0 0 10px #55D6FF;
 }
 .dns-badge {
-  background: rgba(255, 204, 68, 0.15);
-  border: 1px solid rgba(255, 204, 68, 0.4);
-  color: #44CCFF;
+  background: rgba(85, 214, 255, 0.15);
+  border: 1px solid rgba(85, 214, 255, 0.4);
+  color: #55D6FF;
 }
 .dns-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -1146,40 +1146,40 @@ canvas {
   color: #ff6666;
 }
 .dns-lookup-btn {
-  background: rgba(255, 204, 68, 0.14);
-  border: 1px solid rgba(255, 204, 68, 0.4);
-  color: #44CCFF;
+  background: rgba(85, 214, 255, 0.14);
+  border: 1px solid rgba(85, 214, 255, 0.4);
+  color: #55D6FF;
 }
 .dns-lookup-btn:hover {
-  background: rgba(255, 204, 68, 0.25);
-  border-color: rgba(255, 204, 68, 0.65);
-  box-shadow: 0 0 20px rgba(255, 204, 68, 0.2);
+  background: rgba(85, 214, 255, 0.25);
+  border-color: rgba(85, 214, 255, 0.65);
+  box-shadow: 0 0 20px rgba(85, 214, 255, 0.2);
 }
 .dns-records { display: flex; flex-direction: column; gap: 6px; }
 .dns-record-block {
-  background: rgba(8, 8, 18, 0.4);
-  border: 1px solid rgba(255, 204, 68, 0.14);
+  background: rgba(2, 8, 20, 0.4);
+  border: 1px solid rgba(85, 214, 255, 0.14);
   border-radius: 6px;
   padding: 6px 8px;
 }
 .dns-record-head {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: #44CCFF;
+  text-transform: uppercase; color: #55D6FF;
   padding-bottom: 4px; margin-bottom: 4px;
-  border-bottom: 1px solid rgba(255, 204, 68, 0.1);
+  border-bottom: 1px solid rgba(85, 214, 255, 0.1);
 }
 .dns-record-status { font-size: 9px; letter-spacing: 1px; }
 .dns-record-status.ok { color: #00ff88; }
-.dns-record-status.empty { color: rgba(255, 170, 85, 0.5); }
+.dns-record-status.empty { color: rgba(85, 214, 255, 0.5); }
 .dns-record-status.error { color: #ff5555; }
 .dns-record-row {
   display: flex; justify-content: space-between; gap: 10px;
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #88CCFF; padding: 2px 0; word-break: break-all;
+  color: #80DFFF; padding: 2px 0; word-break: break-all;
 }
 .dns-record-ttl {
-  flex: none; color: rgba(255, 170, 85, 0.6); font-size: 10px;
+  flex: none; color: rgba(85, 214, 255, 0.6); font-size: 10px;
 }
 .dns-record-error {
   font-size: 11px; color: rgba(255, 150, 150, 0.7);
@@ -1187,10 +1187,10 @@ canvas {
 }
 .dns-warnings { display: flex; flex-direction: column; gap: 4px; }
 .dns-warning {
-  font-size: 11px; line-height: 1.45; color: rgba(255, 200, 120, 0.85);
+  font-size: 11px; line-height: 1.45; color: rgba(85, 214, 255, 0.85);
   padding: 5px 8px; border-radius: 6px;
-  background: rgba(255, 170, 0, 0.06);
-  border-left: 2px solid rgba(255, 170, 0, 0.35);
+  background: rgba(25, 169, 255, 0.06);
+  border-left: 2px solid rgba(25, 169, 255, 0.35);
 }
 
 .dns-findings-list, .dns-warning-list, .dns-recommendation-list {
@@ -1198,17 +1198,17 @@ canvas {
 }
 .dns-findings-list li, .dns-warning-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #88CCFF; padding: 4px 6px; border-radius: 4px;
-  background: rgba(255, 204, 68, 0.06);
+  color: #80DFFF; padding: 4px 6px; border-radius: 4px;
+  background: rgba(85, 214, 255, 0.06);
 }
 .dns-recommendation-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #88CCFF; padding: 4px 6px; border-radius: 4px;
+  color: #80DFFF; padding: 4px 6px; border-radius: 4px;
   background: rgba(8, 120, 80, 0.12);
   border-left: 2px solid rgba(0, 255, 136, 0.35);
 }
 .dns-empty-list {
-  font-size: 11px; color: rgba(255, 204, 68, 0.25);
+  font-size: 11px; color: rgba(85, 214, 255, 0.25);
   font-family: 'Consolas', 'Courier New', monospace; padding: 8px 0;
 }
 
@@ -1225,11 +1225,11 @@ canvas {
   max-width: 560px;
   padding: 12px 14px 12px 16px;
   background: rgba(8, 8, 20, 0.92);
-  border: 1px solid RGBA(68, 136, 255, 0.45);
+  border: 1px solid rgba(0, 140, 255, 0.45);
   border-radius: 12px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 140, 255, 0.2);
   pointer-events: auto;
   z-index: 40;
   opacity: 0;
@@ -1250,10 +1250,10 @@ canvas {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: #44CCFF;
-  background: rgba(255, 204, 68, 0.12);
-  border: 1px solid rgba(255, 204, 68, 0.4);
-  box-shadow: 0 0 12px rgba(255, 204, 68, 0.25);
+  color: #55D6FF;
+  background: rgba(85, 214, 255, 0.12);
+  border: 1px solid rgba(85, 214, 255, 0.4);
+  box-shadow: 0 0 12px rgba(85, 214, 255, 0.25);
 }
 .scan-toast-body {
   flex: 1;
@@ -1263,13 +1263,13 @@ canvas {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #55AAFF;
+  color: #19A9FF;
   margin-bottom: 3px;
 }
 .scan-toast-text {
   font-size: 12px;
   line-height: 1.45;
-  color: rgba(255, 221, 153, 0.85);
+  color: rgba(234, 248, 255, 0.85);
   word-wrap: break-word;
 }
 .scan-toast-close {
@@ -1277,9 +1277,9 @@ canvas {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: RGBA(68, 136, 255, 0.12);
-  border: 1px solid RGBA(68, 136, 255, 0.3);
-  color: #4488FF;
+  background: rgba(0, 140, 255, 0.12);
+  border: 1px solid rgba(0, 140, 255, 0.3);
+  color: #008CFF;
   font-size: 12px;
   cursor: pointer;
   display: flex;
@@ -1288,8 +1288,8 @@ canvas {
   transition: all 0.3s;
 }
 .scan-toast-close:hover {
-  background: RGBA(68, 136, 255, 0.25);
-  color: #99DDFF;
+  background: rgba(0, 140, 255, 0.25);
+  color: #EAF8FF;
 }
 
 /* Responsive */
@@ -1766,8 +1766,8 @@ canvas {
 (function() {
   // ===== THREE.JS VISUALIZATION =====
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x080812);
-  scene.fog = new THREE.FogExp2(0x080812, 0.018);
+  scene.background = new THREE.Color(0X020814);
+  scene.fog = new THREE.FogExp2(0X020814, 0.018);
 
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(0, 0.8, 8);
@@ -1776,7 +1776,7 @@ canvas {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x080812, 1);
+  renderer.setClearColor(0X020814, 1);
   document.body.prepend(renderer.domElement);
 
   function onResize() {
@@ -1815,7 +1815,7 @@ canvas {
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   const starMat = new THREE.PointsMaterial({
-    color: 0X4488FF,
+    color: 0X008CFF,
     size: 0.06,
     transparent: true,
     opacity: 0.4,
@@ -1828,7 +1828,7 @@ canvas {
   // ===== AMBIENT RED/BLUE WASH =====
   const washGeo = new THREE.SphereGeometry(12, 32, 32);
   const washMat = new THREE.MeshBasicMaterial({
-    color: 0x441100,
+    color: 0X041225,
     transparent: true,
     opacity: 0.08,
     side: THREE.BackSide
@@ -1843,7 +1843,7 @@ canvas {
   // Solid Inner Core with Halo
   const innerCoreGeo = new THREE.SphereGeometry(0.5, 48, 48);
   const innerCoreMat = new THREE.MeshBasicMaterial({
-    color: 0X0088FF,
+    color: 0X19A9FF,
     transparent: true,
     opacity: 0.85
   });
@@ -1852,13 +1852,13 @@ canvas {
 
   // Brighter center
   const centerGeo = new THREE.SphereGeometry(0.25, 32, 32);
-  const centerMat = new THREE.MeshBasicMaterial({ color: 0X44CCFF });
+  const centerMat = new THREE.MeshBasicMaterial({ color: 0X55D6FF });
   const center = new THREE.Mesh(centerGeo, centerMat);
   coreGroup.add(center);
 
   // Core glow halo
   const haloMat = new THREE.MeshBasicMaterial({
-    color: 0X0066FF,
+    color: 0X008CFF,
     transparent: true,
     opacity: 0.12,
     side: THREE.BackSide
@@ -1868,7 +1868,7 @@ canvas {
 
   // Outer glow layer
   const outerHaloMat = new THREE.MeshBasicMaterial({
-    color: 0X0044FF,
+    color: 0X008CFF,
     transparent: true,
     opacity: 0.05,
     side: THREE.BackSide
@@ -1883,7 +1883,7 @@ canvas {
   // Outer geodesic - IcosahedronGeometry subdivision 3 for dense mesh
   const mainWireGeo = new THREE.IcosahedronGeometry(2.2, 3);
   const mainWireMat = new THREE.MeshBasicMaterial({
-    color: 0X0088FF,
+    color: 0X19A9FF,
     wireframe: true,
     transparent: true,
     opacity: 0.2
@@ -1894,7 +1894,7 @@ canvas {
   // Brighter outer wireframe (subdivision 2)
   const midWireGeo = new THREE.IcosahedronGeometry(2.0, 2);
   const midWireMat = new THREE.MeshBasicMaterial({
-    color: 0X33AAFF,
+    color: 0X19A9FF,
     wireframe: true,
     transparent: true,
     opacity: 0.15
@@ -1909,7 +1909,7 @@ canvas {
   // Inner mesh 1
   const innerMesh1Geo = new THREE.IcosahedronGeometry(1.5, 2);
   const innerMesh1Mat = new THREE.MeshBasicMaterial({
-    color: 0X3399FF,
+    color: 0X19A9FF,
     wireframe: true,
     transparent: true,
     opacity: 0.1
@@ -1920,7 +1920,7 @@ canvas {
   // Inner mesh 2 (tighter)
   const innerMesh2Geo = new THREE.IcosahedronGeometry(1.1, 1);
   const innerMesh2Mat = new THREE.MeshBasicMaterial({
-    color: 0X44BBFF,
+    color: 0X55D6FF,
     wireframe: true,
     transparent: true,
     opacity: 0.08
@@ -1952,26 +1952,26 @@ canvas {
   }
 
   // 3 Major orbits
-  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0X0088FF, 0.35);
+  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0X19A9FF, 0.35);
   orbitGroup.add(orbit1);
 
-  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0X33AAFF, 0.3);
+  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0X19A9FF, 0.3);
   orbit2.rotation.x = THREE.MathUtils.degToRad(35);
   orbit2.rotation.z = THREE.MathUtils.degToRad(20);
   orbitGroup.add(orbit2);
 
-  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0X0077FF, 0.25);
+  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0X008CFF, 0.25);
   orbit3.rotation.x = THREE.MathUtils.degToRad(-25);
   orbit3.rotation.z = THREE.MathUtils.degToRad(45);
   orbitGroup.add(orbit3);
 
   // 2 Minor orbits
-  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0X3399FF, 0.15);
+  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0X19A9FF, 0.15);
   orbit4.rotation.x = THREE.MathUtils.degToRad(60);
   orbit4.rotation.z = THREE.MathUtils.degToRad(-10);
   orbitGroup.add(orbit4);
 
-  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0X44BBFF, 0.12);
+  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0X55D6FF, 0.12);
   orbit5.rotation.x = THREE.MathUtils.degToRad(-50);
   orbit5.rotation.z = THREE.MathUtils.degToRad(30);
   orbitGroup.add(orbit5);
@@ -1986,9 +1986,9 @@ canvas {
     canvas.width = 16;
     canvas.height = 16;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'rgba(255, 180, 80, 1)';
+    ctx.fillStyle = 'rgba(0, 140, 255, 1)';
     ctx.fillRect(2, 2, 12, 12);
-    ctx.fillStyle = 'rgba(255, 220, 150, 0.6)';
+    ctx.fillStyle = 'rgba(128, 223, 255, 0.6)';
     ctx.fillRect(4, 4, 8, 8);
     return new THREE.CanvasTexture(canvas);
   }
@@ -2011,7 +2011,7 @@ canvas {
 
   const orbitParticleMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0X44AAFF,
+    color: 0X55D6FF,
     size: 0.08,
     transparent: true,
     opacity: 0.7,
@@ -2022,7 +2022,7 @@ canvas {
   const orbitParticles = new THREE.Points(orbitParticleGeo, orbitParticleMat);
   particleOrbitGroup.add(orbitParticles);
 
-  // ===== SCATTERED AMBER PARTICLES =====
+  // ===== SCATTERED BLUE PARTICLES =====
   const scatterCount = 800;
   const scatterGeo = new THREE.BufferGeometry();
   const scatterPos = new Float32Array(scatterCount * 3);
@@ -2040,7 +2040,7 @@ canvas {
 
   const scatterMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0X3399FF,
+    color: 0X19A9FF,
     size: 0.05,
     transparent: true,
     opacity: 0.5,
@@ -2058,11 +2058,11 @@ canvas {
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
-    grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
-    grad.addColorStop(0.3, 'RGBA(30, 100, 255, 0.4)');
-    grad.addColorStop(0.5, 'RGBA(20, 80, 255, 0.15)');
-    grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
+    grad.addColorStop(0, 'rgba(85, 214, 255, 1)');
+    grad.addColorStop(0.1, 'rgba(25, 169, 255, 0.8)');
+    grad.addColorStop(0.3, 'rgba(85, 214, 255, 0.4)');
+    grad.addColorStop(0.5, 'rgba(0, 140, 255, 0.15)');
+    grad.addColorStop(0.7, 'rgba(0, 140, 255, 0.05)');
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
@@ -2093,9 +2093,9 @@ canvas {
   mainGroup.add(innerGlow);
 
   // ===== LIGHTING =====
-  const ambientLight = new THREE.AmbientLight(0X6633FF, 0.15);
+  const ambientLight = new THREE.AmbientLight(0X008CFF, 0.15);
   scene.add(ambientLight);
-  const pointLight = new THREE.PointLight(0X8833FF, 0.6, 12);
+  const pointLight = new THREE.PointLight(0X19A9FF, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
 
@@ -2433,7 +2433,7 @@ canvas {
     const w = elCpuSpark.width, h = elCpuSpark.height;
     ctx.clearRect(0, 0, w, h);
     // Guide lines at 50% and 90%
-    ctx.strokeStyle = 'RGBA(68,136,255,0.15)';
+    ctx.strokeStyle = 'rgba(0,140,255,0.15)';
     ctx.lineWidth = 1;
     [0.5, 0.9].forEach(function (f) {
       const y = h - (h * f);
@@ -2448,14 +2448,14 @@ canvas {
       const y = h - (Math.min(100, cpuHistory[i]) / 100) * (h - 2) - 1;
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = '#4488FF';
+    ctx.strokeStyle = '#008CFF';
     ctx.lineWidth = 1.6;
     ctx.stroke();
     // Fill under curve
     ctx.lineTo(x0 + (cpuHistory.length - 1) * step, h);
     ctx.lineTo(x0, h);
     ctx.closePath();
-    ctx.fillStyle = 'RGBA(68,136,255,0.14)';
+    ctx.fillStyle = 'rgba(0,140,255,0.14)';
     ctx.fill();
   }
 
@@ -2473,8 +2473,8 @@ canvas {
     const step = w / (SPARK_MAX_POINTS - 1);
     const x0 = w - (netHistory.length - 1) * step;
     const series = [
-      { key: 'down', color: '#4488FF' },
-      { key: 'up', color: '#00ccff' }
+      { key: 'down', color: '#008CFF' },
+      { key: 'up', color: '#55D6FF' }
     ];
     series.forEach(function (s) {
       ctx.beginPath();
@@ -2505,8 +2505,8 @@ canvas {
         if (elAnalysisCard) {
           const levelColors = {
             normal: '#00ff88',
-            low: '#00ccff',
-            elevated: '#ffaa00',
+            low: '#55D6FF',
+            elevated: '#19A9FF',
             warning: '#ff5555'
           };
           elAnalysisCard.style.borderLeftColor = levelColors[m.analysis.level] || '#00ff88';
@@ -3433,7 +3433,7 @@ canvas {
         urlHistoryEl.innerHTML = data.data.map(function (h) {
           const cls = (h.classification === 'MALICIOUS') ? 'danger'
                     : (h.classification === 'SUSPICIOUS') ? 'suspicious' : 'safe';
-          const scoreColor = (h.score >= 70) ? '#00ff88' : (h.score >= 40 ? '#ffaa00' : '#ff3333');
+          const scoreColor = (h.score >= 70) ? '#00ff88' : (h.score >= 40 ? '#19A9FF' : '#ff3333');
           return '<div class="url-history-item" data-scan-id="' + escapeHtml(h.scan_id) + '">'
             + '<span class="url-history-domain">' + escapeHtml(h.domain || h.url || '—') + '</span>'
             + '<span class="url-history-meta">Score: <span style="color:' + scoreColor + ';font-weight:700">' + h.score + '</span> &middot; ' + escapeHtml(h.classification_label || h.classification || '') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
@@ -3649,7 +3649,7 @@ canvas {
         if (rec.ttl) html += '<span class="dns-record-ttl">TTL ' + rec.ttl + '</span>';
         html += '</div>';
       });
-      if (block.ttl) html += '<div class="dns-record-row" style="color:rgba(255,204,68,0.4);justify-content:center"><span class="dns-record-ttl">TTL ' + block.ttl + '</span></div>';
+      if (block.ttl) html += '<div class="dns-record-row" style="color:rgba(85,214,255,0.4);justify-content:center"><span class="dns-record-ttl">TTL ' + block.ttl + '</span></div>';
     }
     html += '</div>';
         return html;
@@ -3911,7 +3911,7 @@ canvas {
       if (dnsHistoryEmpty) dnsHistoryEmpty.remove();
       if (dnsHistoryEl) {
         dnsHistoryEl.innerHTML = data.data.map(function (h) {
-          var stColor = (h.status === 'RESOLVED') ? '#00ff88' : '#ffaa00';
+          var stColor = (h.status === 'RESOLVED') ? '#00ff88' : '#19A9FF';
           return '<div class="url-history-item" data-lookup-id="' + escapeHtml(h.lookup_id) + '">'
             + '<span class="url-history-domain">' + escapeHtml(h.domain || '—') + '</span>'
             + '<span class="url-history-meta"><span style="color:' + stColor + ';font-weight:700">' + escapeHtml(h.status || '') + '</span> &middot; ' + escapeHtml(h.query_type || 'ANY') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
