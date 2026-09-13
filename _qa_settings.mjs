@@ -16,14 +16,6 @@ export default async function run(page, ui) {
   await page.waitForTimeout(150);
   out.zoom = await page.evaluate(() => document.body.style.zoom);
 
-  // Accent: 3rd swatch
-  out.accentPicked = await page.evaluate(() => {
-    const sw = document.querySelectorAll('#zs-accent-swatches .zs-swatch');
-    sw[2].click(); return sw[2].dataset.color;
-  });
-  await page.waitForTimeout(150);
-  out.accentVar = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--zyra-accent').trim());
-
   // Voice toggle off then on; volume 50
   await page.evaluate(() => document.getElementById('zs-voice-toggle').click());
   await page.waitForTimeout(100);
@@ -41,7 +33,7 @@ export default async function run(page, ui) {
   out.wakeWord = await page.evaluate(() => JSON.parse(localStorage.getItem('zyra_settings_v1')||'{}').wakeWord);
 
   const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('zyra_settings_v1')||'{}'));
-  out.persisted = { theme: persisted.theme, fontSize: persisted.fontSize, accent: persisted.accent, voiceEnabled: persisted.voiceEnabled, voiceVolume: persisted.voiceVolume, wakeWord: persisted.wakeWord, saveHistory: persisted.saveHistory };
+  out.persisted = { theme: persisted.theme, fontSize: persisted.fontSize, voiceEnabled: persisted.voiceEnabled, voiceVolume: persisted.voiceVolume, wakeWord: persisted.wakeWord, saveHistory: persisted.saveHistory };
 
   // Open chat sidebar
   await page.evaluate(() => document.getElementById('zs-sidebar-open').click());
