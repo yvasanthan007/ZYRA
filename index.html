@@ -32,7 +32,7 @@ canvas {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x080812);
   
-  // Subtle ambient red/orange fog
+  // Subtle ambient red/blue fog
   scene.fog = new THREE.FogExp2(0x080812, 0.018);
 
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -82,7 +82,7 @@ canvas {
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   const starMat = new THREE.PointsMaterial({
-    color: 0xff8844,
+    color: 0X4488FF,
     size: 0.06,
     transparent: true,
     opacity: 0.4,
@@ -92,7 +92,7 @@ canvas {
   const stars = new THREE.Points(starGeo, starMat);
   scene.add(stars);
 
-  // ===== AMBIENT RED/ORANGE WASH =====
+  // ===== AMBIENT RED/BLUE WASH =====
   const washGeo = new THREE.SphereGeometry(12, 32, 32);
   const washMat = new THREE.MeshBasicMaterial({
     color: 0x441100,
@@ -110,7 +110,7 @@ canvas {
   // --- Solid Inner Core with Halo ---
   const innerCoreGeo = new THREE.SphereGeometry(0.5, 48, 48);
   const innerCoreMat = new THREE.MeshBasicMaterial({
-    color: 0xff8800,
+    color: 0X0088FF,
     transparent: true,
     opacity: 0.85
   });
@@ -119,13 +119,13 @@ canvas {
 
   // Brighter center
   const centerGeo = new THREE.SphereGeometry(0.25, 32, 32);
-  const centerMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
+  const centerMat = new THREE.MeshBasicMaterial({ color: 0X44CCFF });
   const center = new THREE.Mesh(centerGeo, centerMat);
   coreGroup.add(center);
 
   // Core glow halo (soft outer)
   const haloMat = new THREE.MeshBasicMaterial({
-    color: 0xff6600,
+    color: 0X0066FF,
     transparent: true,
     opacity: 0.12,
     side: THREE.BackSide
@@ -135,7 +135,7 @@ canvas {
 
   // Outer glow layer
   const outerHaloMat = new THREE.MeshBasicMaterial({
-    color: 0xff4400,
+    color: 0X0044FF,
     transparent: true,
     opacity: 0.05,
     side: THREE.BackSide
@@ -150,7 +150,7 @@ canvas {
   // Outer geodesic - IcosahedronGeometry subdivision 3 for dense mesh
   const mainWireGeo = new THREE.IcosahedronGeometry(2.2, 3);
   const mainWireMat = new THREE.MeshBasicMaterial({
-    color: 0xff8800,
+    color: 0X0088FF,
     wireframe: true,
     transparent: true,
     opacity: 0.2
@@ -161,7 +161,7 @@ canvas {
   // Brighter outer wireframe (subdivision 2)
   const midWireGeo = new THREE.IcosahedronGeometry(2.0, 2);
   const midWireMat = new THREE.MeshBasicMaterial({
-    color: 0xffaa33,
+    color: 0X33AAFF,
     wireframe: true,
     transparent: true,
     opacity: 0.15
@@ -176,7 +176,7 @@ canvas {
   // Inner mesh 1
   const innerMesh1Geo = new THREE.IcosahedronGeometry(1.5, 2);
   const innerMesh1Mat = new THREE.MeshBasicMaterial({
-    color: 0xff9933,
+    color: 0X3399FF,
     wireframe: true,
     transparent: true,
     opacity: 0.1
@@ -187,7 +187,7 @@ canvas {
   // Inner mesh 2 (tighter)
   const innerMesh2Geo = new THREE.IcosahedronGeometry(1.1, 1);
   const innerMesh2Mat = new THREE.MeshBasicMaterial({
-    color: 0xffbb44,
+    color: 0X44BBFF,
     wireframe: true,
     transparent: true,
     opacity: 0.08
@@ -218,26 +218,26 @@ canvas {
   }
 
   // Major orbits (3)
-  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0xff8800, 0.35);
+  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0X0088FF, 0.35);
   orbitGroup.add(orbit1);
 
-  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0xffaa33, 0.3);
+  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0X33AAFF, 0.3);
   orbit2.rotation.x = THREE.MathUtils.degToRad(35);
   orbit2.rotation.z = THREE.MathUtils.degToRad(20);
   orbitGroup.add(orbit2);
 
-  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0xff7700, 0.25);
+  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0X0077FF, 0.25);
   orbit3.rotation.x = THREE.MathUtils.degToRad(-25);
   orbit3.rotation.z = THREE.MathUtils.degToRad(45);
   orbitGroup.add(orbit3);
 
   // Minor orbits (2)
-  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0xff9933, 0.15);
+  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0X3399FF, 0.15);
   orbit4.rotation.x = THREE.MathUtils.degToRad(60);
   orbit4.rotation.z = THREE.MathUtils.degToRad(-10);
   orbitGroup.add(orbit4);
 
-  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0xffbb44, 0.12);
+  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0X44BBFF, 0.12);
   orbit5.rotation.x = THREE.MathUtils.degToRad(-50);
   orbit5.rotation.z = THREE.MathUtils.degToRad(30);
   orbitGroup.add(orbit5);
@@ -279,7 +279,7 @@ canvas {
 
   const orbitParticleMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0xffaa44,
+    color: 0X44AAFF,
     size: 0.08,
     transparent: true,
     opacity: 0.7,
@@ -308,7 +308,7 @@ canvas {
 
   const scatterMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0xff9933,
+    color: 0X3399FF,
     size: 0.05,
     transparent: true,
     opacity: 0.5,
@@ -328,8 +328,8 @@ canvas {
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
     grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
     grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
-    grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
-    grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
+    grad.addColorStop(0.3, 'RGBA(30, 100, 255, 0.4)');
+    grad.addColorStop(0.5, 'RGBA(20, 80, 255, 0.15)');
     grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
@@ -361,9 +361,9 @@ canvas {
   mainGroup.add(innerGlow);
 
   // ===== LIGHTING =====
-  const ambientLight = new THREE.AmbientLight(0xff6633, 0.15);
+  const ambientLight = new THREE.AmbientLight(0X6633FF, 0.15);
   scene.add(ambientLight);
-  const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
+  const pointLight = new THREE.PointLight(0X8833FF, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
 

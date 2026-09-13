@@ -30,19 +30,67 @@ Verdict Mapping:
   - Score 6+: Critical (Red)
 """
 
+import os
+import shutil
 import subprocess
 import re
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 
+# ──────────────────────────────────────────────
+# Nmap executable resolution
+# ──────────────────────────────────────────────
+
+# Standard install locations probed when PATH lookup fails. The Windows
+# installer (and the winget package) add Nmap's directory to the SYSTEM
+# PATH only for NEW processes — an already-running ZYRA backend would not
+# see the updated PATH, so these fallbacks keep the feature working
+# without a reboot.
+_NMAP_FALLBACK_PATHS = [
+    r"C:\Program Files (x86)\Nmap\nmap.exe",
+    r"C:\Program Files\Nmap\nmap.exe",
+    "/usr/local/bin/nmap",
+    "/usr/bin/nmap",
+    "/opt/homebrew/bin/nmap",
+]
+
+
+def resolve_nmap_command() -> str:
+    """
+    Locate the nmap executable.
+
+    Resolution order:
+      1. NMAP_PATH environment variable (explicit user override)
+      2. PATH lookup (shutil.which)
+      3. Standard Windows install locations
+      4. Common macOS/Linux locations
+
+    Falls back to the bare name "nmap" so any resulting error message
+    still reads naturally.
+    """
+    override = os.environ.get("NMAP_PATH", "").strip()
+    if override and (os.path.isfile(override) or shutil.which(override)):
+        return override
+
+    found = shutil.which("nmap")
+    if found:
+        return found
+
+    for candidate in _NMAP_FALLBACK_PATHS:
+        if os.path.isfile(candidate):
+            return candidate
+
+    return "nmap"
+
 
 # ──────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────
 
-# Default nmap command path (can be overridden)
-NMAP_COMMAND = "nmap"
+# Default nmap command path — resolved once at import (can be overridden
+# via the NMAP_PATH environment variable or the NmapScanner constructor).
+NMAP_COMMAND = resolve_nmap_command()
 
 # Dangerous ports that increase risk score
 DANGEROUS_PORTS = {

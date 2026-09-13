@@ -14,7 +14,7 @@ body {
   height: 100vh;
   cursor: crosshair;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #ff8844;
+  color: #4488FF;
 }
 canvas {
   display: block;
@@ -69,24 +69,24 @@ canvas {
 }
 .top-logo {
   font-size: 18px;
-  color: #ff8844;
-  text-shadow: 0 0 10px rgba(255, 136, 68, 0.7);
+  color: #4488FF;
+  text-shadow: 0 0 10px RGBA(68, 136, 255, 0.7);
   animation: pulseLogo 3s infinite ease-in-out;
 }
 @keyframes pulseLogo {
   0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 16px rgba(255, 136, 68, 1); }
+  50% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 16px RGBA(68, 136, 255, 1); }
 }
 .top-title {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 3px;
-  color: #ffaa55;
+  color: #55AAFF;
 }
 .top-subtitle {
   font-size: 11px;
   letter-spacing: 2px;
-  color: rgba(255, 136, 68, 0.6);
+  color: RGBA(68, 136, 255, 0.6);
   text-transform: uppercase;
 }
 
@@ -96,10 +96,10 @@ canvas {
   gap: 12px;
 }
 .top-btn {
-  background: rgba(255, 136, 68, 0.12);
-  border: 1px solid rgba(255, 136, 68, 0.35);
+  background: RGBA(68, 136, 255, 0.12);
+  border: 1px solid RGBA(68, 136, 255, 0.35);
   border-radius: 20px;
-  color: #ffaa55;
+  color: #55AAFF;
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -111,23 +111,23 @@ canvas {
   backdrop-filter: blur(8px);
 }
 .top-btn:hover {
-  background: rgba(255, 136, 68, 0.25);
-  border-color: rgba(255, 136, 68, 0.6);
-  color: #ffdd99;
-  box-shadow: 0 0 16px rgba(255, 136, 68, 0.25);
+  background: RGBA(68, 136, 255, 0.25);
+  border-color: RGBA(68, 136, 255, 0.6);
+  color: #99DDFF;
+  box-shadow: 0 0 16px RGBA(68, 136, 255, 0.25);
   transform: translateY(-1px);
 }
 .top-btn.active {
-  background: rgba(255, 136, 68, 0.3);
-  border-color: #ff8844;
-  box-shadow: 0 0 16px rgba(255, 136, 68, 0.35);
+  background: RGBA(68, 136, 255, 0.3);
+  border-color: #4488FF;
+  box-shadow: 0 0 16px RGBA(68, 136, 255, 0.35);
 }
 .btn-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ff8844;
-  box-shadow: 0 0 8px #ff8844;
+  background: #4488FF;
+  box-shadow: 0 0 8px #4488FF;
   animation: blinkDot 2s infinite;
 }
 @keyframes blinkDot {
@@ -143,11 +143,11 @@ canvas {
   width: 330px;
   max-height: calc(100vh - 200px);
   background: rgba(8, 8, 20, 0.88);
-  border: 1px solid rgba(255, 136, 68, 0.28);
+  border: 1px solid RGBA(68, 136, 255, 0.28);
   border-radius: 14px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.15);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -170,8 +170,8 @@ canvas {
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  background: rgba(255, 136, 68, 0.08);
-  border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+  background: RGBA(68, 136, 255, 0.08);
+  border-bottom: 1px solid RGBA(68, 136, 255, 0.18);
   cursor: grab;
   user-select: none;
 }
@@ -199,7 +199,7 @@ canvas {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #ff9944;
+  color: #4499FF;
   text-transform: uppercase;
 }
 .sm-header-actions {
@@ -225,7 +225,7 @@ canvas {
 .sm-btn-close {
   background: none;
   border: none;
-  color: rgba(255, 136, 68, 0.6);
+  color: RGBA(68, 136, 255, 0.6);
   font-size: 14px;
   cursor: pointer;
   padding: 4px 6px;
@@ -234,8 +234,8 @@ canvas {
   transition: all 0.2s;
 }
 .sm-btn-close:hover {
-  color: #ff8844;
-  background: rgba(255, 136, 68, 0.15);
+  color: #4488FF;
+  background: RGBA(68, 136, 255, 0.15);
 }
 
 .sm-body {
@@ -245,14 +245,14 @@ canvas {
   flex-direction: column;
   gap: 12px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 136, 68, 0.3) transparent;
+  scrollbar-color: RGBA(68, 136, 255, 0.3) transparent;
 }
 .sm-body::-webkit-scrollbar { width: 4px; }
-.sm-body::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.3); border-radius: 2px; }
+.sm-body::-webkit-scrollbar-thumb { background: RGBA(68, 136, 255, 0.3); border-radius: 2px; }
 
 .sm-metric-card, .sm-info-card {
   background: rgba(8, 8, 18, 0.55);
-  border: 1px solid rgba(255, 136, 68, 0.12);
+  border: 1px solid RGBA(68, 136, 255, 0.12);
   border-radius: 8px;
   padding: 10px 12px;
   display: flex;
@@ -268,20 +268,20 @@ canvas {
 .sm-metric-name {
   font-size: 13px;
   font-weight: 600;
-  color: #ffbb66;
+  color: #66BBFF;
 }
 .sm-metric-val {
   font-size: 14px;
   font-weight: 700;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffaa44;
+  color: #44AAFF;
 }
 
 .sm-ascii-bar {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.2;
-  color: #ff8844;
+  color: #4488FF;
   letter-spacing: 2px;
   user-select: none;
   word-break: break-all;
@@ -290,16 +290,16 @@ canvas {
 .sm-bar-track {
   width: 100%;
   height: 4px;
-  background: rgba(255, 136, 68, 0.12);
+  background: RGBA(68, 136, 255, 0.12);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 2px;
 }
 .sm-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ff8844, #ffcc66);
+  background: linear-gradient(90deg, #4488FF, #66CCFF);
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(255, 136, 68, 0.6);
+  box-shadow: 0 0 8px RGBA(68, 136, 255, 0.6);
   transition: width 0.4s ease;
 }
 
@@ -312,7 +312,7 @@ canvas {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #ff8844;
+  color: #4488FF;
   text-transform: uppercase;
   margin-bottom: 2px;
 }
@@ -328,20 +328,20 @@ canvas {
 .sm-stat-v {
   font-family: 'Consolas', monospace;
   font-weight: 600;
-  color: #ffcc88;
+  color: #88CCFF;
 }
 
 .sm-uptime-val, .sm-sys-val {
   font-size: 12px;
   font-family: 'Consolas', monospace;
-  color: #ffcc88;
+  color: #88CCFF;
   word-break: break-word;
 }
 
 /* System Health Analysis Card */
 .sm-status-card {
   background: rgba(14, 14, 30, 0.75);
-  border: 1px solid rgba(255, 136, 68, 0.2);
+  border: 1px solid RGBA(68, 136, 255, 0.2);
   border-left: 3px solid #00ff88;
   border-radius: 8px;
   padding: 10px 12px;
@@ -359,7 +359,7 @@ canvas {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #ffaa55;
+  color: #55AAFF;
   text-transform: uppercase;
 }
 .sm-status-badge {
@@ -429,18 +429,18 @@ canvas {
   overflow-y: auto;
   padding: 12px 16px;
   background: rgba(8,8,18,0.6);
-  border: 1px solid rgba(255,136,68,0.15);
+  border: 1px solid RGBA(68,136,255,0.15);
   border-radius: 12px;
   backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
   gap: 8px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,136,68,0.3) transparent;
+  scrollbar-color: RGBA(68,136,255,0.3) transparent;
 }
 #chat-messages::-webkit-scrollbar { width: 4px; }
 #chat-messages::-webkit-scrollbar-track { background: transparent; }
-#chat-messages::-webkit-scrollbar-thumb { background: rgba(255,136,68,0.3); border-radius: 2px; }
+#chat-messages::-webkit-scrollbar-thumb { background: RGBA(68,136,255,0.3); border-radius: 2px; }
 
 .msg {
   font-size: 13px;
@@ -455,22 +455,22 @@ canvas {
   to { opacity: 1; transform: translateY(0); }
 }
 .msg.user {
-  background: rgba(255,136,68,0.12);
-  border: 1px solid rgba(255,136,68,0.2);
-  color: #ffcc88;
+  background: RGBA(68,136,255,0.12);
+  border: 1px solid RGBA(68,136,255,0.2);
+  color: #88CCFF;
   align-self: flex-end;
   text-align: right;
 }
 .msg.zyra {
-  background: rgba(255,136,68,0.06);
-  border: 1px solid rgba(255,136,68,0.1);
-  color: #ffaa55;
+  background: RGBA(68,136,255,0.06);
+  border: 1px solid RGBA(68,136,255,0.1);
+  color: #55AAFF;
   align-self: flex-start;
 }
 .msg.zyra .zyra-label {
   font-size: 10px;
   font-weight: 600;
-  color: #ff8844;
+  color: #4488FF;
   letter-spacing: 1px;
   margin-bottom: 4px;
 }
@@ -493,28 +493,28 @@ canvas {
   flex: 1;
   padding: 12px 18px;
   background: rgba(8,8,18,0.7);
-  border: 1px solid rgba(255,136,68,0.2);
+  border: 1px solid RGBA(68,136,255,0.2);
   border-radius: 25px;
-  color: #ffcc88;
+  color: #88CCFF;
   font-size: 14px;
   outline: none;
   transition: border-color 0.3s;
   backdrop-filter: blur(10px);
 }
 #chat-input:focus {
-  border-color: rgba(255,136,68,0.5);
-  box-shadow: 0 0 20px rgba(255,136,68,0.08);
+  border-color: RGBA(68,136,255,0.5);
+  box-shadow: 0 0 20px RGBA(68,136,255,0.08);
 }
 #chat-input::placeholder {
-  color: rgba(255,136,68,0.3);
+  color: RGBA(68,136,255,0.3);
 }
 #chat-send {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(255,136,68,0.15);
-  border: 1px solid rgba(255,136,68,0.3);
-  color: #ff8844;
+  background: RGBA(68,136,255,0.15);
+  border: 1px solid RGBA(68,136,255,0.3);
+  color: #4488FF;
   font-size: 18px;
   cursor: pointer;
   display: flex;
@@ -523,9 +523,9 @@ canvas {
   transition: all 0.3s;
 }
 #chat-send:hover {
-  background: rgba(255,136,68,0.25);
-  border-color: rgba(255,136,68,0.5);
-  box-shadow: 0 0 20px rgba(255,136,68,0.15);
+  background: RGBA(68,136,255,0.25);
+  border-color: RGBA(68,136,255,0.5);
+  box-shadow: 0 0 20px RGBA(68,136,255,0.15);
 }
 
 /* ===== NMAP SCANNER HUD CARD ===== */
@@ -536,8 +536,8 @@ canvas {
   gap: 8px;
 }
 .nm-dot {
-  background: #ffcc44;
-  box-shadow: 0 0 8px #ffcc44;
+  background: #44CCFF;
+  box-shadow: 0 0 8px #44CCFF;
 }
 
 .nmap-scanner-card {
@@ -547,11 +547,11 @@ canvas {
   width: 360px;
   max-height: calc(100vh - 220px);
   background: rgba(8, 8, 20, 0.88);
-  border: 1px solid rgba(255, 136, 68, 0.28);
+  border: 1px solid RGBA(68, 136, 255, 0.28);
   border-radius: 14px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.15);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -573,14 +573,14 @@ canvas {
   justify-content: space-between;
   align-items: center;
   padding: 12px 18px;
-  background: rgba(255, 136, 68, 0.08);
-  border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+  background: RGBA(68, 136, 255, 0.08);
+  border-bottom: 1px solid RGBA(68, 136, 255, 0.18);
   user-select: none;
 }
 .nm-subtitle {
   font-size: 9px;
   letter-spacing: 1.5px;
-  color: rgba(255, 136, 68, 0.55);
+  color: RGBA(68, 136, 255, 0.55);
   text-transform: uppercase;
   margin-top: 2px;
 }
@@ -588,8 +588,8 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ffcc44;
-  box-shadow: 0 0 10px #ffcc44;
+  background: #44CCFF;
+  box-shadow: 0 0 10px #44CCFF;
   animation: pulseGreen 1.8s infinite;
 }
 
@@ -600,14 +600,14 @@ canvas {
   flex-direction: column;
   gap: 12px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 136, 68, 0.3) transparent;
+  scrollbar-color: RGBA(68, 136, 255, 0.3) transparent;
 }
 .nm-body::-webkit-scrollbar { width: 4px; }
-.nm-body::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.3); border-radius: 2px; }
+.nm-body::-webkit-scrollbar-thumb { background: RGBA(68, 136, 255, 0.3); border-radius: 2px; }
 
 .nm-info-card {
   background: rgba(8, 8, 18, 0.55);
-  border: 1px solid rgba(255, 136, 68, 0.12);
+  border: 1px solid RGBA(68, 136, 255, 0.12);
   border-radius: 8px;
   padding: 10px 12px;
   display: flex;
@@ -623,7 +623,7 @@ canvas {
 }
 .nm-request-text {
   font-size: 12px;
-  color: #ffcc88;
+  color: #88CCFF;
   font-style: italic;
 }
 
@@ -637,9 +637,9 @@ canvas {
   width: 100%;
   padding: 9px 12px;
   background: rgba(8, 8, 18, 0.7);
-  border: 1px solid rgba(255, 136, 68, 0.25);
+  border: 1px solid RGBA(68, 136, 255, 0.25);
   border-radius: 8px;
-  color: #ffcc88;
+  color: #88CCFF;
   font-size: 13px;
   font-family: 'Consolas', 'Courier New', monospace;
   outline: none;
@@ -647,25 +647,25 @@ canvas {
 }
 .nm-field input:focus,
 .nm-field select:focus {
-  border-color: rgba(255, 136, 68, 0.55);
-  box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
+  border-color: RGBA(68, 136, 255, 0.55);
+  box-shadow: 0 0 14px RGBA(68, 136, 255, 0.12);
 }
 .nm-field select { cursor: pointer; }
 .nm-field select option {
   background: #0d0d1c;
-  color: #ffcc88;
+  color: #88CCFF;
 }
 .nm-op-desc {
   font-size: 10px;
-  color: rgba(255, 136, 68, 0.55);
+  color: RGBA(68, 136, 255, 0.55);
 }
 
 .nm-command {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 11px;
-  color: #ffaa44;
+  color: #44AAFF;
   background: rgba(8, 8, 18, 0.7);
-  border: 1px dashed rgba(255, 136, 68, 0.3);
+  border: 1px dashed RGBA(68, 136, 255, 0.3);
   border-radius: 6px;
   padding: 8px 10px;
   word-break: break-all;
@@ -673,10 +673,10 @@ canvas {
 }
 
 .nm-btn {
-  background: rgba(255, 136, 68, 0.12);
-  border: 1px solid rgba(255, 136, 68, 0.35);
+  background: RGBA(68, 136, 255, 0.12);
+  border: 1px solid RGBA(68, 136, 255, 0.35);
   border-radius: 10px;
-  color: #ffaa55;
+  color: #55AAFF;
   padding: 9px 14px;
   font-size: 12px;
   font-weight: 700;
@@ -685,27 +685,27 @@ canvas {
   transition: all 0.3s ease;
 }
 .nm-btn:hover:not(:disabled) {
-  background: rgba(255, 136, 68, 0.25);
-  border-color: rgba(255, 136, 68, 0.6);
-  color: #ffdd99;
-  box-shadow: 0 0 16px rgba(255, 136, 68, 0.25);
+  background: RGBA(68, 136, 255, 0.25);
+  border-color: RGBA(68, 136, 255, 0.6);
+  color: #99DDFF;
+  box-shadow: 0 0 16px RGBA(68, 136, 255, 0.25);
 }
 .nm-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 .nm-btn-primary {
-  background: rgba(255, 136, 68, 0.22);
-  border-color: rgba(255, 136, 68, 0.55);
-  color: #ffcc77;
-  text-shadow: 0 0 8px rgba(255, 136, 68, 0.5);
+  background: RGBA(68, 136, 255, 0.22);
+  border-color: RGBA(68, 136, 255, 0.55);
+  color: #77CCFF;
+  text-shadow: 0 0 8px RGBA(68, 136, 255, 0.5);
 }
 .nm-btn-primary.scanning {
   animation: nmPulseBtn 1.4s infinite;
 }
 @keyframes nmPulseBtn {
-  0%, 100% { box-shadow: 0 0 6px rgba(255, 136, 68, 0.2); }
-  50% { box-shadow: 0 0 18px rgba(255, 136, 68, 0.55); }
+  0%, 100% { box-shadow: 0 0 6px RGBA(68, 136, 255, 0.2); }
+  50% { box-shadow: 0 0 18px RGBA(68, 136, 255, 0.55); }
 }
 
 .nm-status {
@@ -713,13 +713,13 @@ canvas {
   font-weight: 700;
   letter-spacing: 1px;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffcc44;
+  color: #44CCFF;
 }
 .nm-status.complete { color: #00ff88; }
 .nm-status.error { color: #ff6666; }
 .nm-stage {
   font-size: 10px;
-  color: rgba(255, 136, 68, 0.6);
+  color: RGBA(68, 136, 255, 0.6);
 }
 
 .nm-summary-row {
@@ -729,7 +729,7 @@ canvas {
 .nm-stat {
   flex: 1;
   background: rgba(8, 8, 18, 0.55);
-  border: 1px solid rgba(255, 136, 68, 0.12);
+  border: 1px solid RGBA(68, 136, 255, 0.12);
   border-radius: 8px;
   padding: 8px 6px;
   text-align: center;
@@ -738,13 +738,13 @@ canvas {
   font-size: 18px;
   font-weight: 700;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffaa44;
+  color: #44AAFF;
 }
 .nm-stat-k {
   font-size: 8.5px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: rgba(255, 136, 68, 0.55);
+  color: RGBA(68, 136, 255, 0.55);
   margin-top: 2px;
 }
 
@@ -756,7 +756,7 @@ canvas {
 }
 .nm-obs-list li {
   font-size: 11px;
-  color: #ffbb77;
+  color: #77BBFF;
   padding-left: 14px;
   position: relative;
   line-height: 1.4;
@@ -765,11 +765,11 @@ canvas {
   content: '▸';
   position: absolute;
   left: 0;
-  color: #ff8844;
+  color: #4488FF;
 }
 
 .nm-host {
-  border: 1px solid rgba(255, 136, 68, 0.14);
+  border: 1px solid RGBA(68, 136, 255, 0.14);
   border-radius: 6px;
   padding: 8px 10px;
   margin-bottom: 8px;
@@ -780,11 +780,11 @@ canvas {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 13px;
   font-weight: 700;
-  color: #ffcc66;
+  color: #66CCFF;
 }
 .nm-host-meta {
   font-size: 10px;
-  color: rgba(255, 136, 68, 0.6);
+  color: RGBA(68, 136, 255, 0.6);
   margin-top: 2px;
 }
 .nm-host-ports {
@@ -796,23 +796,23 @@ canvas {
 .nm-port-line {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 11px;
-  color: #ffaa55;
+  color: #55AAFF;
 }
-.nm-port-num { color: #ffcc44; }
-.nm-port-svc { color: #ff9955; font-weight: 700; }
-.nm-port-ver { color: rgba(255, 136, 68, 0.5); font-size: 10px; }
+.nm-port-num { color: #44CCFF; }
+.nm-port-svc { color: #5599FF; font-weight: 700; }
+.nm-port-ver { color: RGBA(68, 136, 255, 0.5); font-size: 10px; }
 
 .nm-report-pre {
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 10.5px;
   line-height: 1.5;
-  color: #ffbb77;
+  color: #77BBFF;
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 260px;
   overflow-y: auto;
   background: rgba(8, 8, 18, 0.5);
-  border: 1px solid rgba(255, 136, 68, 0.12);
+  border: 1px solid RGBA(68, 136, 255, 0.12);
   border-radius: 6px;
   padding: 10px;
   user-select: text;
@@ -845,8 +845,8 @@ canvas {
 
 /* ===== URL ANALYZER PANEL ===== */
 .url-dot {
-  background: #ff8800;
-  box-shadow: 0 0 8px #ff8800;
+  background: #0088FF;
+  box-shadow: 0 0 8px #0088FF;
 }
 
 .url-analyzer-card {
@@ -856,11 +856,11 @@ canvas {
   width: 380px;
   max-height: calc(100vh - 220px);
   background: rgba(8, 8, 20, 0.88);
-  border: 1px solid rgba(255, 136, 68, 0.28);
+  border: 1px solid RGBA(68, 136, 255, 0.28);
   border-radius: 14px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.15);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -882,8 +882,8 @@ canvas {
   justify-content: space-between;
   align-items: center;
   padding: 12px 18px;
-  background: rgba(255, 136, 68, 0.08);
-  border-bottom: 1px solid rgba(255, 136, 68, 0.18);
+  background: RGBA(68, 136, 255, 0.08);
+  border-bottom: 1px solid RGBA(68, 136, 255, 0.18);
   user-select: none;
 }
 .url-title-group {
@@ -895,21 +895,21 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #ff8800;
-  box-shadow: 0 0 10px #ff8800;
+  background: #0088FF;
+  box-shadow: 0 0 10px #0088FF;
   animation: pulseGreen 1.8s infinite;
 }
 .url-title {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #ff9944;
+  color: #4499FF;
   text-transform: uppercase;
 }
 .url-subtitle {
   font-size: 9px;
   letter-spacing: 1.5px;
-  color: rgba(255, 136, 68, 0.55);
+  color: RGBA(68, 136, 255, 0.55);
   text-transform: uppercase;
   margin-top: 2px;
 }
@@ -919,9 +919,9 @@ canvas {
   letter-spacing: 1px;
   padding: 3px 8px;
   border-radius: 10px;
-  background: rgba(255, 136, 0, 0.15);
-  border: 1px solid rgba(255, 136, 0, 0.35);
-  color: #ff8800;
+  background: RGBA(0, 136, 255, 0.15);
+  border: 1px solid RGBA(0, 136, 255, 0.35);
+  color: #0088FF;
 }
 .url-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -931,7 +931,7 @@ canvas {
 .url-btn-close {
   background: none;
   border: none;
-  color: rgba(255, 136, 68, 0.6);
+  color: RGBA(68, 136, 255, 0.6);
   font-size: 14px;
   cursor: pointer;
   padding: 4px 6px;
@@ -940,8 +940,8 @@ canvas {
   transition: all 0.2s;
 }
 .url-btn-close:hover {
-  color: #ff8844;
-  background: rgba(255, 136, 68, 0.15);
+  color: #4488FF;
+  background: RGBA(68, 136, 255, 0.15);
 }
 
 .url-body {
@@ -951,10 +951,10 @@ canvas {
   flex-direction: column;
   gap: 12px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 136, 68, 0.3) transparent;
+  scrollbar-color: RGBA(68, 136, 255, 0.3) transparent;
 }
 .url-body::-webkit-scrollbar { width: 4px; }
-.url-body::-webkit-scrollbar-thumb { background: rgba(255, 136, 68, 0.3); border-radius: 2px; }
+.url-body::-webkit-scrollbar-thumb { background: RGBA(68, 136, 255, 0.3); border-radius: 2px; }
 
 .url-field { display: flex; flex-direction: column; gap: 5px; }
 .url-field label {
@@ -963,53 +963,53 @@ canvas {
 }
 .url-field input {
   width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
-  border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
-  color: #ffcc88; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+  border: 1px solid RGBA(68, 136, 255, 0.25); border-radius: 8px;
+  color: #88CCFF; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
   outline: none; transition: border-color 0.3s, box-shadow 0.3s;
 }
 .url-field input:focus {
-  border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
+  border-color: RGBA(68, 136, 255, 0.55); box-shadow: 0 0 14px RGBA(68, 136, 255, 0.12);
 }
-.url-field input::placeholder { color: rgba(255, 136, 68, 0.3); }
+.url-field input::placeholder { color: RGBA(68, 136, 255, 0.3); }
 /* DNS record-type selector — inherits the same input look (gold accents) */
 .url-field select {
   width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
-  border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
-  color: #ffcc88; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
+  border: 1px solid RGBA(68, 136, 255, 0.25); border-radius: 8px;
+  color: #88CCFF; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace;
   outline: none; transition: border-color 0.3s, box-shadow 0.3s;
   cursor: pointer; appearance: auto;
 }
 .url-field select:focus {
-  border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
+  border-color: RGBA(68, 136, 255, 0.55); box-shadow: 0 0 14px RGBA(68, 136, 255, 0.12);
 }
-.url-field select option { background: #0a0a14; color: #ffcc88; }
+.url-field select option { background: #0a0a14; color: #88CCFF; }
 .url-analyze-btn {
-  width: 100%; padding: 10px 16px; background: rgba(255, 136, 0, 0.15);
-  border: 1px solid rgba(255, 136, 0, 0.35); border-radius: 8px;
-  color: #ff8800; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+  width: 100%; padding: 10px 16px; background: RGBA(0, 136, 255, 0.15);
+  border: 1px solid RGBA(0, 136, 255, 0.35); border-radius: 8px;
+  color: #0088FF; font-size: 12px; font-weight: 700; letter-spacing: 2px;
   cursor: pointer; transition: all 0.3s; text-transform: uppercase;
 }
 .url-analyze-btn:hover {
-  background: rgba(255, 136, 0, 0.25); border-color: rgba(255, 136, 0, 0.6);
-  box-shadow: 0 0 20px rgba(255, 136, 0, 0.2);
+  background: RGBA(0, 136, 255, 0.25); border-color: RGBA(0, 136, 255, 0.6);
+  box-shadow: 0 0 20px RGBA(0, 136, 255, 0.2);
 }
 .url-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .url-analyze-btn.scanning { animation: urlPulse 1.2s infinite; }
 @keyframes urlPulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(255, 136, 0, 0.2); }
-  50% { box-shadow: 0 0 24px rgba(255, 136, 0, 0.4); }
+  0%, 100% { box-shadow: 0 0 10px RGBA(0, 136, 255, 0.2); }
+  50% { box-shadow: 0 0 24px RGBA(0, 136, 255, 0.4); }
 }
 
 .url-stages { display: flex; flex-direction: column; gap: 4px; }
 .url-stage {
   display: flex; align-items: center; gap: 8px; font-size: 11px;
-  font-family: 'Consolas', 'Courier New', monospace; color: rgba(255, 136, 68, 0.4);
+  font-family: 'Consolas', 'Courier New', monospace; color: RGBA(68, 136, 255, 0.4);
   transition: color 0.3s;
 }
-.url-stage.running { color: #ffaa55; }
+.url-stage.running { color: #55AAFF; }
 .url-stage.done { color: #00ff88; }
 .url-stage.fail { color: #ff5555; }
-.url-stage.skip { color: rgba(255, 136, 68, 0.35); }
+.url-stage.skip { color: RGBA(68, 136, 255, 0.35); }
 .url-stage-icon { width: 14px; text-align: center; font-size: 10px; }
 
 .url-status-bar { display: flex; flex-direction: column; gap: 6px; }
@@ -1018,32 +1018,32 @@ canvas {
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
   text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
 }
-.url-status-value { font-size: 12px; font-weight: 600; color: #ffaa55; }
+.url-status-value { font-size: 12px; font-weight: 600; color: #55AAFF; }
 .url-status-value.complete { color: #00ff88; }
 .url-status-value.error { color: #ff5555; }
 .url-bar-track {
-  width: 100%; height: 4px; background: rgba(255, 136, 68, 0.1);
+  width: 100%; height: 4px; background: RGBA(68, 136, 255, 0.1);
   border-radius: 2px; overflow: hidden;
 }
 .url-bar-fill {
-  height: 100%; background: linear-gradient(90deg, #ff6600, #ff8800);
+  height: 100%; background: linear-gradient(90deg, #0066FF, #0088FF);
   border-radius: 2px; transition: width 0.4s ease;
 }
 
 .url-section {
-  background: rgba(8, 8, 18, 0.55); border: 1px solid rgba(255, 136, 68, 0.12);
+  background: rgba(8, 8, 18, 0.55); border: 1px solid RGBA(68, 136, 255, 0.12);
   border-radius: 8px; padding: 10px 12px;
 }
 .url-section-title {
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
   text-transform: uppercase; color: rgba(255, 170, 85, 0.75);
   margin-bottom: 8px; padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 136, 68, 0.1);
+  border-bottom: 1px solid RGBA(68, 136, 255, 0.1);
 }
 .url-score-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; }
 .url-score {
-  font-size: 42px; font-weight: 700; color: #ff8800; line-height: 1;
-  text-shadow: 0 0 30px rgba(255, 136, 0, 0.4);
+  font-size: 42px; font-weight: 700; color: #0088FF; line-height: 1;
+  text-shadow: 0 0 30px RGBA(0, 136, 255, 0.4);
 }
 .url-score.safe { color: #00ff88; text-shadow: 0 0 30px rgba(0, 255, 136, 0.4); }
 .url-score.suspicious { color: #ffaa00; text-shadow: 0 0 30px rgba(255, 170, 0, 0.4); }
@@ -1064,30 +1064,30 @@ canvas {
 .url-findings { display: flex; flex-direction: column; gap: 5px; }
 .url-finding {
   padding: 6px 8px; border-radius: 6px; font-size: 11px; line-height: 1.4;
-  background: rgba(8, 8, 18, 0.4); border-left: 2px solid rgba(255, 136, 68, 0.3);
+  background: rgba(8, 8, 18, 0.4); border-left: 2px solid RGBA(68, 136, 255, 0.3);
 }
 .url-finding.HIGH { border-left-color: #ff3333; background: rgba(255, 50, 50, 0.08); }
 .url-finding.MEDIUM { border-left-color: #ffaa00; background: rgba(255, 170, 0, 0.08); }
 .url-finding.LOW { border-left-color: #00ccff; background: rgba(0, 200, 255, 0.05); }
 .url-finding.CRITICAL { border-left-color: #ff0000; background: rgba(255, 0, 0, 0.1); }
-.url-finding-title { font-weight: 600; color: #ffcc88; }
+.url-finding-title { font-weight: 600; color: #88CCFF; }
 .url-finding-detail { color: rgba(255, 200, 150, 0.65); margin-top: 2px; }
 
 .url-detail-grid { display: flex; flex-direction: column; gap: 4px; }
 .url-detail-row { display: flex; justify-content: space-between; font-size: 11px; font-family: 'Consolas', 'Courier New', monospace; }
 .url-detail-k { color: rgba(255, 170, 85, 0.6); }
-.url-detail-v { color: #ffcc88; text-align: right; max-width: 60%; word-break: break-all; }
+.url-detail-v { color: #88CCFF; text-align: right; max-width: 60%; word-break: break-all; }
 
 .url-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .url-action-btn {
-  flex: 1; min-width: 100px; padding: 8px 12px; background: rgba(255, 136, 0, 0.12);
-  border: 1px solid rgba(255, 136, 0, 0.3); border-radius: 8px;
-  color: #ff8800; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  flex: 1; min-width: 100px; padding: 8px 12px; background: RGBA(0, 136, 255, 0.12);
+  border: 1px solid RGBA(0, 136, 255, 0.3); border-radius: 8px;
+  color: #0088FF; font-size: 11px; font-weight: 700; letter-spacing: 1px;
   cursor: pointer; transition: all 0.3s; text-transform: uppercase;
 }
 .url-action-btn:hover {
-  background: rgba(255, 136, 0, 0.22); border-color: rgba(255, 136, 0, 0.55);
-  box-shadow: 0 0 16px rgba(255, 136, 0, 0.15);
+  background: RGBA(0, 136, 255, 0.22); border-color: RGBA(0, 136, 255, 0.55);
+  box-shadow: 0 0 16px RGBA(0, 136, 255, 0.15);
 }
 .url-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -1095,13 +1095,13 @@ canvas {
 .url-history-item {
   display: flex; justify-content: space-between; align-items: center;
   padding: 6px 8px; background: rgba(8, 8, 18, 0.4);
-  border: 1px solid rgba(255, 136, 68, 0.1); border-radius: 6px;
+  border: 1px solid RGBA(68, 136, 255, 0.1); border-radius: 6px;
   cursor: pointer; transition: all 0.2s;
 }
-.url-history-item:hover { background: rgba(255, 136, 68, 0.08); border-color: rgba(255, 136, 68, 0.2); }
+.url-history-item:hover { background: RGBA(68, 136, 255, 0.08); border-color: RGBA(68, 136, 255, 0.2); }
 .url-history-domain {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffcc88; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #88CCFF; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .url-history-meta { font-size: 10px; color: rgba(255, 170, 85, 0.6); }
 
@@ -1128,17 +1128,17 @@ canvas {
 
 /* ===== DNS LOOKUP PANEL (gold accents; shares the URL panel layout) ===== */
 .dns-dot {
-  background: #ffcc44;
-  box-shadow: 0 0 8px #ffcc44;
+  background: #44CCFF;
+  box-shadow: 0 0 8px #44CCFF;
 }
 .dns-pulse-dot {
-  background: #ffcc44;
-  box-shadow: 0 0 10px #ffcc44;
+  background: #44CCFF;
+  box-shadow: 0 0 10px #44CCFF;
 }
 .dns-badge {
   background: rgba(255, 204, 68, 0.15);
   border: 1px solid rgba(255, 204, 68, 0.4);
-  color: #ffcc44;
+  color: #44CCFF;
 }
 .dns-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -1148,7 +1148,7 @@ canvas {
 .dns-lookup-btn {
   background: rgba(255, 204, 68, 0.14);
   border: 1px solid rgba(255, 204, 68, 0.4);
-  color: #ffcc44;
+  color: #44CCFF;
 }
 .dns-lookup-btn:hover {
   background: rgba(255, 204, 68, 0.25);
@@ -1165,7 +1165,7 @@ canvas {
 .dns-record-head {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: #ffcc44;
+  text-transform: uppercase; color: #44CCFF;
   padding-bottom: 4px; margin-bottom: 4px;
   border-bottom: 1px solid rgba(255, 204, 68, 0.1);
 }
@@ -1176,7 +1176,7 @@ canvas {
 .dns-record-row {
   display: flex; justify-content: space-between; gap: 10px;
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffcc88; padding: 2px 0; word-break: break-all;
+  color: #88CCFF; padding: 2px 0; word-break: break-all;
 }
 .dns-record-ttl {
   flex: none; color: rgba(255, 170, 85, 0.6); font-size: 10px;
@@ -1198,12 +1198,12 @@ canvas {
 }
 .dns-findings-list li, .dns-warning-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffcc88; padding: 4px 6px; border-radius: 4px;
+  color: #88CCFF; padding: 4px 6px; border-radius: 4px;
   background: rgba(255, 204, 68, 0.06);
 }
 .dns-recommendation-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffcc88; padding: 4px 6px; border-radius: 4px;
+  color: #88CCFF; padding: 4px 6px; border-radius: 4px;
   background: rgba(8, 120, 80, 0.12);
   border-left: 2px solid rgba(0, 255, 136, 0.35);
 }
@@ -1225,11 +1225,11 @@ canvas {
   max-width: 560px;
   padding: 12px 14px 12px 16px;
   background: rgba(8, 8, 20, 0.92);
-  border: 1px solid rgba(255, 136, 68, 0.45);
+  border: 1px solid RGBA(68, 136, 255, 0.45);
   border-radius: 12px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(255, 136, 68, 0.2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px RGBA(68, 136, 255, 0.2);
   pointer-events: auto;
   z-index: 40;
   opacity: 0;
@@ -1250,7 +1250,7 @@ canvas {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: #ffcc44;
+  color: #44CCFF;
   background: rgba(255, 204, 68, 0.12);
   border: 1px solid rgba(255, 204, 68, 0.4);
   box-shadow: 0 0 12px rgba(255, 204, 68, 0.25);
@@ -1263,7 +1263,7 @@ canvas {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #ffaa55;
+  color: #55AAFF;
   margin-bottom: 3px;
 }
 .scan-toast-text {
@@ -1277,9 +1277,9 @@ canvas {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(255, 136, 68, 0.12);
-  border: 1px solid rgba(255, 136, 68, 0.3);
-  color: #ff8844;
+  background: RGBA(68, 136, 255, 0.12);
+  border: 1px solid RGBA(68, 136, 255, 0.3);
+  color: #4488FF;
   font-size: 12px;
   cursor: pointer;
   display: flex;
@@ -1288,8 +1288,8 @@ canvas {
   transition: all 0.3s;
 }
 .scan-toast-close:hover {
-  background: rgba(255, 136, 68, 0.25);
-  color: #ffdd99;
+  background: RGBA(68, 136, 255, 0.25);
+  color: #99DDFF;
 }
 
 /* Responsive */
@@ -1815,7 +1815,7 @@ canvas {
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   const starMat = new THREE.PointsMaterial({
-    color: 0xff8844,
+    color: 0X4488FF,
     size: 0.06,
     transparent: true,
     opacity: 0.4,
@@ -1825,7 +1825,7 @@ canvas {
   const stars = new THREE.Points(starGeo, starMat);
   scene.add(stars);
 
-  // ===== AMBIENT RED/ORANGE WASH =====
+  // ===== AMBIENT RED/BLUE WASH =====
   const washGeo = new THREE.SphereGeometry(12, 32, 32);
   const washMat = new THREE.MeshBasicMaterial({
     color: 0x441100,
@@ -1843,7 +1843,7 @@ canvas {
   // Solid Inner Core with Halo
   const innerCoreGeo = new THREE.SphereGeometry(0.5, 48, 48);
   const innerCoreMat = new THREE.MeshBasicMaterial({
-    color: 0xff8800,
+    color: 0X0088FF,
     transparent: true,
     opacity: 0.85
   });
@@ -1852,13 +1852,13 @@ canvas {
 
   // Brighter center
   const centerGeo = new THREE.SphereGeometry(0.25, 32, 32);
-  const centerMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
+  const centerMat = new THREE.MeshBasicMaterial({ color: 0X44CCFF });
   const center = new THREE.Mesh(centerGeo, centerMat);
   coreGroup.add(center);
 
   // Core glow halo
   const haloMat = new THREE.MeshBasicMaterial({
-    color: 0xff6600,
+    color: 0X0066FF,
     transparent: true,
     opacity: 0.12,
     side: THREE.BackSide
@@ -1868,7 +1868,7 @@ canvas {
 
   // Outer glow layer
   const outerHaloMat = new THREE.MeshBasicMaterial({
-    color: 0xff4400,
+    color: 0X0044FF,
     transparent: true,
     opacity: 0.05,
     side: THREE.BackSide
@@ -1883,7 +1883,7 @@ canvas {
   // Outer geodesic - IcosahedronGeometry subdivision 3 for dense mesh
   const mainWireGeo = new THREE.IcosahedronGeometry(2.2, 3);
   const mainWireMat = new THREE.MeshBasicMaterial({
-    color: 0xff8800,
+    color: 0X0088FF,
     wireframe: true,
     transparent: true,
     opacity: 0.2
@@ -1894,7 +1894,7 @@ canvas {
   // Brighter outer wireframe (subdivision 2)
   const midWireGeo = new THREE.IcosahedronGeometry(2.0, 2);
   const midWireMat = new THREE.MeshBasicMaterial({
-    color: 0xffaa33,
+    color: 0X33AAFF,
     wireframe: true,
     transparent: true,
     opacity: 0.15
@@ -1909,7 +1909,7 @@ canvas {
   // Inner mesh 1
   const innerMesh1Geo = new THREE.IcosahedronGeometry(1.5, 2);
   const innerMesh1Mat = new THREE.MeshBasicMaterial({
-    color: 0xff9933,
+    color: 0X3399FF,
     wireframe: true,
     transparent: true,
     opacity: 0.1
@@ -1920,7 +1920,7 @@ canvas {
   // Inner mesh 2 (tighter)
   const innerMesh2Geo = new THREE.IcosahedronGeometry(1.1, 1);
   const innerMesh2Mat = new THREE.MeshBasicMaterial({
-    color: 0xffbb44,
+    color: 0X44BBFF,
     wireframe: true,
     transparent: true,
     opacity: 0.08
@@ -1952,26 +1952,26 @@ canvas {
   }
 
   // 3 Major orbits
-  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0xff8800, 0.35);
+  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0X0088FF, 0.35);
   orbitGroup.add(orbit1);
 
-  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0xffaa33, 0.3);
+  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0X33AAFF, 0.3);
   orbit2.rotation.x = THREE.MathUtils.degToRad(35);
   orbit2.rotation.z = THREE.MathUtils.degToRad(20);
   orbitGroup.add(orbit2);
 
-  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0xff7700, 0.25);
+  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0X0077FF, 0.25);
   orbit3.rotation.x = THREE.MathUtils.degToRad(-25);
   orbit3.rotation.z = THREE.MathUtils.degToRad(45);
   orbitGroup.add(orbit3);
 
   // 2 Minor orbits
-  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0xff9933, 0.15);
+  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0X3399FF, 0.15);
   orbit4.rotation.x = THREE.MathUtils.degToRad(60);
   orbit4.rotation.z = THREE.MathUtils.degToRad(-10);
   orbitGroup.add(orbit4);
 
-  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0xffbb44, 0.12);
+  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0X44BBFF, 0.12);
   orbit5.rotation.x = THREE.MathUtils.degToRad(-50);
   orbit5.rotation.z = THREE.MathUtils.degToRad(30);
   orbitGroup.add(orbit5);
@@ -2011,7 +2011,7 @@ canvas {
 
   const orbitParticleMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0xffaa44,
+    color: 0X44AAFF,
     size: 0.08,
     transparent: true,
     opacity: 0.7,
@@ -2040,7 +2040,7 @@ canvas {
 
   const scatterMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0xff9933,
+    color: 0X3399FF,
     size: 0.05,
     transparent: true,
     opacity: 0.5,
@@ -2060,8 +2060,8 @@ canvas {
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
     grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
     grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
-    grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
-    grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
+    grad.addColorStop(0.3, 'RGBA(30, 100, 255, 0.4)');
+    grad.addColorStop(0.5, 'RGBA(20, 80, 255, 0.15)');
     grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
@@ -2093,9 +2093,9 @@ canvas {
   mainGroup.add(innerGlow);
 
   // ===== LIGHTING =====
-  const ambientLight = new THREE.AmbientLight(0xff6633, 0.15);
+  const ambientLight = new THREE.AmbientLight(0X6633FF, 0.15);
   scene.add(ambientLight);
-  const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
+  const pointLight = new THREE.PointLight(0X8833FF, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
 
@@ -2433,7 +2433,7 @@ canvas {
     const w = elCpuSpark.width, h = elCpuSpark.height;
     ctx.clearRect(0, 0, w, h);
     // Guide lines at 50% and 90%
-    ctx.strokeStyle = 'rgba(255,136,68,0.15)';
+    ctx.strokeStyle = 'RGBA(68,136,255,0.15)';
     ctx.lineWidth = 1;
     [0.5, 0.9].forEach(function (f) {
       const y = h - (h * f);
@@ -2448,14 +2448,14 @@ canvas {
       const y = h - (Math.min(100, cpuHistory[i]) / 100) * (h - 2) - 1;
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = '#ff8844';
+    ctx.strokeStyle = '#4488FF';
     ctx.lineWidth = 1.6;
     ctx.stroke();
     // Fill under curve
     ctx.lineTo(x0 + (cpuHistory.length - 1) * step, h);
     ctx.lineTo(x0, h);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(255,136,68,0.14)';
+    ctx.fillStyle = 'RGBA(68,136,255,0.14)';
     ctx.fill();
   }
 
@@ -2473,7 +2473,7 @@ canvas {
     const step = w / (SPARK_MAX_POINTS - 1);
     const x0 = w - (netHistory.length - 1) * step;
     const series = [
-      { key: 'down', color: '#ff8844' },
+      { key: 'down', color: '#4488FF' },
       { key: 'up', color: '#00ccff' }
     ];
     series.forEach(function (s) {
