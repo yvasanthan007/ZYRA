@@ -50,6 +50,7 @@ DASHBOARD_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 # Global state for clean shutdown
 server_thread = None
 edge_process = None
+electron_process = None
 running = True
 
 
@@ -108,15 +109,83 @@ def register_edge_browser():
         return False
 
 
+def find_electron_path():
+    """
+    Find the Electron executable shipped with the ZYRA desktop shell.
+    Looks in the project's node_modules first, then the ZYRA_ELECTRON
+    environment variable, then a system-wide electron on PATH.
+    """
+    project_root = os.path.dirname(os.path.abspath(__file__))
+
+    candidates = [
+        os.path.join(project_root, "node_modules", "electron", "dist", "electron.exe"),
+        os.path.join(project_root, "node_modules", "electron", "dist", "electron"),
+        os.path.expanduser(r"~\.zyra\bin\electron.exe"),
+    ]
+
+    env_override = os.environ.get("ZYRA_ELECTRON")
+    if env_override:
+        candidates.insert(0, env_override)
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+
+    return None
+
+
+def open_dashboard_in_electron(url):
+    """
+    Open the ZYRA dashboard in the native desktop window (Electron shell).
+
+    Args:
+        url: The dashboard URL to open (e.g. http://127.0.0.1:8080)
+
+    Returns:
+        bool: True if the desktop window was launched, False if Electron
+              is unavailable (caller should fall back to the browser).
+    """
+    global electron_process
+
+    electron_path = find_electron_path()
+    if not electron_path:
+        print("   ⚠️  ZYRA desktop shell not found — falling back to browser")
+        return False
+
+    print("\n🖥️  Opening ZYRA Dashboard in desktop window...")
+    print(f"   URL: {url}")
+
+    try:
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        electron_process = subprocess.Popen(
+            [electron_path, project_root],
+            cwd=project_root,
+            env={**os.environ, "ZYRA_URL": url},
+            shell=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        print("   ✅ Dashboard opened in ZYRA desktop window")
+        return True
+    except Exception as e:
+        print(f"   ⚠️  Desktop window failed ({e}) — falling back to browser...")
+        electron_process = None
+        return False
+
+
 def open_dashboard_in_edge(url):
     """
-    Open the ZYRA dashboard in Microsoft Edge.
+    Open the ZYRA dashboard in the desktop window (preferred) or Microsoft Edge.
     Uses subprocess for direct control, with webbrowser fallback.
 
     Args:
         url: The dashboard URL to open (e.g. http://127.0.0.1:8080)
     """
     global edge_process
+
+    # Preferred: native desktop window (ZYRA Desktop shell)
+    if open_dashboard_in_electron(url):
+        return True
 
     print(f"\n🌐 Opening ZYRA Dashboard in Microsoft Edge...")
     print(f"   URL: {url}")
@@ -205,12 +274,27 @@ def signal_handler(signum, frame):
 def cleanup():
     """
     Perform clean shutdown of all spawned processes:
+    - Terminate the desktop window (Electron) process if we launched it
     - Terminate the Edge browser process if we launched it
     - The backend server thread is a daemon and will exit automatically
     """
+    global electron_process
     global edge_process
 
     print("\n🧹 Cleaning up...")
+
+    if electron_process is not None:
+        try:
+            electron_process.terminate()
+            electron_process.wait(timeout=3)
+            print("   ✅ Desktop window closed")
+        except Exception:
+            try:
+                electron_process.kill()
+                print("   ✅ Desktop window force-closed")
+            except Exception:
+                pass
+        electron_process = None
 
     if edge_process is not None:
         try:
