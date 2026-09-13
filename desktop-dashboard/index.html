@@ -2201,9 +2201,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
           </div>
         </div>
 
-
-
-        <!-- 6. DATA & PRIVACY -->
+<!-- 5. DATA & PRIVACY -->
         <div class="zs-section">
           <div class="zs-section-title">🔒 Data &amp; Privacy</div>
           <div class="zs-btn-row">
@@ -2565,9 +2563,9 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   mainGroup.add(innerGlow);
 
   // ===== LIGHTING =====
-  const ambientLight = new THREE.AmbientLight(0xff6633, 0.15);
+  const ambientLight = new THREE.AmbientLight(0x3366ff, 0.15);
   scene.add(ambientLight);
-  const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
+  const pointLight = new THREE.PointLight(0x3388ff, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
 
@@ -4640,6 +4638,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   if (zsWake) zsWake.addEventListener('change', function(){
     var v = (zsWake.value || '').trim(); if (v) { zs.wakeWord = v; zsSave(); zsStatus('zs-wakeword-status', true); } else zsStatus('zs-wakeword-status', false, 'required');
   });
+
   function zsSyncControls() {
     if (zsThemeSel) zsThemeSel.value = zs.theme;
     if (zsFontSel) zsFontSel.value = String(zs.fontSize);
