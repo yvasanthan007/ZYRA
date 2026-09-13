@@ -499,7 +499,7 @@ _URL_SCAN_MAX_LIFETIME = 90  # seconds
 
 def _url_watchdog(scan_id: str, deadline: float) -> None:
     """Clear a stuck _url_active once it passes its deadline."""
-    global _url_active
+    global _url_active, _url_last
     while time.time() < deadline:
         with _url_lock:
             active = _url_active
@@ -535,7 +535,7 @@ def _url_watchdog(scan_id: str, deadline: float) -> None:
 
 def start_url_scan(url: str, source: str = "panel") -> Dict[str, Any]:
     """Validate and launch a background URL analysis scan."""
-    global _url_active
+    global _url_active, _url_last
     if not url or not url.strip():
         return {"success": False, "error": "Please enter a valid URL."}
 
