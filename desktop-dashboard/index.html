@@ -588,8 +588,8 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #00ff88;
-  box-shadow: 0 0 10px #00ff88;
+  background: #ffcc44;
+  box-shadow: 0 0 10px #ffcc44;
   animation: pulseGreen 1.8s infinite;
 }
 
@@ -713,7 +713,7 @@ canvas {
   font-weight: 700;
   letter-spacing: 1px;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #ffaa55;
+  color: #ffcc44;
 }
 .nm-status.complete { color: #00ff88; }
 .nm-status.error { color: #ff6666; }
@@ -798,7 +798,7 @@ canvas {
   font-size: 11px;
   color: #ffaa55;
 }
-.nm-port-num { color: #ffcc66; }
+.nm-port-num { color: #ffcc44; }
 .nm-port-svc { color: #ff9955; font-weight: 700; }
 .nm-port-ver { color: rgba(255, 136, 68, 0.5); font-size: 10px; }
 
@@ -895,8 +895,8 @@ canvas {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #00ff88;
-  box-shadow: 0 0 10px #00ff88;
+  background: #ff8800;
+  box-shadow: 0 0 10px #ff8800;
   animation: pulseGreen 1.8s infinite;
 }
 .url-title {
@@ -919,9 +919,9 @@ canvas {
   letter-spacing: 1px;
   padding: 3px 8px;
   border-radius: 10px;
-  background: rgba(0, 255, 136, 0.15);
-  border: 1px solid rgba(0, 255, 136, 0.35);
-  color: #00ff88;
+  background: rgba(255, 136, 0, 0.15);
+  border: 1px solid rgba(255, 136, 0, 0.35);
+  color: #ff8800;
 }
 .url-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -971,7 +971,7 @@ canvas {
   border-color: rgba(255, 136, 68, 0.55); box-shadow: 0 0 14px rgba(255, 136, 68, 0.12);
 }
 .url-field input::placeholder { color: rgba(255, 136, 68, 0.3); }
-/* DNS record-type selector — inherits the same input look (orange accents) */
+/* DNS record-type selector — inherits the same input look (gold accents) */
 .url-field select {
   width: 100%; padding: 9px 12px; background: rgba(8, 8, 18, 0.7);
   border: 1px solid rgba(255, 136, 68, 0.25); border-radius: 8px;
@@ -1126,19 +1126,19 @@ canvas {
   color: rgba(255, 200, 200, 0.8);
 }
 
-/* ===== DNS LOOKUP PANEL (System Monitor accents; shares the URL panel layout) ===== */
+/* ===== DNS LOOKUP PANEL (gold accents; shares the URL panel layout) ===== */
 .dns-dot {
   background: #ffcc44;
   box-shadow: 0 0 8px #ffcc44;
 }
 .dns-pulse-dot {
-  background: #00ff88;
-  box-shadow: 0 0 10px #00ff88;
+  background: #ffcc44;
+  box-shadow: 0 0 10px #ffcc44;
 }
 .dns-badge {
-  background: rgba(0, 255, 136, 0.15);
-  border: 1px solid rgba(0, 255, 136, 0.35);
-  color: #00ff88;
+  background: rgba(255, 204, 68, 0.15);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  color: #ffcc44;
 }
 .dns-badge.offline {
   background: rgba(255, 68, 68, 0.15);
@@ -1146,28 +1146,28 @@ canvas {
   color: #ff6666;
 }
 .dns-lookup-btn {
-  background: rgba(255, 136, 0, 0.15);
-  border: 1px solid rgba(255, 136, 0, 0.35);
-  color: #ff8800;
+  background: rgba(255, 204, 68, 0.14);
+  border: 1px solid rgba(255, 204, 68, 0.4);
+  color: #ffcc44;
 }
 .dns-lookup-btn:hover {
-  background: rgba(255, 136, 0, 0.25);
-  border-color: rgba(255, 136, 0, 0.6);
-  box-shadow: 0 0 20px rgba(255, 136, 0, 0.2);
+  background: rgba(255, 204, 68, 0.25);
+  border-color: rgba(255, 204, 68, 0.65);
+  box-shadow: 0 0 20px rgba(255, 204, 68, 0.2);
 }
 .dns-records { display: flex; flex-direction: column; gap: 6px; }
 .dns-record-block {
   background: rgba(8, 8, 18, 0.4);
-  border: 1px solid rgba(255, 136, 68, 0.14);
+  border: 1px solid rgba(255, 204, 68, 0.14);
   border-radius: 6px;
   padding: 6px 8px;
 }
 .dns-record-head {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: #ff9944;
+  text-transform: uppercase; color: #ffcc44;
   padding-bottom: 4px; margin-bottom: 4px;
-  border-bottom: 1px solid rgba(255, 136, 68, 0.1);
+  border-bottom: 1px solid rgba(255, 204, 68, 0.1);
 }
 .dns-record-status { font-size: 9px; letter-spacing: 1px; }
 .dns-record-status.ok { color: #00ff88; }
@@ -1199,7 +1199,7 @@ canvas {
 .dns-findings-list li, .dns-warning-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
   color: #ffcc88; padding: 4px 6px; border-radius: 4px;
-  background: rgba(255, 136, 68, 0.06);
+  background: rgba(255, 204, 68, 0.06);
 }
 .dns-recommendation-list li {
   font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
@@ -1208,7 +1208,7 @@ canvas {
   border-left: 2px solid rgba(0, 255, 136, 0.35);
 }
 .dns-empty-list {
-  font-size: 11px; color: rgba(255, 136, 68, 0.25);
+  font-size: 11px; color: rgba(255, 204, 68, 0.25);
   font-family: 'Consolas', 'Courier New', monospace; padding: 8px 0;
 }
 
@@ -1471,166 +1471,8 @@ body.zyra-light .zs-select option { background: #061a34; color: #eaf5ff; }
 body.zyra-light .zs-section { border-color: rgba(71,166,255,.2); }
 body.zyra-light .zs-btn { color: #dceeff; background: rgba(22,119,255,.18); border-color: rgba(71,166,255,.4); }
 body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: #65c3ff; }
-<<
-/* Light-theme settings controls: blue toggles + blue sliders (dark theme keeps the orange styling) */
-body.zyra-light .zs-toggle { background: rgba(174,194,224,.45); border-color: rgba(146,170,204,.65); }
-body.zyra-light .zs-toggle::after { background: #ffffff; box-shadow: 0 1px 4px rgba(13,47,96,.28); }
-body.zyra-light .zs-toggle.on { background: #1677ff; border-color: #1677ff; }
-body.zyra-light .zs-toggle.on::after { background: #ffffff; }
-body.zyra-light .zs-range { background: linear-gradient(to right, #1677ff var(--zs-range-fill, 80%), rgba(180,205,235,.55) var(--zs-range-fill, 80%)); }
-body.zyra-light .zs-range::-webkit-slider-thumb { background: #1677ff; border-color: #ffffff; box-shadow: 0 0 10px rgba(22,119,255,.45); }
-body.zyra-light .zs-range::-moz-range-thumb { background: #1677ff; border-color: #ffffff; }
-body.zyra-light .zs-range::-moz-range-progress { background: #1677ff; }
-body.zyra-light .zs-range-val { color: #1677ff; }
 
-/* Chat history sidebar (ChatGPT-style, additive) */
-#zyra-chat-sidebar {
-  --sb-fg: #ffcc88; --sb-accent: #ffaa66; --sb-muted: rgba(255,170,85,0.55);
-  --sb-border: rgba(255,136,68,0.25); --sb-hover: rgba(255,136,68,0.14);
-  --sb-active: rgba(255,136,68,0.22); --sb-item-border: rgba(255,136,68,0.12);
-  --sb-input-bg: rgba(8,8,18,0.5); --sb-menu-bg: #14141f; --sb-danger: #ff6b6b;
-  position: fixed; top: 0; left: 0; bottom: 0; width: 272px; z-index: 9050;
-  background: linear-gradient(180deg, rgba(12,12,24,0.97), rgba(8,8,18,0.97));
-  border-right: 1px solid var(--sb-border);
-  display: flex; flex-direction: column; color: var(--sb-fg);
-  font-family: 'Consolas','Courier New',monospace;
-  transition: width .28s cubic-bezier(.2,.8,.2,1), background .35s, border-color .35s;
-  box-shadow: 0 0 40px rgba(0,0,0,0.5); overflow: hidden;
-}
-.zsb-top { padding: 12px 12px 10px; border-bottom: 1px solid var(--sb-border); flex-shrink: 0; }
-.zsb-logo-row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
-.zsb-logo-icon {
-  width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; color: var(--sb-accent);
-  background: var(--sb-hover); border: 1px solid var(--sb-border);
-}
-.zsb-logo-text { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; letter-spacing: 3px; color: var(--sb-accent); white-space: nowrap; overflow: hidden; }
-.zsb-top-row { display: flex; align-items: center; gap: 8px; }
-.zsb-new-btn {
-  flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
-  padding: 9px 12px; border-radius: 9px; cursor: pointer; white-space: nowrap;
-  border: 1px solid var(--sb-border); background: var(--sb-hover); color: var(--sb-fg);
-  font-family: inherit; font-size: 13px; font-weight: 600;
-  transition: background .2s, border-color .2s, transform .15s;
-}
-.zsb-new-btn:hover { background: var(--sb-active); border-color: var(--sb-accent); }
-.zsb-new-btn:active { transform: scale(0.98); }
-.zsb-new-btn .zi { font-size: 15px; flex-shrink: 0; }
-.zsb-new-btn .zt { overflow: hidden; text-overflow: ellipsis; }
-.zsb-icon-btn {
-  width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--sb-border); background: transparent; color: var(--sb-fg);
-  font-size: 15px; display: flex; align-items: center; justify-content: center;
-  transition: background .2s, border-color .2s;
-}
-.zsb-icon-btn:hover { background: var(--sb-hover); }
-.zsb-search-row { margin-top: 8px; position: relative; }
-#zyra-chat-search {
-  width: 100%; padding: 8px 10px 8px 28px; border-radius: 8px;
-  background: var(--sb-input-bg); border: 1px solid var(--sb-item-border);
-  color: var(--sb-fg); font-family: inherit; font-size: 12px; outline: none;
-  transition: border-color .2s, box-shadow .2s;
-}
-#zyra-chat-search::placeholder { color: var(--sb-muted); }
-#zyra-chat-search:focus { border-color: var(--sb-accent); box-shadow: 0 0 0 2px var(--sb-hover); }
-.zsb-search-glyph { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--sb-muted); pointer-events: none; }
-.zsb-list { flex: 1; overflow-y: auto; padding: 8px 10px 12px; display: flex; flex-direction: column; gap: 2px; scrollbar-width: thin; scrollbar-color: var(--sb-border) transparent; }
-.zsb-group-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--sb-muted); padding: 10px 6px 4px; white-space: nowrap; overflow: hidden; }
-.zsb-item {
-  position: relative; display: flex; align-items: center; gap: 8px;
-  padding: 8px 8px 8px 10px; border-radius: 8px; cursor: pointer;
-  border: 1px solid transparent; transition: background .15s, border-color .15s; flex-shrink: 0;
-}
-.zsb-item:hover { background: var(--sb-hover); }
-.zsb-item.active { background: var(--sb-active); border-color: var(--sb-accent); }
-.zsb-item .zi { font-size: 13px; flex-shrink: 0; }
-.zsb-item .zt { flex: 1; min-width: 0; font-size: 12px; color: var(--sb-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.zsb-rename-input {
-  flex: 1; min-width: 0; font-family: inherit; font-size: 12px; color: var(--sb-fg);
-  background: var(--sb-input-bg); border: 1px solid var(--sb-accent); border-radius: 5px;
-  padding: 3px 6px; outline: none;
-}
-.zsb-kebab {
-  flex-shrink: 0; width: 24px; height: 24px; border: none; background: transparent;
-  color: var(--sb-accent); font-size: 16px; line-height: 1; cursor: pointer; border-radius: 6px;
-  opacity: 0; transition: opacity .15s, background .15s;
-  display: flex; align-items: center; justify-content: center; padding: 0;
-}
-.zsb-item:hover .zsb-kebab, .zsb-item.active .zsb-kebab, .zsb-kebab:focus-visible { opacity: 1; }
-.zsb-kebab:hover { background: rgba(0,0,0,0.25); }
-.zsb-empty { font-size: 11px; color: var(--sb-muted); padding: 16px 8px; text-align: center; }
-.zsb-menu {
-  position: fixed; z-index: 9600; min-width: 156px; padding: 5px;
-  background: var(--sb-menu-bg); border: 1px solid var(--sb-accent); border-radius: 10px;
-  box-shadow: 0 14px 34px rgba(0,0,0,0.55); display: flex; flex-direction: column; gap: 2px;
-  font-family: 'Consolas','Courier New',monospace;
-}
-.zsb-menu-btn {
-  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: none;
-  background: transparent; color: var(--sb-fg); font-family: inherit; font-size: 12px;
-  cursor: pointer; border-radius: 7px; text-align: left; transition: background .15s;
-}
-.zsb-menu-btn:hover { background: var(--sb-hover); }
-.zsb-menu-btn.danger { color: var(--sb-danger); }
-.zsb-menu-btn.danger:hover { background: rgba(255,68,68,0.14); }
-.zsb-menu-warn { padding: 8px 10px 6px; font-size: 11px; line-height: 1.4; color: var(--sb-danger); }
-.zsb-menu-confirm { border: 1px solid rgba(255,68,68,0.4); }
-.zsb-menu-confirm:hover { background: rgba(255,68,68,0.22) !important; }
-.zsb-footer { flex-shrink: 0; border-top: 1px solid var(--sb-border); padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-.zsb-profile {
-  display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px;
-  background: var(--sb-input-bg); border: 1px solid var(--sb-item-border); overflow: hidden;
-}
-.zsb-avatar {
-  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; font-size: 15px;
-  color: var(--sb-accent); border: 1px solid var(--sb-border); background: var(--sb-hover);
-}
-.zsb-profile-text { display: flex; flex-direction: column; min-width: 0; }
-.zsb-profile-name { font-size: 12.5px; color: var(--sb-fg); white-space: nowrap; }
-.zsb-profile-sub { font-size: 10px; color: var(--sb-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* The existing bottom-left settings button (same ID, same centered settings
-   modal wiring) now lives in the sidebar footer, ChatGPT-style, icon + label. */
-#zyra-chat-sidebar #zyra-settings-btn {
-  position: static; width: 100%; height: auto; border-radius: 9px;
-  border: 1px solid transparent; background: transparent; backdrop-filter: none;
-  color: var(--sb-fg); font-size: 18px; padding: 9px 10px; gap: 10px;
-  justify-content: flex-start; box-shadow: none; font-family: inherit;
-}
-#zyra-chat-sidebar #zyra-settings-btn:hover {
-  transform: none; border-color: var(--sb-border); background: var(--sb-hover); box-shadow: none;
-}
-#zyra-chat-sidebar #zyra-settings-btn .zt { font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
-.zsb-show-collapsed { display: none !important; }
-#zyra-chat-sidebar.collapsed { width: 58px; }
-#zyra-chat-sidebar.collapsed .zsb-hide-collapsed { display: none !important; }
-#zyra-chat-sidebar.collapsed .zsb-show-collapsed { display: flex !important; }
-#zyra-chat-sidebar.collapsed .zsb-top { padding: 12px 10px 10px; }
-#zyra-chat-sidebar.collapsed .zsb-logo-row { margin-bottom: 8px; justify-content: center; }
-#zyra-chat-sidebar.collapsed .zsb-top-row { flex-direction: column; }
-#zyra-chat-sidebar.collapsed .zsb-new-btn { padding: 9px 0; justify-content: center; }
-#zyra-chat-sidebar.collapsed .zsb-search-expand-row { margin-top: 8px; display: flex; justify-content: center; }
-#zyra-chat-sidebar.collapsed .zsb-list { padding: 8px 6px 12px; align-items: center; }
-#zyra-chat-sidebar.collapsed .zsb-item { width: 40px; padding: 8px 0; justify-content: center; border-radius: 50%; }
-#zyra-chat-sidebar.collapsed .zsb-footer { padding: 10px 8px; }
-#zyra-chat-sidebar.collapsed .zsb-profile { justify-content: center; padding: 8px 0; }
-#zyra-chat-sidebar.collapsed #zyra-settings-btn { padding: 9px 0; justify-content: center; }
-.zsb-item { animation: zsbItemIn .18s ease both; }
-@keyframes zsbItemIn { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: translateX(0); } }
-/* Responsive: narrow viewports start collapsed to keep the dashboard usable */
-@media (max-width: 1024px) {
-  #zyra-chat-sidebar:not(.collapsed) { width: 232px; }
-}
-body.zyra-light #zyra-chat-sidebar {
-  --sb-fg: #eaf5ff; --sb-accent: #65c3ff; --sb-muted: rgba(220,238,255,0.58);
-  --sb-border: rgba(71,166,255,0.4); --sb-hover: rgba(22,119,255,0.28);
-  --sb-active: rgba(22,119,255,0.4); --sb-item-border: rgba(71,166,255,0.2);
-  --sb-input-bg: rgba(5,29,60,0.8); --sb-menu-bg: #06243f; --sb-danger: #ff7b7b;
-  background: linear-gradient(180deg, rgba(5,27,57,.98), rgba(2,13,29,.98));
-  box-shadow: 0 0 40px rgba(0,0,0,0.55);
-}
-body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
+
 </style>
 </head>
 <body>
@@ -2093,39 +1935,8 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     </div>
   </div>
 
-<<<!-- Chat history sidebar (ChatGPT-style, additive) -->
-  <div id="zyra-chat-sidebar">
-    <div class="zsb-top">
-      <div class="zsb-logo-row">
-        <span class="zsb-logo-icon">◈</span>
-        <span class="zsb-logo-text zsb-hide-collapsed">ZYRA</span>
-        <button id="zyra-chat-collapse" class="zsb-icon-btn" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
-      </div>
-      <div class="zsb-top-row">
-        <button id="zyra-chat-new" class="zsb-new-btn" title="New Chat"><span class="zi">＋</span><span class="zt">New Chat</span></button>
-      </div>
-      <div class="zsb-search-row zsb-hide-collapsed">
-        <span class="zsb-search-glyph">⌕</span>
-        <input id="zyra-chat-search" type="text" placeholder="Search chats" autocomplete="off">
-      </div>
-      <div class="zsb-search-expand-row zsb-show-collapsed">
-        <button id="zyra-chat-search-expand" class="zsb-icon-btn" title="Search chats" aria-label="Search chats">⌕</button>
-      </div>
-    </div>
-    <div id="zyra-chat-sessions" class="zsb-list" aria-label="Chat history"></div>
-    <div class="zsb-footer">
-      <div class="zsb-profile zsb-hide-collapsed" title="ZYRA — AI Desktop Assistant">
-        <span class="zsb-avatar">◈</span>
-        <span class="zsb-profile-text">
-          <span class="zsb-profile-name">ZYRA</span>
-          <span class="zsb-profile-sub">Neural Core v1.0</span>
-        </span>
-      </div>
-      <button id="zyra-settings-btn" title="ZYRA Settings" aria-label="Open ZYRA Settings">
-        <span class="zi">⚙</span><span class="zt zsb-hide-collapsed">Settings</span>
-           </button>
-         </div>
-      </div>
+  <!-- ===== ZYRA SETTINGS (additive) ===== -->
+  <button id="zyra-settings-btn" title="ZYRA Settings" aria-label="Open ZYRA Settings">⚙</button>
 
   <!-- Settings modal -->
   <div id="zyra-settings-overlay" role="dialog" aria-modal="true" aria-labelledby="zyra-settings-title">
@@ -2146,7 +1957,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
             <span class="zs-label">Interface theme<small>Animations stay enabled</small></span>
             <div class="zs-control">
               <select id="zs-theme" class="zs-select">
-                <option value="dark">Dark — Black &amp; Orange</option>
+                <option value="dark">Dark — Black &amp; Blue</option>
                 <option value="light">Light — Blue &amp; White</option>
               </select>
             </div>
@@ -2201,16 +2012,17 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
           </div>
         </div>
 
-<!-- 5. DATA & PRIVACY -->
+        <!-- 5. DATA & PRIVACY -->
         <div class="zs-section">
           <div class="zs-section-title">🔒 Data &amp; Privacy</div>
           <div class="zs-btn-row">
             <button class="zs-btn danger" id="zs-clear-data">Clear Stored Data</button>
           </div>
           <div class="zs-info" id="zs-privacy-info">
-            <strong>Privacy information.</strong> ZYRA stores your settings
-            locally in your browser via <code>localStorage</code>. No data is sent to any
-            third party. Clearing stored data resets all ZYRA settings on this device.
+            <strong>Privacy information.</strong> ZYRA stores your settings and (optionally) chat
+            history locally in your browser via <code>localStorage</code>. No data is sent to any
+            third party. Clearing chat history removes saved conversations; clearing stored data
+            resets all ZYRA settings and history on this device.
           </div>
         </div>
 
@@ -2438,20 +2250,19 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   const particleOrbitGroup = new THREE.Group();
   mainGroup.add(particleOrbitGroup);
 
-  // Create square particle texture (dark = amber, light = blue/cyan)
-  function createSquareTexture(isLight) {
+  // Create square particle texture
+  function createSquareTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 16;
     canvas.height = 16;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = isLight ? 'rgba(90, 195, 255, 1)' : 'rgba(255, 180, 80, 1)';
+    ctx.fillStyle = 'rgba(80, 180, 255, 1)';
     ctx.fillRect(2, 2, 12, 12);
-    ctx.fillStyle = isLight ? 'rgba(190, 240, 255, 0.6)' : 'rgba(255, 220, 150, 0.6)';
+    ctx.fillStyle = 'rgba(150, 220, 255, 0.6)';
     ctx.fillRect(4, 4, 8, 8);
     return new THREE.CanvasTexture(canvas);
   }
-  const squareTexture = createSquareTexture(false);
-  const squareTextureLight = createSquareTexture(true);
+  const squareTexture = createSquareTexture();
 
   const orbitParticleCount = 400;
   const orbitParticleGeo = new THREE.BufferGeometry();
@@ -2511,36 +2322,25 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   mainGroup.add(scatterParticles);
 
   // ===== GLOW SPRITE =====
-  // Dark = original amber/orange glow, light = cyan/blue glow (same falloff curve)
-  function createGlowTexture(isLight) {
+  function createGlowTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    if (isLight) {
-      grad.addColorStop(0, 'rgba(120, 220, 255, 1)');
-      grad.addColorStop(0.1, 'rgba(40, 165, 255, 0.8)');
-      grad.addColorStop(0.3, 'rgba(22, 119, 255, 0.4)');
-      grad.addColorStop(0.5, 'rgba(15, 77, 200, 0.15)');
-      grad.addColorStop(0.7, 'rgba(5, 40, 120, 0.05)');
-    } else {
-      grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
-      grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
-      grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
-      grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
-      grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
-    }
+    grad.addColorStop(0, 'rgba(100, 200, 255, 1)');
+    grad.addColorStop(0.1, 'rgba(50, 150, 255, 0.8)');
+    grad.addColorStop(0.3, 'rgba(30, 100, 255, 0.4)');
+    grad.addColorStop(0.5, 'rgba(20, 80, 255, 0.15)');
+    grad.addColorStop(0.7, 'rgba(10, 50, 200, 0.05)');
     grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
     return new THREE.CanvasTexture(canvas);
   }
-  const glowTextureDark = createGlowTexture(false);
-  const glowTextureLight = createGlowTexture(true);
 
   const glowSpriteMat = new THREE.SpriteMaterial({
-    map: glowTextureDark,
+    map: createGlowTexture(),
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.5,
@@ -2552,7 +2352,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   // Smaller inner glow
   const innerGlowMat = new THREE.SpriteMaterial({
-    map: glowTextureDark,
+    map: createGlowTexture(),
     blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.3,
@@ -2568,59 +2368,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   const pointLight = new THREE.PointLight(0x3388ff, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
-
-  // ===== NEURAL CORE THEME COLORS =====
-  // Dark theme keeps the original orange palette; light theme switches the
-  // neural core to the blue/cyan appearance. Only material colors and canvas
-  // textures are swapped here -- geometry, sizes, positions, animation timing
-  // and all movement stay exactly the same.
-  const NEURAL_THEMES = {
-    dark: {
-      stars: 0xff8844, wash: 0x441100,
-      innerCore: 0xff8800, center: 0xffcc44, halo: 0xff6600, outerHalo: 0xff4400,
-      mainWire: 0xff8800, midWire: 0xffaa33, innerMesh1: 0xff9933, innerMesh2: 0xffbb44,
-      orbits: [0xff8800, 0xffaa33, 0xff7700, 0xff9933, 0xffbb44],
-      orbitParticles: 0xffaa44, scatterParticles: 0xff9933,
-      ambient: 0xff6633, point: 0xff8833
-    },
-    light: {
-      stars: 0x3fa8ff, wash: 0x001a44,
-      innerCore: 0x1677ff, center: 0x0a3a8c, halo: 0x00c2ff, outerHalo: 0x1677ff,
-      mainWire: 0x00d0ff, midWire: 0x2ea8ff, innerMesh1: 0x36c9ff, innerMesh2: 0x5fd8ff,
-      orbits: [0x1677ff, 0x2e9bff, 0x0f6fe0, 0x39b1ff, 0x5cc8ff],
-      orbitParticles: 0x33bbff, scatterParticles: 0x1e90ff,
-      ambient: 0x3399ff, point: 0x3399ff
-    }
-  };
-  const orbitMats = [orbit1.material, orbit2.material, orbit3.material, orbit4.material, orbit5.material];
-
-  function applyNeuralTheme(isLight) {
-    const t = isLight ? NEURAL_THEMES.light : NEURAL_THEMES.dark;
-    starMat.color.setHex(t.stars);
-    washMat.color.setHex(t.wash);
-    innerCoreMat.color.setHex(t.innerCore);
-    centerMat.color.setHex(t.center);
-    haloMat.color.setHex(t.halo);
-    outerHaloMat.color.setHex(t.outerHalo);
-    mainWireMat.color.setHex(t.mainWire);
-    midWireMat.color.setHex(t.midWire);
-    innerMesh1Mat.color.setHex(t.innerMesh1);
-    innerMesh2Mat.color.setHex(t.innerMesh2);
-    orbitMats.forEach(function (m, i) { m.color.setHex(t.orbits[i]); });
-    orbitParticleMat.color.setHex(t.orbitParticles);
-    scatterMat.color.setHex(t.scatterParticles);
-    ambientLight.color.setHex(t.ambient);
-    pointLight.color.setHex(t.point);
-    const sqTex = isLight ? squareTextureLight : squareTexture;
-    if (orbitParticleMat.map !== sqTex) { orbitParticleMat.map = sqTex; orbitParticleMat.needsUpdate = true; }
-    if (scatterMat.map !== sqTex) { scatterMat.map = sqTex; scatterMat.needsUpdate = true; }
-    const glowTex = isLight ? glowTextureLight : glowTextureDark;
-    if (glowSpriteMat.map !== glowTex) { glowSpriteMat.map = glowTex; glowSpriteMat.needsUpdate = true; }
-    if (innerGlowMat.map !== glowTex) { innerGlowMat.map = glowTex; innerGlowMat.needsUpdate = true; }
-  }
-  // Exposed so the existing settings theme system (zsApplyTheme) can drive it.
-  window.zyraSetNeuralTheme = applyNeuralTheme;
-  applyNeuralTheme(document.body.classList.contains('zyra-light'));
 
   // ===== ANIMATION =====
   let time = 0;
@@ -2760,23 +2507,9 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     });
   }
 
-  // Candidate hosts: the page origin first (when the dashboard is served by
-  // the ZYRA backend itself), then the backend's fixed default address. This
-  // keeps chat working when the dashboard is opened directly from disk or
-  // from a different dev-server origin.
-  let wsHostCandidates = null;
-  let wsHostIndex = 0;
-  let wsEverOpened = false;
-  let pendingChat = null;
-
   function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    if (!wsHostCandidates) {
-      wsHostCandidates = [];
-      if (window.location.host) wsHostCandidates.push(window.location.host);
-      if (wsHostCandidates.indexOf('127.0.0.1:8080') === -1) wsHostCandidates.push('127.0.0.1:8080');
-    }
-    const host = wsHostCandidates[wsHostIndex % wsHostCandidates.length];
+    const host = window.location.host || '127.0.0.1:8080';
     const wsUrl = protocol + '//' + host + '/ws';
 
     try {
@@ -2784,34 +2517,16 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
       ws.onopen = function() {
         // Connection established silently
-        wsEverOpened = true;
-        connectWebSocket._notified = false;
-        // Deliver a message that was typed before the connection was ready.
-        if (pendingChat) {
-          var msg = pendingChat;
-          pendingChat = null;
-          try {
-            addMessage(msg, 'user');
-            ws.send(JSON.stringify({ type: 'chat', data: msg }));
-          } catch (e) {}
-        }
       };
 
       ws.onclose = function(event) {
-        // Rotate to the next candidate host until one connects; after a
-        // successful connection, keep using the host that worked.
-        if (!wsEverOpened) wsHostIndex += 1;
-        // Show the reconnect notice once per outage instead of on every
-        // retry, so the chat feed is not flooded while the backend is down.
-        if (!connectWebSocket._notified) {
-          connectWebSocket._notified = true;
-          addMessage('Connection lost. Reconnecting...', 'system');
-        }
+        addMessage('Connection lost. Reconnecting...', 'system');
         setTimeout(connectWebSocket, 2000);
       };
 
       ws.onerror = function(error) {
         console.error('WebSocket error:', error);
+        addMessage('Connection error. Retrying...', 'system');
       };
 
       ws.onmessage = function(event) {
@@ -2909,9 +2624,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       if (dm && dnsInput && !dnsInput.value) dnsInput.value = dm[0].replace(/[.,!?;:]+$/, '');
     }
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      // Queue the message so it is delivered as soon as the connection is up.
-      pendingChat = cleanText;
-      addMessage('Not connected to ZYRA server. Your message will be sent once connected.', 'system');
+      addMessage('Not connected to ZYRA server', 'system');
       return;
     }
     addMessage(cleanText, 'user');
@@ -4545,13 +4258,18 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   // Initial connection
   setTimeout(connectWebSocket, 500);
 
-  // Hello message (skipped when a saved conversation was restored on load)
+  // Hello message
   setTimeout(function() {
-    if (chatMessages && !chatMessages.children.length) {
-      addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
-    }
+    addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
   }, 1500);
 
+  // ===================================================================
+  // ===== ZYRA SETTINGS  (additive — self-contained) =====
+  // ===================================================================
+  var ZS_KEY = 'zyra_settings_v1';
+  var ZS_DEFAULTS = {
+    theme: 'dark', fontSize: '100', accent: '#ff8800',
+    voiceEnabled: true, voiceVolume: 80, wakeWord: 'Hey ZYRA'
   };
   var zs = JSON.parse(JSON.stringify(ZS_DEFAULTS));
   try { var saved = JSON.parse(localStorage.getItem(ZS_KEY) || '{}'); if (saved) for (var k in ZS_DEFAULTS) if (k in saved) zs[k] = saved[k]; } catch (e) {}
@@ -4588,12 +4306,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     root.setProperty('--zyra-accent-soft', 'rgba('+r+','+g+','+b+',0.25)');
     root.setProperty('--zyra-accent-text', hex);
   }
-  function zsApplyTheme() {
-    var light = zs.theme === 'light';
-    document.body.classList.toggle('zyra-light', light);
-    // Drive the existing Three.js neural core palette (orange dark / blue-cyan light).
-    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }
-  }
+  function zsApplyTheme() { document.body.classList.toggle('zyra-light', zs.theme === 'light'); }
   function zsApplyFontSize() { document.body.style.zoom = (parseInt(zs.fontSize,10) / 100).toString(); }
 
   function zsApplyAll() { zsApplyTheme(); zsApplyFontSize(); zsApplyAccent(); zsRenderSwatches(); }
@@ -4624,328 +4337,23 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
   if (zsVoiceToggle) zsVoiceToggle.addEventListener('click', function(){ zs.voiceEnabled = !zs.voiceEnabled; zsApplyVoiceToggle(); zsSave(); });
   function zsApplyVoiceToggle() { if (!zsVoiceToggle) return; zsVoiceToggle.classList.toggle('on', zs.voiceEnabled); zsVoiceToggle.setAttribute('aria-checked', zs.voiceEnabled ? 'true' : 'false'); }
-  if (zsVoiceVol) zsVoiceVol.addEventListener('input', function(){ zs.voiceVolume = parseInt(zsVoiceVol.value,10); if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; zsUpdateRangeFill(); zsSave(); });
-  // Keep the light-theme blue fill of the volume slider in sync with its value (visual only).
-  function zsUpdateRangeFill() {
-    if (!zsVoiceVol) return;
-    var min = parseFloat(zsVoiceVol.min || '0');
-    var max = parseFloat(zsVoiceVol.max || '100');
-    var val = parseFloat(zsVoiceVol.value);
-    if (isNaN(val)) val = min;
-    var pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
-    zsVoiceVol.style.setProperty('--zs-range-fill', pct + '%');
-  }
+  if (zsVoiceVol) zsVoiceVol.addEventListener('input', function(){ zs.voiceVolume = parseInt(zsVoiceVol.value,10); if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; zsSave(); });
   if (zsWake) zsWake.addEventListener('change', function(){
     var v = (zsWake.value || '').trim(); if (v) { zs.wakeWord = v; zsSave(); zsStatus('zs-wakeword-status', true); } else zsStatus('zs-wakeword-status', false, 'required');
   });
-
   function zsSyncControls() {
     if (zsThemeSel) zsThemeSel.value = zs.theme;
     if (zsFontSel) zsFontSel.value = String(zs.fontSize);
     if (zsVoiceVol) { zsVoiceVol.value = zs.voiceVolume; if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; }
     if (zsWake) zsWake.value = zs.wakeWord;
-    zsApplyVoiceToggle(); zsApplySaveHistToggle(); zsRenderSwatches(); zsUpdateRangeFill();
+    zsApplyVoiceToggle(); zsRenderSwatches();
   }
-
-  // ---- Chat history (ChatGPT-style sessions in localStorage) ----
-  var zsSessions = [];
-  try { zsSessions = JSON.parse(localStorage.getItem(ZS_CHAT_KEY) || '[]') || []; } catch (e) { zsSessions = []; }
-  var zsActiveSessionId = null;
-  function zsSaveSessions() { try { localStorage.setItem(ZS_CHAT_KEY, JSON.stringify(zsSessions.slice(0, 50))); } catch (e) {} }
-  function zsNewSession() {
-    var s = { id: 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), title: 'New conversation', ts: Date.now(), messages: [] };
-    zsSessions.unshift(s); zsActiveSessionId = s.id; zsSaveSessions(); zsRenderSessions(); return s;
-  }
-  function zsCurrentSession() {
-    if (!zsActiveSessionId) { var s = zsNewSession(); return s; }
-    for (var i=0;i<zsSessions.length;i++) if (zsSessions[i].id === zsActiveSessionId) return zsSessions[i];
-    return zsNewSession();
-  }
-  // ---- Smart chat naming ----
-  // Generates a short, meaningful title (2-5 words) from the first user
-  // message. Recognizes common ZYRA intents first, then falls back to the
-  // most meaningful words in the message.
-  var ZS_STOPWORDS = { a:1,an:1,and:1,are:1,as:1,at:1,be:1,but:1,by:1,can:1,do:1,does:1,for:1,from:1,give:1,go:1,has:1,have:1,how:1,i:1,in:1,is:1,it:1,its:1,me:1,my:1,of:1,on:1,or:1,please:1,show:1,so:1,tell:1,that:1,the:1,their:1,them:1,then:1,there:1,these:1,they:1,this:1,to:1,up:1,us:1,use:1,want:1,was:1,way:1,we:1,what:1,when:1,whether:1,which:1,who:1,why:1,will:1,with:1,would:1,you:1,your:1 };
-  function zsSmartTitle(text) {
-    var raw = String(text || '').toLowerCase().replace(/[^a-z0-9.\s-]/g, ' ').replace(/\s+/g, ' ').trim();
-    var has = function(re){ return re.test(raw); };
-    // Intent rules → canonical short names
-    if (has(/\b(scan|scanning)\b/) && has(/\b(network|net|subnet|lan|wifi|wi-fi)\b/)) return 'Network Scan';
-    if (has(/\b(nmap|port scanning|open ports?)\b/)) return 'Port Scan';
-    if ((has(/\b(url|website|site|link|domain)\b/) || has(/\b[a-z0-9-]+\.(com|net|org|io|edu|gov|co|in|dev|ai|xyz|info|biz|online)\b/)) && has(/\b(safe|safety|secure|security|check|malicious|phish|reputation|analyze|analysis|scam|trust)\b/)) return 'URL Security Check';
-    if (has(/\b(cpu|memory|ram|disk|usage|monitor|performance|health)\b/)) return 'System Monitor';
-    if (has(/\b(hosts?|devices?)\b/) && has(/\b(active|find|discover|online|connected)\b/)) return 'Active Host Discovery';
-    if (has(/\bdns\b/)) return 'DNS Lookup';
-    if (has(/\b(ip address|whois|geoip|ip info)\b/)) return 'IP Lookup';
-    if (has(/\b(vulnerab|exploit|cve)\b/)) return 'Vulnerability Check';
-    if (has(/\b(ssl|https certificate|tls)\b/)) return 'SSL Check';
-    if (has(/\b(password|encrypt|hash)\b/)) return 'Security Question';
-    // Fallback: meaningful words from the message, max 5, min 2 when possible
-    var words = raw.split(' ').filter(function(w){ return w && !ZS_STOPWORDS[w]; });
-    if (!words.length) words = raw.split(' ').filter(Boolean);
-    if (!words.length) return 'New conversation';
-    var picked = words.slice(0, 5);
-    if (picked.length === 1 && words.length > 1) picked = words.slice(0, 2);
-    var title = picked.join(' ');
-    return title.charAt(0).toUpperCase() + title.slice(1);
-  }
-  function zsRecordMessage(text, type) {
-    if (!zs.saveHistory) return;
-    var s = zsCurrentSession();
-    s.messages.push({ text: text, type: type, ts: Date.now() });
-    // Auto-generate the conversation title from the first user message
-    // (never overwrites a manually renamed title).
-    if (type === 'user' && !s.renamed && (!s.title || s.title === 'New conversation')) {
-      var clean = String(text || '').trim().replace(/\s+/g, ' ');
-      if (clean) {
-        s.title = zsSmartTitle(clean);
-        // Keep the full first message around for search/context if needed
-        s.firstMessage = clean.slice(0, 200);
-      }
-    }
-    s.ts = Date.now(); zsSaveSessions(); zsRenderSessions();
-  }
-  // ---- Date grouping (Today / Yesterday / Previous 7 Days / Older) ----
-  var ZS_GROUPS = ['Today', 'Yesterday', 'Previous 7 Days', 'Older'];
-  function zsBucket(ts) {
-    var d = new Date(ts || Date.now()), now = new Date();
-    var day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    var d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    var DAY = 24 * 60 * 60 * 1000;
-    if (d0 >= day0) return 'Today';
-    if (d0 === day0 - DAY) return 'Yesterday';
-    if (d0 >= day0 - 7 * DAY) return 'Previous 7 Days';
-    return 'Older';
-  }
-  function zsFindSession(id) {
-    for (var i = 0; i < zsSessions.length; i++) if (zsSessions[i].id === id) return zsSessions[i];
-    return null;
-  }
-  var zsSearchInput = document.getElementById('zyra-chat-search');
-  function zsRenderSessions() {
-    var list = document.getElementById('zyra-chat-sessions'); if (!list) return;
-    var q = ((zsSearchInput && zsSearchInput.value) || '').trim().toLowerCase();
-    var shown = zsSessions.filter(function(s){
-      if (!q) return true;
-      if (String(s.title || '').toLowerCase().indexOf(q) !== -1) return true;
-      for (var i = 0; i < s.messages.length; i++) {
-        if (String(s.messages[i].text || '').toLowerCase().indexOf(q) !== -1) return true;
-      }
-      return false;
-    });
-    if (!shown.length) {
-      list.innerHTML = '<div class="zsb-empty">' + (q ? 'No chats match your search.' : 'No saved conversations yet.') + '</div>';
-      return;
-    }
-    var ordered = shown.slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
-    list.innerHTML = '';
-    ZS_GROUPS.forEach(function(g) {
-      var items = ordered.filter(function(s){ return zsBucket(s.ts) === g; });
-      if (!items.length) return;
-      var h = document.createElement('div');
-      h.className = 'zsb-group-label zsb-hide-collapsed';
-      h.textContent = g;
-      list.appendChild(h);
-      items.forEach(function(s){ list.appendChild(zsBuildItem(s)); });
-    });
-  }
-  function zsBuildItem(s) {
-    var item = document.createElement('div');
-    item.className = 'zsb-item' + (s.id === zsActiveSessionId ? ' active' : '');
-    item.setAttribute('data-sid', s.id);
-    item.title = s.title || 'Untitled chat';
-    var ico = document.createElement('span'); ico.className = 'zi'; ico.textContent = '💬';
-    var t = document.createElement('span'); t.className = 'zt'; t.textContent = s.title || 'Untitled chat';
-    var kebab = document.createElement('button');
-    kebab.className = 'zsb-kebab zsb-hide-collapsed'; kebab.textContent = '⋮';
-    kebab.title = 'Chat options';
-    kebab.setAttribute('aria-label', 'Chat options');
-    kebab.addEventListener('click', function(e){ e.stopPropagation(); zsOpenMenu(s, kebab); });
-    item.appendChild(ico); item.appendChild(t); item.appendChild(kebab);
-    item.addEventListener('click', function(){ zsLoadSession(s.id); });
-    return item;
-  }
-  function zsLoadSession(id) {
-    zsActiveSessionId = id; zsCloseMenu(); zsRenderSessions();
-    if (!chatMessages) return;
-    chatMessages.innerHTML = '';
-    var s = zsFindSession(id);
-    zsRestoring = true;
-    try {
-      if (s && s.messages && s.messages.length) {
-        s.messages.forEach(function(m){ addMessage(m.text, m.type); });
-      } else {
-        addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
-      }
-    } finally { zsRestoring = false; }
-  }
-
-  // ---- Floating three-dot menu (Rename / Delete) ----
-  var zsMenu = null;
-  function zsCloseMenu() { if (zsMenu) { zsMenu.remove(); zsMenu = null; } }
-  document.addEventListener('click', function(e){ if (zsMenu && !zsMenu.contains(e.target)) zsCloseMenu(); });
-  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') zsCloseMenu(); });
-  function zsOpenMenu(s, anchor) {
-    zsCloseMenu();
-    zsMenu = document.createElement('div'); zsMenu.className = 'zsb-menu';
-    var renameBtn = document.createElement('button');
-    renameBtn.className = 'zsb-menu-btn';
-    renameBtn.innerHTML = '✏️ <span>Rename</span>';
-    renameBtn.addEventListener('click', function(){ zsCloseMenu(); zsStartRename(s.id); });
-    var delBtn = document.createElement('button');
-    delBtn.className = 'zsb-menu-btn danger';
-    delBtn.innerHTML = '🗑️ <span>Delete</span>';
-    // Two-step confirmation so a chat can never be deleted accidentally.
-    delBtn.addEventListener('click', function(){
-      zsMenu.innerHTML = '';
-      var warn = document.createElement('div');
-      warn.className = 'zsb-menu-warn';
-      warn.textContent = 'Delete this chat permanently?';
-      var yes = document.createElement('button');
-      yes.className = 'zsb-menu-btn danger zsb-menu-confirm';
-      yes.innerHTML = '🗑️ <span>Yes, delete</span>';
-      yes.addEventListener('click', function(){ zsCloseMenu(); zsDeleteSession(s.id); });
-      var no = document.createElement('button');
-      no.className = 'zsb-menu-btn';
-      no.innerHTML = '↩️ <span>Cancel</span>';
-      no.addEventListener('click', function(){ zsCloseMenu(); });
-      zsMenu.appendChild(warn); zsMenu.appendChild(yes); zsMenu.appendChild(no);
-    });
-    zsMenu.appendChild(renameBtn); zsMenu.appendChild(delBtn);
-    document.body.appendChild(zsMenu);
-    var r = anchor.getBoundingClientRect(), mw = 170, mh = 100;
-    var left = Math.min(Math.max(8, r.right - mw), window.innerWidth - mw - 8);
-    var top = r.bottom + 6;
-    if (top + mh > window.innerHeight - 8) top = r.top - mh - 6;
-    zsMenu.style.left = left + 'px';
-    zsMenu.style.top = Math.max(8, top) + 'px';
-  }
-  function zsStartRename(id) {
-    var item = document.querySelector('.zsb-item[data-sid="' + id + '"]'); if (!item) return;
-    var s = zsFindSession(id); if (!s) return;
-    var titleEl = item.querySelector('.zt'); if (!titleEl) return;
-    var input = document.createElement('input');
-    input.type = 'text'; input.className = 'zsb-rename-input';
-    input.value = s.title || ''; input.maxLength = 60;
-    titleEl.replaceWith(input);
-    input.focus(); input.select();
-    var done = false;
-    function commit(save) {
-      if (done) return; done = true;
-      var v = input.value.trim();
-      if (save && v && v !== s.title) { s.title = v; s.renamed = true; zsSaveSessions(); }
-      zsRenderSessions();
-    }
-    input.addEventListener('keydown', function(e){
-      e.stopPropagation();
-      if (e.key === 'Enter') { e.preventDefault(); commit(true); }
-      else if (e.key === 'Escape') { e.preventDefault(); commit(false); }
-    });
-    input.addEventListener('blur', function(){ commit(true); });
-    input.addEventListener('click', function(e){ e.stopPropagation(); });
-  }
-  function zsDeleteSession(id) {
-    var idx = -1;
-    for (var i = 0; i < zsSessions.length; i++) if (zsSessions[i].id === id) { idx = i; break; }
-    if (idx === -1) return;
-    zsSessions.splice(idx, 1);
-    zsSaveSessions();
-    if (zsActiveSessionId === id) {
-      zsActiveSessionId = zsSessions.length ? zsSessions[0].id : null;
-      if (chatMessages) chatMessages.innerHTML = '';
-      zsRestoring = true;
-      try {
-        if (zsActiveSessionId) {
-          var nx = zsFindSession(zsActiveSessionId);
-          if (nx && nx.messages.length) nx.messages.forEach(function(m){ addMessage(m.text, m.type); });
-          else addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
-        } else {
-          addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
-        }
-      } finally { zsRestoring = false; }
-    }
-    zsRenderSessions();
-  }
-
-  // ---- Sidebar collapse/expand (ChatGPT-style rail, persisted) ----
-  var zsSidebar = document.getElementById('zyra-chat-sidebar');
-  var zsCollapseBtn = document.getElementById('zyra-chat-collapse');
-  var zsSearchExpandBtn = document.getElementById('zyra-chat-search-expand');
-  var zsSidebarNew = document.getElementById('zyra-chat-new');
-  var zsSidebarOpenBtn = document.getElementById('zs-sidebar-open');
-  function zsApplySidebar() {
-    var collapsed = zs.sidebarCollapsed === true;
-    if (zsSidebar) zsSidebar.classList.toggle('collapsed', collapsed);
-    if (zsCollapseBtn) {
-      zsCollapseBtn.textContent = collapsed ? '›' : '‹';
-      zsCollapseBtn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
-    }
-  }
-  function zsToggleSidebar() {
-    zs.sidebarCollapsed = !(zs.sidebarCollapsed === true);
-    zs.sidebarOpen = !zs.sidebarCollapsed;
-    zsSave(); zsApplySidebar(); zsRenderSessions();
-  }
-  function zsOpenSidebar() {
-    if (zsSidebar && zs.sidebarCollapsed) {
-      zs.sidebarCollapsed = false; zs.sidebarOpen = true;
-      zsSave(); zsApplySidebar();
-    }
-    zsRenderSessions();
-  }
-  if (zsCollapseBtn) zsCollapseBtn.addEventListener('click', zsToggleSidebar);
-  if (zsSearchExpandBtn) zsSearchExpandBtn.addEventListener('click', function(){
-    if (zs.sidebarCollapsed) zsToggleSidebar();
-    setTimeout(function(){ if (zsSearchInput) zsSearchInput.focus(); }, 120);
-  });
-  if (zsSearchInput) zsSearchInput.addEventListener('input', function(){ zsRenderSessions(); });
-  if (zsSidebarOpenBtn) zsSidebarOpenBtn.addEventListener('click', zsOpenSidebar);
-  if (zsSidebarNew) zsSidebarNew.addEventListener('click', function(){
-    zsNewSession();
-    if (chatMessages) chatMessages.innerHTML = '';
-    addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
-  });
-
-  // ---- Data & Privacy actions ----
-  var zsClearDataBtn = document.getElementById('zs-clear-data');
-  if (zsClearDataBtn) zsClearDataBtn.addEventListener('click', function(){
-    try { localStorage.removeItem(ZS_KEY); } catch (e) {}
-    zs = JSON.parse(JSON.stringify(ZS_DEFAULTS)); zsApplyAll(); zsSyncControls(); zsStatus('zs-wakeword-status', true, 'all data cleared');
-  });
-
-  // ---- Wrap addMessage so every message is recorded into history ----
-  // (function declaration in this scope is reassignable)
-  // zsRestoring=true while replaying a saved conversation, so restored
-  // messages are NOT re-recorded (avoids duplicated history entries).
-  var zsRestoring = false;
-  var _origAddMessage = addMessage;
-  addMessage = function(text, type) {
-    _origAddMessage(text, type);
-    if (!zsRestoring) { try { zsRecordMessage(text, type); } catch (e) {} }
-  };
 
   // Voice output is handled only by the backend's configured female Edge TTS voice.
   // Browser-side speech playback is intentionally disabled to prevent duplicates.
 
   // ---- Apply persisted settings on load ----
   zsApplyAll();
-  zsUpdateRangeFill();
-  zsApplySidebar();
-  // Restore the most recent conversation so history survives refresh/reopen
-  if (zs.saveHistory && chatMessages) {
-    chatMessages.innerHTML = '';
-    if (zsSessions.length) {
-      zsActiveSessionId = zsSessions[0].id;
-      var s0 = zsSessions[0];
-      zsRestoring = true;
-      try {
-        if (s0.messages && s0.messages.length) s0.messages.forEach(function(m){ addMessage(m.text, m.type); });
-      } finally { zsRestoring = false; }
-    } else {
-      zsNewSession();
-    }
-    zsRenderSessions();
-  }
 })();
 </script>
 </body>
