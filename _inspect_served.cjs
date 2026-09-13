@@ -1,0 +1,13 @@
+const fs = require('fs');
+const html = fs.readFileSync('_theme_qa_served.html', 'utf8');
+console.log('size', html.length);
+console.log('threeStart count', html.split('window.__threeStart').length - 1);
+console.log('threeLoaded count', html.split('window.__threeLoaded').length - 1);
+console.log('script open count', html.split('<script').length - 1);
+console.log('script close count', html.split('</script>').length - 1);
+console.log('has REVISION', html.includes('REVISION'));
+const idx = html.indexOf('window.__threeStart');
+console.log('context', JSON.stringify(html.slice(idx - 40, idx + 60)));
+const headEnd = html.indexOf('</head>');
+console.log('head end at', headEnd, 'boot before head end:', html.indexOf('window.__boot') < headEnd);
+console.log('first 60 lines size', html.split('\n').slice(0, 20).join('\n').length);
