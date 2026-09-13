@@ -135,7 +135,244 @@ canvas {
   50% { opacity: 0.4; }
 }
 
-/* ===== SYSTEM MONITOR HUD CARD ===== */
+/* ===== Settings FAB Button ===== */
+.settings-fab {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 136, 68, 0.15);
+  border: 1px solid rgba(255, 136, 68, 0.4);
+  color: #ff8844;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+.settings-fab:hover {
+  background: rgba(255, 136, 68, 0.3);
+  border-color: #ff8844;
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(255, 136, 68, 0.4);
+}
+
+/* ===== Settings Modal ===== */
+.settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: settingsFadeIn 0.2s ease;
+}
+.settings-modal.active {
+  display: flex;
+}
+@keyframes settingsFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.settings-modal-content {
+  position: relative;
+  background: rgba(20, 20, 35, 0.95);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 580px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: settingsSlideUp 0.3s ease;
+}
+@keyframes settingsSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 136, 68, 0.15);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  color: #ffaa55;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+.settings-close-btn:hover {
+  background: rgba(255, 136, 68, 0.3);
+  border-color: #ff8844;
+}
+
+.settings-header {
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 136, 68, 0.2);
+}
+.settings-header h2 {
+  font-size: 1.4rem;
+  color: #ff8844;
+  margin-bottom: 4px;
+  text-shadow: 0 0 12px rgba(255, 136, 68, 0.4);
+}
+.settings-subtitle {
+  font-size: 0.8rem;
+  color: rgba(255, 170, 85, 0.5);
+  font-style: italic;
+}
+
+/* ===== Settings Section ===== */
+.settings-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 136, 68, 0.15);
+}
+.settings-section:last-of-type {
+  border-bottom: none;
+}
+.section-title {
+  font-size: 0.95rem;
+  color: #ffaa55;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-icon {
+  font-size: 1.1rem;
+}
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.setting-row label {
+  font-size: 0.85rem;
+  color: rgba(255, 170, 85, 0.8);
+  min-width: 130px;
+}
+.setting-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 170, 85, 0.4);
+  margin-top: 6px;
+  width: 100%;
+}
+
+/* ===== Theme Toggle ===== */
+.theme-toggle-group {
+  display: flex;
+  gap: 10px;
+}
+.theme-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 20px;
+  background: rgba(255, 136, 68, 0.08);
+  border: 2px solid rgba(255, 136, 68, 0.2);
+  border-radius: 10px;
+  color: rgba(255, 170, 85, 0.7);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+.theme-toggle:hover {
+  border-color: rgba(255, 136, 68, 0.5);
+}
+.theme-toggle.active {
+  border-color: #ff8844;
+  background: rgba(255, 136, 68, 0.2);
+  color: #ffcc88;
+}
+.theme-preview {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 136, 68, 0.3);
+}
+.dark-preview {
+  background: linear-gradient(135deg, #1a1a2e 50%, #e94560 50%);
+}
+.light-preview {
+  background: linear-gradient(135deg, #f5f7fa 50%, #3b82f6 50%);
+}
+.theme-toggle span {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.theme-toggle small {
+  font-size: 0.7rem;
+  color: rgba(255, 170, 85, 0.5);
+}
+
+/* ===== Slider Input ===== */
+.slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 140px;
+  height: 5px;
+  background: rgba(255, 136, 68, 0.15);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #ff8844;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+.font-size-control,
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.font-size-display,
+.volume-display {
+  font-size: 0.8rem;
+  color: #ffaa55;
+  min-width: 38px;
+  text-align: center;
+  padding: 3px 8px;
+  background: rgba(255, 136, 68, 0.1);
+  border-radius: 4px;
+}
+
 .system-monitor-card {
   position: absolute;
   top: 70px;
@@ -1296,7 +1533,202 @@ canvas {
 @media (max-width: 768px) {
   #top-bar { padding: 12px 16px; }
   #bottom-controls { padding: 12px 16px 16px; }
-  #chat-messages { max-height: 140px; }
+}
+
+/* ===== Wake Word Input ===== */
+.wake-word-input {
+  padding: 8px 12px;
+  background: rgba(255, 136, 68, 0.08);
+  border: 1px solid rgba(255, 136, 68, 0.2);
+  border-radius: 8px;
+  color: #ffcc88;
+  font-size: 0.85rem;
+  outline: none;
+  width: 180px;
+  transition: border-color 0.3s ease;
+}
+.wake-word-input:focus {
+  border-color: #ff8844;
+}
+
+/* ===== Toggle Switch ===== */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 136, 68, 0.15);
+  border-radius: 22px;
+  transition: 0.3s ease;
+  border: 1px solid rgba(255, 136, 68, 0.2);
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: rgba(255, 170, 85, 0.6);
+  border-radius: 50%;
+  transition: 0.3s ease;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: rgba(255, 136, 68, 0.3);
+  border-color: #ff8844;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+  background: #ff8844;
+}
+
+/* ===== Data Actions ===== */
+.data-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.data-action-btn {
+  padding: 10px 14px;
+  background: rgba(255, 136, 68, 0.08);
+  border: 1px solid rgba(255, 136, 68, 0.2);
+  border-radius: 8px;
+  color: #ffcc88;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+.data-action-btn:hover {
+  border-color: rgba(255, 136, 68, 0.5);
+  background: rgba(255, 136, 68, 0.15);
+}
+.data-action-btn.danger {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+.data-action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+
+/* ===== Privacy Info ===== */
+.privacy-info {
+  background: rgba(255, 136, 68, 0.05);
+  border-radius: 8px;
+  padding: 14px;
+}
+.privacy-info h4 {
+  font-size: 0.9rem;
+  color: #ffaa55;
+  margin-bottom: 10px;
+}
+.privacy-info ul {
+  list-style: none;
+  padding: 0;
+}
+.privacy-info li {
+  font-size: 0.8rem;
+  color: rgba(255, 170, 85, 0.6);
+  margin-bottom: 6px;
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.4;
+}
+.privacy-info li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #ff8844;
+}
+
+/* ===== Confirmation Dialog ===== */
+.confirm-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: settingsFadeIn 0.2s ease;
+}
+.confirm-dialog.active {
+  display: flex;
+}
+.confirm-dialog-content {
+  background: rgba(20, 20, 35, 0.95);
+  border: 1px solid rgba(255, 136, 68, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: settingsSlideUp 0.3s ease;
+}
+.confirm-title {
+  font-size: 1.05rem;
+  color: #ffaa55;
+  margin-bottom: 10px;
+}
+.confirm-message {
+  font-size: 0.85rem;
+  color: rgba(255, 170, 85, 0.7);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.confirm-cancel {
+  padding: 8px 18px;
+  background: rgba(255, 136, 68, 0.1);
+  border: 1px solid rgba(255, 136, 68, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 170, 85, 0.8);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.confirm-cancel:hover {
+  border-color: rgba(255, 136, 68, 0.5);
+}
+.confirm-ok {
+  padding: 8px 18px;
+  background: #ff8844;
+  border: 1px solid #ff8844;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.confirm-ok:hover {
+  background: #ffaa55;
+}
+.confirm-ok.danger {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+.confirm-ok.danger:hover {
+  background: #dc2626;
 }
 
 /* =====================================================================
@@ -2577,6 +3009,7 @@ body.font-xl .cs-item-title { font-size: 14px; }
    </div>
   </div>
 
+<<<<<<< HEAD
   <!-- ===== CHAT HISTORY SIDEBAR (hidden until enabled in Settings > Chat) ===== -->
   <div id="chat-sidebar" aria-label="Chat History">
    <div class="cs-header">
@@ -2733,6 +3166,127 @@ body.font-xl .cs-item-title { font-size: 14px; }
 
   <!-- Action confirmation toast -->
   <div id="settings-toast" role="status" aria-live="polite"></div>
+=======
+  <!-- Settings Button (Bottom Left) -->
+  <button id="settings-btn" class="settings-fab" title="Settings">⚙️</button>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="settings-modal">
+    <div class="settings-modal-content">
+      <button id="settings-close" class="settings-close-btn">✕</button>
+      
+      <div class="settings-header">
+        <h2>⚙️ ZYRA SETTINGS</h2>
+        <p class="settings-subtitle">// Neural core configuration</p>
+      </div>
+
+      <!-- Section 1: THEME -->
+      <div class="settings-section">
+        <h3 class="section-title"><span class="section-icon">🎨</span> THEME</h3>
+        <div class="setting-row">
+          <label>Interface Theme</label>
+          <div class="theme-toggle-group">
+            <button class="theme-toggle active" data-theme="dark" id="theme-dark">
+              <span class="theme-preview dark-preview"></span>
+              <span>Dark</span>
+              <small>Black & Orange</small>
+            </button>
+            <button class="theme-toggle" data-theme="light" id="theme-light">
+              <span class="theme-preview light-preview"></span>
+              <span>Light</span>
+              <small>Blue & White</small>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: APPEARANCE -->
+      <div class="settings-section">
+        <h3 class="section-title"><span class="section-icon">✨</span> APPEARANCE</h3>
+        <div class="setting-row">
+          <label>Font Size</label>
+          <div class="font-size-control">
+            <input type="range" id="font-size-slider" class="slider-input" min="12" max="20" value="14">
+            <span id="font-size-value" class="font-size-display">14px</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: VOICE -->
+      <div class="settings-section">
+        <h3 class="section-title"><span class="section-icon">🎤</span> VOICE</h3>
+        <div class="setting-row">
+          <label>Voice Assistant</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="voice-enabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <label>Voice Volume</label>
+          <div class="volume-control">
+            <input type="range" id="voice-volume-slider" class="slider-input" min="0" max="100" value="70">
+            <span id="voice-volume-value" class="volume-display">70%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: AUTHENTICATION -->
+      <div class="settings-section">
+        <h3 class="section-title"><span class="section-icon">🔐</span> AUTHENTICATION</h3>
+        <div class="setting-row">
+          <label>Wake Word</label>
+          <input type="text" id="wake-word-input" class="wake-word-input" placeholder='e.g., "Hey ZYRA"' value="Hey ZYRA">
+        </div>
+        <p class="setting-hint">Say this phrase to activate voice command mode</p>
+      </div>
+
+      <!-- Section 5: CHAT -->
+      <div class="settings-section">
+        <h3 class="section-title"><span class="section-icon">💬</span> CHAT</h3>
+        <div class="setting-row">
+          <label>Save Chat History</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="save-chat-history" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="setting-hint">Save conversations across sessions</p>
+      </div>
+
+      <!-- Section 6: DATA & PRIVACY -->
+      <div class="settings-section">
+        <h3 class="section-title"><span class="section-icon">🛡️</span> DATA & PRIVACY</h3>
+        <div class="data-actions">
+          <button id="clear-chat-btn" class="data-action-btn danger">🗑️ Clear Chat History</button>
+          <button id="clear-all-btn" class="data-action-btn danger">🧹 Clear All Stored Data</button>
+        </div>
+        <div class="privacy-info">
+          <h4>Privacy Information</h4>
+          <ul>
+            <li><strong>Local Storage Only:</strong> All data is stored locally on your device. No data is sent to external servers.</li>
+            <li><strong>Chat History:</strong> Conversations are saved in local storage when enabled.</li>
+            <li><strong>No Tracking:</strong> ZYRA does not collect usage analytics or personal information.</li>
+            <li><strong>Full Control:</strong> You can clear all stored data at any time.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirm-dialog" class="confirm-dialog">
+    <div class="confirm-dialog-content">
+      <h3 id="confirm-title" class="confirm-title">Confirm Action</h3>
+      <p id="confirm-message" class="confirm-message">Are you sure?</p>
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="confirm-cancel">Cancel</button>
+        <button id="confirm-ok" class="confirm-ok danger">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+>>>>>>> ebf350db106e86c113a596bb5fd7546189a6c7de
 
 
 <script>
@@ -5514,6 +6068,122 @@ body.font-xl .cs-item-title { font-size: 14px; }
       openConversation(conversations[0].id);
     }
   })();
+})();
+
+// ===== SETTINGS SYSTEM =====
+(function() {
+  const SETTINGS_KEY = 'zyra_settings';
+  
+  const defaultSettings = {
+    theme: 'dark',
+    fontSize: 14,
+    voiceEnabled: true,
+    voiceVolume: 70,
+    wakeWord: 'Hey ZYRA',
+    saveChatHistory: true,
+    chatSidebarOpen: false
+  };
+
+  function loadSettings() {
+    try {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (stored) {
+        return { ...defaultSettings, ...JSON.parse(stored) };
+      }
+    } catch (e) {
+      console.error('Failed to load settings:', e);
+    }
+    return defaultSettings;
+  }
+
+  function saveSettings(settings) {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.error('Failed to save settings:', e);
+    }
+  }
+
+  let settings = loadSettings();
+
+  function applySettings() {
+    if (settings.theme === 'light') {
+      document.body.classList.add('light-theme');
+      document.getElementById('theme-light').classList.add('active');
+      document.getElementById('theme-dark').classList.remove('active');
+    } else {
+      document.body.classList.remove('light-theme');
+      document.getElementById('theme-dark').classList.add('active');
+      document.getElementById('theme-light').classList.remove('active');
+    }
+    document.getElementById('font-size-slider').value = settings.fontSize;
+    document.getElementById('font-size-value').textContent = settings.fontSize + 'px';
+    document.getElementById('voice-enabled').checked = settings.voiceEnabled;
+    document.getElementById('voice-volume-slider').value = settings.voiceVolume;
+    document.getElementById('voice-volume-value').textContent = settings.voiceVolume + '%';
+    document.getElementById('wake-word-input').value = settings.wakeWord;
+    document.getElementById('save-chat-history').checked = settings.saveChatHistory;
+  }
+
+  var settingsBtn = document.getElementById('settings-btn');
+  var settingsModal = document.getElementById('settings-modal');
+  var settingsClose = document.getElementById('settings-close');
+
+  settingsBtn.addEventListener('click', function() {
+    settingsModal.classList.add('active');
+    applySettings();
+  });
+
+  settingsClose.addEventListener('click', function() {
+    settingsModal.classList.remove('active');
+  });
+
+  settingsModal.addEventListener('click', function(e) {
+    if (e.target === settingsModal) {
+      settingsModal.classList.remove('active');
+    }
+  });
+
+  document.getElementById('theme-dark').addEventListener('click', function() {
+    settings.theme = 'dark';
+    saveSettings(settings);
+    applySettings();
+  });
+
+  document.getElementById('theme-light').addEventListener('click', function() {
+    settings.theme = 'light';
+    saveSettings(settings);
+    applySettings();
+  });
+
+  document.getElementById('font-size-slider').addEventListener('input', function(e) {
+    settings.fontSize = parseInt(e.target.value, 10);
+    document.getElementById('font-size-value').textContent = settings.fontSize + 'px';
+    saveSettings(settings);
+  });
+
+  document.getElementById('voice-enabled').addEventListener('change', function(e) {
+    settings.voiceEnabled = e.target.checked;
+    saveSettings(settings);
+  });
+
+  document.getElementById('voice-volume-slider').addEventListener('input', function(e) {
+    settings.voiceVolume = parseInt(e.target.value, 10);
+    document.getElementById('voice-volume-value').textContent = settings.voiceVolume + '%';
+    saveSettings(settings);
+  });
+
+  document.getElementById('wake-word-input').addEventListener('input', function(e) {
+    settings.wakeWord = e.target.value;
+    saveSettings(settings);
+  });
+
+  document.getElementById('save-chat-history').addEventListener('change', function(e) {
+    settings.saveChatHistory = e.target.checked;
+    saveSettings(settings);
+  });
+
+  applySettings();
 })();
 </script>
 </body>

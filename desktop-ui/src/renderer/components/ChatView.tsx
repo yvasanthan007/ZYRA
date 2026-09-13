@@ -9,16 +9,41 @@ interface ChatViewProps {
   setStatus: (status: string) => void;
 }
 
+const CHAT_HISTORY_KEY = 'zyra_chat_history';
+
 const ChatView: React.FC<ChatViewProps> = ({ setStatus }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hello! I am ZYRA. How can I help you today?' },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Load chat history from localStorage on mount
+    try {
+      const stored = localStorage.getItem(CHAT_HISTORY_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load chat history:', e);
+    }
+    return [
+      { role: 'assistant', content: 'Hello! I am ZYRA. How can I help you today?' },
+    ];
+  });
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+    } catch (e) {
+      console.error('Failed to save chat history:', e);
+    }
   }, [messages]);
 
   const handleSend = async () => {
@@ -100,3 +125,4 @@ const ChatView: React.FC<ChatViewProps> = ({ setStatus }) => {
 };
 
 export default ChatView;
+
