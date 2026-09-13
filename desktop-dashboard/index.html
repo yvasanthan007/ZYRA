@@ -1471,7 +1471,7 @@ body.zyra-light .zs-select option { background: #061a34; color: #eaf5ff; }
 body.zyra-light .zs-section { border-color: rgba(71,166,255,.2); }
 body.zyra-light .zs-btn { color: #dceeff; background: rgba(22,119,255,.18); border-color: rgba(71,166,255,.4); }
 body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: #65c3ff; }
-
+<<
 /* Light-theme settings controls: blue toggles + blue sliders (dark theme keeps the orange styling) */
 body.zyra-light .zs-toggle { background: rgba(174,194,224,.45); border-color: rgba(146,170,204,.65); }
 body.zyra-light .zs-toggle::after { background: #ffffff; box-shadow: 0 1px 4px rgba(13,47,96,.28); }
@@ -2093,7 +2093,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     </div>
   </div>
 
-  <!-- Chat history sidebar (ChatGPT-style, additive) -->
+<<<!-- Chat history sidebar (ChatGPT-style, additive) -->
   <div id="zyra-chat-sidebar">
     <div class="zsb-top">
       <div class="zsb-logo-row">
@@ -2123,9 +2123,9 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
       </div>
       <button id="zyra-settings-btn" title="ZYRA Settings" aria-label="Open ZYRA Settings">
         <span class="zi">⚙</span><span class="zt zsb-hide-collapsed">Settings</span>
-      </button>
-    </div>
-  </div>
+           </button>
+         </div>
+      </div>
 
   <!-- Settings modal -->
   <div id="zyra-settings-overlay" role="dialog" aria-modal="true" aria-labelledby="zyra-settings-title">
@@ -2201,32 +2201,18 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
           </div>
         </div>
 
-        <!-- 5. CHAT -->
-        <div class="zs-section">
-          <div class="zs-section-title">💬 Chat</div>
-          <div class="zs-row">
-            <span class="zs-label">Save chat history<small>Keep conversations across sessions</small></span>
-            <div class="zs-control"><div class="zs-toggle on" id="zs-savehistory-toggle" role="switch" aria-checked="true"></div></div>
-          </div>
-          <div class="zs-row">
-            <span class="zs-label">Chat sidebar<small>Open the history sidebar</small></span>
-            <div class="zs-control"><button class="zs-btn" id="zs-sidebar-open">Open Sidebar</button></div>
-          </div>
-        </div>
+
 
         <!-- 6. DATA & PRIVACY -->
         <div class="zs-section">
           <div class="zs-section-title">🔒 Data &amp; Privacy</div>
           <div class="zs-btn-row">
-            <button class="zs-btn" id="zs-manage-history">Manage Chat History</button>
-            <button class="zs-btn danger" id="zs-clear-history">Clear Chat History</button>
             <button class="zs-btn danger" id="zs-clear-data">Clear Stored Data</button>
           </div>
           <div class="zs-info" id="zs-privacy-info">
-            <strong>Privacy information.</strong> ZYRA stores your settings and (optionally) chat
-            history locally in your browser via <code>localStorage</code>. No data is sent to any
-            third party. Clearing chat history removes saved conversations; clearing stored data
-            resets all ZYRA settings and history on this device.
+            <strong>Privacy information.</strong> ZYRA stores your settings
+            locally in your browser via <code>localStorage</code>. No data is sent to any
+            third party. Clearing stored data resets all ZYRA settings on this device.
           </div>
         </div>
 
@@ -2289,7 +2275,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   }
   starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
   const starMat = new THREE.PointsMaterial({
-    color: 0xff8844,
+    color: 0x4488ff,
     size: 0.06,
     transparent: true,
     opacity: 0.4,
@@ -2299,10 +2285,10 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   const stars = new THREE.Points(starGeo, starMat);
   scene.add(stars);
 
-  // ===== AMBIENT RED/ORANGE WASH =====
+  // ===== AMBIENT BLUE WASH =====
   const washGeo = new THREE.SphereGeometry(12, 32, 32);
   const washMat = new THREE.MeshBasicMaterial({
-    color: 0x441100,
+    color: 0x001144,
     transparent: true,
     opacity: 0.08,
     side: THREE.BackSide
@@ -2317,7 +2303,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   // Solid Inner Core with Halo
   const innerCoreGeo = new THREE.SphereGeometry(0.5, 48, 48);
   const innerCoreMat = new THREE.MeshBasicMaterial({
-    color: 0xff8800,
+    color: 0x0088ff,
     transparent: true,
     opacity: 0.85
   });
@@ -2326,13 +2312,13 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   // Brighter center
   const centerGeo = new THREE.SphereGeometry(0.25, 32, 32);
-  const centerMat = new THREE.MeshBasicMaterial({ color: 0xffcc44 });
+  const centerMat = new THREE.MeshBasicMaterial({ color: 0x44ccff });
   const center = new THREE.Mesh(centerGeo, centerMat);
   coreGroup.add(center);
 
   // Core glow halo
   const haloMat = new THREE.MeshBasicMaterial({
-    color: 0xff6600,
+    color: 0x0066ff,
     transparent: true,
     opacity: 0.12,
     side: THREE.BackSide
@@ -2342,7 +2328,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   // Outer glow layer
   const outerHaloMat = new THREE.MeshBasicMaterial({
-    color: 0xff4400,
+    color: 0x0044ff,
     transparent: true,
     opacity: 0.05,
     side: THREE.BackSide
@@ -2357,7 +2343,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   // Outer geodesic - IcosahedronGeometry subdivision 3 for dense mesh
   const mainWireGeo = new THREE.IcosahedronGeometry(2.2, 3);
   const mainWireMat = new THREE.MeshBasicMaterial({
-    color: 0xff8800,
+    color: 0x0088ff,
     wireframe: true,
     transparent: true,
     opacity: 0.2
@@ -2368,7 +2354,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   // Brighter outer wireframe (subdivision 2)
   const midWireGeo = new THREE.IcosahedronGeometry(2.0, 2);
   const midWireMat = new THREE.MeshBasicMaterial({
-    color: 0xffaa33,
+    color: 0x33aaff,
     wireframe: true,
     transparent: true,
     opacity: 0.15
@@ -2383,7 +2369,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   // Inner mesh 1
   const innerMesh1Geo = new THREE.IcosahedronGeometry(1.5, 2);
   const innerMesh1Mat = new THREE.MeshBasicMaterial({
-    color: 0xff9933,
+    color: 0x3399ff,
     wireframe: true,
     transparent: true,
     opacity: 0.1
@@ -2394,7 +2380,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   // Inner mesh 2 (tighter)
   const innerMesh2Geo = new THREE.IcosahedronGeometry(1.1, 1);
   const innerMesh2Mat = new THREE.MeshBasicMaterial({
-    color: 0xffbb44,
+    color: 0x44bbff,
     wireframe: true,
     transparent: true,
     opacity: 0.08
@@ -2426,26 +2412,26 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   }
 
   // 3 Major orbits
-  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0xff8800, 0.35);
+  const orbit1 = createOrbitPath(2.8, 2.4, 1.2, 0x0088ff, 0.35);
   orbitGroup.add(orbit1);
 
-  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0xffaa33, 0.3);
+  const orbit2 = createOrbitPath(3.0, 1.8, 2.6, 0x33aaff, 0.3);
   orbit2.rotation.x = THREE.MathUtils.degToRad(35);
   orbit2.rotation.z = THREE.MathUtils.degToRad(20);
   orbitGroup.add(orbit2);
 
-  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0xff7700, 0.25);
+  const orbit3 = createOrbitPath(2.5, 2.8, 1.8, 0x0077ff, 0.25);
   orbit3.rotation.x = THREE.MathUtils.degToRad(-25);
   orbit3.rotation.z = THREE.MathUtils.degToRad(45);
   orbitGroup.add(orbit3);
 
   // 2 Minor orbits
-  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0xff9933, 0.15);
+  const orbit4 = createOrbitPath(3.3, 2.0, 1.0, 0x3399ff, 0.15);
   orbit4.rotation.x = THREE.MathUtils.degToRad(60);
   orbit4.rotation.z = THREE.MathUtils.degToRad(-10);
   orbitGroup.add(orbit4);
 
-  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0xffbb44, 0.12);
+  const orbit5 = createOrbitPath(2.0, 3.2, 1.5, 0x44bbff, 0.12);
   orbit5.rotation.x = THREE.MathUtils.degToRad(-50);
   orbit5.rotation.z = THREE.MathUtils.degToRad(30);
   orbitGroup.add(orbit5);
@@ -2486,7 +2472,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   const orbitParticleMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0xffaa44,
+    color: 0x44aaff,
     size: 0.08,
     transparent: true,
     opacity: 0.7,
@@ -2515,7 +2501,7 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
 
   const scatterMat = new THREE.PointsMaterial({
     map: squareTexture,
-    color: 0xff9933,
+    color: 0x3399ff,
     size: 0.05,
     transparent: true,
     opacity: 0.5,
@@ -4568,15 +4554,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
     }
   }, 1500);
 
-  // ===================================================================
-  // ===== ZYRA SETTINGS  (additive — self-contained) =====
-  // ===================================================================
-  var ZS_KEY = 'zyra_settings_v1';
-  var ZS_CHAT_KEY = 'zyra_chat_sessions_v1';
-  var ZS_DEFAULTS = {
-    theme: 'dark', fontSize: '100', accent: '#ff8800',
-    voiceEnabled: true, voiceVolume: 80, wakeWord: 'Hey ZYRA',
-    saveHistory: true, sidebarOpen: true, sidebarCollapsed: false
   };
   var zs = JSON.parse(JSON.stringify(ZS_DEFAULTS));
   try { var saved = JSON.parse(localStorage.getItem(ZS_KEY) || '{}'); if (saved) for (var k in ZS_DEFAULTS) if (k in saved) zs[k] = saved[k]; } catch (e) {}
@@ -4645,7 +4622,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   var zsVoiceVol = document.getElementById('zs-voice-volume');
   var zsVoiceVolVal = document.getElementById('zs-voice-volume-val');
   var zsWake = document.getElementById('zs-wakeword');
-  var zsSaveHistToggle = document.getElementById('zs-savehistory-toggle');
   if (zsThemeSel) zsThemeSel.addEventListener('change', function(){ zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); });
   if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
   if (zsVoiceToggle) zsVoiceToggle.addEventListener('click', function(){ zs.voiceEnabled = !zs.voiceEnabled; zsApplyVoiceToggle(); zsSave(); });
@@ -4664,9 +4640,6 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   if (zsWake) zsWake.addEventListener('change', function(){
     var v = (zsWake.value || '').trim(); if (v) { zs.wakeWord = v; zsSave(); zsStatus('zs-wakeword-status', true); } else zsStatus('zs-wakeword-status', false, 'required');
   });
-  if (zsSaveHistToggle) zsSaveHistToggle.addEventListener('click', function(){ zs.saveHistory = !zs.saveHistory; zsApplySaveHistToggle(); zsSave(); });
-  function zsApplySaveHistToggle() { if (!zsSaveHistToggle) return; zsSaveHistToggle.classList.toggle('on', zs.saveHistory); zsSaveHistToggle.setAttribute('aria-checked', zs.saveHistory ? 'true' : 'false'); }
-
   function zsSyncControls() {
     if (zsThemeSel) zsThemeSel.value = zs.theme;
     if (zsFontSel) zsFontSel.value = String(zs.fontSize);
@@ -4935,16 +4908,10 @@ body.zyra-light .zsb-kebab:hover { background: rgba(255,255,255,0.18); }
   });
 
   // ---- Data & Privacy actions ----
-  var zsManageBtn = document.getElementById('zs-manage-history');
-  var zsClearHistBtn = document.getElementById('zs-clear-history');
   var zsClearDataBtn = document.getElementById('zs-clear-data');
-  if (zsManageBtn) zsManageBtn.addEventListener('click', zsOpenSidebar);
-  if (zsClearHistBtn) zsClearHistBtn.addEventListener('click', function(){
-    zsSessions = []; zsActiveSessionId = null; zsSaveSessions(); zsRenderSessions(); zsStatus('zs-wakeword-status', true, 'history cleared');
-  });
   if (zsClearDataBtn) zsClearDataBtn.addEventListener('click', function(){
-    try { localStorage.removeItem(ZS_KEY); localStorage.removeItem(ZS_CHAT_KEY); } catch (e) {}
-    zs = JSON.parse(JSON.stringify(ZS_DEFAULTS)); zsApplyAll(); zsSyncControls(); zsSessions = []; zsActiveSessionId = null; zsRenderSessions(); zsStatus('zs-wakeword-status', true, 'all data cleared');
+    try { localStorage.removeItem(ZS_KEY); } catch (e) {}
+    zs = JSON.parse(JSON.stringify(ZS_DEFAULTS)); zsApplyAll(); zsSyncControls(); zsStatus('zs-wakeword-status', true, 'all data cleared');
   });
 
   // ---- Wrap addMessage so every message is recorded into history ----
