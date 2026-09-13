@@ -1,10 +1,11 @@
 import React from 'react';
 
-type View = 'chat' | 'commands' | 'monitor' | 'voice' | 'settings';
+type View = 'chat' | 'commands' | 'monitor' | 'voice';
 
 interface SidebarProps {
   activeView: View;
   onViewChange: (view: View) => void;
+  onSettingsClick: () => void;
 }
 
 const navItems: Array<{ id: View; label: string; icon: string }> = [
@@ -12,10 +13,9 @@ const navItems: Array<{ id: View; label: string; icon: string }> = [
   { id: 'commands', label: 'Commands', icon: '⚡' },
   { id: 'monitor', label: 'Monitor', icon: '📊' },
   { id: 'voice', label: 'Voice', icon: '🎤' },
-  { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onSettingsClick }) => {
   return (
     <nav className="sidebar">
       <div className="sidebar-logo">
@@ -36,8 +36,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
           </li>
         ))}
       </ul>
+      <div className="sidebar-bottom">
+        <button
+          className="nav-button settings-button"
+          onClick={onSettingsClick}
+          title="Settings"
+        >
+          <span className="nav-icon">⚙️</span>
+          <span className="nav-label">Settings</span>
+        </button>
+      </div>
     </nav>
   );
 };
 
 export default Sidebar;
+

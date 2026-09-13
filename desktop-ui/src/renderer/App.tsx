@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
+import { SettingsProvider } from './context/SettingsContext';
 import Sidebar from './components/Sidebar';
 import ChatView from './components/ChatView';
 import CommandPanel from './components/CommandPanel';
 import VoiceControl from './components/VoiceControl';
-import Settings from './components/Settings';
+import SettingsModal from './components/SettingsModal';
 import SystemMonitor from './components/SystemMonitor';
 
-type View = 'chat' | 'commands' | 'monitor' | 'voice' | 'settings';
+type View = 'chat' | 'commands' | 'monitor' | 'voice';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('chat');
   const [statusMessage, setStatusMessage] = useState('Ready');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const renderView = () => {
     switch (activeView) {
@@ -22,8 +24,6 @@ const App: React.FC = () => {
         return <SystemMonitor setStatus={setStatusMessage} />;
       case 'voice':
         return <VoiceControl setStatus={setStatusMessage} />;
-      case 'settings':
-        return <Settings setStatus={setStatusMessage} />;
       default:
         return <ChatView setStatus={setStatusMessage} />;
     }
@@ -31,7 +31,11 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      <Sidebar
+        activeView={activeView}
+        onViewChange={setActiveView}
+        onSettingsClick={() => setSettingsOpen(true)}
+      />
       <main className="main-content">
         <header className="app-header">
           <h1>ZYRA</h1>
@@ -40,8 +44,22 @@ const App: React.FC = () => {
           {renderView()}
         </div>
       </main>
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        setStatus={setStatusMessage}
+      />
     </div>
   );
 };
 
+const App: React.FC = () => {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
+  );
+};
+
 export default App;
+

@@ -1,5 +1,4 @@
 /******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
 /***/ "./node_modules/css-loader/dist/cjs.js!./src/renderer/styles/app.css"
@@ -8,6 +7,7 @@
   \***************************************************************************/
 (module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -35,6 +35,21 @@ ___CSS_LOADER_EXPORT___.push([module.id, `/* ===== CSS Variables ===== */
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   --radius: 8px;
   --transition: all 0.2s ease;
+  --font-size-base: 14px;
+}
+
+/* ===== Light Theme ===== */
+:root[data-theme="light"] {
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e8eef5;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* ===== Global Styles ===== */
@@ -693,7 +708,441 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
-`, "",{"version":3,"sources":["webpack://./src/renderer/styles/app.css"],"names":[],"mappings":"AAAA,8BAA8B;AAC9B;EACE,qBAAqB;EACrB,uBAAuB;EACvB,sBAAsB;EACtB,iBAAiB;EACjB,uBAAuB;EACvB,oBAAoB;EACpB,yBAAyB;EACzB,qBAAqB;EACrB,uBAAuB;EACvB,sCAAsC;EACtC,aAAa;EACb,2BAA2B;AAC7B;;AAEA,8BAA8B;AAC9B;EACE,SAAS;EACT,UAAU;EACV,sBAAsB;AACxB;;AAEA;EACE;uCACqC;EACrC,6BAA6B;EAC7B,0BAA0B;EAC1B,gBAAgB;EAChB,aAAa;AACf;;AAEA;EACE,aAAa;AACf;;AAEA,2BAA2B;AAC3B;EACE,aAAa;EACb,aAAa;AACf;;AAEA,wBAAwB;AACxB;EACE,YAAY;EACZ,+BAA+B;EAC/B,2CAA2C;EAC3C,aAAa;EACb,sBAAsB;EACtB,cAAc;AAChB;;AAEA;EACE,aAAa;EACb,kBAAkB;EAClB,4CAA4C;AAC9C;;AAEA;EACE,eAAe;EACf,cAAc;EACd,kBAAkB;AACpB;;AAEA;EACE,iBAAiB;EACjB,gBAAgB;EAChB,oBAAoB;EACpB,mBAAmB;AACrB;;AAEA;EACE,gBAAgB;EAChB,eAAe;EACf,OAAO;AACT;;AAEA;EACE,WAAW;EACX,kBAAkB;EAClB,gBAAgB;EAChB,YAAY;EACZ,4BAA4B;EAC5B,eAAe;EACf,aAAa;EACb,mBAAmB;EACnB,SAAS;EACT,eAAe;EACf,6BAA6B;EAC7B,kCAAkC;AACpC;;AAEA;EACE,kCAAkC;EAClC,0BAA0B;AAC5B;;AAEA;EACE,mCAAmC;EACnC,oBAAoB;EACpB,gCAAgC;AAClC;;AAEA;EACE,iBAAiB;AACnB;;AAEA;EACE,kBAAkB;AACpB;;AAEA,6BAA6B;AAC7B;EACE,OAAO;EACP,aAAa;EACb,sBAAsB;EACtB,gBAAgB;AAClB;;AAEA;EACE,kBAAkB;EAClB,+BAA+B;EAC/B,4CAA4C;EAC5C,aAAa;EACb,mBAAmB;EACnB,2BAA2B;EAC3B,cAAc;AAChB;;AAEA;EACE,iBAAiB;EACjB,oBAAoB;EACpB,gBAAgB;AAClB;;AAEA;EACE,iBAAiB;EACjB,4BAA4B;EAC5B,8BAA8B;EAC9B,iBAAiB;EACjB,mBAAmB;AACrB;;AAEA;EACE,OAAO;EACP,gBAAgB;EAChB,aAAa;AACf;;AAEA,0BAA0B;AAC1B;EACE,aAAa;EACb,sBAAsB;EACtB,YAAY;AACd;;AAEA;EACE,OAAO;EACP,gBAAgB;EAChB,oBAAoB;AACtB;;AAEA;EACE,aAAa;EACb,SAAS;EACT,mBAAmB;EACnB,2BAA2B;AAC7B;;AAEA;EACE,OAAO,UAAU,EAAE,0BAA0B,EAAE;EAC/C,KAAK,UAAU,EAAE,wBAAwB,EAAE;AAC7C;;AAEA;EACE,2BAA2B;AAC7B;;AAEA;EACE,iBAAiB;EACjB,WAAW;EACX,YAAY;EACZ,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,8BAA8B;EAC9B,kBAAkB;EAClB,cAAc;AAChB;;AAEA;EACE,cAAc;EACd,kBAAkB;EAClB,mBAAmB;EACnB,iBAAiB;EACjB,gBAAgB;AAClB;;AAEA;EACE,8BAA8B;EAC9B,8BAA8B;AAChC;;AAEA;EACE,yBAAyB;EACzB,+BAA+B;AACjC;;AAEA,qBAAqB;AACrB;EACE,aAAa;EACb,QAAQ;EACR,cAAc;AAChB;;AAEA;EACE,UAAU;EACV,WAAW;EACX,iCAAiC;EACjC,kBAAkB;EAClB,2CAA2C;AAC7C;;AAEA,sCAAsC,qBAAqB,EAAE;AAC7D,sCAAsC,qBAAqB,EAAE;;AAE7D;EACE,gBAAgB,wBAAwB,EAAE;EAC1C,MAAM,2BAA2B,EAAE;AACrC;;AAEA,eAAe;AACf;EACE,aAAa;EACb,SAAS;EACT,iBAAiB;EACjB,yCAAyC;AAC3C;;AAEA;EACE,OAAO;EACP,kBAAkB;EAClB,+BAA+B;EAC/B,qCAAqC;EACrC,4BAA4B;EAC5B,0BAA0B;EAC1B,iBAAiB;EACjB,YAAY;EACZ,aAAa;EACb,6BAA6B;EAC7B,oBAAoB;AACtB;;AAEA;EACE,2BAA2B;AAC7B;;AAEA;EACE,kBAAkB;EAClB,yBAAyB;EACzB,YAAY;EACZ,YAAY;EACZ,4BAA4B;EAC5B,eAAe;EACf,iBAAiB;EACjB,gBAAgB;EAChB,6BAA6B;EAC7B,oBAAoB;AACtB;;AAEA;EACE,+BAA+B;AACjC;;AAEA;EACE,YAAY;EACZ,mBAAmB;AACrB;;AAEA,8BAA8B;AAC9B;EACE,aAAa;EACb,sBAAsB;EACtB,SAAS;AACX;;AAEA;EACE,+BAA+B;EAC/B,4BAA4B;EAC5B,aAAa;EACb,qCAAqC;AACvC;;AAEA;EACE,iBAAiB;EACjB,oBAAoB;EACpB,mBAAmB;EACnB,yBAAyB;EACzB,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,4DAA4D;EAC5D,QAAQ;AACV;;AAEA;EACE,kBAAkB;EAClB,8BAA8B;EAC9B,qCAAqC;EACrC,4BAA4B;EAC5B,0BAA0B;EAC1B,eAAe;EACf,iBAAiB;EACjB,6BAA6B;EAC7B,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,QAAQ;AACV;;AAEA;EACE,yBAAyB;EACzB,2BAA2B;EAC3B,2BAA2B;AAC7B;;AAEA;EACE,YAAY;EACZ,mBAAmB;AACrB;;AAEA;EACE,2BAA2B;EAC3B,mCAAmC;AACrC;;AAEA;EACE,WAAW,0CAA0C,EAAE;EACvD,MAAM,0CAA0C,EAAE;AACpD;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,uCAAuC;EACvC,+BAA+B;EAC/B,kBAAkB;EAClB,oCAAoC;AACtC;;AAEA;EACE,KAAK,yBAAyB,EAAE;AAClC;;AAEA,8BAA8B;AAC9B;EACE,aAAa;EACb,sBAAsB;EACtB,SAAS;EACT,mBAAmB;AACrB;;AAEA;EACE,kBAAkB;EAClB,aAAa;EACb,+BAA+B;EAC/B,4BAA4B;EAC5B,qCAAqC;EACrC,WAAW;EACX,gBAAgB;AAClB;;AAEA;EACE,mBAAmB;AACrB;;AAEA;EACE,eAAe;EACf,cAAc;EACd,mBAAmB;AACrB;;AAEA;EACE,iBAAiB;EACjB,gBAAgB;AAClB;;AAEA;EACE,mCAAmC;AACrC;;AAEA;EACE,kBAAkB;EAClB,+BAA+B;EAC/B,uBAAuB;EACvB,oBAAoB;EACpB,mBAAmB;EACnB,eAAe;EACf,eAAe;EACf,gBAAgB;EAChB,6BAA6B;AAC/B;;AAEA;EACE,yBAAyB;EACzB,YAAY;AACd;;AAEA;EACE,yBAAyB;EACzB,YAAY;AACd;;AAEA;EACE,gBAAgB;EAChB,kBAAkB;EAClB,4BAA4B;AAC9B;;AAEA;EACE,WAAW;EACX,gBAAgB;EAChB,+BAA+B;EAC/B,4BAA4B;EAC5B,aAAa;EACb,qCAAqC;AACvC;;AAEA;EACE,mBAAmB;AACrB;;AAEA;EACE,iBAAiB;EACjB,oBAAoB;EACpB,gBAAgB;AAClB;;AAEA;EACE,iBAAiB;EACjB,eAAe;EACf,gBAAgB;AAClB;;AAEA;EACE,WAAW;EACX,gBAAgB;EAChB,+BAA+B;EAC/B,4BAA4B;EAC5B,aAAa;EACb,qCAAqC;AACvC;;AAEA;EACE,iBAAiB;EACjB,oBAAoB;EACpB,mBAAmB;AACrB;;AAEA;EACE,gBAAgB;EAChB,UAAU;AACZ;;AAEA;EACE,cAAc;EACd,kBAAkB;EAClB,4BAA4B;EAC5B,4CAA4C;AAC9C;;AAEA;EACE,mBAAmB;AACrB;;AAEA,8BAA8B;AAC9B;EACE,aAAa;EACb,sBAAsB;EACtB,SAAS;EACT,gBAAgB;AAClB;;AAEA;EACE,+BAA+B;EAC/B,4BAA4B;EAC5B,aAAa;EACb,qCAAqC;AACvC;;AAEA;EACE,iBAAiB;EACjB,oBAAoB;EACpB,mBAAmB;EACnB,yBAAyB;EACzB,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,mBAAmB;EACnB,SAAS;EACT,mBAAmB;EACnB,eAAe;AACjB;;AAEA;EACE,eAAe;EACf,iBAAiB;EACjB,0BAA0B;AAC5B;;AAEA;;EAEE,iBAAiB;EACjB,8BAA8B;EAC9B,qCAAqC;EACrC,4BAA4B;EAC5B,0BAA0B;EAC1B,kBAAkB;EAClB,aAAa;AACf;;AAEA;;EAEE,2BAA2B;AAC7B;;AAEA;EACE,aAAa;EACb,QAAQ;EACR,mBAAmB;EACnB,eAAe;AACjB;;AAEA;EACE,iBAAiB;EACjB,8BAA8B;EAC9B,qCAAqC;EACrC,4BAA4B;EAC5B,0BAA0B;EAC1B,kBAAkB;EAClB,aAAa;EACb,YAAY;AACd;;AAEA;EACE,2BAA2B;AAC7B;;AAEA;EACE,iBAAiB;EACjB,yBAAyB;EACzB,YAAY;EACZ,YAAY;EACZ,4BAA4B;EAC5B,eAAe;EACf,kBAAkB;EAClB,6BAA6B;AAC/B;;AAEA;EACE,+BAA+B;AACjC;;AAEA;EACE,WAAW;EACX,eAAe;EACf,YAAY;EACZ,8BAA8B;EAC9B,4BAA4B;EAC5B,kBAAkB;EAClB,0BAA0B;AAC5B;;AAEA;EACE,kBAAkB;EAClB,qBAAqB;EACrB,WAAW;EACX,YAAY;AACd;;AAEA;EACE,UAAU;EACV,QAAQ;EACR,SAAS;AACX;;AAEA;EACE,kBAAkB;EAClB,eAAe;EACf,MAAM,EAAE,OAAO,EAAE,QAAQ,EAAE,SAAS;EACpC,8BAA8B;EAC9B,mBAAmB;EACnB,6BAA6B;EAC7B,qCAAqC;AACvC;;AAEA;EACE,WAAW;EACX,kBAAkB;EAClB,YAAY;EACZ,WAAW;EACX,SAAS;EACT,WAAW;EACX,iCAAiC;EACjC,kBAAkB;EAClB,6BAA6B;AAC/B;;AAEA;EACE,yBAAyB;EACzB,2BAA2B;AAC7B;;AAEA;EACE,2BAA2B;EAC3B,iBAAiB;AACnB;;AAEA;EACE,kBAAkB;EAClB,4BAA4B;EAC5B,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;EAClB,yBAAyB;EACzB,YAAY;EACZ,YAAY;EACZ,4BAA4B;EAC5B,eAAe;EACf,eAAe;EACf,gBAAgB;EAChB,6BAA6B;EAC7B,sBAAsB;AACxB;;AAEA;EACE,+BAA+B;AACjC;;AAEA,8BAA8B;AAC9B;EACE,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,YAAY;EACZ,eAAe;EACf,4BAA4B;AAC9B;;AAEA,0BAA0B;AAC1B;EACE,UAAU;AACZ;;AAEA;EACE,6BAA6B;AAC/B;;AAEA;EACE,+BAA+B;EAC/B,kBAAkB;AACpB;;AAEA;EACE,6BAA6B;AAC/B","sourcesContent":["/* ===== CSS Variables ===== */\r\n:root {\r\n  --bg-primary: #1a1a2e;\r\n  --bg-secondary: #16213e;\r\n  --bg-tertiary: #0f3460;\r\n  --accent: #e94560;\r\n  --accent-hover: #ff6b81;\r\n  --text-primary: #eee;\r\n  --text-secondary: #a0a0b0;\r\n  --text-muted: #6c6c80;\r\n  --border-color: #2a2a4a;\r\n  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);\r\n  --radius: 8px;\r\n  --transition: all 0.2s ease;\r\n}\r\n\r\n/* ===== Global Styles ===== */\r\n* {\r\n  margin: 0;\r\n  padding: 0;\r\n  box-sizing: border-box;\r\n}\r\n\r\nbody {\r\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,\r\n    'Helvetica Neue', Arial, sans-serif;\r\n  background: var(--bg-primary);\r\n  color: var(--text-primary);\r\n  overflow: hidden;\r\n  height: 100vh;\r\n}\r\n\r\n#root {\r\n  height: 100vh;\r\n}\r\n\r\n/* ===== App Layout ===== */\r\n.app-container {\r\n  display: flex;\r\n  height: 100vh;\r\n}\r\n\r\n/* ===== Sidebar ===== */\r\n.sidebar {\r\n  width: 200px;\r\n  background: var(--bg-secondary);\r\n  border-right: 1px solid var(--border-color);\r\n  display: flex;\r\n  flex-direction: column;\r\n  flex-shrink: 0;\r\n}\r\n\r\n.sidebar-logo {\r\n  padding: 20px;\r\n  text-align: center;\r\n  border-bottom: 1px solid var(--border-color);\r\n}\r\n\r\n.logo-icon {\r\n  font-size: 2rem;\r\n  display: block;\r\n  margin-bottom: 4px;\r\n}\r\n\r\n.logo-text {\r\n  font-size: 1.2rem;\r\n  font-weight: 700;\r\n  color: var(--accent);\r\n  letter-spacing: 2px;\r\n}\r\n\r\n.sidebar-nav {\r\n  list-style: none;\r\n  padding: 10px 0;\r\n  flex: 1;\r\n}\r\n\r\n.nav-button {\r\n  width: 100%;\r\n  padding: 12px 20px;\r\n  background: none;\r\n  border: none;\r\n  color: var(--text-secondary);\r\n  cursor: pointer;\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n  font-size: 14px;\r\n  transition: var(--transition);\r\n  border-left: 3px solid transparent;\r\n}\r\n\r\n.nav-button:hover {\r\n  background: rgba(233, 69, 96, 0.1);\r\n  color: var(--text-primary);\r\n}\r\n\r\n.nav-button.active {\r\n  background: rgba(233, 69, 96, 0.15);\r\n  color: var(--accent);\r\n  border-left-color: var(--accent);\r\n}\r\n\r\n.nav-icon {\r\n  font-size: 1.2rem;\r\n}\r\n\r\n.nav-label {\r\n  font-size: 0.95rem;\r\n}\r\n\r\n/* ===== Main Content ===== */\r\n.main-content {\r\n  flex: 1;\r\n  display: flex;\r\n  flex-direction: column;\r\n  overflow: hidden;\r\n}\r\n\r\n.app-header {\r\n  padding: 15px 25px;\r\n  background: var(--bg-secondary);\r\n  border-bottom: 1px solid var(--border-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: flex-start;\r\n  flex-shrink: 0;\r\n}\r\n\r\n.app-header h1 {\r\n  font-size: 1.1rem;\r\n  color: var(--accent);\r\n  font-weight: 600;\r\n}\r\n\r\n.status-badge {\r\n  font-size: 0.8rem;\r\n  color: var(--text-secondary);\r\n  background: var(--bg-tertiary);\r\n  padding: 4px 12px;\r\n  border-radius: 12px;\r\n}\r\n\r\n.view-container {\r\n  flex: 1;\r\n  overflow-y: auto;\r\n  padding: 20px;\r\n}\r\n\r\n/* ===== Chat View ===== */\r\n.chat-view {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.chat-messages {\r\n  flex: 1;\r\n  overflow-y: auto;\r\n  padding-bottom: 15px;\r\n}\r\n\r\n.message {\r\n  display: flex;\r\n  gap: 12px;\r\n  margin-bottom: 16px;\r\n  animation: fadeIn 0.3s ease;\r\n}\r\n\r\n@keyframes fadeIn {\r\n  from { opacity: 0; transform: translateY(8px); }\r\n  to { opacity: 1; transform: translateY(0); }\r\n}\r\n\r\n.message.user {\r\n  flex-direction: row-reverse;\r\n}\r\n\r\n.message-avatar {\r\n  font-size: 1.5rem;\r\n  width: 36px;\r\n  height: 36px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  background: var(--bg-tertiary);\r\n  border-radius: 50%;\r\n  flex-shrink: 0;\r\n}\r\n\r\n.message-content {\r\n  max-width: 70%;\r\n  padding: 10px 14px;\r\n  border-radius: 12px;\r\n  font-size: 0.9rem;\r\n  line-height: 1.5;\r\n}\r\n\r\n.message.assistant .message-content {\r\n  background: var(--bg-tertiary);\r\n  border-bottom-left-radius: 4px;\r\n}\r\n\r\n.message.user .message-content {\r\n  background: var(--accent);\r\n  border-bottom-right-radius: 4px;\r\n}\r\n\r\n/* Typing Indicator */\r\n.typing-indicator {\r\n  display: flex;\r\n  gap: 4px;\r\n  padding: 4px 0;\r\n}\r\n\r\n.typing-indicator span {\r\n  width: 8px;\r\n  height: 8px;\r\n  background: var(--text-secondary);\r\n  border-radius: 50%;\r\n  animation: bounce 1.4s ease-in-out infinite;\r\n}\r\n\r\n.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }\r\n.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }\r\n\r\n@keyframes bounce {\r\n  0%, 60%, 100% { transform: translateY(0); }\r\n  30% { transform: translateY(-6px); }\r\n}\r\n\r\n/* Chat Input */\r\n.chat-input-area {\r\n  display: flex;\r\n  gap: 10px;\r\n  padding-top: 15px;\r\n  border-top: 1px solid var(--border-color);\r\n}\r\n\r\n.chat-input {\r\n  flex: 1;\r\n  padding: 10px 14px;\r\n  background: var(--bg-secondary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.9rem;\r\n  resize: none;\r\n  outline: none;\r\n  transition: var(--transition);\r\n  font-family: inherit;\r\n}\r\n\r\n.chat-input:focus {\r\n  border-color: var(--accent);\r\n}\r\n\r\n.send-button {\r\n  padding: 10px 24px;\r\n  background: var(--accent);\r\n  color: white;\r\n  border: none;\r\n  border-radius: var(--radius);\r\n  cursor: pointer;\r\n  font-size: 0.9rem;\r\n  font-weight: 600;\r\n  transition: var(--transition);\r\n  align-self: flex-end;\r\n}\r\n\r\n.send-button:hover:not(:disabled) {\r\n  background: var(--accent-hover);\r\n}\r\n\r\n.send-button:disabled {\r\n  opacity: 0.5;\r\n  cursor: not-allowed;\r\n}\r\n\r\n/* ===== Command Panel ===== */\r\n.command-panel {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 24px;\r\n}\r\n\r\n.command-category {\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.category-title {\r\n  font-size: 0.9rem;\r\n  color: var(--accent);\r\n  margin-bottom: 12px;\r\n  text-transform: uppercase;\r\n  letter-spacing: 1px;\r\n}\r\n\r\n.command-grid {\r\n  display: grid;\r\n  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));\r\n  gap: 8px;\r\n}\r\n\r\n.command-button {\r\n  padding: 10px 12px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  cursor: pointer;\r\n  font-size: 0.8rem;\r\n  transition: var(--transition);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  gap: 6px;\r\n}\r\n\r\n.command-button:hover:not(:disabled) {\r\n  background: var(--accent);\r\n  border-color: var(--accent);\r\n  transform: translateY(-1px);\r\n}\r\n\r\n.command-button:disabled {\r\n  opacity: 0.6;\r\n  cursor: not-allowed;\r\n}\r\n\r\n.command-button.executing {\r\n  border-color: var(--accent);\r\n  animation: pulse 1.5s ease infinite;\r\n}\r\n\r\n@keyframes pulse {\r\n  0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }\r\n  50% { box-shadow: 0 0 0 6px rgba(233, 69, 96, 0); }\r\n}\r\n\r\n.spinner {\r\n  width: 12px;\r\n  height: 12px;\r\n  border: 2px solid var(--text-secondary);\r\n  border-top-color: var(--accent);\r\n  border-radius: 50%;\r\n  animation: spin 0.6s linear infinite;\r\n}\r\n\r\n@keyframes spin {\r\n  to { transform: rotate(360deg); }\r\n}\r\n\r\n/* ===== Voice Control ===== */\r\n.voice-control {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 20px;\r\n  align-items: center;\r\n}\r\n\r\n.voice-status-card {\r\n  text-align: center;\r\n  padding: 30px;\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  border: 1px solid var(--border-color);\r\n  width: 100%;\r\n  max-width: 400px;\r\n}\r\n\r\n.voice-indicator {\r\n  margin-bottom: 20px;\r\n}\r\n\r\n.mic-icon {\r\n  font-size: 3rem;\r\n  display: block;\r\n  margin-bottom: 10px;\r\n}\r\n\r\n.voice-indicator h2 {\r\n  font-size: 1.3rem;\r\n  font-weight: 600;\r\n}\r\n\r\n.voice-indicator.active .mic-icon {\r\n  animation: pulse 1.5s ease infinite;\r\n}\r\n\r\n.voice-toggle-button {\r\n  padding: 12px 32px;\r\n  border: 2px solid var(--accent);\r\n  background: transparent;\r\n  color: var(--accent);\r\n  border-radius: 24px;\r\n  cursor: pointer;\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  transition: var(--transition);\r\n}\r\n\r\n.voice-toggle-button:hover {\r\n  background: var(--accent);\r\n  color: white;\r\n}\r\n\r\n.voice-toggle-button.active {\r\n  background: var(--accent);\r\n  color: white;\r\n}\r\n\r\n.voice-hint {\r\n  margin-top: 12px;\r\n  font-size: 0.85rem;\r\n  color: var(--text-secondary);\r\n}\r\n\r\n.voice-transcript-area {\r\n  width: 100%;\r\n  max-width: 400px;\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.transcript-item {\r\n  margin-bottom: 10px;\r\n}\r\n\r\n.transcript-label {\r\n  font-size: 0.8rem;\r\n  color: var(--accent);\r\n  font-weight: 600;\r\n}\r\n\r\n.transcript-item p {\r\n  font-size: 0.9rem;\r\n  margin-top: 4px;\r\n  line-height: 1.4;\r\n}\r\n\r\n.voice-info {\r\n  width: 100%;\r\n  max-width: 400px;\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.voice-info h3 {\r\n  font-size: 0.9rem;\r\n  color: var(--accent);\r\n  margin-bottom: 10px;\r\n}\r\n\r\n.voice-info ul {\r\n  list-style: none;\r\n  padding: 0;\r\n}\r\n\r\n.voice-info li {\r\n  padding: 4px 0;\r\n  font-size: 0.85rem;\r\n  color: var(--text-secondary);\r\n  border-bottom: 1px solid var(--border-color);\r\n}\r\n\r\n.voice-info li:last-child {\r\n  border-bottom: none;\r\n}\r\n\r\n/* ===== Settings View ===== */\r\n.settings-view {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 20px;\r\n  max-width: 600px;\r\n}\r\n\r\n.settings-section {\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.settings-section h3 {\r\n  font-size: 0.9rem;\r\n  color: var(--accent);\r\n  margin-bottom: 14px;\r\n  text-transform: uppercase;\r\n  letter-spacing: 1px;\r\n}\r\n\r\n.setting-row {\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n  margin-bottom: 12px;\r\n  flex-wrap: wrap;\r\n}\r\n\r\n.setting-row label {\r\n  min-width: 80px;\r\n  font-size: 0.9rem;\r\n  color: var(--text-primary);\r\n}\r\n\r\n.setting-row select,\r\n.setting-row input[type=\"text\"] {\r\n  padding: 8px 12px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.85rem;\r\n  outline: none;\r\n}\r\n\r\n.setting-row select:focus,\r\n.setting-row input[type=\"text\"]:focus {\r\n  border-color: var(--accent);\r\n}\r\n\r\n.memory-input-group {\r\n  display: flex;\r\n  gap: 8px;\r\n  align-items: center;\r\n  flex-wrap: wrap;\r\n}\r\n\r\n.memory-input-group input {\r\n  padding: 8px 12px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.85rem;\r\n  outline: none;\r\n  width: 150px;\r\n}\r\n\r\n.memory-input-group input:focus {\r\n  border-color: var(--accent);\r\n}\r\n\r\n.memory-input-group button {\r\n  padding: 8px 16px;\r\n  background: var(--accent);\r\n  color: white;\r\n  border: none;\r\n  border-radius: var(--radius);\r\n  cursor: pointer;\r\n  font-size: 0.85rem;\r\n  transition: var(--transition);\r\n}\r\n\r\n.memory-input-group button:hover {\r\n  background: var(--accent-hover);\r\n}\r\n\r\n.recall-result {\r\n  width: 100%;\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  background: var(--bg-tertiary);\r\n  border-radius: var(--radius);\r\n  font-size: 0.85rem;\r\n  color: var(--text-primary);\r\n}\r\n\r\n.toggle-switch {\r\n  position: relative;\r\n  display: inline-block;\r\n  width: 44px;\r\n  height: 24px;\r\n}\r\n\r\n.toggle-switch input {\r\n  opacity: 0;\r\n  width: 0;\r\n  height: 0;\r\n}\r\n\r\n.toggle-slider {\r\n  position: absolute;\r\n  cursor: pointer;\r\n  top: 0; left: 0; right: 0; bottom: 0;\r\n  background: var(--bg-tertiary);\r\n  border-radius: 24px;\r\n  transition: var(--transition);\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.toggle-slider::before {\r\n  content: '';\r\n  position: absolute;\r\n  height: 18px;\r\n  width: 18px;\r\n  left: 2px;\r\n  bottom: 2px;\r\n  background: var(--text-secondary);\r\n  border-radius: 50%;\r\n  transition: var(--transition);\r\n}\r\n\r\n.toggle-switch input:checked + .toggle-slider {\r\n  background: var(--accent);\r\n  border-color: var(--accent);\r\n}\r\n\r\n.toggle-switch input:checked + .toggle-slider::before {\r\n  transform: translateX(20px);\r\n  background: white;\r\n}\r\n\r\n.about-info p {\r\n  font-size: 0.85rem;\r\n  color: var(--text-secondary);\r\n  margin-bottom: 4px;\r\n}\r\n\r\n.save-settings-button {\r\n  padding: 12px 32px;\r\n  background: var(--accent);\r\n  color: white;\r\n  border: none;\r\n  border-radius: var(--radius);\r\n  cursor: pointer;\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  transition: var(--transition);\r\n  align-self: flex-start;\r\n}\r\n\r\n.save-settings-button:hover {\r\n  background: var(--accent-hover);\r\n}\r\n\r\n/* ===== Loading State ===== */\r\n.loading-state {\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  height: 100%;\r\n  font-size: 1rem;\r\n  color: var(--text-secondary);\r\n}\r\n\r\n/* ===== Scrollbar ===== */\r\n::-webkit-scrollbar {\r\n  width: 6px;\r\n}\r\n\r\n::-webkit-scrollbar-track {\r\n  background: var(--bg-primary);\r\n}\r\n\r\n::-webkit-scrollbar-thumb {\r\n  background: var(--border-color);\r\n  border-radius: 3px;\r\n}\r\n\r\n::-webkit-scrollbar-thumb:hover {\r\n  background: var(--text-muted);\r\n}\r\n"],"sourceRoot":""}]);
+
+/* ===== Sidebar Bottom ===== */
+.sidebar-bottom {
+  padding: 10px 0;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+.sidebar-bottom .nav-button {
+  width: 100%;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+}
+
+.sidebar-bottom .nav-button:hover {
+  background: rgba(233, 69, 96, 0.1);
+  color: var(--text-primary);
+}
+
+/* ===== Settings Modal Overlay ===== */
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Settings Modal Panel ===== */
+.settings-modal-panel {
+  position: relative;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  z-index: 10;
+}
+
+.settings-modal-close:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ===== Settings Panel ===== */
+.settings-panel {
+  padding: 30px;
+}
+
+.settings-header {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-title {
+  font-size: 1.5rem;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.settings-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ===== Settings Section ===== */
+.settings-section {
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-section:last-of-type {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  font-size: 1.2rem;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.setting-row label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  min-width: 140px;
+}
+
+.setting-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  width: 100%;
+}
+
+/* ===== Theme Toggle ===== */
+.theme-toggle-group {
+  display: flex;
+  gap: 12px;
+}
+
+.theme-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 120px;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+}
+
+.theme-toggle.active {
+  border-color: var(--accent);
+  background: rgba(233, 69, 96, 0.15);
+  color: var(--text-primary);
+}
+
+.theme-preview {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+}
+
+.dark-preview {
+  background: linear-gradient(135deg, #1a1a2e 50%, #e94560 50%);
+}
+
+.light-preview {
+  background: linear-gradient(135deg, #f5f7fa 50%, #3b82f6 50%);
+}
+
+.theme-toggle span {
+  font-weight: 600;
+}
+
+.theme-toggle small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ===== Slider Input ===== */
+.slider-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 150px;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.font-size-control,
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.font-size-value,
+.volume-value {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  min-width: 40px;
+  text-align: center;
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+/* ===== Wake Word Input ===== */
+.wake-word-input input {
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  width: 200px;
+  transition: var(--transition);
+}
+
+.wake-word-input input:focus {
+  border-color: var(--accent);
+}
+
+/* ===== Data Actions ===== */
+.data-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.data-action-button {
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+}
+
+.data-action-button:hover {
+  border-color: var(--accent);
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.data-action-button.danger {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.data-action-button.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #dc2626;
+}
+
+/* ===== Privacy Info ===== */
+.privacy-info {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.privacy-info h4 {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.privacy-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.privacy-info li {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  padding-left: 16px;
+  position: relative;
+}
+
+.privacy-info li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+/* ===== Confirmation Dialog ===== */
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-dialog-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+.confirm-dialog-title {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.confirm-dialog-message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirm-dialog-cancel {
+  padding: 10px 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.confirm-dialog-cancel:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.confirm-dialog-confirm {
+  padding: 10px 20px;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.confirm-dialog-confirm:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.confirm-dialog-confirm.danger {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.confirm-dialog-confirm.danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+`, "",{"version":3,"sources":["webpack://./src/renderer/styles/app.css"],"names":[],"mappings":"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","sourcesContent":["/* ===== CSS Variables ===== */\r\n:root {\r\n  --bg-primary: #1a1a2e;\r\n  --bg-secondary: #16213e;\r\n  --bg-tertiary: #0f3460;\r\n  --accent: #e94560;\r\n  --accent-hover: #ff6b81;\r\n  --text-primary: #eee;\r\n  --text-secondary: #a0a0b0;\r\n  --text-muted: #6c6c80;\r\n  --border-color: #2a2a4a;\r\n  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);\r\n  --radius: 8px;\r\n  --transition: all 0.2s ease;\r\n  --font-size-base: 14px;\r\n}\r\n\r\n/* ===== Light Theme ===== */\r\n:root[data-theme=\"light\"] {\r\n  --bg-primary: #f5f7fa;\r\n  --bg-secondary: #ffffff;\r\n  --bg-tertiary: #e8eef5;\r\n  --accent: #3b82f6;\r\n  --accent-hover: #2563eb;\r\n  --text-primary: #1e293b;\r\n  --text-secondary: #64748b;\r\n  --text-muted: #94a3b8;\r\n  --border-color: #e2e8f0;\r\n  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\r\n}\r\n\r\n/* ===== Global Styles ===== */\r\n* {\r\n  margin: 0;\r\n  padding: 0;\r\n  box-sizing: border-box;\r\n}\r\n\r\nbody {\r\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,\r\n    'Helvetica Neue', Arial, sans-serif;\r\n  background: var(--bg-primary);\r\n  color: var(--text-primary);\r\n  overflow: hidden;\r\n  height: 100vh;\r\n}\r\n\r\n#root {\r\n  height: 100vh;\r\n}\r\n\r\n/* ===== App Layout ===== */\r\n.app-container {\r\n  display: flex;\r\n  height: 100vh;\r\n}\r\n\r\n/* ===== Sidebar ===== */\r\n.sidebar {\r\n  width: 200px;\r\n  background: var(--bg-secondary);\r\n  border-right: 1px solid var(--border-color);\r\n  display: flex;\r\n  flex-direction: column;\r\n  flex-shrink: 0;\r\n}\r\n\r\n.sidebar-logo {\r\n  padding: 20px;\r\n  text-align: center;\r\n  border-bottom: 1px solid var(--border-color);\r\n}\r\n\r\n.logo-icon {\r\n  font-size: 2rem;\r\n  display: block;\r\n  margin-bottom: 4px;\r\n}\r\n\r\n.logo-text {\r\n  font-size: 1.2rem;\r\n  font-weight: 700;\r\n  color: var(--accent);\r\n  letter-spacing: 2px;\r\n}\r\n\r\n.sidebar-nav {\r\n  list-style: none;\r\n  padding: 10px 0;\r\n  flex: 1;\r\n}\r\n\r\n.nav-button {\r\n  width: 100%;\r\n  padding: 12px 20px;\r\n  background: none;\r\n  border: none;\r\n  color: var(--text-secondary);\r\n  cursor: pointer;\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n  font-size: 14px;\r\n  transition: var(--transition);\r\n  border-left: 3px solid transparent;\r\n}\r\n\r\n.nav-button:hover {\r\n  background: rgba(233, 69, 96, 0.1);\r\n  color: var(--text-primary);\r\n}\r\n\r\n.nav-button.active {\r\n  background: rgba(233, 69, 96, 0.15);\r\n  color: var(--accent);\r\n  border-left-color: var(--accent);\r\n}\r\n\r\n.nav-icon {\r\n  font-size: 1.2rem;\r\n}\r\n\r\n.nav-label {\r\n  font-size: 0.95rem;\r\n}\r\n\r\n/* ===== Main Content ===== */\r\n.main-content {\r\n  flex: 1;\r\n  display: flex;\r\n  flex-direction: column;\r\n  overflow: hidden;\r\n}\r\n\r\n.app-header {\r\n  padding: 15px 25px;\r\n  background: var(--bg-secondary);\r\n  border-bottom: 1px solid var(--border-color);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: flex-start;\r\n  flex-shrink: 0;\r\n}\r\n\r\n.app-header h1 {\r\n  font-size: 1.1rem;\r\n  color: var(--accent);\r\n  font-weight: 600;\r\n}\r\n\r\n.status-badge {\r\n  font-size: 0.8rem;\r\n  color: var(--text-secondary);\r\n  background: var(--bg-tertiary);\r\n  padding: 4px 12px;\r\n  border-radius: 12px;\r\n}\r\n\r\n.view-container {\r\n  flex: 1;\r\n  overflow-y: auto;\r\n  padding: 20px;\r\n}\r\n\r\n/* ===== Chat View ===== */\r\n.chat-view {\r\n  display: flex;\r\n  flex-direction: column;\r\n  height: 100%;\r\n}\r\n\r\n.chat-messages {\r\n  flex: 1;\r\n  overflow-y: auto;\r\n  padding-bottom: 15px;\r\n}\r\n\r\n.message {\r\n  display: flex;\r\n  gap: 12px;\r\n  margin-bottom: 16px;\r\n  animation: fadeIn 0.3s ease;\r\n}\r\n\r\n@keyframes fadeIn {\r\n  from { opacity: 0; transform: translateY(8px); }\r\n  to { opacity: 1; transform: translateY(0); }\r\n}\r\n\r\n.message.user {\r\n  flex-direction: row-reverse;\r\n}\r\n\r\n.message-avatar {\r\n  font-size: 1.5rem;\r\n  width: 36px;\r\n  height: 36px;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  background: var(--bg-tertiary);\r\n  border-radius: 50%;\r\n  flex-shrink: 0;\r\n}\r\n\r\n.message-content {\r\n  max-width: 70%;\r\n  padding: 10px 14px;\r\n  border-radius: 12px;\r\n  font-size: 0.9rem;\r\n  line-height: 1.5;\r\n}\r\n\r\n.message.assistant .message-content {\r\n  background: var(--bg-tertiary);\r\n  border-bottom-left-radius: 4px;\r\n}\r\n\r\n.message.user .message-content {\r\n  background: var(--accent);\r\n  border-bottom-right-radius: 4px;\r\n}\r\n\r\n/* Typing Indicator */\r\n.typing-indicator {\r\n  display: flex;\r\n  gap: 4px;\r\n  padding: 4px 0;\r\n}\r\n\r\n.typing-indicator span {\r\n  width: 8px;\r\n  height: 8px;\r\n  background: var(--text-secondary);\r\n  border-radius: 50%;\r\n  animation: bounce 1.4s ease-in-out infinite;\r\n}\r\n\r\n.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }\r\n.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }\r\n\r\n@keyframes bounce {\r\n  0%, 60%, 100% { transform: translateY(0); }\r\n  30% { transform: translateY(-6px); }\r\n}\r\n\r\n/* Chat Input */\r\n.chat-input-area {\r\n  display: flex;\r\n  gap: 10px;\r\n  padding-top: 15px;\r\n  border-top: 1px solid var(--border-color);\r\n}\r\n\r\n.chat-input {\r\n  flex: 1;\r\n  padding: 10px 14px;\r\n  background: var(--bg-secondary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.9rem;\r\n  resize: none;\r\n  outline: none;\r\n  transition: var(--transition);\r\n  font-family: inherit;\r\n}\r\n\r\n.chat-input:focus {\r\n  border-color: var(--accent);\r\n}\r\n\r\n.send-button {\r\n  padding: 10px 24px;\r\n  background: var(--accent);\r\n  color: white;\r\n  border: none;\r\n  border-radius: var(--radius);\r\n  cursor: pointer;\r\n  font-size: 0.9rem;\r\n  font-weight: 600;\r\n  transition: var(--transition);\r\n  align-self: flex-end;\r\n}\r\n\r\n.send-button:hover:not(:disabled) {\r\n  background: var(--accent-hover);\r\n}\r\n\r\n.send-button:disabled {\r\n  opacity: 0.5;\r\n  cursor: not-allowed;\r\n}\r\n\r\n/* ===== Command Panel ===== */\r\n.command-panel {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 24px;\r\n}\r\n\r\n.command-category {\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.category-title {\r\n  font-size: 0.9rem;\r\n  color: var(--accent);\r\n  margin-bottom: 12px;\r\n  text-transform: uppercase;\r\n  letter-spacing: 1px;\r\n}\r\n\r\n.command-grid {\r\n  display: grid;\r\n  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));\r\n  gap: 8px;\r\n}\r\n\r\n.command-button {\r\n  padding: 10px 12px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  cursor: pointer;\r\n  font-size: 0.8rem;\r\n  transition: var(--transition);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  gap: 6px;\r\n}\r\n\r\n.command-button:hover:not(:disabled) {\r\n  background: var(--accent);\r\n  border-color: var(--accent);\r\n  transform: translateY(-1px);\r\n}\r\n\r\n.command-button:disabled {\r\n  opacity: 0.6;\r\n  cursor: not-allowed;\r\n}\r\n\r\n.command-button.executing {\r\n  border-color: var(--accent);\r\n  animation: pulse 1.5s ease infinite;\r\n}\r\n\r\n@keyframes pulse {\r\n  0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }\r\n  50% { box-shadow: 0 0 0 6px rgba(233, 69, 96, 0); }\r\n}\r\n\r\n.spinner {\r\n  width: 12px;\r\n  height: 12px;\r\n  border: 2px solid var(--text-secondary);\r\n  border-top-color: var(--accent);\r\n  border-radius: 50%;\r\n  animation: spin 0.6s linear infinite;\r\n}\r\n\r\n@keyframes spin {\r\n  to { transform: rotate(360deg); }\r\n}\r\n\r\n/* ===== Voice Control ===== */\r\n.voice-control {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 20px;\r\n  align-items: center;\r\n}\r\n\r\n.voice-status-card {\r\n  text-align: center;\r\n  padding: 30px;\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  border: 1px solid var(--border-color);\r\n  width: 100%;\r\n  max-width: 400px;\r\n}\r\n\r\n.voice-indicator {\r\n  margin-bottom: 20px;\r\n}\r\n\r\n.mic-icon {\r\n  font-size: 3rem;\r\n  display: block;\r\n  margin-bottom: 10px;\r\n}\r\n\r\n.voice-indicator h2 {\r\n  font-size: 1.3rem;\r\n  font-weight: 600;\r\n}\r\n\r\n.voice-indicator.active .mic-icon {\r\n  animation: pulse 1.5s ease infinite;\r\n}\r\n\r\n.voice-toggle-button {\r\n  padding: 12px 32px;\r\n  border: 2px solid var(--accent);\r\n  background: transparent;\r\n  color: var(--accent);\r\n  border-radius: 24px;\r\n  cursor: pointer;\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  transition: var(--transition);\r\n}\r\n\r\n.voice-toggle-button:hover {\r\n  background: var(--accent);\r\n  color: white;\r\n}\r\n\r\n.voice-toggle-button.active {\r\n  background: var(--accent);\r\n  color: white;\r\n}\r\n\r\n.voice-hint {\r\n  margin-top: 12px;\r\n  font-size: 0.85rem;\r\n  color: var(--text-secondary);\r\n}\r\n\r\n.voice-transcript-area {\r\n  width: 100%;\r\n  max-width: 400px;\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.transcript-item {\r\n  margin-bottom: 10px;\r\n}\r\n\r\n.transcript-label {\r\n  font-size: 0.8rem;\r\n  color: var(--accent);\r\n  font-weight: 600;\r\n}\r\n\r\n.transcript-item p {\r\n  font-size: 0.9rem;\r\n  margin-top: 4px;\r\n  line-height: 1.4;\r\n}\r\n\r\n.voice-info {\r\n  width: 100%;\r\n  max-width: 400px;\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.voice-info h3 {\r\n  font-size: 0.9rem;\r\n  color: var(--accent);\r\n  margin-bottom: 10px;\r\n}\r\n\r\n.voice-info ul {\r\n  list-style: none;\r\n  padding: 0;\r\n}\r\n\r\n.voice-info li {\r\n  padding: 4px 0;\r\n  font-size: 0.85rem;\r\n  color: var(--text-secondary);\r\n  border-bottom: 1px solid var(--border-color);\r\n}\r\n\r\n.voice-info li:last-child {\r\n  border-bottom: none;\r\n}\r\n\r\n/* ===== Settings View ===== */\r\n.settings-view {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 20px;\r\n  max-width: 600px;\r\n}\r\n\r\n.settings-section {\r\n  background: var(--bg-secondary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.settings-section h3 {\r\n  font-size: 0.9rem;\r\n  color: var(--accent);\r\n  margin-bottom: 14px;\r\n  text-transform: uppercase;\r\n  letter-spacing: 1px;\r\n}\r\n\r\n.setting-row {\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n  margin-bottom: 12px;\r\n  flex-wrap: wrap;\r\n}\r\n\r\n.setting-row label {\r\n  min-width: 80px;\r\n  font-size: 0.9rem;\r\n  color: var(--text-primary);\r\n}\r\n\r\n.setting-row select,\r\n.setting-row input[type=\"text\"] {\r\n  padding: 8px 12px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.85rem;\r\n  outline: none;\r\n}\r\n\r\n.setting-row select:focus,\r\n.setting-row input[type=\"text\"]:focus {\r\n  border-color: var(--accent);\r\n}\r\n\r\n.memory-input-group {\r\n  display: flex;\r\n  gap: 8px;\r\n  align-items: center;\r\n  flex-wrap: wrap;\r\n}\r\n\r\n.memory-input-group input {\r\n  padding: 8px 12px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.85rem;\r\n  outline: none;\r\n  width: 150px;\r\n}\r\n\r\n.memory-input-group input:focus {\r\n  border-color: var(--accent);\r\n}\r\n\r\n.memory-input-group button {\r\n  padding: 8px 16px;\r\n  background: var(--accent);\r\n  color: white;\r\n  border: none;\r\n  border-radius: var(--radius);\r\n  cursor: pointer;\r\n  font-size: 0.85rem;\r\n  transition: var(--transition);\r\n}\r\n\r\n.memory-input-group button:hover {\r\n  background: var(--accent-hover);\r\n}\r\n\r\n.recall-result {\r\n  width: 100%;\r\n  margin-top: 8px;\r\n  padding: 8px;\r\n  background: var(--bg-tertiary);\r\n  border-radius: var(--radius);\r\n  font-size: 0.85rem;\r\n  color: var(--text-primary);\r\n}\r\n\r\n.toggle-switch {\r\n  position: relative;\r\n  display: inline-block;\r\n  width: 44px;\r\n  height: 24px;\r\n}\r\n\r\n.toggle-switch input {\r\n  opacity: 0;\r\n  width: 0;\r\n  height: 0;\r\n}\r\n\r\n.toggle-slider {\r\n  position: absolute;\r\n  cursor: pointer;\r\n  top: 0; left: 0; right: 0; bottom: 0;\r\n  background: var(--bg-tertiary);\r\n  border-radius: 24px;\r\n  transition: var(--transition);\r\n  border: 1px solid var(--border-color);\r\n}\r\n\r\n.toggle-slider::before {\r\n  content: '';\r\n  position: absolute;\r\n  height: 18px;\r\n  width: 18px;\r\n  left: 2px;\r\n  bottom: 2px;\r\n  background: var(--text-secondary);\r\n  border-radius: 50%;\r\n  transition: var(--transition);\r\n}\r\n\r\n.toggle-switch input:checked + .toggle-slider {\r\n  background: var(--accent);\r\n  border-color: var(--accent);\r\n}\r\n\r\n.toggle-switch input:checked + .toggle-slider::before {\r\n  transform: translateX(20px);\r\n  background: white;\r\n}\r\n\r\n.about-info p {\r\n  font-size: 0.85rem;\r\n  color: var(--text-secondary);\r\n  margin-bottom: 4px;\r\n}\r\n\r\n.save-settings-button {\r\n  padding: 12px 32px;\r\n  background: var(--accent);\r\n  color: white;\r\n  border: none;\r\n  border-radius: var(--radius);\r\n  cursor: pointer;\r\n  font-size: 1rem;\r\n  font-weight: 600;\r\n  transition: var(--transition);\r\n  align-self: flex-start;\r\n}\r\n\r\n.save-settings-button:hover {\r\n  background: var(--accent-hover);\r\n}\r\n\r\n/* ===== Loading State ===== */\r\n.loading-state {\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  height: 100%;\r\n  font-size: 1rem;\r\n  color: var(--text-secondary);\r\n}\r\n\r\n/* ===== Scrollbar ===== */\r\n::-webkit-scrollbar {\r\n  width: 6px;\r\n}\r\n\r\n::-webkit-scrollbar-track {\r\n  background: var(--bg-primary);\r\n}\r\n\r\n::-webkit-scrollbar-thumb {\r\n  background: var(--border-color);\r\n  border-radius: 3px;\r\n}\r\n\r\n::-webkit-scrollbar-thumb:hover {\r\n  background: var(--text-muted);\r\n}\r\n\r\n/* ===== Sidebar Bottom ===== */\r\n.sidebar-bottom {\r\n  padding: 10px 0;\r\n  border-top: 1px solid var(--border-color);\r\n  margin-top: auto;\r\n}\r\n\r\n.sidebar-bottom .nav-button {\r\n  width: 100%;\r\n  padding: 12px 20px;\r\n  background: none;\r\n  border: none;\r\n  color: var(--text-secondary);\r\n  cursor: pointer;\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n  font-size: 14px;\r\n  transition: var(--transition);\r\n  border-left: 3px solid transparent;\r\n}\r\n\r\n.sidebar-bottom .nav-button:hover {\r\n  background: rgba(233, 69, 96, 0.1);\r\n  color: var(--text-primary);\r\n}\r\n\r\n/* ===== Settings Modal Overlay ===== */\r\n.settings-modal-overlay {\r\n  position: fixed;\r\n  top: 0;\r\n  left: 0;\r\n  width: 100vw;\r\n  height: 100vh;\r\n  background: rgba(0, 0, 0, 0.6);\r\n  backdrop-filter: blur(4px);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  z-index: 1000;\r\n  animation: fadeIn 0.2s ease;\r\n}\r\n\r\n@keyframes fadeIn {\r\n  from { opacity: 0; }\r\n  to { opacity: 1; }\r\n}\r\n\r\n/* ===== Settings Modal Panel ===== */\r\n.settings-modal-panel {\r\n  position: relative;\r\n  background: var(--bg-secondary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: 16px;\r\n  width: 90%;\r\n  max-width: 600px;\r\n  max-height: 85vh;\r\n  overflow-y: auto;\r\n  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);\r\n  animation: slideUp 0.3s ease;\r\n}\r\n\r\n@keyframes slideUp {\r\n  from { opacity: 0; transform: translateY(20px); }\r\n  to { opacity: 1; transform: translateY(0); }\r\n}\r\n\r\n.settings-modal-close {\r\n  position: absolute;\r\n  top: 16px;\r\n  right: 16px;\r\n  width: 36px;\r\n  height: 36px;\r\n  border-radius: 50%;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  color: var(--text-primary);\r\n  font-size: 16px;\r\n  cursor: pointer;\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  transition: var(--transition);\r\n  z-index: 10;\r\n}\r\n\r\n.settings-modal-close:hover {\r\n  background: var(--accent);\r\n  border-color: var(--accent);\r\n}\r\n\r\n/* ===== Settings Panel ===== */\r\n.settings-panel {\r\n  padding: 30px;\r\n}\r\n\r\n.settings-header {\r\n  margin-bottom: 30px;\r\n  padding-bottom: 20px;\r\n  border-bottom: 1px solid var(--border-color);\r\n}\r\n\r\n.settings-title {\r\n  font-size: 1.5rem;\r\n  color: var(--accent);\r\n  margin-bottom: 4px;\r\n}\r\n\r\n.settings-subtitle {\r\n  font-size: 0.85rem;\r\n  color: var(--text-muted);\r\n  font-style: italic;\r\n}\r\n\r\n/* ===== Settings Section ===== */\r\n.settings-section {\r\n  margin-bottom: 28px;\r\n  padding-bottom: 28px;\r\n  border-bottom: 1px solid var(--border-color);\r\n}\r\n\r\n.settings-section:last-of-type {\r\n  border-bottom: none;\r\n}\r\n\r\n.section-title {\r\n  font-size: 1rem;\r\n  color: var(--text-primary);\r\n  margin-bottom: 16px;\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 8px;\r\n}\r\n\r\n.section-icon {\r\n  font-size: 1.2rem;\r\n}\r\n\r\n.setting-row {\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: space-between;\r\n  margin-bottom: 12px;\r\n  flex-wrap: wrap;\r\n  gap: 12px;\r\n}\r\n\r\n.setting-row label {\r\n  font-size: 0.9rem;\r\n  color: var(--text-secondary);\r\n  min-width: 140px;\r\n}\r\n\r\n.setting-hint {\r\n  font-size: 0.8rem;\r\n  color: var(--text-muted);\r\n  margin-top: 8px;\r\n  width: 100%;\r\n}\r\n\r\n/* ===== Theme Toggle ===== */\r\n.theme-toggle-group {\r\n  display: flex;\r\n  gap: 12px;\r\n}\r\n\r\n.theme-toggle {\r\n  display: flex;\r\n  flex-direction: column;\r\n  align-items: center;\r\n  gap: 8px;\r\n  padding: 16px 24px;\r\n  background: var(--bg-tertiary);\r\n  border: 2px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-secondary);\r\n  cursor: pointer;\r\n  transition: var(--transition);\r\n  min-width: 120px;\r\n}\r\n\r\n.theme-toggle:hover {\r\n  border-color: var(--accent);\r\n}\r\n\r\n.theme-toggle.active {\r\n  border-color: var(--accent);\r\n  background: rgba(233, 69, 96, 0.15);\r\n  color: var(--text-primary);\r\n}\r\n\r\n.theme-preview {\r\n  width: 40px;\r\n  height: 40px;\r\n  border-radius: 8px;\r\n  border: 2px solid var(--border-color);\r\n}\r\n\r\n.dark-preview {\r\n  background: linear-gradient(135deg, #1a1a2e 50%, #e94560 50%);\r\n}\r\n\r\n.light-preview {\r\n  background: linear-gradient(135deg, #f5f7fa 50%, #3b82f6 50%);\r\n}\r\n\r\n.theme-toggle span {\r\n  font-weight: 600;\r\n}\r\n\r\n.theme-toggle small {\r\n  font-size: 0.75rem;\r\n  color: var(--text-muted);\r\n}\r\n\r\n/* ===== Slider Input ===== */\r\n.slider-input {\r\n  -webkit-appearance: none;\r\n  appearance: none;\r\n  width: 150px;\r\n  height: 6px;\r\n  background: var(--bg-tertiary);\r\n  border-radius: 3px;\r\n  outline: none;\r\n  cursor: pointer;\r\n}\r\n\r\n.slider-input::-webkit-slider-thumb {\r\n  -webkit-appearance: none;\r\n  appearance: none;\r\n  width: 18px;\r\n  height: 18px;\r\n  background: var(--accent);\r\n  border-radius: 50%;\r\n  cursor: pointer;\r\n  transition: var(--transition);\r\n}\r\n\r\n.slider-input::-webkit-slider-thumb:hover {\r\n  transform: scale(1.2);\r\n}\r\n\r\n.font-size-control,\r\n.volume-control {\r\n  display: flex;\r\n  align-items: center;\r\n  gap: 12px;\r\n}\r\n\r\n.font-size-value,\r\n.volume-value {\r\n  font-size: 0.85rem;\r\n  color: var(--text-primary);\r\n  min-width: 40px;\r\n  text-align: center;\r\n  padding: 4px 8px;\r\n  background: var(--bg-tertiary);\r\n  border-radius: 4px;\r\n}\r\n\r\n/* ===== Wake Word Input ===== */\r\n.wake-word-input input {\r\n  padding: 10px 14px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.9rem;\r\n  outline: none;\r\n  width: 200px;\r\n  transition: var(--transition);\r\n}\r\n\r\n.wake-word-input input:focus {\r\n  border-color: var(--accent);\r\n}\r\n\r\n/* ===== Data Actions ===== */\r\n.data-actions {\r\n  display: flex;\r\n  flex-direction: column;\r\n  gap: 10px;\r\n  margin-bottom: 20px;\r\n}\r\n\r\n.data-action-button {\r\n  padding: 12px 16px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-primary);\r\n  font-size: 0.9rem;\r\n  cursor: pointer;\r\n  text-align: left;\r\n  transition: var(--transition);\r\n}\r\n\r\n.data-action-button:hover {\r\n  border-color: var(--accent);\r\n  background: rgba(233, 69, 96, 0.1);\r\n}\r\n\r\n.data-action-button.danger {\r\n  border-color: #ef4444;\r\n  color: #ef4444;\r\n}\r\n\r\n.data-action-button.danger:hover {\r\n  background: rgba(239, 68, 68, 0.1);\r\n  border-color: #dc2626;\r\n}\r\n\r\n/* ===== Privacy Info ===== */\r\n.privacy-info {\r\n  background: var(--bg-tertiary);\r\n  border-radius: var(--radius);\r\n  padding: 16px;\r\n}\r\n\r\n.privacy-info h4 {\r\n  font-size: 0.95rem;\r\n  color: var(--text-primary);\r\n  margin-bottom: 12px;\r\n}\r\n\r\n.privacy-info ul {\r\n  list-style: none;\r\n  padding: 0;\r\n}\r\n\r\n.privacy-info li {\r\n  font-size: 0.85rem;\r\n  color: var(--text-secondary);\r\n  margin-bottom: 8px;\r\n  padding-left: 16px;\r\n  position: relative;\r\n}\r\n\r\n.privacy-info li::before {\r\n  content: '•';\r\n  position: absolute;\r\n  left: 0;\r\n  color: var(--accent);\r\n}\r\n\r\n/* ===== Confirmation Dialog ===== */\r\n.confirm-dialog-overlay {\r\n  position: fixed;\r\n  top: 0;\r\n  left: 0;\r\n  width: 100vw;\r\n  height: 100vh;\r\n  background: rgba(0, 0, 0, 0.7);\r\n  backdrop-filter: blur(4px);\r\n  display: flex;\r\n  align-items: center;\r\n  justify-content: center;\r\n  z-index: 2000;\r\n  animation: fadeIn 0.2s ease;\r\n}\r\n\r\n.confirm-dialog-panel {\r\n  background: var(--bg-secondary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: 12px;\r\n  padding: 24px;\r\n  max-width: 400px;\r\n  width: 90%;\r\n  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);\r\n  animation: slideUp 0.3s ease;\r\n}\r\n\r\n.confirm-dialog-title {\r\n  font-size: 1.1rem;\r\n  color: var(--text-primary);\r\n  margin-bottom: 12px;\r\n}\r\n\r\n.confirm-dialog-message {\r\n  font-size: 0.9rem;\r\n  color: var(--text-secondary);\r\n  margin-bottom: 20px;\r\n  line-height: 1.5;\r\n}\r\n\r\n.confirm-dialog-actions {\r\n  display: flex;\r\n  gap: 12px;\r\n  justify-content: flex-end;\r\n}\r\n\r\n.confirm-dialog-cancel {\r\n  padding: 10px 20px;\r\n  background: var(--bg-tertiary);\r\n  border: 1px solid var(--border-color);\r\n  border-radius: var(--radius);\r\n  color: var(--text-secondary);\r\n  font-size: 0.9rem;\r\n  cursor: pointer;\r\n  transition: var(--transition);\r\n}\r\n\r\n.confirm-dialog-cancel:hover {\r\n  border-color: var(--text-muted);\r\n  color: var(--text-primary);\r\n}\r\n\r\n.confirm-dialog-confirm {\r\n  padding: 10px 20px;\r\n  background: var(--accent);\r\n  border: 1px solid var(--accent);\r\n  border-radius: var(--radius);\r\n  color: white;\r\n  font-size: 0.9rem;\r\n  cursor: pointer;\r\n  transition: var(--transition);\r\n}\r\n\r\n.confirm-dialog-confirm:hover {\r\n  background: var(--accent-hover);\r\n  border-color: var(--accent-hover);\r\n}\r\n\r\n.confirm-dialog-confirm.danger {\r\n  background: #ef4444;\r\n  border-color: #ef4444;\r\n}\r\n\r\n.confirm-dialog-confirm.danger:hover {\r\n  background: #dc2626;\r\n  border-color: #dc2626;\r\n}\r\n\r\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -706,6 +1155,7 @@ body {
   \*****************************************************/
 (module) {
 
+"use strict";
 
 
 /*
@@ -800,6 +1250,7 @@ module.exports = function (cssWithMappingToString) {
   \************************************************************/
 (module) {
 
+"use strict";
 
 
 module.exports = function (item) {
@@ -825,6 +1276,7 @@ module.exports = function (item) {
   \*************************************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 /**
  * @license React
  * react-dom.development.js
@@ -30754,6 +31206,7 @@ if (
   \******************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 
 var m = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
@@ -30787,6 +31240,7 @@ if (false) // removed by dead control flow
   \*****************************************/
 (module, __unused_webpack_exports, __webpack_require__) {
 
+"use strict";
 
 
 function checkDCE() {
@@ -30825,6 +31279,7 @@ if (false) // removed by dead control flow
   \*****************************************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 /**
  * @license React
  * react-jsx-runtime.development.js
@@ -32168,6 +32623,7 @@ exports.jsxs = jsxs;
   \*****************************************************/
 (module, exports, __webpack_require__) {
 
+"use strict";
 /* module decorator */ module = __webpack_require__.nmd(module);
 /**
  * @license React
@@ -34919,6 +35375,7 @@ if (
   \*************************************/
 (module, __unused_webpack_exports, __webpack_require__) {
 
+"use strict";
 
 
 if (false) // removed by dead control flow
@@ -34935,6 +35392,7 @@ if (false) // removed by dead control flow
   \*******************************************/
 (module, __unused_webpack_exports, __webpack_require__) {
 
+"use strict";
 
 
 if (false) // removed by dead control flow
@@ -34951,6 +35409,7 @@ if (false) // removed by dead control flow
   \*************************************************************/
 (__unused_webpack_module, exports) {
 
+"use strict";
 /**
  * @license React
  * scheduler.development.js
@@ -35595,6 +36054,7 @@ if (
   \*****************************************/
 (module, __unused_webpack_exports, __webpack_require__) {
 
+"use strict";
 
 
 if (false) // removed by dead control flow
@@ -35611,6 +36071,7 @@ if (false) // removed by dead control flow
   \*************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
@@ -35665,6 +36126,7 @@ var update = _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js
   \****************************************************************************/
 (module) {
 
+"use strict";
 
 
 var stylesInDOM = [];
@@ -35758,6 +36220,7 @@ module.exports = function (list, options) {
   \********************************************************************/
 (module) {
 
+"use strict";
 
 
 var memo = {};
@@ -35801,6 +36264,7 @@ module.exports = insertBySelector;
   \**********************************************************************/
 (module) {
 
+"use strict";
 
 
 /* istanbul ignore next  */
@@ -35820,6 +36284,7 @@ module.exports = insertStyleElement;
   \**********************************************************************************/
 (module, __unused_webpack_exports, __webpack_require__) {
 
+"use strict";
 
 
 /* istanbul ignore next  */
@@ -35839,6 +36304,7 @@ module.exports = setAttributesWithoutAttributes;
   \***************************************************************/
 (module) {
 
+"use strict";
 
 
 /* istanbul ignore next  */
@@ -35909,6 +36375,7 @@ module.exports = domAPI;
   \*********************************************************************/
 (module) {
 
+"use strict";
 
 
 /* istanbul ignore next  */
@@ -35932,6 +36399,7 @@ module.exports = styleTagTransform;
   \******************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -35939,15 +36407,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const SettingsContext_1 = __webpack_require__(/*! ./context/SettingsContext */ "./src/renderer/context/SettingsContext.tsx");
 const Sidebar_1 = __importDefault(__webpack_require__(/*! ./components/Sidebar */ "./src/renderer/components/Sidebar.tsx"));
 const ChatView_1 = __importDefault(__webpack_require__(/*! ./components/ChatView */ "./src/renderer/components/ChatView.tsx"));
 const CommandPanel_1 = __importDefault(__webpack_require__(/*! ./components/CommandPanel */ "./src/renderer/components/CommandPanel.tsx"));
 const VoiceControl_1 = __importDefault(__webpack_require__(/*! ./components/VoiceControl */ "./src/renderer/components/VoiceControl.tsx"));
-const Settings_1 = __importDefault(__webpack_require__(/*! ./components/Settings */ "./src/renderer/components/Settings.tsx"));
+const SettingsModal_1 = __importDefault(__webpack_require__(/*! ./components/SettingsModal */ "./src/renderer/components/SettingsModal.tsx"));
 const SystemMonitor_1 = __importDefault(__webpack_require__(/*! ./components/SystemMonitor */ "./src/renderer/components/SystemMonitor.tsx"));
-const App = () => {
+const AppContent = () => {
     const [activeView, setActiveView] = (0, react_1.useState)('chat');
     const [statusMessage, setStatusMessage] = (0, react_1.useState)('Ready');
+    const [settingsOpen, setSettingsOpen] = (0, react_1.useState)(false);
     const renderView = () => {
         switch (activeView) {
             case 'chat':
@@ -35958,13 +36428,14 @@ const App = () => {
                 return (0, jsx_runtime_1.jsx)(SystemMonitor_1.default, { setStatus: setStatusMessage });
             case 'voice':
                 return (0, jsx_runtime_1.jsx)(VoiceControl_1.default, { setStatus: setStatusMessage });
-            case 'settings':
-                return (0, jsx_runtime_1.jsx)(Settings_1.default, { setStatus: setStatusMessage });
             default:
                 return (0, jsx_runtime_1.jsx)(ChatView_1.default, { setStatus: setStatusMessage });
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "app-container", children: [(0, jsx_runtime_1.jsx)(Sidebar_1.default, { activeView: activeView, onViewChange: setActiveView }), (0, jsx_runtime_1.jsxs)("main", { className: "main-content", children: [(0, jsx_runtime_1.jsx)("header", { className: "app-header", children: (0, jsx_runtime_1.jsx)("h1", { children: "ZYRA" }) }), (0, jsx_runtime_1.jsx)("div", { className: "view-container", children: renderView() })] })] }));
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "app-container", children: [(0, jsx_runtime_1.jsx)(Sidebar_1.default, { activeView: activeView, onViewChange: setActiveView, onSettingsClick: () => setSettingsOpen(true) }), (0, jsx_runtime_1.jsxs)("main", { className: "main-content", children: [(0, jsx_runtime_1.jsx)("header", { className: "app-header", children: (0, jsx_runtime_1.jsx)("h1", { children: "ZYRA" }) }), (0, jsx_runtime_1.jsx)("div", { className: "view-container", children: renderView() })] }), (0, jsx_runtime_1.jsx)(SettingsModal_1.default, { isOpen: settingsOpen, onClose: () => setSettingsOpen(false), setStatus: setStatusMessage })] }));
+};
+const App = () => {
+    return ((0, jsx_runtime_1.jsx)(SettingsContext_1.SettingsProvider, { children: (0, jsx_runtime_1.jsx)(AppContent, {}) }));
 };
 exports["default"] = App;
 
@@ -35977,19 +36448,45 @@ exports["default"] = App;
   \**********************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const CHAT_HISTORY_KEY = 'zyra_chat_history';
 const ChatView = ({ setStatus }) => {
-    const [messages, setMessages] = (0, react_1.useState)([
-        { role: 'assistant', content: 'Hello! I am ZYRA. How can I help you today?' },
-    ]);
+    const [messages, setMessages] = (0, react_1.useState)(() => {
+        // Load chat history from localStorage on mount
+        try {
+            const stored = localStorage.getItem(CHAT_HISTORY_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed;
+                }
+            }
+        }
+        catch (e) {
+            console.error('Failed to load chat history:', e);
+        }
+        return [
+            { role: 'assistant', content: 'Hello! I am ZYRA. How can I help you today?' },
+        ];
+    });
     const [input, setInput] = (0, react_1.useState)('');
     const [loading, setLoading] = (0, react_1.useState)(false);
     const messagesEndRef = (0, react_1.useRef)(null);
     (0, react_1.useEffect)(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+    // Save chat history to localStorage whenever messages change
+    (0, react_1.useEffect)(() => {
+        try {
+            localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+        }
+        catch (e) {
+            console.error('Failed to save chat history:', e);
+        }
     }, [messages]);
     const handleSend = async () => {
         if (!input.trim() || loading)
@@ -36034,6 +36531,7 @@ exports["default"] = ChatView;
   \**************************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
@@ -36098,49 +36596,37 @@ exports["default"] = CommandPanel;
 /*!**********************************************!*\
   !*** ./src/renderer/components/Settings.tsx ***!
   \**********************************************/
+() {
+
+throw new Error("Module parse failed: Unexpected token (61:0)\nFile was parsed as module type 'javascript/auto'.\nFile was processed with these loaders:\n * ./node_modules/ts-loader/index.js\nYou may need an additional loader to handle the result of these loaders.\n  60 | div >\n> 61 | ;\n     | ^\n  62 | ;");
+
+/***/ },
+
+/***/ "./src/renderer/components/SettingsModal.tsx"
+/*!***************************************************!*\
+  !*** ./src/renderer/components/SettingsModal.tsx ***!
+  \***************************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
-const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-const Settings = ({ setStatus }) => {
-    const [voiceEnabled, setVoiceEnabled] = (0, react_1.useState)(true);
-    const [modelName, setModelName] = (0, react_1.useState)('llama3');
-    const [recallKey, setRecallKey] = (0, react_1.useState)('');
-    const [recallValue, setRecallValue] = (0, react_1.useState)('');
-    const [rememberedKey, setRememberedKey] = (0, react_1.useState)('');
-    const [rememberedValue, setRememberedValue] = (0, react_1.useState)('');
-    const handleSave = () => {
-        setStatus('Settings saved');
-    };
-    const handleRemember = async () => {
-        if (!rememberedKey.trim() || !rememberedValue.trim())
-            return;
-        try {
-            await window.zyraAPI.remember(rememberedKey.trim(), rememberedValue.trim());
-            setStatus(`Remembered: ${rememberedKey}`);
-            setRememberedKey('');
-            setRememberedValue('');
-        }
-        catch (err) {
-            setStatus('Failed to save memory');
+const Settings_1 = __importDefault(__webpack_require__(/*! ./Settings */ "./src/renderer/components/Settings.tsx"));
+const SettingsModal = ({ isOpen, onClose, setStatus }) => {
+    if (!isOpen)
+        return null;
+    const handleOverlayClick = (e) => {
+        if (e.target === e.currentTarget) {
+            onClose();
         }
     };
-    const handleRecall = async () => {
-        if (!recallKey.trim())
-            return;
-        try {
-            const value = await window.zyraAPI.recall(recallKey.trim());
-            setRecallValue(value || 'Not found');
-        }
-        catch (err) {
-            setRecallValue('Error recalling');
-        }
-    };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "settings-view", children: [(0, jsx_runtime_1.jsxs)("div", { className: "settings-section", children: [(0, jsx_runtime_1.jsx)("h3", { children: "AI Model" }), (0, jsx_runtime_1.jsxs)("div", { className: "setting-row", children: [(0, jsx_runtime_1.jsx)("label", { children: "Model Name" }), (0, jsx_runtime_1.jsxs)("select", { value: modelName, onChange: (e) => setModelName(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "llama3", children: "Llama 3" }), (0, jsx_runtime_1.jsx)("option", { value: "llama2", children: "Llama 2" }), (0, jsx_runtime_1.jsx)("option", { value: "mistral", children: "Mistral" }), (0, jsx_runtime_1.jsx)("option", { value: "codellama", children: "Code Llama" })] })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "settings-section", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Voice Settings" }), (0, jsx_runtime_1.jsxs)("div", { className: "setting-row", children: [(0, jsx_runtime_1.jsx)("label", { children: "Enable Voice" }), (0, jsx_runtime_1.jsxs)("label", { className: "toggle-switch", children: [(0, jsx_runtime_1.jsx)("input", { type: "checkbox", checked: voiceEnabled, onChange: (e) => setVoiceEnabled(e.target.checked) }), (0, jsx_runtime_1.jsx)("span", { className: "toggle-slider" })] })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "settings-section", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Memory" }), (0, jsx_runtime_1.jsxs)("div", { className: "setting-row", children: [(0, jsx_runtime_1.jsx)("label", { children: "Remember" }), (0, jsx_runtime_1.jsxs)("div", { className: "memory-input-group", children: [(0, jsx_runtime_1.jsx)("input", { type: "text", placeholder: "Key", value: rememberedKey, onChange: (e) => setRememberedKey(e.target.value) }), (0, jsx_runtime_1.jsx)("input", { type: "text", placeholder: "Value", value: rememberedValue, onChange: (e) => setRememberedValue(e.target.value) }), (0, jsx_runtime_1.jsx)("button", { onClick: handleRemember, children: "Save" })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "setting-row", children: [(0, jsx_runtime_1.jsx)("label", { children: "Recall" }), (0, jsx_runtime_1.jsxs)("div", { className: "memory-input-group", children: [(0, jsx_runtime_1.jsx)("input", { type: "text", placeholder: "Key", value: recallKey, onChange: (e) => setRecallKey(e.target.value) }), (0, jsx_runtime_1.jsx)("button", { onClick: handleRecall, children: "Get" })] }), recallValue && ((0, jsx_runtime_1.jsxs)("p", { className: "recall-result", children: ["Result: ", recallValue] }))] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "settings-section", children: [(0, jsx_runtime_1.jsx)("h3", { children: "About" }), (0, jsx_runtime_1.jsxs)("div", { className: "about-info", children: [(0, jsx_runtime_1.jsxs)("p", { children: [(0, jsx_runtime_1.jsx)("strong", { children: "ZYRA" }), " - AI Desktop Assistant"] }), (0, jsx_runtime_1.jsx)("p", { children: "Version: 1.0.0" }), (0, jsx_runtime_1.jsx)("p", { children: "Built with Electron + React + TypeScript" })] })] }), (0, jsx_runtime_1.jsx)("button", { className: "save-settings-button", onClick: handleSave, children: "Save Settings" })] }));
+    return ((0, jsx_runtime_1.jsx)("div", { className: "settings-modal-overlay", onClick: handleOverlayClick, children: (0, jsx_runtime_1.jsxs)("div", { className: "settings-modal-panel", children: [(0, jsx_runtime_1.jsx)("button", { className: "settings-modal-close", onClick: onClose, title: "Close Settings", children: "\u2715" }), (0, jsx_runtime_1.jsx)(Settings_1.default, { setStatus: setStatus, onClose: onClose })] }) }));
 };
-exports["default"] = Settings;
+exports["default"] = SettingsModal;
 
 
 /***/ },
@@ -36151,6 +36637,7 @@ exports["default"] = Settings;
   \*********************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
@@ -36159,10 +36646,9 @@ const navItems = [
     { id: 'commands', label: 'Commands', icon: '⚡' },
     { id: 'monitor', label: 'Monitor', icon: '📊' },
     { id: 'voice', label: 'Voice', icon: '🎤' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
-const Sidebar = ({ activeView, onViewChange }) => {
-    return ((0, jsx_runtime_1.jsxs)("nav", { className: "sidebar", children: [(0, jsx_runtime_1.jsxs)("div", { className: "sidebar-logo", children: [(0, jsx_runtime_1.jsx)("span", { className: "logo-icon", children: "\uD83E\uDD16" }), (0, jsx_runtime_1.jsx)("span", { className: "logo-text", children: "ZYRA" })] }), (0, jsx_runtime_1.jsx)("ul", { className: "sidebar-nav", children: navItems.map((item) => ((0, jsx_runtime_1.jsx)("li", { children: (0, jsx_runtime_1.jsxs)("button", { className: `nav-button ${activeView === item.id ? 'active' : ''}`, onClick: () => onViewChange(item.id), title: item.label, children: [(0, jsx_runtime_1.jsx)("span", { className: "nav-icon", children: item.icon }), (0, jsx_runtime_1.jsx)("span", { className: "nav-label", children: item.label })] }) }, item.id))) })] }));
+const Sidebar = ({ activeView, onViewChange, onSettingsClick }) => {
+    return ((0, jsx_runtime_1.jsxs)("nav", { className: "sidebar", children: [(0, jsx_runtime_1.jsxs)("div", { className: "sidebar-logo", children: [(0, jsx_runtime_1.jsx)("span", { className: "logo-icon", children: "\uD83E\uDD16" }), (0, jsx_runtime_1.jsx)("span", { className: "logo-text", children: "ZYRA" })] }), (0, jsx_runtime_1.jsx)("ul", { className: "sidebar-nav", children: navItems.map((item) => ((0, jsx_runtime_1.jsx)("li", { children: (0, jsx_runtime_1.jsxs)("button", { className: `nav-button ${activeView === item.id ? 'active' : ''}`, onClick: () => onViewChange(item.id), title: item.label, children: [(0, jsx_runtime_1.jsx)("span", { className: "nav-icon", children: item.icon }), (0, jsx_runtime_1.jsx)("span", { className: "nav-label", children: item.label })] }) }, item.id))) }), (0, jsx_runtime_1.jsx)("div", { className: "sidebar-bottom", children: (0, jsx_runtime_1.jsxs)("button", { className: "nav-button settings-button", onClick: onSettingsClick, title: "Settings", children: [(0, jsx_runtime_1.jsx)("span", { className: "nav-icon", children: "\u2699\uFE0F" }), (0, jsx_runtime_1.jsx)("span", { className: "nav-label", children: "Settings" })] }) })] }));
 };
 exports["default"] = Sidebar;
 
@@ -36175,6 +36661,7 @@ exports["default"] = Sidebar;
   \***************************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
@@ -36254,6 +36741,7 @@ exports["default"] = SystemMonitor;
   \**************************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
@@ -36281,12 +36769,113 @@ exports["default"] = VoiceControl;
 
 /***/ },
 
+/***/ "./src/renderer/context/SettingsContext.tsx"
+/*!**************************************************!*\
+  !*** ./src/renderer/context/SettingsContext.tsx ***!
+  \**************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.useSettingsContext = exports.SettingsProvider = void 0;
+const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const useSettings_1 = __webpack_require__(/*! ../hooks/useSettings */ "./src/renderer/hooks/useSettings.ts");
+const SettingsContext = (0, react_1.createContext)(undefined);
+const SettingsProvider = ({ children }) => {
+    const { settings, updateSetting, resetSettings } = (0, useSettings_1.useSettings)();
+    return ((0, jsx_runtime_1.jsx)(SettingsContext.Provider, { value: { settings, updateSetting, resetSettings }, children: children }));
+};
+exports.SettingsProvider = SettingsProvider;
+const useSettingsContext = () => {
+    const context = (0, react_1.useContext)(SettingsContext);
+    if (!context) {
+        throw new Error('useSettingsContext must be used within a SettingsProvider');
+    }
+    return context;
+};
+exports.useSettingsContext = useSettingsContext;
+
+
+/***/ },
+
+/***/ "./src/renderer/hooks/useSettings.ts"
+/*!*******************************************!*\
+  !*** ./src/renderer/hooks/useSettings.ts ***!
+  \*******************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.useSettings = useSettings;
+const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const DEFAULT_SETTINGS = {
+    theme: 'dark',
+    fontSize: 14,
+    voiceEnabled: true,
+    voiceVolume: 70,
+    wakeWord: 'Hey ZYRA',
+    saveChatHistory: true,
+    chatSidebarOpen: false,
+};
+const STORAGE_KEY = 'zyra_settings';
+function loadSettings() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return { ...DEFAULT_SETTINGS, ...parsed };
+        }
+    }
+    catch (e) {
+        console.error('Failed to load settings:', e);
+    }
+    return DEFAULT_SETTINGS;
+}
+function saveSettings(settings) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+    catch (e) {
+        console.error('Failed to save settings:', e);
+    }
+}
+function useSettings() {
+    const [settings, setSettings] = (0, react_1.useState)(loadSettings);
+    (0, react_1.useEffect)(() => {
+        saveSettings(settings);
+    }, [settings]);
+    (0, react_1.useEffect)(() => {
+        // Apply theme
+        document.documentElement.setAttribute('data-theme', settings.theme);
+        // Apply font size
+        document.documentElement.style.setProperty('--font-size-base', `${settings.fontSize}px`);
+    }, [settings.theme, settings.fontSize]);
+    const updateSetting = (0, react_1.useCallback)((key, value) => {
+        setSettings((prev) => ({ ...prev, [key]: value }));
+    }, []);
+    const resetSettings = (0, react_1.useCallback)(() => {
+        setSettings(DEFAULT_SETTINGS);
+    }, []);
+    return {
+        settings,
+        updateSetting,
+        resetSettings,
+    };
+}
+
+
+/***/ },
+
 /***/ "./src/renderer/index.tsx"
 /*!********************************!*\
   !*** ./src/renderer/index.tsx ***!
   \********************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
+"use strict";
 
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
