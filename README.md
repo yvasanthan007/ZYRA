@@ -16,9 +16,10 @@ An intelligent voice-controlled AI assistant with a holographic dashboard, featu
 ### Prerequisites
 
 1. **Python 3.8+** installed
-2. **Ollama** installed and running with Llama3 model
+2. **Ollama** installed and running with the phi3 model (default — fast, ~5-10s replies on CPU)
    - Download from: https://ollama.ai
-   - Run: `ollama pull llama3`
+   - Run: `ollama pull phi3:latest`
+   - Prefer maximum quality over speed? `ollama pull llama3` and start ZYRA with `ZYRA_OLLAMA_MODEL=llama3:latest` (slower replies)
 3. **Microsoft Edge** browser (optional, for kiosk mode)
 4. **Microphone** for voice commands
 
@@ -230,7 +231,12 @@ Do not click or enter credentials — close the page and report the source of th
 
 ### AI not responding?
 - Make sure Ollama is running: `ollama serve`
-- Pull the Llama3 model: `ollama pull llama3`
+- Pull the default model: `ollama pull phi3:latest`
+- Chat replies slow (30s+)? The default model/params target 5-10s on CPU.
+  Tune via environment variables (see `brain.py`):
+  - `ZYRA_OLLAMA_MODEL` — model name (e.g. `phi3:latest`, `llama3:latest`)
+  - `ZYRA_OLLAMA_KEEP_ALIVE` — keep the model in memory (default `8760h`; cold model loads cost ~30s)
+  - `ZYRA_OLLAMA_NUM_PREDICT` — max reply tokens (default `40`)
 
 ### Dashboard not loading?
 - Check if backend server started (look for "Dashboard will be available at: http://127.0.0.1:8080")

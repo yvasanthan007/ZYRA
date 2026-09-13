@@ -1,6 +1,32 @@
+import os
+
 import ollama
 
 MAX_HISTORY = 10
+
+# ── Model selection (target chat response time: 5–10s) ──
+# Benchmarked on this machine with ZYRA's real prompts (warm model):
+#   llama3:latest  ~2 tok/s   → 20-40s replies (too slow for chat)
+#   phi3:latest    ~4.8 tok/s → ~5-10s typical replies  ← default
+#   tinyllama      ~10 tok/s  → fastest, but noticeably weaker answers
+# Override without touching code, e.g. for max quality:
+#   set ZYRA_OLLAMA_MODEL=llama3:latest   (slower replies)
+#   or pull another model:  ollama pull phi3:latest
+OLLAMA_MODEL = os.environ.get("ZYRA_OLLAMA_MODEL", "phi3:latest")
+
+# Keep the model loaded between chats — reloading from disk after idle
+# costs ~30s (that alone can make a reply feel "broken"). "8760h" (1 year)
+# keeps the model resident ~permanently (~3.9 GB RAM for phi3) so every
+# reply stays fast. NOTE: this Ollama build rejects keep_alive="-1"
+# (400: missing unit in duration) — always use a duration WITH a unit,
+# e.g. "24h" to free RAM daily, "5m" to mimic the default.
+OLLAMA_KEEP_ALIVE = os.environ.get("ZYRA_OLLAMA_KEEP_ALIVE", "8760h")
+
+# Cap on generated tokens: bounds the worst-case reply time on CPU.
+# phi3 at ~4.8 tok/s (100% CPU — no GPU on this machine) →
+# worst case ≈ 40/4.8 ≈ 8-10s, typical brief answers 3-7s.
+MAX_REPLY_TOKENS = int(os.environ.get("ZYRA_OLLAMA_NUM_PREDICT", "40"))
+
 
 # ── Backend Security Analysis Module: persona injection ──
 # Zyra's system instructions now declare that link inspection is a backend-only
@@ -37,6 +63,9 @@ conversation = [
         "content": (
             "You are Zyra, a helpful, intelligent, friendly AI assistant. "
             "Answer naturally and briefly unless the user asks for more details. "
+            "IMPORTANT: keep every answer very short — at most 2-3 short "
+            "sentences (or a few bullet points). Never write paragraphs or "
+            "essays unless the user explicitly asks for a detailed answer. "
             + SECURITY_ANALYST_PERSONA
             + " "
             + NMAP_PERSONA
@@ -63,12 +92,13 @@ def ask_ai(question):
 
     try:
         response = ollama.chat(
-            model="llama3",
+            model=OLLAMA_MODEL,
             messages=conversation,
             options={
                 "temperature": 0.4,
-                "num_predict": 100,
-            }
+                "num_predict": MAX_REPLY_TOKENS,
+            },
+            keep_alive=OLLAMA_KEEP_ALIVE,
         )
 
         answer = response["message"]["content"].strip()
@@ -84,6 +114,10 @@ def ask_ai(question):
 
     except ollama.ResponseError as e:
         print(f"Ollama error: {e}")
+        if "not found" in str(e).lower() or "404" in str(e):
+            return (f"The AI model '{OLLAMA_MODEL}' is not installed. "
+                    f"Run: ollama pull {OLLAMA_MODEL} "
+                    f"(or set ZYRA_OLLAMA_MODEL to an installed model).")
         return "Sorry, I'm having trouble connecting to the AI model. Please make sure Ollama is running."
     except Exception as e:
         print(f"AI error: {e}")
