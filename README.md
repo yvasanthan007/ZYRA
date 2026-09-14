@@ -95,6 +95,8 @@ python start_zyra.py
   - `ZYRA_OLLAMA_MODEL`, `ZYRA_OLLAMA_HOST`
   - `ZYRA_AI_TEMPERATURE`, `ZYRA_AI_NUM_PREDICT`
   - `ZYRA_AI_MAX_HISTORY`, `ZYRA_AI_TIMEOUT_SECONDS`
+  - `ZYRA_AI_RESPONSE_BUDGET_SECONDS` (hard reply deadline, default 10s),
+    `ZYRA_AI_KEEP_ALIVE` (keeps the model warm so replies stay fast)
   - `ZYRA_AI_MAX_RESPONSE_CHARS`, `ZYRA_AI_MEMORY`
 - ✅ **Retry with backoff** for transient Ollama failures + response hardening (ANSI/control chars stripped, capped length)
 

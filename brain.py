@@ -15,7 +15,12 @@ Improvements over the legacy brain:
     history depth, timeout and the response-length cap are all tunable:
       ZYRA_OLLAMA_MODEL, ZYRA_OLLAMA_HOST, ZYRA_AI_TEMPERATURE,
       ZYRA_AI_NUM_PREDICT, ZYRA_AI_MAX_HISTORY, ZYRA_AI_TIMEOUT_SECONDS,
-      ZYRA_AI_MAX_RESPONSE_CHARS, ZYRA_AI_MEMORY (0 disables memory injection)
+      ZYRA_AI_MAX_RESPONSE_CHARS, ZYRA_AI_MEMORY (0 disables memory injection),
+      ZYRA_AI_RESPONSE_BUDGET_SECONDS (hard reply deadline), ZYRA_AI_KEEP_ALIVE
+  • Guaranteed response window — every reply is forced to arrive within
+    AI_RESPONSE_BUDGET_SECONDS (default 10s): the HTTP timeout, the retry
+    policy and the timeout fallback are all deadline-aware, and the model is
+    kept warm (keep_alive) so no reply ever pays a cold-load penalty.
   • Long-term memory integration — remembered facts (memory.py) are injected
     into the system prompt every turn, so Zyra answers from what she knows about
     the user instead of hallucinating. Recall works directly from the store.
@@ -41,28 +46,49 @@ import ollama
 # Configuration (env-tunable)
 # ──────────────────────────────────────────────
 
-# Bound the AI call so a slow or hung Ollama backend can never stall the
-# dashboard chat forever (the ollama client's default timeout is much longer).
-AI_TIMEOUT_SECONDS = float(os.environ.get("ZYRA_AI_TIMEOUT_SECONDS", "120"))
+# Hard wall-clock budget for one AI reply. Every chat/voice answer is forced
+# to arrive within this window (default 10s → "response within 5-10 seconds").
+AI_RESPONSE_BUDGET_SECONDS = float(os.environ.get("ZYRA_AI_RESPONSE_BUDGET_SECONDS", "10"))
+
+# HTTP timeout for the Ollama call itself. Defaults to the reply budget; an
+# explicit ZYRA_AI_TIMEOUT_SECONDS is honoured but can never exceed the budget,
+# so a hung request can never push a reply past the guaranteed window.
+_timeout_env = os.environ.get("ZYRA_AI_TIMEOUT_SECONDS", "").strip()
+try:
+    _timeout_value = float(_timeout_env) if _timeout_env else AI_RESPONSE_BUDGET_SECONDS
+except ValueError:
+    _timeout_value = AI_RESPONSE_BUDGET_SECONDS
+AI_TIMEOUT_SECONDS = max(1.0, min(_timeout_value, AI_RESPONSE_BUDGET_SECONDS))
 MAX_HISTORY = int(os.environ.get("ZYRA_AI_MAX_HISTORY", "10"))
 AI_TEMPERATURE = float(os.environ.get("ZYRA_AI_TEMPERATURE", "0.4"))
-AI_NUM_PREDICT = int(os.environ.get("ZYRA_AI_NUM_PREDICT", "200"))
+# Fewer max tokens ⇒ generation finishes well inside the budget (200 tokens
+# can take 10-20s on CPU; 120 keeps answers brief and fast).
+AI_NUM_PREDICT = int(os.environ.get("ZYRA_AI_NUM_PREDICT", "120"))
 AI_MAX_RESPONSE_CHARS = int(os.environ.get("ZYRA_AI_MAX_RESPONSE_CHARS", "3000"))
 AI_MEMORY_ENABLED = os.environ.get("ZYRA_AI_MEMORY", "1").strip() not in ("0", "false", "False")
+# Keep the model resident in Ollama memory so replies never pay a cold-load
+# penalty (Ollama's default unload after ~5 idle minutes makes the next reply
+# slow; a warm model answers in seconds).
+AI_KEEP_ALIVE = os.environ.get("ZYRA_AI_KEEP_ALIVE", "30m").strip() or "30m"
 
 _MAX_ATTEMPTS = 2
-_RETRY_DELAY_SECONDS = 1.2
+_RETRY_DELAY_SECONDS = 0.5
+# The one-time model load at warm-up is allowed to take longer than a reply
+# budget — its whole purpose is to absorb that cost outside the user window.
+_WARMUP_TIMEOUT_SECONDS = 120.0
 
 # Ordered fallback preferences (used only when the configured model is absent).
+# Small, fast models come first: they keep every reply inside the 5-10s budget
+# on typical machines (a cold/warm 8B model cannot).
 _PREFERRED_MODELS = [
-    "llama3",
+    "phi3",
     "llama3.2",
-    "llama3.1",
+    "qwen2.5",
     "mistral",
     "gemma",
-    "phi3",
-    "qwen2.5",
     "tinyllama",
+    "llama3",
+    "llama3.1",
 ]
 
 try:
@@ -112,7 +138,8 @@ _conversation_lock = threading.RLock()
 def _base_system_prompt() -> str:
     return (
         "You are Zyra, a helpful, intelligent, friendly AI assistant. "
-        "Answer naturally and briefly unless the user asks for more details. "
+        "Reply in 1-3 short sentences and get straight to the point; only "
+        "write more when the user explicitly asks for detail. "
         + SECURITY_ANALYST_PERSONA
         + " "
         + NMAP_PERSONA
@@ -217,18 +244,22 @@ def _select_model() -> str:
     """Pick the model to use from this run.
 
     1. The configured ZYRA_OLLAMA_MODEL if it (or its base) is installed.
-    2. The first installed model from the preferred fallback list.
-    3. Any installed model.
-    4. The configured default, even if we cannot verify it right now.
+    2. With no explicit configuration, the first installed model from the
+       speed-ordered preferred list (keeps replies inside the time budget —
+       a cold/warm 8B model cannot finish within 5-10s on typical hardware).
+    3. The first installed model from the preferred fallback list.
+    4. Any installed model.
+    5. The configured default, even if we cannot verify it right now.
     """
-    requested = os.environ.get("ZYRA_OLLAMA_MODEL", "").strip() or "llama3"
+    requested = os.environ.get("ZYRA_OLLAMA_MODEL", "").strip()
     installed = available_models()
     if not installed:
-        return requested
-    requested_base = _basename(requested)
-    for name in installed:
-        if _basename(name) == requested_base:
-            return name
+        return requested or _PREFERRED_MODELS[0]
+    if requested:
+        requested_base = _basename(requested)
+        for name in installed:
+            if _basename(name) == requested_base:
+                return name
     for candidate in _PREFERRED_MODELS:
         for name in installed:
             if _basename(name) == candidate:
@@ -340,20 +371,25 @@ def _friendly_ollama_error(exc: BaseException) -> str:
 # ──────────────────────────────────────────────
 
 def _run_chat(messages: List[Dict[str, str]]) -> Any:
-    """Invoke Ollama, retrying transient failures with backoff.
+    """Invoke Ollama within the hard reply budget.
 
-    Raises the original final exception on persistent failure; ask_ai converts
-    it into a friendly message.
+    A deadline is enforced across attempts: the first call gets the whole
+    budget and the single retry only happens when enough of it is left, so
+    the total wall time never exceeds AI_RESPONSE_BUDGET_SECONDS. Raises the
+    original final exception on persistent failure; ask_ai converts it into
+    a friendly message.
     """
     sender = _get_client() or ollama
     chat_kwargs = {
         "model": _ACTIVE_MODEL,
         "messages": messages,
+        "keep_alive": AI_KEEP_ALIVE,
         "options": {
             "temperature": AI_TEMPERATURE,
             "num_predict": AI_NUM_PREDICT,
         },
     }
+    deadline = time.monotonic() + AI_RESPONSE_BUDGET_SECONDS
     last_exc: Optional[BaseException] = None
     for attempt in range(_MAX_ATTEMPTS):
         try:
@@ -363,17 +399,19 @@ def _run_chat(messages: List[Dict[str, str]]) -> Any:
             # 429/500/503 are transient (rate limit / model still loading);
             # 404 means the model is not pulled and will not fix itself.
             if attempt == 0 and status in (429, 500, 503):
-                time.sleep(_RETRY_DELAY_SECONDS)
-                continue
-            raise
+                last_exc = exc
+            else:
+                raise
         except Exception as exc:  # noqa: BLE001 - retry once on network noise
             last_exc = exc
-            if attempt == 0:
-                time.sleep(_RETRY_DELAY_SECONDS)
-                continue
-            raise
-    if last_exc is not None:
-        raise last_exc
+        # Never retry when the reply budget is already spent (a timeout means
+        # the whole window is gone — retrying would double the wait).
+        remaining = deadline - time.monotonic()
+        if attempt + 1 >= _MAX_ATTEMPTS or remaining < 1.0:
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError("chat failed")
+        time.sleep(min(_RETRY_DELAY_SECONDS, max(0.0, remaining - 0.5)))
     raise RuntimeError("chat failed")
 
 
@@ -399,6 +437,7 @@ def ask_ai(question) -> str:
         conversation.append({"role": "user", "content": question})
         _prune_locked()
 
+    started = time.monotonic()
     try:
         # Pass a snapshot so the in-flight Ollama request can never see the
         # shared thread-safe conversation mutate under it mid-generation.
@@ -409,21 +448,79 @@ def ask_ai(question) -> str:
             _prune_locked()
         return _friendly_ollama_error(exc)
     except Exception as exc:
-        print(f"brain: AI error: {exc}")
+        elapsed = time.monotonic() - started
+        print(f"brain: AI error after {elapsed:.1f}s: {exc}")
         with _conversation_lock:
             _prune_locked()
+        # A timeout means the reply budget was spent — answer fast and honestly
+        # instead of leaving the user staring at a typing indicator.
+        if isinstance(exc, TimeoutError) or "timed out" in str(exc).lower() or "timeout" in str(exc).lower():
+            return (
+                f"That took longer than my {AI_RESPONSE_BUDGET_SECONDS:.0f}-second "
+                "reply budget, so I stopped waiting. Please try again — "
+                "I'm usually much faster."
+            )
         return (
             "Sorry, something went wrong. Please make sure Ollama is running "
             "and try again."
         )
 
     answer = _extract_answer(response)
+    elapsed = time.monotonic() - started
+    print(f"brain: reply in {elapsed:.2f}s ({len(answer)} chars, model={get_model()})")
 
     with _conversation_lock:
         conversation.append({"role": "assistant", "content": answer})
         _prune_locked()
 
     return answer
+
+
+# ──────────────────────────────────────────────
+# Model warm-up (removes the cold-start penalty)
+# ──────────────────────────────────────────────
+
+def _warmup_client():
+    """A dedicated client with a generous timeout for the one-time model load.
+
+    The budgeted client would abort a cold model load after 10s; warm-up
+    exists precisely to pay that cost up front, off the user's clock.
+    """
+    host = os.environ.get("ZYRA_OLLAMA_HOST", "").strip() or None
+    client_kwargs: Dict[str, Any] = {"timeout": _WARMUP_TIMEOUT_SECONDS}
+    if host:
+        client_kwargs["host"] = host
+    try:
+        return ollama.Client(**client_kwargs)
+    except TypeError:  # pragma: no cover - ancient client without `timeout`
+        return None
+
+
+def warm_up_model() -> bool:
+    """Preload the active model into Ollama memory so the first real reply
+    is fast.
+
+    Best effort and never raises — safe to call from a background thread at
+    server startup. Returns True when the model is loaded and resident
+    (keep_alive keeps it that way between requests).
+    """
+    try:
+        sender = _warmup_client() or _get_client() or ollama
+        started = time.monotonic()
+        sender.generate(model=_ACTIVE_MODEL, prompt="", keep_alive=AI_KEEP_ALIVE)
+        print(
+            f"brain: model '{_ACTIVE_MODEL}' warmed up in "
+            f"{time.monotonic() - started:.1f}s (kept alive {AI_KEEP_ALIVE})"
+        )
+        return True
+    except Exception as exc:  # noqa: BLE001 - warm-up is optional
+        print(f"brain: warm-up skipped ({exc})")
+        return False
+
+
+def warm_up_async() -> None:
+    """Kick off warm_up_model() in a daemon thread (fire-and-forget)."""
+    threading.Thread(target=warm_up_model, name="zyra-model-warmup", daemon=True).start()
 
 
 __all__ = [
@@ -434,8 +531,11 @@ __all__ = [
     "get_model",
     "set_model",
     "conversation",
+    "warm_up_model",
+    "warm_up_async",
     "MAX_HISTORY",
     "AI_TIMEOUT_SECONDS",
+    "AI_RESPONSE_BUDGET_SECONDS",
 ]
 
 
