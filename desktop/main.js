@@ -84,7 +84,12 @@ if (!gotLock) {
       }
     );
 
-    createWindow();
+    // Evict any stale HTTP-cached dashboard so a UI update (e.g. the Settings
+    // panel) is never shadowed by the shell's persistent disk cache.
+    // Clears ONLY the HTTP cache — localStorage settings are untouched.
+    session.defaultSession.clearCache().then(() => {
+      createWindow();
+    });
   });
 
   app.on("window-all-closed", () => {

@@ -834,7 +834,9 @@ async def get_dashboard():
     index_path = os.path.join(DASHBOARD_DIR, "index.html")
     if not os.path.exists(index_path):
         raise HTTPException(status_code=404, detail="Dashboard not found")
-    return FileResponse(index_path)
+    # Always revalidate the dashboard HTML so UI updates (e.g. the Settings
+    # panel) are never shadowed by the browser's heuristic disk cache.
+    return FileResponse(index_path, headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/health")
