@@ -81,7 +81,7 @@ canvas {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 3px;
-  color: #19A9FF;
+  color: #FFFFFF;
 }
 .top-subtitle {
   font-size: 11px;
@@ -470,7 +470,7 @@ canvas {
 .msg.zyra .zyra-label {
   font-size: 10px;
   font-weight: 600;
-  color: #008CFF;
+  color: #FFFFFF;
   letter-spacing: 1px;
   margin-bottom: 4px;
 }
@@ -1298,6 +1298,563 @@ canvas {
   #bottom-controls { padding: 12px 16px 16px; }
   #chat-messages { max-height: 140px; }
 }
+/* ===== SETTINGS PANEL ===== */
+.zyra-settings-btn {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 35;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(8, 8, 20, 0.7);
+  border: 1px solid rgba(0, 140, 255, 0.35);
+  color: #19A9FF;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.zyra-settings-btn:hover {
+  background: rgba(0, 140, 255, 0.25);
+  border-color: rgba(0, 140, 255, 0.6);
+  color: #EAF8FF;
+  box-shadow: 0 0 16px rgba(0, 140, 255, 0.25);
+  transform: translateY(-1px);
+}
+.zyra-settings-btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+#settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 8, 20, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s;
+}
+#settings-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.settings-modal {
+  width: min(900px, 94vw);
+  max-width: 900px;
+  max-height: min(640px, 86vh);
+  background: rgba(8, 8, 20, 0.92);
+  border: 1px solid rgba(0, 140, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 140, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(12px) scale(0.97);
+  transition: transform 0.3s ease;
+}
+#settings-overlay.visible .settings-modal {
+  transform: translateY(0) scale(1);
+}
+
+.settings-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  background: rgba(0, 140, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 140, 255, 0.18);
+  flex-shrink: 0;
+}
+.settings-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.settings-modal-icon {
+  font-size: 18px;
+  color: #19A9FF;
+}
+.settings-modal-title-group h2 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #EAF8FF;
+  text-transform: uppercase;
+  margin: 0;
+}
+.settings-close-btn {
+  background: none;
+  border: none;
+  color: rgba(0, 140, 255, 0.7);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+.settings-close-btn:hover {
+  color: #008CFF;
+  background: rgba(0, 140, 255, 0.15);
+}
+
+.settings-modal-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.settings-nav {
+  width: 210px;
+  flex-shrink: 0;
+  padding: 14px 10px;
+  border-right: 1px solid rgba(0, 140, 255, 0.14);
+  background: rgba(2, 8, 20, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+.settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: rgba(128, 223, 255, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+.settings-nav-item:hover {
+  background: rgba(0, 140, 255, 0.12);
+  color: #80DFFF;
+}
+.settings-nav-item.active {
+  background: rgba(0, 140, 255, 0.18);
+  border-color: rgba(0, 140, 255, 0.35);
+  color: #EAF8FF;
+}
+.settings-nav-icon {
+  font-size: 15px;
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  min-width: 0;
+}
+.settings-pane {
+  display: none;
+}
+.settings-pane.active {
+  display: block;
+  animation: settingsFadeIn 0.25s ease;
+}
+@keyframes settingsFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-pane-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #19A9FF;
+  margin-bottom: 4px;
+}
+.settings-pane-desc {
+  font-size: 12px;
+  color: rgba(128, 223, 255, 0.6);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  background: rgba(2, 8, 20, 0.5);
+  border: 1px solid rgba(0, 140, 255, 0.14);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.setting-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.setting-row-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #80DFFF;
+}
+.setting-row-hint {
+  font-size: 11px;
+  color: rgba(128, 223, 255, 0.55);
+  line-height: 1.4;
+}
+
+.setting-toggle {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.setting-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.setting-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 8, 20, 0.8);
+  border: 1px solid rgba(0, 140, 255, 0.35);
+  border-radius: 24px;
+  transition: all 0.25s;
+  cursor: pointer;
+}
+.setting-toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: rgba(128, 223, 255, 0.7);
+  border-radius: 50%;
+  transition: transform 0.25s;
+}
+.setting-toggle input:checked + .setting-toggle-slider {
+  background: rgba(0, 140, 255, 0.55);
+  border-color: #008CFF;
+}
+.setting-toggle input:checked + .setting-toggle-slider::before {
+  transform: translateX(18px);
+  background: #EAF8FF;
+}
+
+.setting-select {
+  background: rgba(2, 8, 20, 0.7);
+  border: 1px solid rgba(0, 140, 255, 0.3);
+  border-radius: 8px;
+  color: #80DFFF;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.setting-select:focus {
+  border-color: rgba(0, 140, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 140, 255, 0.12);
+}
+.setting-select option {
+  background: #041225;
+  color: #80DFFF;
+}
+
+.setting-segmented {
+  display: inline-flex;
+  background: rgba(2, 8, 20, 0.7);
+  border: 1px solid rgba(0, 140, 255, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.setting-segmented button {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  color: rgba(128, 223, 255, 0.6);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.setting-segmented button:hover {
+  color: #80DFFF;
+}
+.setting-segmented button.active {
+  background: rgba(0, 140, 255, 0.4);
+  color: #EAF8FF;
+}
+
+.setting-btn {
+  background: rgba(0, 140, 255, 0.14);
+  border: 1px solid rgba(0, 140, 255, 0.4);
+  border-radius: 8px;
+  color: #19A9FF;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.setting-btn:hover {
+  background: rgba(0, 140, 255, 0.25);
+  border-color: rgba(0, 140, 255, 0.6);
+  color: #EAF8FF;
+  box-shadow: 0 0 12px rgba(0, 140, 255, 0.2);
+}
+.setting-btn.danger {
+  background: rgba(255, 68, 68, 0.12);
+  border-color: rgba(255, 68, 68, 0.4);
+  color: #ff8888;
+}
+.setting-btn.danger:hover {
+  background: rgba(255, 68, 68, 0.25);
+  border-color: rgba(255, 68, 68, 0.65);
+  color: #ffaaaa;
+}
+
+.setting-note {
+  font-size: 11px;
+  color: rgba(128, 223, 255, 0.55);
+  line-height: 1.6;
+  padding: 12px 14px;
+  background: rgba(0, 140, 255, 0.06);
+  border: 1px solid rgba(0, 140, 255, 0.12);
+  border-radius: 10px;
+}
+
+.settings-about-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.settings-about-logo .top-logo {
+  font-size: 22px;
+  animation: none;
+  opacity: 1;
+}
+.settings-about-logo .top-title {
+  font-size: 20px;
+  letter-spacing: 4px;
+}
+.settings-about-card {
+  background: rgba(2, 8, 20, 0.5);
+  border: 1px solid rgba(0, 140, 255, 0.14);
+  border-radius: 10px;
+  padding: 4px 14px;
+  margin-bottom: 12px;
+}
+.settings-about-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0, 140, 255, 0.1);
+}
+.settings-about-row:last-child {
+  border-bottom: none;
+}
+.settings-about-k {
+  font-size: 12px;
+  color: rgba(128, 223, 255, 0.65);
+  flex-shrink: 0;
+}
+.settings-about-v {
+  font-size: 12px;
+  color: #80DFFF;
+  font-family: 'Consolas', 'Courier New', monospace;
+  text-align: right;
+  word-break: break-word;
+}
+.settings-about-desc {
+  font-size: 12px;
+  color: rgba(128, 223, 255, 0.7);
+  line-height: 1.6;
+  padding: 2px 0 14px;
+}
+
+/* ===== THEME: LIGHT (white & light-blue shades only) ===== */
+html[data-theme="light"] #top-bar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.55) 70%, transparent 100%);
+}
+html[data-theme="light"] #bottom-controls {
+  background: linear-gradient(0deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.55) 70%, transparent 100%);
+}
+html[data-theme="light"] #chat-messages {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 140, 255, 0.25);
+}
+html[data-theme="light"] #chat-input {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 140, 255, 0.3);
+  color: #1E3A5F;
+}
+html[data-theme="light"] #chat-input::placeholder { color: #6FA6D9; }
+html[data-theme="light"] .msg.zyra {
+  background: rgba(0, 140, 255, 0.08);
+  border-color: rgba(0, 140, 255, 0.2);
+  color: #0A6FB4;
+}
+html[data-theme="light"] .msg.zyra .zyra-label { color: #008CFF; }
+html[data-theme="light"] .msg.user {
+  background: rgba(0, 140, 255, 0.1);
+  border-color: rgba(0, 140, 255, 0.22);
+  color: #0A6FB4;
+}
+html[data-theme="light"] .msg.system { color: #4A90C2; }
+html[data-theme="light"] .top-logo,
+html[data-theme="light"] .top-title {
+  color: #008CFF;
+  text-shadow: 0 0 10px rgba(0, 140, 255, 0.25);
+}
+html[data-theme="light"] .top-subtitle { color: rgba(0, 140, 255, 0.5); }
+html[data-theme="light"] .top-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 140, 255, 0.35);
+  color: #008CFF;
+}
+html[data-theme="light"] .top-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 140, 255, 0.6);
+  color: #005FAA;
+}
+html[data-theme="light"] #scan-toast {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 140, 255, 0.4);
+}
+html[data-theme="light"] #scan-toast-title { color: #008CFF; }
+html[data-theme="light"] #scan-toast-text { color: #1E3A5F; }
+html[data-theme="light"] #scan-toast-close { background: rgba(0, 140, 255, 0.1); }
+html[data-theme="light"] #scan-toast-close:hover { background: rgba(0, 140, 255, 0.2); color: #005FAA; }
+
+/* Settings surfaces in light mode */
+html[data-theme="light"] .zyra-settings-btn {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 140, 255, 0.4);
+  color: #008CFF;
+  box-shadow: 0 4px 14px rgba(0, 60, 120, 0.15);
+}
+html[data-theme="light"] .zyra-settings-btn:hover {
+  background: #FFFFFF;
+  border-color: rgba(0, 140, 255, 0.7);
+  color: #005FAA;
+}
+html[data-theme="light"] #settings-overlay { background: rgba(230, 241, 255, 0.6); }
+html[data-theme="light"] .settings-modal {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(0, 140, 255, 0.35);
+  box-shadow: 0 20px 60px rgba(0, 60, 120, 0.2), 0 0 40px rgba(0, 140, 255, 0.1);
+}
+html[data-theme="light"] .settings-modal-header {
+  background: #EAF3FF;
+  border-bottom-color: rgba(0, 140, 255, 0.2);
+}
+html[data-theme="light"] .settings-modal-title-group h2 { color: #0A3D6E; }
+html[data-theme="light"] .settings-modal-icon { color: #008CFF; }
+html[data-theme="light"] .settings-close-btn { color: #4A90C2; }
+html[data-theme="light"] .settings-close-btn:hover { color: #005FAA; background: rgba(0, 140, 255, 0.12); }
+html[data-theme="light"] .settings-nav { background: #F2F8FF; border-right-color: rgba(0, 140, 255, 0.18); }
+html[data-theme="light"] .settings-nav-item { color: #4A6E91; }
+html[data-theme="light"] .settings-nav-item:hover { background: rgba(0, 140, 255, 0.1); color: #0A6FB4; }
+html[data-theme="light"] .settings-nav-item.active {
+  background: rgba(0, 140, 255, 0.14);
+  border-color: rgba(0, 140, 255, 0.35);
+  color: #005FAA;
+}
+html[data-theme="light"] .settings-pane-title { color: #008CFF; }
+html[data-theme="light"] .settings-pane-desc { color: #4A6E91; }
+html[data-theme="light"] .setting-row {
+  background: #F7FBFF;
+  border-color: rgba(0, 140, 255, 0.18);
+}
+html[data-theme="light"] .setting-row-name { color: #1E3A5F; }
+html[data-theme="light"] .setting-row-hint { color: #4A6E91; }
+html[data-theme="light"] .setting-toggle-slider { background: #DCE9F8; border-color: rgba(0, 140, 255, 0.3); }
+html[data-theme="light"] .setting-toggle-slider::before { background: #FFFFFF; }
+html[data-theme="light"] .setting-toggle input:checked + .setting-toggle-slider { background: #008CFF; border-color: #008CFF; }
+html[data-theme="light"] .setting-toggle input:checked + .setting-toggle-slider::before { background: #FFFFFF; }
+html[data-theme="light"] .setting-select { background: #FFFFFF; border-color: rgba(0, 140, 255, 0.3); color: #1E3A5F; }
+html[data-theme="light"] .setting-select option { background: #FFFFFF; color: #1E3A5F; }
+html[data-theme="light"] .setting-segmented { background: #EAF3FF; border-color: rgba(0, 140, 255, 0.3); }
+html[data-theme="light"] .setting-segmented button { color: #4A6E91; }
+html[data-theme="light"] .setting-segmented button.active { background: #008CFF; color: #FFFFFF; }
+html[data-theme="light"] .setting-btn { color: #005FAA; }
+html[data-theme="light"] .setting-btn:hover { background: rgba(0, 140, 255, 0.15); color: #003A6B; }
+html[data-theme="light"] .setting-note { background: #F2F8FF; border-color: rgba(0, 140, 255, 0.16); color: #4A6E91; }
+html[data-theme="light"] .settings-about-row { border-bottom-color: rgba(0, 140, 255, 0.12); }
+html[data-theme="light"] .settings-about-card { background: #F7FBFF; border-color: rgba(0, 140, 255, 0.18); }
+html[data-theme="light"] .settings-about-k { color: #4A6E91; }
+html[data-theme="light"] .settings-about-v { color: #0A6FB4; }
+html[data-theme="light"] .settings-about-desc { color: #4A6E91; }
+
+/* ===== OPT-IN UX MODES ===== */
+html[data-compact="on"] #chat-messages { max-height: 120px; }
+html[data-compact="on"] #chat-container { max-width: 560px; }
+
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.001s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001s !important;
+}
+
+/* ===== SETTINGS RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .zyra-settings-btn { left: 14px; bottom: 14px; width: 42px; height: 42px; font-size: 18px; }
+  .settings-modal { width: 95vw; max-height: 90vh; }
+  .settings-modal-body { flex-direction: column; }
+  .settings-nav {
+    width: 100%;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 140, 255, 0.14);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 10px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .settings-nav-item {
+    width: auto;
+    padding: 8px 12px;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .settings-content { padding: 16px; }
+  .setting-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .setting-segmented { width: 100%; }
+  .setting-segmented button { flex: 1; }
+}
+@media (max-width: 480px) {
+  .settings-modal-header { padding: 12px 16px; }
+  .settings-content { padding: 12px; }
+  .settings-pane-title { font-size: 12px; }
+}
+
 </style>
 </head>
 <body>
@@ -1761,6 +2318,164 @@ canvas {
   </div>
 </div>
 
+<!-- Settings ⚙️ button (bottom-left) -->
+<button id="zyra-settings-btn" class="zyra-settings-btn" title="Open Settings" aria-label="Open Settings">⚙</button>
+
+<!-- Settings Panel -->
+<div id="settings-overlay" class="settings-overlay" aria-hidden="true">
+  <div id="settings-modal" class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <header class="settings-modal-header">
+      <div class="settings-modal-title-group">
+        <span class="settings-modal-icon" aria-hidden="true">⚙</span>
+        <h2 id="settings-title">Settings</h2>
+      </div>
+      <button type="button" id="settings-close" class="settings-close-btn" title="Close Settings" aria-label="Close Settings">&#10005;</button>
+    </header>
+
+    <div class="settings-modal-body">
+      <nav class="settings-nav" aria-label="Settings sections">
+        <button type="button" class="settings-nav-item active" data-settings-pane="general"><span class="settings-nav-icon" aria-hidden="true">⚙️</span>General</button>
+        <button type="button" class="settings-nav-item" data-settings-pane="appearance"><span class="settings-nav-icon" aria-hidden="true">🎨</span>Appearance</button>
+        <button type="button" class="settings-nav-item" data-settings-pane="notifications"><span class="settings-nav-icon" aria-hidden="true">🔔</span>Notifications</button>
+        <button type="button" class="settings-nav-item" data-settings-pane="privacy"><span class="settings-nav-icon" aria-hidden="true">🛡️</span>Privacy &amp; Security</button>
+        <button type="button" class="settings-nav-item" data-settings-pane="about"><span class="settings-nav-icon" aria-hidden="true">ℹ️</span>About</button>
+      </nav>
+
+      <div class="settings-content">
+        <section class="settings-pane active" data-settings-content="general">
+          <h3 class="settings-pane-title">General</h3>
+          <p class="settings-pane-desc">Behaviour preferences for your ZYRA workspace.</p>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Interface language</span>
+              <span class="setting-row-hint">Saved as a preference for future localization.</span>
+            </div>
+            <select id="setting-language" class="setting-select" aria-label="Interface language">
+              <option value="en" selected>English</option>
+              <option value="ta">தமிழ்</option>
+              <option value="hi">हिन्दी</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Compact chat view</span>
+              <span class="setting-row-hint">Reduce the height and width of the chat feed.</span>
+            </div>
+            <label class="setting-toggle">
+              <input type="checkbox" id="setting-compact">
+              <span class="setting-toggle-slider" aria-hidden="true"></span>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-pane" data-settings-content="appearance">
+          <h3 class="settings-pane-title">Appearance</h3>
+          <p class="settings-pane-desc">Personalise how ZYRA looks. Dark is the classic theme.</p>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Theme</span>
+              <span class="setting-row-hint">Light uses white &amp; light-blue shades only.</span>
+            </div>
+            <div class="setting-segmented" id="setting-theme-switch" role="group" aria-label="Theme">
+              <button type="button" data-theme-option="dark">Dark</button>
+              <button type="button" data-theme-option="light">Light</button>
+              <button type="button" data-theme-option="system">System</button>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Reduce motion</span>
+              <span class="setting-row-hint">Disable decorative animations and transitions.</span>
+            </div>
+            <label class="setting-toggle">
+              <input type="checkbox" id="setting-motion">
+              <span class="setting-toggle-slider" aria-hidden="true"></span>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-pane" data-settings-content="notifications">
+          <h3 class="settings-pane-title">Notifications</h3>
+          <p class="settings-pane-desc">Control which alerts ZYRA shows you.</p>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Scan complete notifications</span>
+              <span class="setting-row-hint">Center-top toast when a scan or analysis finishes.</span>
+            </div>
+            <label class="setting-toggle">
+              <input type="checkbox" id="setting-scan-toasts">
+              <span class="setting-toggle-slider" aria-hidden="true"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Browser notifications</span>
+              <span class="setting-row-hint">Native in-app notifications when a task completes.</span>
+            </div>
+            <label class="setting-toggle">
+              <input type="checkbox" id="setting-browser-notify">
+              <span class="setting-toggle-slider" aria-hidden="true"></span>
+            </label>
+          </div>
+        </section>
+
+        <section class="settings-pane" data-settings-content="privacy">
+          <h3 class="settings-pane-title">Privacy &amp; Security</h3>
+          <p class="settings-pane-desc">Conversations are processed locally through the ZYRA backend.</p>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Save chat history</span>
+              <span class="setting-row-hint">Keep the chat feed on this device across refreshes.</span>
+            </div>
+            <label class="setting-toggle">
+              <input type="checkbox" id="setting-chat-history">
+              <span class="setting-toggle-slider" aria-hidden="true"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <span class="setting-row-name">Clear chat history</span>
+              <span class="setting-row-hint">Remove all saved messages from this browser.</span>
+            </div>
+            <button type="button" id="setting-clear-chat" class="setting-btn danger">Clear Chat</button>
+          </div>
+
+          <div class="setting-note">🔒 ZYRA is account-free and fully local — no authentication is used, nothing is sent to third parties, and your sessions stay on this device unless you clear them.</div>
+        </section>
+
+        <section class="settings-pane" data-settings-content="about">
+          <h3 class="settings-pane-title">About</h3>
+          <p class="settings-pane-desc">ZYRA — Holographic Neural AI Core.</p>
+
+          <div class="settings-about-logo">
+            <span class="top-logo">◈</span>
+            <span class="top-title">ZYRA</span>
+            <span class="top-subtitle">// Neural Core</span>
+          </div>
+
+          <p class="settings-about-desc">Your AI desktop assistant with real network intelligence: Nmap scanning, URL security analysis, DNS lookup and live system monitoring — powered by a local Python backend with voice control.</p>
+
+          <div class="settings-about-card">
+            <div class="settings-about-row"><span class="settings-about-k">Version</span><span class="settings-about-v">1.0.0</span></div>
+            <div class="settings-about-row"><span class="settings-about-k">Core</span><span class="settings-about-v">ZYRA Neural Engine</span></div>
+            <div class="settings-about-row"><span class="settings-about-k">Stack</span><span class="settings-about-v">Python · FastAPI · WebSocket · Three.js</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <script>
 (function() {
@@ -2214,6 +2929,13 @@ canvas {
   let scanToastTimer = null;
 
   function showScanNotification(title, text) {
+    // Settings → Notifications gates (defaults preserve the existing behavior).
+    if (window.ZYRASettings) {
+      if (window.ZYRASettings.get('scanToasts') === false) return;
+      if (window.ZYRASettings.get('browserNotify') && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        try { new Notification(title || 'SCAN COMPLETE', { body: text || '' }); } catch (e) { /* ignore */ }
+      }
+    }
     const toast = document.getElementById('scan-toast');
     const titleEl = document.getElementById('scan-toast-title');
     const textEl = document.getElementById('scan-toast-text');
@@ -3983,6 +4705,201 @@ canvas {
     window.addEventListener('mouseup', function() {
       isDragging = false;
     });
+  })();
+
+  // ===== SETTINGS PANEL CONTROLLER =====
+  // Non-invasive: purely additive DOM + localStorage. Defaults match the
+  // existing behavior exactly (dark theme, toasts on, nothing persisted).
+  (function () {
+    var SETTINGS_KEY = 'zyra.settings.v1';
+    var CHAT_HISTORY_KEY = 'zyra.chatHistory.v1';
+
+    var defaults = {
+      theme: 'dark',
+      language: 'en',
+      compact: false,
+      reduceMotion: false,
+      scanToasts: true,
+      browserNotify: false,
+      chatHistory: false
+    };
+    var settings = {};
+    try {
+      var stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      for (var key in defaults) settings[key] = (stored[key] !== undefined) ? stored[key] : defaults[key];
+    } catch (err) {
+      for (var key2 in defaults) settings[key2] = defaults[key2];
+    }
+
+    // Tiny read-only accessor so showScanNotification() can honor preferences
+    // without changing its own logic.
+    window.ZYRASettings = {
+      get: function (k) { return settings[k]; }
+    };
+
+    function saveSettings() {
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (err) {}
+    }
+    function resolveTheme(theme) {
+      if (theme === 'system' && window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+      return theme;
+    }
+    function applyTheme() { document.documentElement.setAttribute('data-theme', resolveTheme(settings.theme)); }
+    function applyMotion() { document.documentElement.setAttribute('data-motion', settings.reduceMotion ? 'reduced' : 'full'); }
+    function applyCompact() { document.documentElement.setAttribute('data-compact', settings.compact ? 'on' : 'off'); }
+
+    var overlay = document.getElementById('settings-overlay');
+    var gearBtn = document.getElementById('zyra-settings-btn');
+    var closeBtn = document.getElementById('settings-close');
+    if (!overlay || !gearBtn) return;
+
+    function openSettings() {
+      overlay.classList.add('visible');
+      overlay.setAttribute('aria-hidden', 'false');
+      if (closeBtn) closeBtn.focus();
+    }
+    function closeSettings() {
+      overlay.classList.remove('visible');
+      overlay.setAttribute('aria-hidden', 'true');
+      gearBtn.focus();
+    }
+    gearBtn.addEventListener('click', openSettings);
+    if (closeBtn) closeBtn.addEventListener('click', closeSettings);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeSettings(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.classList.contains('visible')) closeSettings();
+    });
+
+    // Left-hand nav ↔ right-hand content panes
+    var navItems = document.querySelectorAll('.settings-nav-item');
+    var panes = document.querySelectorAll('.settings-pane');
+    Array.prototype.forEach.call(navItems, function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-settings-pane');
+        Array.prototype.forEach.call(navItems, function (b) { b.classList.toggle('active', b === btn); });
+        Array.prototype.forEach.call(panes, function (p) {
+          p.classList.toggle('active', p.getAttribute('data-settings-content') === key);
+        });
+      });
+    });
+
+    var languageEl = document.getElementById('setting-language');
+    var compactEl = document.getElementById('setting-compact');
+    var motionEl = document.getElementById('setting-motion');
+    var scanToastEl = document.getElementById('setting-scan-toasts');
+    var browserNotifyEl = document.getElementById('setting-browser-notify');
+    var chatHistoryEl = document.getElementById('setting-chat-history');
+    var clearChatBtn = document.getElementById('setting-clear-chat');
+    var themeSwitch = document.getElementById('setting-theme-switch');
+
+    function setSegmented(active) {
+      if (!themeSwitch) return;
+      var opts = themeSwitch.querySelectorAll('[data-theme-option]');
+      Array.prototype.forEach.call(opts, function (b) {
+        b.classList.toggle('active', b.getAttribute('data-theme-option') === active);
+      });
+    }
+
+    if (languageEl) {
+      languageEl.value = settings.language;
+      languageEl.addEventListener('change', function () { settings.language = languageEl.value; saveSettings(); });
+    }
+    if (compactEl) {
+      compactEl.checked = settings.compact;
+      compactEl.addEventListener('change', function () { settings.compact = compactEl.checked; saveSettings(); applyCompact(); });
+    }
+    if (motionEl) {
+      motionEl.checked = settings.reduceMotion;
+      motionEl.addEventListener('change', function () { settings.reduceMotion = motionEl.checked; saveSettings(); applyMotion(); });
+    }
+    if (scanToastEl) {
+      scanToastEl.checked = settings.scanToasts;
+      scanToastEl.addEventListener('change', function () { settings.scanToasts = scanToastEl.checked; saveSettings(); });
+    }
+    if (browserNotifyEl) {
+      browserNotifyEl.checked = settings.browserNotify;
+      browserNotifyEl.addEventListener('change', function () {
+        settings.browserNotify = browserNotifyEl.checked;
+        saveSettings();
+        if (settings.browserNotify && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+          Notification.requestPermission().then(function (perm) {
+            if (perm !== 'granted') { settings.browserNotify = false; browserNotifyEl.checked = false; saveSettings(); }
+          });
+        }
+      });
+    }
+    if (chatHistoryEl) {
+      chatHistoryEl.checked = settings.chatHistory;
+      chatHistoryEl.addEventListener('change', function () {
+        settings.chatHistory = chatHistoryEl.checked;
+        saveSettings();
+        if (!settings.chatHistory) {
+          try { localStorage.removeItem(CHAT_HISTORY_KEY); } catch (err) {}
+        } else if (chatMessages && chatMessages.childNodes.length) {
+          try { localStorage.setItem(CHAT_HISTORY_KEY, chatMessages.innerHTML); } catch (err) {}
+        }
+      });
+    }
+    if (clearChatBtn) {
+      clearChatBtn.addEventListener('click', function () {
+        if (chatMessages) chatMessages.innerHTML = '';
+        try { localStorage.removeItem(CHAT_HISTORY_KEY); } catch (err) {}
+        restoringHistory = true;
+        setTimeout(function () { restoringHistory = false; }, 400);
+        addMessage('Chat history cleared.', 'system');
+      });
+    }
+    if (themeSwitch) {
+      themeSwitch.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-theme-option]');
+        if (!btn) return;
+        settings.theme = btn.getAttribute('data-theme-option');
+        saveSettings();
+        applyTheme();
+        setSegmented(settings.theme);
+      });
+    }
+
+    // Keep "System" theme in sync with the OS
+    if (window.matchMedia) {
+      var mqLight = window.matchMedia('(prefers-color-scheme: light)');
+      function onSystemChange() { if (settings.theme === 'system') applyTheme(); }
+      if (mqLight.addEventListener) mqLight.addEventListener('change', onSystemChange);
+      else if (mqLight.addListener) mqLight.addListener(onSystemChange);
+    }
+
+    // Opt-in chat history persistence (MutationObserver, addMessage untouched)
+    var restoringHistory = false;
+    if (chatMessages && 'MutationObserver' in window) {
+      var persistTimer = null;
+      var observer = new MutationObserver(function () {
+        if (!settings.chatHistory || restoringHistory) return;
+        if (persistTimer) clearTimeout(persistTimer);
+        persistTimer = setTimeout(function () {
+          try { localStorage.setItem(CHAT_HISTORY_KEY, chatMessages.innerHTML); } catch (err) {}
+        }, 150);
+      });
+      observer.observe(chatMessages, { childList: true });
+    }
+
+    // Restore saved feed only when the user has opted in
+    if (settings.chatHistory && chatMessages) {
+      var saved = null;
+      try { saved = localStorage.getItem(CHAT_HISTORY_KEY); } catch (err) {}
+      if (saved) {
+        restoringHistory = true;
+        chatMessages.innerHTML = saved;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        restoringHistory = false;
+      }
+    }
+
+    applyTheme();
+    applyMotion();
+    applyCompact();
+    setSegmented(settings.theme);
   })();
 
   // Initial connection
