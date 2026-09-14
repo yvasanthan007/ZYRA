@@ -1444,7 +1444,20 @@ canvas {
 /* Light theme presentation matched to the supplied ZYRA reference: cool black
    surroundings with deep navy glass panels and electric blue controls. The
    Three.js canvas and neural-core animation are intentionally untouched. */
-body.zyra-light { background: #03070d !important; color: #f4f9ff; }
+body.zyra-light { background: #03070d !important; color: #f4f9ff;
+  /* Light-theme text palette: light blue + white only */
+  --lt-ink: #bfe0ff;
+  --lt-ink-strong: #ffffff;
+  --lt-ink-soft: rgba(191,224,255,.72);
+  --lt-ink-faint: rgba(191,224,255,.5);
+  --lt-good: #ffffff;
+  --lt-warn: #8fd0ff;
+  --lt-bad: #6fb9ff;
+  --lt-accent: #65c3ff;
+  /* Remap the accent variables so accent-driven colors turn blue in light mode */
+  --zyra-accent: #4db2ff;
+  --zyra-accent-soft: rgba(77,178,255,.22);
+  --zyra-accent-text: #bfe0ff; }
 body.zyra-light #top-bar { background: linear-gradient(180deg, rgba(2,5,10,.9), rgba(3,7,13,.42) 70%, transparent); border-bottom: 1px solid rgba(67,157,255,.12); }
 body.zyra-light .top-logo, body.zyra-light .top-title { color: #f4f9ff; text-shadow: 0 0 10px rgba(110,190,255,.22); }
 body.zyra-light .top-subtitle { color: rgba(220,238,255,.78); }
@@ -1471,6 +1484,185 @@ body.zyra-light .zs-select option { background: #061a34; color: #eaf5ff; }
 body.zyra-light .zs-section { border-color: rgba(71,166,255,.2); }
 body.zyra-light .zs-btn { color: #dceeff; background: rgba(22,119,255,.18); border-color: rgba(71,166,255,.4); }
 body.zyra-light .zs-btn:hover { background: rgba(22,119,255,.35); border-color: #65c3ff; }
+
+/* ── Light-theme text pass: every word in light blue / white only ── */
+/* Chat */
+body.zyra-light .msg.zyra .zyra-label { color: #65c3ff; }
+body.zyra-light .msg.system { color: #bfe0ff; }
+/* System monitor */
+body.zyra-light .sm-pulse-dot { background: #56bdff; box-shadow: 0 0 10px #1677ff; }
+body.zyra-light .sm-badge { color: #ffffff; }
+body.zyra-light .sm-badge.offline { color: #8fd0ff; }
+body.zyra-light .sm-btn-close { color: rgba(191,224,255,.6); }
+body.zyra-light .sm-btn-close:hover { color: #ffffff; background: rgba(22,119,255,.15); }
+body.zyra-light .sm-ascii-bar { color: #65c3ff; }
+body.zyra-light .sm-sub-info { color: rgba(191,224,255,.65); }
+body.zyra-light .sm-stat-k { color: rgba(191,224,255,.55); }
+body.zyra-light .sm-stat-v, body.zyra-light .sm-uptime-val, body.zyra-light .sm-sys-val { color: #ffffff; }
+body.zyra-light .sm-status-title { color: #65c3ff; }
+body.zyra-light .sm-status-desc { color: rgba(214,236,255,.85); }
+body.zyra-light .sm-status-badge.normal, body.zyra-light .sm-status-badge.low { color: #ffffff; }
+body.zyra-light .sm-status-badge.elevated { color: #8fd0ff; }
+body.zyra-light .sm-status-badge.warning { color: #6fb9ff; }
+/* Scan-complete toast */
+body.zyra-light .scan-toast-icon { color: #65c3ff; }
+body.zyra-light .scan-toast-title { color: #65c3ff; }
+body.zyra-light .scan-toast-text { color: rgba(214,236,255,.9); }
+body.zyra-light .scan-toast-close { color: rgba(191,224,255,.7); }
+body.zyra-light .scan-toast-close:hover { color: #ffffff; }
+/* Nmap panel */
+body.zyra-light .nm-pulse-dot { background: #56bdff; box-shadow: 0 0 10px #1677ff; }
+body.zyra-light .nm-subtitle { color: rgba(191,224,255,.55); }
+body.zyra-light .nm-k { color: rgba(191,224,255,.75); }
+body.zyra-light .nm-request-text { color: #bfe0ff; }
+body.zyra-light .nm-field input, body.zyra-light .nm-field select { color: #bfe0ff; }
+body.zyra-light .nm-field input::placeholder { color: rgba(191,224,255,.45); }
+body.zyra-light .nm-field select option { background: #061a34; color: #eaf5ff; }
+body.zyra-light .nm-op-desc { color: rgba(191,224,255,.55); }
+body.zyra-light .nm-command { color: #bfe0ff; }
+body.zyra-light .nm-btn { color: #bfe0ff; }
+body.zyra-light .nm-btn:hover:not(:disabled) { color: #ffffff; }
+body.zyra-light .nm-btn-primary { color: #ffffff; text-shadow: 0 0 8px rgba(77,178,255,.5); }
+body.zyra-light .nm-status { color: #8fd0ff; }
+body.zyra-light .nm-status.complete { color: #ffffff; }
+body.zyra-light .nm-status.error { color: #6fb9ff; }
+body.zyra-light .nm-stage { color: rgba(191,224,255,.6); }
+body.zyra-light .nm-stat-v { color: #ffffff; }
+body.zyra-light .nm-stat-k { color: rgba(191,224,255,.55); }
+body.zyra-light .nm-obs-list li { color: #bfe0ff; }
+body.zyra-light .nm-obs-list li::before { color: #56bdff; }
+body.zyra-light .nm-host-ip { color: #ffffff; }
+body.zyra-light .nm-host-meta { color: rgba(191,224,255,.6); }
+body.zyra-light .nm-port-line { color: #bfe0ff; }
+body.zyra-light .nm-port-num { color: #ffffff; }
+body.zyra-light .nm-port-svc { color: #bfe0ff; }
+body.zyra-light .nm-port-ver { color: rgba(191,224,255,.5); }
+body.zyra-light .nm-report-pre { color: #bfe0ff; }
+body.zyra-light .nm-error-title { color: #6fb9ff; }
+body.zyra-light .nm-error-reason { color: rgba(191,224,255,.75); }
+/* URL analyzer */
+body.zyra-light .url-pulse-dot { background: #56bdff; box-shadow: 0 0 10px #1677ff; }
+body.zyra-light .url-subtitle { color: rgba(191,224,255,.55); }
+body.zyra-light .url-field label { color: rgba(191,224,255,.75); }
+body.zyra-light .url-badge { color: #65c3ff; }
+body.zyra-light .url-badge.offline { color: #8fd0ff; }
+body.zyra-light .url-btn-close { color: rgba(191,224,255,.6); }
+body.zyra-light .url-btn-close:hover { color: #ffffff; background: rgba(22,119,255,.15); }
+body.zyra-light .url-field input, body.zyra-light .url-field select { color: #bfe0ff; }
+body.zyra-light .url-field input::placeholder { color: rgba(191,224,255,.45); }
+body.zyra-light .url-field select option { background: #061a34; color: #eaf5ff; }
+body.zyra-light .url-analyze-btn { color: #65c3ff; }
+body.zyra-light .url-analyze-btn:hover { color: #ffffff; }
+body.zyra-light .url-action-btn { color: #65c3ff; }
+body.zyra-light .url-action-btn:hover { color: #ffffff; }
+body.zyra-light .url-stage { color: rgba(191,224,255,.4); }
+body.zyra-light .url-stage.running { color: #8fd0ff; }
+body.zyra-light .url-stage.done { color: #ffffff; }
+body.zyra-light .url-stage.fail { color: #6fb9ff; }
+body.zyra-light .url-stage.skip { color: rgba(191,224,255,.3); }
+body.zyra-light .url-section-title, body.zyra-light .url-status-label { color: rgba(191,224,255,.75); }
+body.zyra-light .url-status-value { color: #8fd0ff; }
+body.zyra-light .url-status-value.complete { color: #ffffff; }
+body.zyra-light .url-status-value.error { color: #6fb9ff; }
+body.zyra-light .url-score { color: #65c3ff; text-shadow: 0 0 30px rgba(77,178,255,.35); }
+body.zyra-light .url-score.safe { color: #ffffff; text-shadow: 0 0 30px rgba(120,190,255,.35); }
+body.zyra-light .url-score.suspicious { color: #8fd0ff; text-shadow: 0 0 30px rgba(120,190,255,.3); }
+body.zyra-light .url-score.danger { color: #6fb9ff; text-shadow: 0 0 30px rgba(90,150,230,.3); }
+body.zyra-light .url-score-class { color: rgba(191,224,255,.7); }
+body.zyra-light .url-check.pass { color: #ffffff; }
+body.zyra-light .url-check.fail { color: #6fb9ff; }
+body.zyra-light .url-check.warn { color: #8fd0ff; }
+body.zyra-light .url-finding-title { color: #bfe0ff; }
+body.zyra-light .url-finding-detail { color: rgba(191,224,255,.65); }
+body.zyra-light .url-detail-k { color: rgba(191,224,255,.6); }
+body.zyra-light .url-detail-v { color: #bfe0ff; }
+body.zyra-light .url-history-domain { color: #bfe0ff; }
+body.zyra-light .url-history-meta { color: rgba(191,224,255,.6); }
+body.zyra-light .url-error-title { color: #6fb9ff; }
+body.zyra-light .url-error-reason { color: rgba(191,224,255,.75); }
+body.zyra-light .url-recommendation { color: #bfe0ff; }
+body.zyra-light .url-recommendation.danger { color: #8fd0ff; }
+/* DNS lookup panel */
+body.zyra-light .dns-title { color: #65c3ff; }
+body.zyra-light .dns-subtitle { color: rgba(191,224,255,.55); }
+body.zyra-light .dns-pulse-dot { background: #56bdff; box-shadow: 0 0 10px #1677ff; }
+body.zyra-light .dns-badge { color: #65c3ff; }
+body.zyra-light .dns-badge.offline { color: #8fd0ff; }
+body.zyra-light .dns-lookup-btn { color: #65c3ff; }
+body.zyra-light .dns-lookup-btn:hover { color: #ffffff; }
+body.zyra-light .dns-record-head { color: #65c3ff; }
+body.zyra-light .dns-record-status.ok { color: #ffffff; }
+body.zyra-light .dns-record-status.empty { color: rgba(191,224,255,.5); }
+body.zyra-light .dns-record-status.error { color: #6fb9ff; }
+body.zyra-light .dns-record-row { color: #bfe0ff; }
+body.zyra-light .dns-record-ttl { color: rgba(191,224,255,.6); }
+body.zyra-light .dns-record-error { color: rgba(191,224,255,.75); }
+body.zyra-light .dns-warning { color: rgba(214,236,255,.85); }
+body.zyra-light .dns-findings-list li, body.zyra-light .dns-warning-list li,
+body.zyra-light .dns-recommendation-list li { color: #bfe0ff; }
+body.zyra-light .dns-empty-list { color: rgba(191,224,255,.35); }
+/* Settings popup */
+body.zyra-light #zyra-settings-panel { color: #bfe0ff; }
+body.zyra-light .zs-subtitle { color: rgba(191,224,255,.55); }
+body.zyra-light .zs-close { color: #bfe0ff; }
+body.zyra-light .zs-label small { color: rgba(191,224,255,.55); }
+body.zyra-light .zs-range-val { color: rgba(191,224,255,.8); }
+body.zyra-light .zs-btn.danger { color: #8fd0ff; }
+body.zyra-light .zs-btn.danger:hover { color: #ffffff; }
+body.zyra-light .zs-status { color: #8fd0ff; }
+body.zyra-light .zs-status.err { color: #6fb9ff; }
+/* Light-theme settings controls: blue toggle + blue slider (dark theme keeps orange) */
+body.zyra-light .zs-toggle { background: rgba(174,194,224,.45); border-color: rgba(146,170,204,.65); }
+body.zyra-light .zs-toggle::after { background: #ffffff; box-shadow: 0 1px 4px rgba(13,47,96,.28); }
+body.zyra-light .zs-toggle.on { background: #1677ff; border-color: #1677ff; }
+body.zyra-light .zs-toggle.on::after { background: #ffffff; }
+body.zyra-light .zs-range { background: rgba(180,205,235,.4); }
+body.zyra-light .zs-range::-webkit-slider-thumb { background: #1677ff; border: 2px solid #ffffff; box-shadow: 0 0 10px rgba(22,119,255,.45); }
+body.zyra-light .zs-range::-moz-range-thumb { background: #1677ff; border: 2px solid #ffffff; }
+/* Inner surfaces + controls: blue glass language (light theme only) */
+body.zyra-light .nm-stat { background: rgba(5,29,60,.7); border-color: rgba(71,166,255,.2); }
+body.zyra-light .nm-host { background: rgba(8,43,82,.4); border-color: rgba(71,166,255,.18); }
+body.zyra-light .sm-bar-track { background: rgba(71,166,255,.15); }
+body.zyra-light .sm-bar-fill { background: linear-gradient(90deg, #1677ff, #56bdff); }
+body.zyra-light .nm-command { background: rgba(5,24,49,.8); border-color: rgba(71,166,255,.3); }
+body.zyra-light .nm-report-pre { background: rgba(5,24,49,.75); border-color: rgba(71,166,255,.22); }
+body.zyra-light .nm-field input, body.zyra-light .nm-field select,
+body.zyra-light .url-field input, body.zyra-light .url-field select {
+  background: rgba(5,24,49,.85); border-color: rgba(71,166,255,.35); }
+body.zyra-light .nm-btn { background: rgba(22,119,255,.16); border-color: rgba(71,166,255,.4); }
+body.zyra-light .nm-btn:hover:not(:disabled) { background: rgba(22,119,255,.32); border-color: #56bdff; }
+body.zyra-light .nm-btn-primary { background: rgba(22,119,255,.3); border-color: rgba(91,183,255,.55); }
+body.zyra-light .url-analyze-btn { background: rgba(22,119,255,.16); border-color: rgba(71,166,255,.4); }
+body.zyra-light .url-analyze-btn:hover { background: rgba(22,119,255,.32); border-color: #56bdff; }
+body.zyra-light .url-action-btn { background: rgba(22,119,255,.14); border-color: rgba(71,166,255,.35); }
+body.zyra-light .url-action-btn:hover { background: rgba(22,119,255,.28); border-color: #56bdff; }
+body.zyra-light .url-badge, body.zyra-light .dns-badge { background: rgba(22,119,255,.15); border-color: rgba(71,166,255,.4); }
+body.zyra-light .dns-lookup-btn { background: rgba(22,119,255,.16); border-color: rgba(71,166,255,.4); }
+body.zyra-light .dns-lookup-btn:hover { background: rgba(22,119,255,.32); border-color: #56bdff; }
+body.zyra-light .nm-error-card, body.zyra-light .url-error-card { background: rgba(22,119,255,.08); border-color: rgba(111,185,255,.3); }
+body.zyra-light .url-history-item { background: rgba(8,43,82,.4); border-color: rgba(71,166,255,.18); }
+body.zyra-light .url-history-item:hover { background: rgba(22,119,255,.14); border-color: rgba(91,183,255,.3); }
+body.zyra-light .url-recommendation { background: rgba(22,119,255,.07); border-color: rgba(71,166,255,.25); }
+body.zyra-light .url-recommendation.danger { background: rgba(22,119,255,.1); border-color: rgba(111,185,255,.35); }
+body.zyra-light .dns-record-block { background: rgba(8,43,82,.4); border-color: rgba(71,166,255,.18); }
+body.zyra-light .dns-warning { background: rgba(22,119,255,.07); border-left-color: #4db2ff; }
+body.zyra-light .dns-findings-list li, body.zyra-light .dns-warning-list li { background: rgba(22,119,255,.1); }
+body.zyra-light .dns-recommendation-list li { background: rgba(22,119,255,.12); border-left-color: rgba(86,189,255,.5); }
+body.zyra-light .scan-toast { background: rgba(5,25,52,.94); border-color: rgba(71,166,255,.45); }
+body.zyra-light .scan-toast-icon { background: rgba(22,119,255,.15); border-color: rgba(71,166,255,.4); box-shadow: 0 0 12px rgba(22,119,255,.25); }
+body.zyra-light .scan-toast-close { background: rgba(22,119,255,.12); border-color: rgba(71,166,255,.3); }
+body.zyra-light .scan-toast-close:hover { background: rgba(22,119,255,.25); }
+body.zyra-light .zs-info { background: rgba(8,43,82,.5); border-color: rgba(71,166,255,.18); }
+/* Scrollbars: blue tint instead of orange (light theme only) */
+body.zyra-light .sm-body, body.zyra-light #chat-messages, body.zyra-light .nm-body,
+body.zyra-light .url-body, body.zyra-light #zyra-settings-panel {
+  scrollbar-color: rgba(77,178,255,.4) transparent; }
+body.zyra-light .sm-body::-webkit-scrollbar-thumb, body.zyra-light #chat-messages::-webkit-scrollbar-thumb,
+body.zyra-light .nm-body::-webkit-scrollbar-thumb, body.zyra-light .url-body::-webkit-scrollbar-thumb,
+body.zyra-light #zyra-settings-panel::-webkit-scrollbar-thumb { background: rgba(77,178,255,.4); }
+/* Safety net: JS-injected inline colors (history scores/statuses) follow the
+   light-theme palette instead of green/orange/red */
+body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
 
 </style>
