@@ -483,6 +483,21 @@ canvas {
   font-size: 11px;
   max-width: 100%;
 }
+/* Typing indicator: shown while ZYRA generates a reply. The first answer can
+   take ~30s (Ollama cold model load), so the feed needs visible feedback
+   instead of silence. */
+.msg.typing { padding: 10px 14px 12px; }
+.typing-dots { display: inline-flex; gap: 5px; align-items: center; height: 14px; }
+.typing-dots i {
+  width: 6px; height: 6px; border-radius: 50%; background: #ff8844;
+  opacity: .35; animation: zyraTyping 1.2s infinite;
+}
+.typing-dots i:nth-child(2) { animation-delay: .18s; }
+.typing-dots i:nth-child(3) { animation-delay: .36s; }
+@keyframes zyraTyping {
+  0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
 
 #chat-input-row {
   display: flex;
@@ -1466,6 +1481,7 @@ body.zyra-light .top-btn:hover, body.zyra-light .top-btn.active { background: rg
 body.zyra-light .btn-dot { background: #56bdff; box-shadow: 0 0 9px #1677ff; }
 body.zyra-light #bottom-controls { background: linear-gradient(0deg, rgba(2,6,12,.94), rgba(3,8,16,.58) 70%, transparent); }
 body.zyra-light #chat-messages { background: rgba(5,25,52,.78); border-color: rgba(62,157,255,.38); color: #eaf5ff; box-shadow: 0 0 18px rgba(22,119,255,.12); }
+body.zyra-light .typing-dots i { background: #56bdff; }
 body.zyra-light .msg.user { background: rgba(22,119,255,.2); border-color: rgba(67,166,255,.38); color: #fff; }
 body.zyra-light .msg.zyra { background: rgba(8,43,82,.62); border-color: rgba(67,166,255,.25); color: #dceeff; }
 body.zyra-light #chat-input { background: rgba(5,24,49,.9); border-color: rgba(70,165,255,.42); color: #fff; box-shadow: 0 0 16px rgba(22,119,255,.12); }
@@ -2722,12 +2738,37 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     const msg = document.createElement('div');
     msg.className = 'msg ' + type;
     if (type === 'zyra') {
-      msg.innerHTML = '<div class="zyra-label">ZYRA</div>' + text;
+      // Escape HTML so AI output containing <, > or & can never break the feed
+      const safeText = String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      msg.innerHTML = '<div class="zyra-label">ZYRA</div>' + safeText;
     } else {
       msg.textContent = text;
     }
     chatMessages.appendChild(msg);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // ===== TYPING INDICATOR =====
+  // The first AI reply can take tens of seconds (Ollama cold model load), so
+  // show visible feedback the moment a message is sent.
+  let typingEl = null;
+  function showTypingIndicator() {
+    removeTypingIndicator();
+    if (!chatMessages) return;
+    typingEl = document.createElement('div');
+    typingEl.className = 'msg zyra typing';
+    typingEl.innerHTML =
+      '<div class="zyra-label">ZYRA</div>' +
+      '<span class="typing-dots"><i></i><i></i><i></i></span>';
+    chatMessages.appendChild(typingEl);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  function removeTypingIndicator() {
+    if (typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+    typingEl = null;
   }
 
   // ===== CENTER-TOP SCAN COMPLETION NOTIFICATION =====
@@ -2773,17 +2814,20 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       };
 
       ws.onclose = function(event) {
+        removeTypingIndicator();
         addMessage('Connection lost. Reconnecting...', 'system');
         setTimeout(connectWebSocket, 2000);
       };
 
       ws.onerror = function(error) {
         console.error('WebSocket error:', error);
+        removeTypingIndicator();
         addMessage('Connection error. Retrying...', 'system');
       };
 
       ws.onmessage = function(event) {
         try {
+          removeTypingIndicator();
           const data = JSON.parse(event.data);
           if (data.type === 'show_system_monitor') {
             startSystemMonitor();
@@ -2882,6 +2926,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     }
     addMessage(cleanText, 'user');
     ws.send(JSON.stringify({ type: 'chat', data: cleanText }));
+    showTypingIndicator();
     chatInput.value = '';
   }
 
@@ -4511,9 +4556,11 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   // Initial connection
   setTimeout(connectWebSocket, 500);
 
-  // Hello message
+  // Hello message (only when the feed is still empty)
   setTimeout(function() {
-    addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
+    if (chatMessages && !chatMessages.children.length) {
+      addMessage('Hello, I am ZYRA. How can I help you today?', 'zyra');
+    }
   }, 1500);
 
   // ===================================================================

@@ -1,29 +1,33 @@
+# Python
 venv/
 __pycache__/
 *.pyc
-database/*.db
+.pytest_cache/
+
+# Environment
 .env
-screenshot.png
-zyra_voice.mp3
+
+# Runtime logs & pid files
+*.log
+*_pid.txt
+
+# Data
+database/*.db
 memory/data.json
+zyra_voice.mp3
+
 # Node
 node_modules/
 
 # Electron
 desktop-ui/node_modules/
 
-# Python
-venv/
-__pycache__/
-*.pyc
-
-# Environment
-.env
-
 # Build
 dist/
 build/
 
-# IDE
+# IDE / local tooling
 .vscode/
 .idea/
+.postqode/
+
