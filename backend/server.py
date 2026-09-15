@@ -40,6 +40,7 @@ from backend.zyra_bridge import (
     process_message,
     speak_text,
 )
+from brain import warm_up_async
 from backend.link_security import (
     analyze_url_security,
     format_security_report,
@@ -160,6 +161,9 @@ _server_loop: Optional[asyncio.AbstractEventLoop] = None
 async def on_startup():
     global _server_loop
     _server_loop = asyncio.get_running_loop()
+    # Preload the AI model in the background so the first chat reply doesn't
+    # pay the cold-load penalty (keeps every reply inside the 5-10s budget).
+    warm_up_async()
 
 
 def broadcast_message_sync(message: Dict[str, Any]) -> None:
