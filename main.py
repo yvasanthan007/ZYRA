@@ -9,6 +9,16 @@ import platform
 import urllib.request
 import urllib.error
 
+# ── Windows console safety ──────────────────────────────────────────────
+# Force UTF-8 output before any module that prints emoji is imported, so
+# status prints never crash with UnicodeEncodeError on cp1252 consoles.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 from listen import listen
 from speak import speak
 from brain import ask_ai

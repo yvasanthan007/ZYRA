@@ -3,6 +3,17 @@ import json
 import importlib.util
 import os
 
+# ── Windows console safety ──────────────────────────────────────────────
+# Force UTF-8 stdout/stderr BEFORE importing ZYRA modules. Any emoji print
+# from an imported module would otherwise raise UnicodeEncodeError on a
+# cp1252 console and kill the bridge the Electron app depends on.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 # Add parent directory to path for importing ZYRA modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

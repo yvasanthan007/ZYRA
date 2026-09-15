@@ -6,6 +6,16 @@ import sys
 import subprocess
 import importlib
 
+# ── Windows console safety ──────────────────────────────────────────────
+# Force UTF-8 output so the ✅/❌/box-drawing prints below never crash with
+# UnicodeEncodeError on cp1252 Windows consoles.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 def check_package(package_name, import_name=None):
     """Check if a package is installed."""
     if import_name is None:

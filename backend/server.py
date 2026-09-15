@@ -9,6 +9,18 @@ import time
 import asyncio
 import threading
 import webbrowser
+
+# ── Windows console safety ──────────────────────────────────────────────
+# Reconfigure stdout/stderr to UTF-8 so emoji status prints (🚀 📡 🔍 …)
+# can never raise UnicodeEncodeError on cp1252 Windows consoles — an
+# unhandled encode error here would abort the server before uvicorn starts.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 from typing import Optional, Dict, Any
 from pathlib import Path
 
