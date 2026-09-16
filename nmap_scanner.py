@@ -32,9 +32,42 @@ Verdict Mapping:
 
 import subprocess
 import re
+import os
+import platform as _platform
 import xml.etree.ElementTree as ET
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
+from functools import lru_cache
+
+
+# ──────────────────────────────────────────────
+# Privilege detection (raw-socket capability)
+# ──────────────────────────────────────────────
+
+@lru_cache(maxsize=1)
+def has_raw_socket_privileges() -> bool:
+    """
+    Detect (once per process) whether raw-socket nmap scans are possible:
+    SYN scans (-sS), OS detection (-O), aggressive scan (-A) and raw ping
+    sweeps (-sn) all need raw packet access.
+
+      - Windows: requires Administrator rights (Npcap raw access)
+      - Linux/macOS: requires root (euid 0)
+
+    When False, nmap_scanner SILENTLY downgrades to unprivileged scan types
+    (TCP connect scans, no OS detection) so that running a scan NEVER
+    triggers the Windows admin/UAC consent prompt or asks the user for
+    permission. When the process is elevated, full-power scans are used
+    automatically.
+    """
+    try:
+        if _platform.system() == "Windows":
+            import ctypes
+            return bool(ctypes.windll.shell32.IsUserAnAdmin())
+        return os.geteuid() == 0
+    except Exception:
+        return False
+
 
 
 # ──────────────────────────────────────────────
@@ -101,27 +134,64 @@ def build_scan_args(
 
     Returns:
         List of command-line arguments (without the nmap executable itself)
+
+    Privilege-aware: raw-socket scan types (-sS, -O, -A, -sn) are only used
+    when the process has raw-socket privileges. Unprivileged runs are
+    silently mapped to TCP connect scans (-sT) and connect-based discovery
+    so a scan never triggers the Windows admin/UAC consent prompt.
     """
     args: List[str] = []
+    privileged = has_raw_socket_privileges()
 
     # Always request XML output for parsing when a filename is supplied
     if xml_file:
         args.extend(["-oX", xml_file])
 
     if scan_type == "ping_sweep":
-        args.extend(["-sn", "-T4"])  # Ping sweep, no port scan
+        if privileged:
+            args.extend(["-sn", "-T4"])  # Raw ping sweep, no port scan
+        else:
+            # Unprivileged discovery: raw ICMP/ARP sweeps need admin rights
+            # and would trigger the admin consent prompt on every scan. Use
+            # TCP connect probes against ports commonly open on real devices
+            # (Windows: 135/445/3389, routers/web: 80/443/8080, Linux: 22)
+            # and detect liveness from the replies — never asks for permission.
+            args.extend([
+                "-Pn", "-sT", "-p", "22,80,135,443,445,3389,8080",
+                "-T4", "--host-timeout", "30s",
+            ])
     elif scan_type == "quick":
-        args.extend(["-F", "-T4"])  # Fast scan, top 100 ports
+        if privileged:
+            args.extend(["-F", "-T4"])  # Fast scan, top 100 ports
+        else:
+            args.extend(["-sT", "-F", "-T4"])  # Explicit connect scan
     elif scan_type == "standard":
-        args.extend(["-sS", "-sV", "-T4"])  # SYN scan, version detection
+        if privileged:
+            args.extend(["-sS", "-sV", "-T4"])  # SYN scan, version detection
+        else:
+            args.extend(["-sT", "-sV", "-T4"])  # Connect scan, version detection
     elif scan_type == "full":
-        args.extend(["-sS", "-sV", "-O", "-A", "-T4", "-p-", "--script=default,vuln"])
+        if privileged:
+            args.extend(["-sS", "-sV", "-O", "-A", "-T4", "-p-", "--script=default,vuln"])
+        else:
+            # OS detection (-O) and aggressive scan (-A) need raw sockets;
+            # use unprivileged equivalents (version + default NSE scripts).
+            args.extend(["-sT", "-sV", "-sC", "-T4", "-p-", "--script=default,vuln"])
     elif scan_type == "stealth":
-        args.extend(["-sS", "-sV", "-T2"])  # Slow SYN scan
+        if privileged:
+            args.extend(["-sS", "-sV", "-T2"])  # Slow SYN scan
+        else:
+            args.extend(["-sT", "-sV", "-T2"])  # Slow connect scan
     elif scan_type == "vuln":
-        args.extend(["-sS", "-sV", "--script=vuln", "-T4"])
+        if privileged:
+            args.extend(["-sS", "-sV", "--script=vuln", "-T4"])
+        else:
+            args.extend(["-sT", "-sV", "--script=vuln", "-T4"])
     else:
-        args.extend(["-sS", "-sV", "-T4"])  # Default to standard
+        if privileged:
+            args.extend(["-sS", "-sV", "-T4"])  # Default to standard
+        else:
+            args.extend(["-sT", "-sV", "-T4"])  # Default to standard
 
     if ports:
         args.extend(["-p", ports])
@@ -398,34 +468,18 @@ class NmapScanner:
         Returns:
             Dictionary with scan results
         """
-        args = []
         xml_file = f"nmap_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
-        
-        # Always request XML output for parsing
-        args.extend(["-oX", xml_file])
-        
-        if scan_type == "quick":
-            args.extend(["-F", "-T4"])  # Fast scan, top 100 ports
-        elif scan_type == "standard":
-            args.extend(["-sS", "-sV", "-T4"])  # SYN scan, version detection
-        elif scan_type == "full":
-            args.extend(["-sS", "-sV", "-O", "-A", "-T4", "-p-", "--script=default,vuln"])
-        elif scan_type == "stealth":
-            args.extend(["-sS", "-sV", "-T2"])  # Slow SYN scan
-        elif scan_type == "vuln":
-            args.extend(["-sS", "-sV", "--script=vuln", "-T4"])
-        else:
-            args.extend(["-sS", "-sV", "-T4"])  # Default to standard
-        
-        if ports:
-            args.extend(["-p", ports])
-        
-        if scripts:
-            script_arg = ",".join(scripts)
-            args.extend(["--script", script_arg])
-        
-        # Add target
-        args.append(target)
+
+        # Build args through the shared, privilege-aware builder so the
+        # command displayed in the Nmap Scanner panel always matches the
+        # command that is actually executed.
+        args = build_scan_args(
+            scan_type,
+            target,
+            ports=ports,
+            scripts=scripts,
+            xml_file=xml_file,
+        )
         
         # Run scan
         print(f"🔍 Running Nmap scan: {self.nmap_path} {' '.join(args)}")
@@ -459,6 +513,8 @@ class NmapScanner:
         results["scan_type"] = scan_type
         results["target"] = target
         results["timestamp"] = datetime.now().isoformat()
+        if not has_raw_socket_privileges():
+            results["privilege_mode"] = "unprivileged"
         
         return results
     
@@ -472,7 +528,11 @@ class NmapScanner:
         Returns:
             Dictionary with discovered hosts
         """
-        args = ["-sn", "-T4", network]  # Ping sweep, no port scan
+        # Use the shared, privilege-aware builder (same args the Nmap panel
+        # displays): raw ping sweep when elevated, TCP-connect discovery when
+        # unprivileged — so a sweep never triggers the admin consent prompt.
+        xml_file = f"nmap_sweep_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+        args = build_scan_args("ping_sweep", network, xml_file=xml_file)
         
         print(f"🔍 Running ping sweep: {self.nmap_path} {' '.join(args)}")
         stdout, stderr, returncode = self._run_nmap(args, timeout=300)
@@ -484,7 +544,52 @@ class NmapScanner:
                 "hosts": []
             }
         
-        results = self._parse_nmap_text(stdout)
+        # Parse the XML output (same structured path as scan_host), falling
+        # back to text parsing when the XML file is missing or invalid.
+        xml_content = None
+        try:
+            with open(xml_file, 'r', encoding='utf-8') as f:
+                xml_content = f.read()
+            results = self._parse_nmap_xml(xml_content)
+        except Exception:
+            results = self._parse_nmap_text(stdout)
+
+        # Clean up the XML file
+        try:
+            os.remove(xml_file)
+        except Exception:
+            pass
+
+        if not has_raw_socket_privileges():
+            # -Pn marks every address in the range as "up", so liveness must
+            # come from the raw XML port states (the shared parser only keeps
+            # OPEN ports): a responsive host answers at least one probe with
+            # state "closed" (RST received) or "open" (connection accepted).
+            alive_ips = set()
+            if xml_content:
+                try:
+                    root = ET.fromstring(xml_content)
+                    for host_el in root.findall('.//host'):
+                        addr_el = host_el.find('address[@addrtype="ipv4"]')
+                        if addr_el is None:
+                            continue
+                        for port_el in host_el.findall('.//port'):
+                            state_el = port_el.find('state')
+                            if state_el is not None and state_el.get('state') in (
+                                "closed", "open", "open|filtered"
+                            ):
+                                alive_ips.add(addr_el.get('addr'))
+                                break
+                except Exception:
+                    pass
+            alive_hosts = []
+            for host in results.get("hosts", []):
+                ip = host.get("ip", "")
+                if ip in alive_ips or host.get("ports"):
+                    alive_hosts.append(host)
+            results["hosts"] = alive_hosts
+            results["privilege_mode"] = "unprivileged"
+
         results["success"] = True
         results["scan_type"] = "ping_sweep"
         results["target"] = network

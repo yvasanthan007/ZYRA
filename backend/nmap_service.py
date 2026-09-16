@@ -117,6 +117,24 @@ SCAN_OPERATIONS = {
     },
 }
 
+# Explanatory notes shown only when a scan ran without raw-socket privileges.
+# Raw-socket operations (-sS, -O, -A, -sn) require Administrator rights on
+# Windows, which would raise the admin/UAC consent prompt on every scan. The
+# scanner therefore silently uses unprivileged TCP connect equivalents (-sT)
+# so a scan never asks the user for permission. These notes keep the loss of
+# capability transparent instead of looking like a failure.
+UNPRIVILEGED_NOTES = {
+    "full": (
+        "Raw-socket operations (OS detection) require administrator rights and "
+        "were skipped automatically — no permission was requested. Port, service "
+        "and version detection are unaffected."
+    ),
+    "ping_sweep": (
+        "Host discovery used TCP connect probes (raw ICMP/ARP is unavailable "
+        "without administrator rights), so no permission was requested."
+    ),
+}
+
 # Map "scan_type" values used by nmap_scanner to stable human labels for the panel
 SCAN_TYPE_LABELS = {
     "ping_sweep": "Network / Host Discovery",
@@ -447,9 +465,18 @@ def run_scan(
     observations = build_security_observations(hosts, analysis)
     total_ports = sum(len(h.get("ports", [])) for h in hosts)
 
+    # Report the privilege mode the scan actually ran in, and explain any
+    # capability that was automatically skipped (rather than prompting for it).
+    privilege_mode = raw.get("privilege_mode") or "privileged"
+    if privilege_mode == "unprivileged":
+        note = UNPRIVILEGED_NOTES.get(scan_type)
+        if note:
+            observations.append(note)
+
     payload = {
         "success": True,
         "status": "COMPLETE",
+        "privilege_mode": privilege_mode,
         "operation": operation_key,
         "operation_label": op["label"],
         "operation_description": op["description"],

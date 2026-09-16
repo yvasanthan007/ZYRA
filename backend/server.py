@@ -1097,7 +1097,13 @@ async def nmap_operations_endpoint():
         "success": True,
         "operations": [
             {"key": key, "label": meta["label"], "description": meta.get("description", ""),
-             "default_target": meta.get("default_target", "")}
+             "default_target": meta.get("default_target", ""),
+             # Preview of the exact command that will run for this operation.
+             # Built by the same privilege-aware builder used for execution, so
+             # the panel never shows raw-socket flags that would need admin
+             # rights (e.g. -sS / -sn) when an unprivileged scan will run.
+             "example_command": build_nmap_command(
+                 key, meta.get("default_target", "") or "127.0.0.1")}
             for key, meta in SCAN_OPERATIONS.items()
         ],
     }
