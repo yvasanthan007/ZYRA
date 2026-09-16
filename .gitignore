@@ -21,6 +21,10 @@ node_modules/
 
 # Electron
 desktop-ui/node_modules/
+desktop/node_modules/
+
+# Desktop build output
+desktop-dist/
 
 # Build
 dist/

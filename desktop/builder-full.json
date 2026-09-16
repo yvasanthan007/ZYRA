@@ -1,0 +1,60 @@
+{
+  "appId": "com.zyra.desktop",
+  "productName": "ZYRA",
+  "copyright": "Copyright © 2026 Vasanthan Y",
+  "directories": {
+    "output": "desktop-dist",
+    "buildResources": "desktop"
+  },
+  "files": [
+    "desktop/main.js",
+    "desktop/preload.js",
+    "desktop/package.json",
+    "desktop/zyra.ico",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": ".",
+      "to": "zyra",
+      "filter": [
+        "main.py",
+        "brain.py",
+        "listen.py",
+        "speak.py",
+        "memory.py",
+        "nmap_handler.py",
+        "nmap_scanner.py",
+        "zyra_handler.py",
+        "link_analysis.py",
+        "screen_ocr.py",
+        "system_monitor.py",
+        "requirements.txt",
+        "backend/**",
+        "commands/**",
+        "desktop-dashboard/**",
+        "memory/**",
+        "tools/**",
+        ".venv/**"
+      ]
+    }
+  ],
+  "win": {
+    "icon": "desktop/zyra.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "ZYRA",
+    "artifactName": "ZYRA-Setup-Full-${version}.${ext}"
+  }
+}

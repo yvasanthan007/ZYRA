@@ -60,6 +60,7 @@ DASHBOARD_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 # Global state for clean shutdown
 server_thread = None
 edge_process = None
+desktop_shell_process = None
 running = True
 
 
@@ -162,6 +163,65 @@ def open_dashboard_in_edge(url):
     return True
 
 
+def find_desktop_shell_command():
+    """
+    Locate the ZYRA Desktop shell (Electron) bundled with the project.
+
+    Returns:
+        tuple: (electron_exe_path, shell_dir) or (None, None) when unavailable
+    """
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    electron_exe = os.path.join(project_root, "node_modules", "electron", "dist", "electron.exe")
+    shell_dir = os.path.join(project_root, "desktop")
+    shell_manifest = os.path.join(shell_dir, "package.json")
+
+    if os.path.exists(electron_exe) and os.path.exists(shell_manifest):
+        return electron_exe, shell_dir
+    return None, None
+
+
+def open_dashboard_in_desktop_shell(url):
+    """
+    Launch the dashboard in the native ZYRA Desktop window (Electron shell).
+
+    The backend server is already running inside THIS Python process, so the
+    shell is launched in "external" mode (ZYRA_EXTERNAL_SHELL=1): it only
+    opens the native window pointing at the existing server — it does not
+    spawn its own backend. When the window is closed, the shell stops this
+    Python process (ZYRA_PARENT_PID), so the whole app shuts down cleanly.
+
+    Returns:
+        bool: True when the desktop window was launched, False when the
+              shell is unavailable (caller can fall back to the browser).
+    """
+    global desktop_shell_process
+
+    electron_exe, shell_dir = find_desktop_shell_command()
+    if not electron_exe:
+        print("   ⚠️  ZYRA Desktop shell not found (node_modules/electron missing)")
+        return False
+
+    try:
+        env = os.environ.copy()
+        env["ZYRA_EXTERNAL_SHELL"] = "1"
+        env["ZYRA_URL"] = url
+        env["ZYRA_PARENT_PID"] = str(os.getpid())
+
+        desktop_shell_process = subprocess.Popen(
+            [electron_exe, shell_dir],
+            cwd=os.path.dirname(shell_dir),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        print("   ✅ ZYRA Desktop window launched")
+        return True
+    except Exception as e:
+        print(f"   ⚠️  Could not launch the ZYRA Desktop shell ({e})")
+        desktop_shell_process = None
+        return False
+
+
 def wait_for_server(url, max_retries=10, retry_interval=1.0):
     """
     Poll the backend server's health endpoint until it responds.
@@ -215,12 +275,27 @@ def signal_handler(signum, frame):
 def cleanup():
     """
     Perform clean shutdown of all spawned processes:
+    - Terminate the ZYRA Desktop window if we launched it
     - Terminate the Edge browser process if we launched it
     - The backend server thread is a daemon and will exit automatically
     """
     global edge_process
+    global desktop_shell_process
 
     print("\n🧹 Cleaning up...")
+
+    if desktop_shell_process is not None:
+        try:
+            desktop_shell_process.terminate()
+            desktop_shell_process.wait(timeout=3)
+            print("   ✅ ZYRA Desktop window closed")
+        except Exception:
+            try:
+                desktop_shell_process.kill()
+                print("   ✅ ZYRA Desktop window force-closed")
+            except Exception:
+                pass
+        desktop_shell_process = None
 
     if edge_process is not None:
         try:
@@ -470,17 +545,35 @@ if __name__ == "__main__":
     # This polls the /api/health endpoint with retries
     server_ready = wait_for_server(DASHBOARD_URL, max_retries=8, retry_interval=1.0)
 
-    if server_ready:
-        # Open the dashboard in Microsoft Edge
-        open_dashboard_in_edge(DASHBOARD_URL)
+    # ZYRA Desktop mode: the Electron desktop shell (desktop/main.js) loads
+    # the dashboard in its own native window, so the Edge-kiosk browser
+    # launch must be skipped. Normal `python main.py` behavior is unchanged.
+    if os.environ.get("ZYRA_DESKTOP") == "1":
+        if server_ready:
+            print("\n🖥️  ZYRA Desktop mode — dashboard is served to the ZYRA desktop window")
+        else:
+            print("\n⚠️  Server may not be fully ready. The desktop window will retry.")
+        print("\n✨ ZYRA is now running!")
+        print("   🎤 Voice commands: Speak into your microphone")
+        print("   🖥️  Dashboard: ZYRA desktop window (http://127.0.0.1:8080)")
+        print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
     else:
-        print("\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway...")
-        open_dashboard_in_edge(DASHBOARD_URL)
+        # Default: open the dashboard in the native ZYRA Desktop window
+        shell_started = open_dashboard_in_desktop_shell(DASHBOARD_URL)
+        if not shell_started:
+            # Desktop shell unavailable (node_modules/electron missing) —
+            # fall back to the classic Microsoft Edge kiosk mode.
+            print("   ↪️  Falling back to Microsoft Edge kiosk mode")
+            if server_ready:
+                open_dashboard_in_edge(DASHBOARD_URL)
+            else:
+                print("\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway...")
+                open_dashboard_in_edge(DASHBOARD_URL)
 
-    print("\n✨ ZYRA is now running!")
-    print("   🎤 Voice commands: Speak into your microphone")
-    print("   🌐 Dashboard: Open in browser at", DASHBOARD_URL)
-    print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
+        print("\n✨ ZYRA is now running!")
+        print("   🎤 Voice commands: Speak into your microphone")
+        print("   🖥️  Dashboard: ZYRA Desktop window (http://127.0.0.1:8080)")
+        print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
 
     speak("Hello, I am Zyra. How can I help you today?")
 
