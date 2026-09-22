@@ -543,6 +543,58 @@ canvas {
   box-shadow: 0 0 20px rgba(255,136,68,0.15);
 }
 
+/* ===== VOICE LAYER (additive — matches #chat-send visual language) ===== */
+#chat-mic {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,136,68,0.15);
+  border: 1px solid rgba(255,136,68,0.3);
+  color: #ff8844;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  flex: 0 0 auto;
+}
+#chat-mic:hover {
+  background: rgba(255,136,68,0.25);
+  border-color: rgba(255,136,68,0.5);
+  box-shadow: 0 0 20px rgba(255,136,68,0.15);
+}
+#chat-mic.listening {
+  color: #ff5544;
+  background: rgba(255,85,68,0.18);
+  border-color: rgba(255,85,68,0.6);
+  animation: micPulse 1.2s ease infinite;
+}
+#chat-mic.processing {
+  color: #ffcc44;
+  background: rgba(255,204,68,0.15);
+  border-color: rgba(255,204,68,0.55);
+  cursor: default;
+}
+#chat-mic.speaking {
+  color: #22cc88;
+  background: rgba(34,204,136,0.15);
+  border-color: rgba(34,204,136,0.55);
+  animation: micPulse 1.6s ease infinite;
+}
+#chat-mic.error {
+  color: #ff4444;
+  background: rgba(255,68,68,0.18);
+  border-color: rgba(255,68,68,0.6);
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,85,68,0.35); }
+  50% { box-shadow: 0 0 0 9px rgba(255,85,68,0); }
+}
+@media (max-width: 720px) {
+  #chat-mic, #chat-send { width: 40px; height: 40px; }
+  #chat-input { padding: 10px 14px; font-size: 13px; }
+}
+
 /* ===== NMAP SCANNER HUD CARD ===== */
 .top-actions-col {
   display: flex;
@@ -2137,6 +2189,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     <div id="chat-container">
       <div id="chat-messages"></div>
       <div id="chat-input-row">
+        <button id="chat-mic" title="Voice input" aria-label="Voice input" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.07A7 7 0 0 0 19 11z"/></svg></button>
         <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
         <button id="chat-send" title="Send message">➤</button>
       </div>
@@ -2849,6 +2902,8 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
               updateSystemMonitorUI(data.data);
             } else {
               addMessage(data.data, 'zyra');
+              // Voice layer hook: speak the reply when this turn started by voice
+              if (window.__zyraVoiceHook) { try { window.__zyraVoiceHook(data.data); } catch (e) {} }
               if (typeof data.data === 'string' && (data.data.includes('SYSTEM MONITOR') || data.data.toLowerCase().includes('system monitor'))) {
                 startSystemMonitor();
               }
@@ -2941,6 +2996,363 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       sendMessage(chatInput.value);
     }
   });
+
+  // ===================================================================
+  // ===== VOICE LAYER (additive — mic → streaming STT → chat → TTS) ===
+  // ===================================================================
+  // Purely additive: the typed-chat flow above is untouched. Voice turns
+  // reuse the exact same sendMessage() → WebSocket → Neural Core pipeline
+  // and only add: streaming speech-to-text into the existing chat input,
+  // and progressive interruptible TTS of the reply.
+  (function () {
+    'use strict';
+    var micBtn = document.getElementById('chat-mic');
+    if (!micBtn) return;
+    var SRClass = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+    var state = 'idle';            // idle | listening | processing | speaking | error
+    var recognition = null;        // active Web Speech recognition
+    var fallback = null;           // active fallback recorder {stream, ctx, node, chunks}
+    var baseText = '';             // typed draft kept when dictation starts
+    var cancelled = false;         // user cancelled the current capture
+    var watchdog = null;           // silence / no-speech watchdog
+    var graceTimer = null;         // review window before auto-send
+    var graceText = '';            // transcript waiting in the review window
+    var sessionActive = false;     // the next assistant reply belongs to a voice turn
+    var errorTimer = null;
+    var ttsActive = false;         // TTS playback in progress
+    var ttsAbort = null;           // aborts in-flight TTS fetch on interrupt
+    var audioEl = null;            // the single <audio> used for playback
+    var audioUrl = null;           // current object URL (revoked after play)
+
+    var IDLE_PLACEHOLDER = 'Message ZYRA...';
+
+    function voiceSettings() {
+      try { if (window.zyraVoiceSettings) return window.zyraVoiceSettings(); } catch (e) {}
+      return { enabled: true, volume: 0.8 };
+    }
+
+    function inputPlaceholder(text) {
+      if (document.activeElement !== chatInput) chatInput.placeholder = text;
+    }
+
+    function setState(next) {
+      state = next;
+      micBtn.classList.remove('listening', 'processing', 'speaking', 'error');
+      if (next !== 'idle') micBtn.classList.add(next);
+      var label =
+        next === 'listening' ? 'Stop listening' :
+        next === 'processing' ? 'ZYRA is thinking' :
+        next === 'speaking' ? 'Stop ZYRA speaking' : 'Voice input';
+      micBtn.title = label;
+      micBtn.setAttribute('aria-label', label);
+      if (next === 'idle') inputPlaceholder(IDLE_PLACEHOLDER);
+    }
+
+    function showError(msg) {
+      setState('error');
+      chatInput.placeholder = msg;
+      addMessage(msg, 'system');
+      clearTimeout(errorTimer);
+      errorTimer = setTimeout(function () {
+        if (state === 'error') setState('idle');
+      }, 3500);
+    }
+
+    // ---------------- TTS: progressive, interruptible playback ----------------
+    function stopSpeaking(silent) {
+      ttsActive = false;
+      if (ttsAbort) { try { ttsAbort.abort(); } catch (e) {} ttsAbort = null; }
+      if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl.src = ''; audioEl = null; }
+      if (audioUrl) { try { URL.revokeObjectURL(audioUrl); } catch (e) {} audioUrl = null; }
+      if (!silent && state === 'speaking') setState('idle');
+    }
+
+    function splitSentences(text) {
+      var parts = String(text).replace(/\s+/g, ' ').match(/[^.!?…]+[.!?…]+["')\]]*|\S[^.!?…]*$/g) || [];
+      var chunks = [];
+      var buf = '';
+      for (var i = 0; i < parts.length; i++) {
+        if ((buf + parts[i]).length < 220) { buf += parts[i]; }
+        else { if (buf.trim()) chunks.push(buf.trim()); buf = parts[i]; }
+      }
+      if (buf.trim()) chunks.push(buf.trim());
+      return chunks;
+    }
+
+    async function speakText(text) {
+      stopSpeaking(true);
+      var cfg = voiceSettings();
+      if (!cfg.enabled) { setState('idle'); return; }
+      var chunks = splitSentences(text);
+      if (!chunks.length) { setState('idle'); return; }
+      ttsActive = true;
+      setState('speaking');
+      for (var i = 0; i < chunks.length; i++) {
+        if (!ttsActive) return; // interrupted
+        ttsAbort = new AbortController();
+        var blob = null;
+        try {
+          var res = await fetch('/api/voice/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: chunks[i] }),
+            signal: ttsAbort.signal
+          });
+          if (!res.ok) throw new Error('TTS HTTP ' + res.status);
+          blob = await res.blob();
+        } catch (err) {
+          if (!ttsActive) return; // user interrupt — not an error
+          showError('Voice output unavailable — text response shown above');
+          return;
+        }
+        if (!ttsActive) return;
+        // Play this sentence; sequential playback guarantees no overlap.
+        await new Promise(function (resolve) {
+          audioEl = new Audio();
+          audioUrl = URL.createObjectURL(blob);
+          audioEl.src = audioUrl;
+          audioEl.volume = cfg.volume;
+          audioEl.onended = audioEl.onerror = resolve;
+          audioEl.play().catch(function () { resolve(); });
+        });
+        if (audioUrl) { try { URL.revokeObjectURL(audioUrl); } catch (e) {} audioUrl = null; }
+        audioEl = null;
+      }
+      if (ttsActive) { ttsActive = false; setState('idle'); }
+    }
+
+    // ---------------- STT: primary streaming (Web Speech API) ----------------
+    function clearWatchdog() { if (watchdog) { clearTimeout(watchdog); watchdog = null; } }
+
+    function startStreaming() {
+      baseText = chatInput.value ? chatInput.value.replace(/\s+$/, '') + ' ' : '';
+      var finalText = '';
+      cancelled = false;
+      sessionActive = false;
+      var rec = new SRClass();
+      recognition = rec;
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+      rec.maxAlternatives = 1;
+
+      rec.onresult = function (ev) {
+        var interim = '';
+        for (var i = ev.resultIndex; i < ev.results.length; i++) {
+          var r = ev.results[i];
+          if (r.isFinal) finalText += r[0].transcript + ' ';
+          else interim += r[0].transcript;
+        }
+        // live streaming transcript straight into the existing chat input
+        chatInput.value = (baseText + finalText + interim).replace(/\s+/g, ' ').trim();
+        // speech detected → restart the silence window (auto-stop after a pause)
+        clearWatchdog();
+        watchdog = setTimeout(endCapture, 1600);
+      };
+      rec.onerror = function (ev) {
+        clearWatchdog();
+        recognition = null;
+        if (cancelled) { cancelled = false; return; }
+        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+          showError('Microphone blocked — allow mic access or use text chat');
+        } else if (ev.error === 'no-speech') {
+          showError('Didn\u2019t hear anything — try again');
+        } else if (ev.error === 'network') {
+          showError('Speech recognition network error — use text chat');
+        } else if (ev.error !== 'aborted') {
+          showError('Voice input error — use text chat');
+        }
+      };
+      rec.onend = function () {
+        clearWatchdog();
+        recognition = null;
+        if (cancelled) { cancelled = false; if (state === 'listening') setState('idle'); return; }
+        if (state !== 'listening') return;
+        var text = (chatInput.value || '').trim();
+        if (text) finishCapture(text);
+        else showError('Didn\u2019t catch that — try again');
+      };
+
+      setState('listening');
+      inputPlaceholder('Listening... speak now');
+      // never listen forever: auto-stop if nothing is said
+      watchdog = setTimeout(endCapture, 8000);
+      try { rec.start(); }
+      catch (e) { recognition = null; clearWatchdog(); showError('Could not start the microphone'); }
+    }
+
+    function endCapture() {
+      clearWatchdog();
+      if (recognition) { try { recognition.stop(); } catch (e) { /* onend handles it */ } return; }
+      if (fallback) { stopFallbackAndTranscribe(); return; }
+      if (state === 'listening') setState('idle');
+    }
+    // ------------- STT fallback (WAV capture → server transcribe) -------------
+    // Used only when the Web Speech API is unavailable (e.g. Firefox). Captures
+    // 16 kHz mono PCM client-side, then posts a WAV to /api/voice/transcribe.
+    function startFallback() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showError('Voice input not supported in this browser');
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
+      }).then(function (stream) {
+        try {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          var ctx = new Ctx({ sampleRate: 16000 });
+          var src = ctx.createMediaStreamSource(stream);
+          var proc = ctx.createScriptProcessor(4096, 1, 1);
+          var chunks = [];
+          proc.onaudioprocess = function (ev) {
+            chunks.push(new Float32Array(ev.inputBuffer.getChannelData(0)));
+          };
+          src.connect(proc); proc.connect(ctx.destination);
+          fallback = { stream: stream, ctx: ctx, node: proc, chunks: chunks };
+          cancelled = false;
+          sessionActive = false;
+          setState('listening');
+          inputPlaceholder('Listening... click the mic when done');
+        } catch (e) {
+          releaseStream(stream, null, null);
+          showError('Could not open the microphone');
+        }
+      }).catch(function (err) {
+        if (err && (err.name === 'NotAllowedError' || err.name === 'SecurityError')) {
+          showError('Microphone blocked — allow mic access or use text chat');
+        } else if (err && err.name === 'NotFoundError') {
+          showError('No microphone found');
+        } else {
+          showError('Microphone unavailable — use text chat');
+        }
+      });
+    }
+
+    function releaseStream(stream, ctx, node) {
+      if (stream) { try { stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} }
+      if (node) { try { node.disconnect(); } catch (e) {} }
+      if (ctx) { try { ctx.close(); } catch (e) {} }
+    }
+    function encodeWav(chunks, sampleRate) {
+      var length = 0, i, j, k;
+      for (i = 0; i < chunks.length; i++) length += chunks[i].length;
+      if (!length) return null;
+      var buffer = new ArrayBuffer(44 + length * 2);
+      var view = new DataView(buffer);
+      var pos = 0;
+      function str(s) { for (i = 0; i < s.length; i++) view.setUint8(pos++, s.charCodeAt(i)); }
+      function u32(v) { view.setUint32(pos, v, true); pos += 4; }
+      function u16(v) { view.setUint16(pos, v, true); pos += 2; }
+      str('RIFF'); u32(36 + length * 2); str('WAVE');
+      str('fmt '); u32(16); u16(1); u16(1); u32(sampleRate); u32(sampleRate * 2); u16(2); u16(16);
+      str('data'); u32(length * 2);
+      for (j = 0; j < chunks.length; j++) {
+        var c = chunks[j];
+        for (k = 0; k < c.length; k++) {
+          var s = Math.max(-1, Math.min(1, c[k]));
+          view.setInt16(pos, s < 0 ? s * 0x8000 : s * 0x7FFF, true); pos += 2;
+        }
+      }
+      return buffer;
+    }
+
+    function stopFallbackAndTranscribe() {
+      var fb = fallback; fallback = null;
+      if (!fb) return;
+      releaseStream(fb.stream, fb.ctx, fb.node);
+      var wav = encodeWav(fb.chunks, fb.ctx.sampleRate);
+      if (!wav || wav.byteLength < 2000) { showError('Didn\u2019t catch that — try again'); return; }
+      sessionActive = false;
+      var fd = new FormData();
+      fd.append('file', new Blob([wav], { type: 'audio/wav' }), 'speech.wav');
+      fetch('/api/voice/transcribe', { method: 'POST', body: fd })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (j) {
+          var text = ((j && j.text) || '').trim();
+          if (text) finishCapture(text);
+          else showError('Didn\u2019t catch that — try again');
+        })
+        .catch(function () { showError('Speech recognition failed — use text chat'); });
+    }
+    // ---------------- Shared: review window → existing pipeline ----------------
+    function finishCapture(text) {
+      setState('idle');
+      chatInput.value = text;
+      // Requirement: the transcript lands in the existing chat input so the
+      // user can review/edit it; it auto-sends through the SAME sendMessage()
+      // pipeline unless the user starts typing (editing cancels auto-send).
+      chatInput.placeholder = 'Review or edit — sending automatically\u2026';
+      graceText = text;
+      sessionActive = true; // this turn's reply should be spoken
+      clearTimeout(graceTimer);
+      graceTimer = setTimeout(function () {
+        graceTimer = null;
+        if (sessionActive && chatInput.value.trim() === graceText) {
+          setState('processing');
+          inputPlaceholder('ZYRA is thinking...');
+          try { sendMessage(text); } catch (e) { showError('Could not send the message'); }
+        }
+      }, 2500);
+    }
+
+    function cancelGrace() {
+      if (graceTimer) { clearTimeout(graceTimer); graceTimer = null; sessionActive = false; }
+    }
+
+    // ---------------- Mic button state machine ----------------
+    function toggleMic() {
+      clearTimeout(errorTimer);
+      if (state === 'listening') {
+        // click again = cancel capture (typed chat remains fully functional)
+        cancelled = true;
+        clearWatchdog();
+        if (recognition) { try { recognition.stop(); } catch (e) {} }
+        else if (fallback) {
+          releaseStream(fallback.stream, fallback.ctx, fallback.node);
+          fallback = null;
+          setState('idle');
+        }
+        return;
+      }
+      if (state === 'speaking') { stopSpeaking(false); return; } // interrupt ZYRA
+      if (state === 'processing') return;                        // prevent duplicates
+      cancelGrace();
+      if (SRClass) startStreaming();
+      else startFallback();
+    }
+
+    micBtn.addEventListener('click', toggleMic);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if (state === 'speaking') stopSpeaking(false);
+        else if (state === 'listening') toggleMic();
+      }
+    });
+    // Any typing / clicking into the input cancels the auto-send review window
+    chatInput.addEventListener('keydown', cancelGrace);
+    chatInput.addEventListener('mousedown', cancelGrace);
+
+    // Sending any message stops ongoing speech (no overlapping audio, no leaks)
+    chatSend.addEventListener('click', function () { stopSpeaking(true); if (state === 'speaking') setState('idle'); });
+    chatInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && state === 'speaking') { stopSpeaking(true); setState('idle'); }
+    });
+
+    // Hooks used by the WebSocket response handler and typed-send paths
+    window.__zyraVoiceHook = function (replyText) {
+      if (!sessionActive) return;          // typed turn → never speak
+      sessionActive = false;
+      if (typeof replyText === 'string' && replyText.trim()) speakText(replyText);
+      else setState('idle');
+    };
+    window.__zyraVoiceStop = function () {
+      cancelGrace();
+      stopSpeaking(true);
+      if (state === 'speaking') setState('idle');
+      sessionActive = false;
+    };
+  })();
 
   // ===== SYSTEM MONITOR CONTROLLER =====
   const monitorCard = document.getElementById('system-monitor-card');
@@ -4575,6 +4987,10 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   try { var saved = JSON.parse(localStorage.getItem(ZS_KEY) || '{}'); if (saved) for (var k in ZS_DEFAULTS) if (k in saved) zs[k] = saved[k]; } catch (e) {}
 
   function zsSave() { try { localStorage.setItem(ZS_KEY, JSON.stringify(zs)); } catch (e) {} }
+  // Voice layer reads the live "Speak ZYRA responses aloud" toggle + volume.
+  window.zyraVoiceSettings = function () {
+    return { enabled: !!zs.voiceEnabled, volume: (parseInt(zs.voiceVolume, 10) || 80) / 100 };
+  };
   function zsStatus(id, ok, txt) {
     var el = document.getElementById(id); if (!el) return;
     el.textContent = txt || (ok ? 'saved' : 'error');

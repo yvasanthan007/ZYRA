@@ -98,18 +98,6 @@ electron_1.ipcMain.handle('command:execute', async (_event, command) => {
         return 'Error: Python bridge not initialized';
     return pythonBridge.sendCommand({ type: 'command', data: command });
 });
-// Toggle voice listening
-electron_1.ipcMain.handle('voice:toggle', async (_event, enabled) => {
-    if (!pythonBridge)
-        return 'Error: Python bridge not initialized';
-    return pythonBridge.sendCommand({ type: 'voice_toggle', data: enabled });
-});
-// Get voice status
-electron_1.ipcMain.handle('voice:status', async () => {
-    if (!pythonBridge)
-        return { listening: false };
-    return pythonBridge.sendCommand({ type: 'voice_status', data: null });
-});
 // Remember something
 electron_1.ipcMain.handle('memory:remember', async (_event, key, value) => {
     if (!pythonBridge)

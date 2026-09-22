@@ -234,7 +234,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(async () => {
-    // Permission policy: allow microphone for the dashboard voice features,
+    // Permission policy: allow microphone for the chat voice layer,
     // deny everything else (no geolocation, notifications, etc.).
     session.defaultSession.setPermissionRequestHandler(
       (_webContents, permission, callback) => {

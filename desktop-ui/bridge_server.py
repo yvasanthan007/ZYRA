@@ -117,13 +117,6 @@ def handle_message(msg):
             return {"success": True, "data": value}
         return {"success": False, "error": "Invalid recall data"}
 
-    elif msg_type == "voice_toggle":
-        # Voice toggle is handled by the UI; this is a placeholder
-        return {"success": True, "data": "Voice toggled"}
-
-    elif msg_type == "voice_status":
-        return {"success": True, "data": {"listening": False}}
-
     elif msg_type in ("system_metrics", "get_system_metrics", "monitor_system"):
         metrics = get_system_metrics()
         return {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-type View = 'chat' | 'commands' | 'monitor' | 'voice' | 'settings';
+type View = 'chat' | 'commands' | 'monitor' | 'settings';
 
 interface SidebarProps {
   activeView: View;
@@ -11,7 +11,6 @@ const navItems: Array<{ id: View; label: string; icon: string }> = [
   { id: 'chat', label: 'Chat', icon: '💬' },
   { id: 'commands', label: 'Commands', icon: '⚡' },
   { id: 'monitor', label: 'Monitor', icon: '📊' },
-  { id: 'voice', label: 'Voice', icon: '🎤' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 

@@ -5,7 +5,6 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ setStatus }) => {
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [modelName, setModelName] = useState('llama3');
   const [recallKey, setRecallKey] = useState('');
   const [recallValue, setRecallValue] = useState('');
@@ -53,21 +52,6 @@ const Settings: React.FC<SettingsProps> = ({ setStatus }) => {
             <option value="mistral">Mistral</option>
             <option value="codellama">Code Llama</option>
           </select>
-        </div>
-      </div>
-
-      <div className="settings-section">
-        <h3>Voice Settings</h3>
-        <div className="setting-row">
-          <label>Enable Voice</label>
-          <label className="toggle-switch">
-            <input
-              type="checkbox"
-              checked={voiceEnabled}
-              onChange={(e) => setVoiceEnabled(e.target.checked)}
-            />
-            <span className="toggle-slider"></span>
-          </label>
         </div>
       </div>
 

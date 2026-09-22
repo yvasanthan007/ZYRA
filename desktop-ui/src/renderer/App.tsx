@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatView from './components/ChatView';
 import CommandPanel from './components/CommandPanel';
-import VoiceControl from './components/VoiceControl';
 import Settings from './components/Settings';
 import SystemMonitor from './components/SystemMonitor';
 
-type View = 'chat' | 'commands' | 'monitor' | 'voice' | 'settings';
+type View = 'chat' | 'commands' | 'monitor' | 'settings';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('chat');
@@ -20,8 +19,6 @@ const App: React.FC = () => {
         return <CommandPanel setStatus={setStatusMessage} />;
       case 'monitor':
         return <SystemMonitor setStatus={setStatusMessage} />;
-      case 'voice':
-        return <VoiceControl setStatus={setStatusMessage} />;
       case 'settings':
         return <Settings setStatus={setStatusMessage} />;
       default:

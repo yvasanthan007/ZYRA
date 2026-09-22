@@ -63,18 +63,6 @@ ipcMain.handle('command:execute', async (_event, command: string) => {
   return pythonBridge.sendCommand({ type: 'command', data: command });
 });
 
-// Toggle voice listening
-ipcMain.handle('voice:toggle', async (_event, enabled: boolean) => {
-  if (!pythonBridge) return 'Error: Python bridge not initialized';
-  return pythonBridge.sendCommand({ type: 'voice_toggle', data: enabled });
-});
-
-// Get voice status
-ipcMain.handle('voice:status', async () => {
-  if (!pythonBridge) return { listening: false };
-  return pythonBridge.sendCommand({ type: 'voice_status', data: null });
-});
-
 // Remember something
 ipcMain.handle('memory:remember', async (_event, key: string, value: string) => {
   if (!pythonBridge) return 'Error: Python bridge not initialized';

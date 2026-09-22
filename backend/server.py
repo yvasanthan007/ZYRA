@@ -5,6 +5,8 @@ Serves the desktop dashboard and provides API/WebSocket endpoints for Zyra
 import os
 import sys
 import json
+import io
+import re
 import time
 import asyncio
 import threading
@@ -24,7 +26,7 @@ for _stream in (sys.stdout, sys.stderr):
 from typing import Optional, Dict, Any
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -999,6 +1001,126 @@ async def speak_endpoint(data: Dict[str, Any]):
             status_code=500,
             content={"success": False, "error": str(e)}
         )
+
+
+# ======================================================================
+# ===== Voice Layer (additive — STT + TTS for the dashboard chat) =====
+# ======================================================================
+# These endpoints power the dashboard's microphone button:
+#   mic → browser streaming STT (Web Speech API) → existing /ws chat
+#   pipeline → sentence-chunked progressive TTS via /api/voice/tts.
+# They are purely additive: no existing endpoint, pipeline or the
+# Neural Core (brain.py) is modified in any way.
+
+_ZYRA_TTS_VOICE = "en-US-AriaNeural"   # same natural female voice as speak.py
+_TTS_MAX_CHARS = 2000                  # matches speak.py MAX_TEXT_LEN
+_TTS_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+_TTS_WS_RE = re.compile(r"\s+")
+
+
+@app.post("/api/voice/tts")
+async def voice_tts_endpoint(data: Dict[str, Any]):
+    """
+    Text-to-speech for the dashboard voice layer.
+
+    Request body:
+        {"text": "Hello, I am Zyra"}
+
+    Response:
+        audio/mpeg bytes synthesized with the same Edge neural voice
+        (en-US-AriaNeural) the desktop voice loop already uses.
+
+    The client splits replies into sentence chunks and calls this per chunk,
+    so spoken playback starts before the whole reply would be synthesized.
+    """
+    text = str(data.get("text", "") or "")
+    text = _TTS_WS_RE.sub(" ", _TTS_CONTROL_RE.sub(" ", text)).strip()
+    if not text:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Text is required"}
+        )
+    if len(text) > _TTS_MAX_CHARS:
+        text = text[:_TTS_MAX_CHARS].rstrip()
+
+    try:
+        import edge_tts  # deferred: the voice layer must never break startup
+        communicate = edge_tts.Communicate(text, _ZYRA_TTS_VOICE)
+        buf = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                buf.write(chunk["data"])
+        audio = buf.getvalue()
+    except Exception as exc:
+        return JSONResponse(
+            status_code=502,
+            content={"success": False, "error": f"TTS unavailable: {exc}"}
+        )
+
+    if not audio:
+        return JSONResponse(
+            status_code=502,
+            content={"success": False, "error": "TTS service returned no audio"}
+        )
+    return Response(content=audio, media_type="audio/mpeg")
+
+
+@app.post("/api/voice/transcribe")
+async def voice_transcribe_endpoint(file: UploadFile = File(...)):
+    """
+    Speech-to-text fallback for browsers without the Web Speech API.
+
+    Accepts a small mono WAV file (16 kHz recommended) recorded client-side
+    and transcribes it with the same free Google Web Speech backend the
+    desktop voice loop (listen.py) already uses.
+
+    Response:
+        {"success": true, "text": "open chrome"}
+    """
+    raw = await file.read()
+    if not raw:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "Empty audio upload"}
+        )
+    if len(raw) > 8 * 1024 * 1024:
+        return JSONResponse(
+            status_code=413,
+            content={"success": False, "error": "Audio too large"}
+        )
+
+    import tempfile
+    import speech_recognition as sr
+
+    tmp_path = None
+    try:
+        fd, tmp_path = tempfile.mkstemp(suffix=".wav")
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(raw)
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(tmp_path) as source:
+            audio = recognizer.record(source)
+        try:
+            text = recognizer.recognize_google(audio, language="en-US")
+        except sr.UnknownValueError:
+            text = ""
+        except sr.RequestError as exc:
+            return JSONResponse(
+                status_code=503,
+                content={"success": False, "error": f"STT service unavailable: {exc}"}
+            )
+        return {"success": True, "text": (text or "").strip()}
+    except Exception as exc:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": f"Transcription failed: {exc}"}
+        )
+    finally:
+        if tmp_path:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
 
 
 @app.post("/api/analyze-link")
