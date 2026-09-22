@@ -61,6 +61,12 @@ from backend.nmap_service import (
     build_nmap_command,
 )
 
+# ── "Scan My Network" (real-time local subnet host discovery) ──
+from backend.network_scan import (
+    is_network_scan_intent,
+    scan_my_network,
+)
+
 # Command map for executing voice commands programmatically
 COMMAND_MAP = {
     "open_chrome": open_chrome,
@@ -158,6 +164,17 @@ def process_chat(message: str) -> str:
     if is_dns_intent(message):
         target = extract_dns_target(message)
         return dns_build_chat_ack(target)
+
+    # ── "Scan My Network" (real-time local subnet host discovery) ──
+    # Typed and spoken requests both land here. The shared scan function
+    # detects the local private IPv4/subnet, validates it and runs
+    # `nmap -sn <subnet>` — the FULL results are returned directly inside
+    # the existing chat, so ZYRA never hallucinates network data.
+    if is_network_scan_intent(message):
+        return scan_my_network().get(
+            "chat_response",
+            "The network scan could not be completed.",
+        )
 
     # ── Nmap Network Scanner ──
     # Intent detection is handled by the backend; the actual scan runs in the

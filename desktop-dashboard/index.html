@@ -542,6 +542,38 @@ canvas {
   border-color: rgba(255,136,68,0.5);
   box-shadow: 0 0 20px rgba(255,136,68,0.15);
 }
+/* Voice input (mic) button — ChatGPT-style, inside the existing chat input row */
+#chat-mic {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255,136,68,0.15);
+  border: 1px solid rgba(255,136,68,0.3);
+  color: #ff8844;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+#chat-mic:hover {
+  background: rgba(255,136,68,0.25);
+  border-color: rgba(255,136,68,0.5);
+  box-shadow: 0 0 20px rgba(255,136,68,0.15);
+}
+#chat-mic.listening {
+  background: rgba(255,82,82,0.22);
+  border-color: rgba(255,82,82,0.65);
+  color: #ff6b6b;
+  animation: micPulse 1.4s ease-in-out infinite;
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,82,82,0.45); }
+  50% { box-shadow: 0 0 0 9px rgba(255,82,82,0); }
+}
 
 /* ===== NMAP SCANNER HUD CARD ===== */
 .top-actions-col {
@@ -1489,6 +1521,9 @@ body.zyra-light #chat-input:focus { border-color: #56bdff; box-shadow: 0 0 0 2px
 body.zyra-light #chat-input::placeholder { color: rgba(220,238,255,.58); }
 body.zyra-light #chat-send { background: #1677ff; border-color: #56bdff; color: #fff; box-shadow: 0 0 16px rgba(22,119,255,.42); }
 body.zyra-light #chat-send:hover { background: #3998ff; box-shadow: 0 0 22px rgba(80,184,255,.55); }
+body.zyra-light #chat-mic { background: #1677ff; border-color: #56bdff; color: #fff; box-shadow: 0 0 16px rgba(22,119,255,.42); }
+body.zyra-light #chat-mic:hover { background: #3998ff; box-shadow: 0 0 22px rgba(80,184,255,.55); }
+body.zyra-light #chat-mic.listening { background: #ff4d4d; border-color: #ff8a8a; color: #fff; animation: micPulse 1.4s ease-in-out infinite; }
 body.zyra-light .system-monitor-card, body.zyra-light .nmap-scanner-card, body.zyra-light .url-analyzer-card, body.zyra-light #zyra-settings-panel { background: linear-gradient(180deg, rgba(5,27,57,.96), rgba(2,13,29,.97)); border-color: rgba(71,166,255,.4); color: #eaf5ff; box-shadow: 0 12px 36px rgba(0,0,0,.6), 0 0 24px rgba(22,119,255,.2); }
 body.zyra-light .sm-header, body.zyra-light .nm-header, body.zyra-light .url-header, body.zyra-light .zs-header { background: linear-gradient(90deg, rgba(22,119,255,.22), transparent); border-color: rgba(71,166,255,.25); }
 body.zyra-light .sm-metric-card, body.zyra-light .sm-info-card, body.zyra-light .nm-info-card, body.zyra-light .url-section, body.zyra-light .sm-status-card { background: rgba(5,29,60,.7); border-color: rgba(71,166,255,.2); }
@@ -2138,6 +2173,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       <div id="chat-messages"></div>
       <div id="chat-input-row">
         <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
+        <button id="chat-mic" title="Voice input" aria-label="Voice input">🎤</button>
         <button id="chat-send" title="Send message">➤</button>
       </div>
     </div>
@@ -2738,11 +2774,14 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     const msg = document.createElement('div');
     msg.className = 'msg ' + type;
     if (type === 'zyra') {
-      // Escape HTML so AI output containing <, > or & can never break the feed
+      // Escape HTML so AI output containing <, > or & can never break the feed;
+      // newlines are preserved so multi-line responses (e.g. network scan
+      // results) render as separate lines.
       const safeText = String(text)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
       msg.innerHTML = '<div class="zyra-label">ZYRA</div>' + safeText;
     } else {
       msg.textContent = text;
@@ -2890,6 +2929,9 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
   function sendMessage(text) {
     if (!text || !text.trim()) return;
+    // Sending while the mic is live (e.g. pressing Enter) stops the voice
+    // session first — the input content itself is what gets submitted.
+    if (voiceActive) voiceStopListening();
     const cleanText = text.trim();
     const lowerText = cleanText.toLowerCase();
     if (lowerText.includes('monitor my system') ||
@@ -2908,7 +2950,9 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     }
     // Nmap requests: open the panel immediately; the backend detects the
     // intent, launches the whitelisted scan and streams live status back.
-    if (isNmapRequest(lowerText)) {
+    // ("Scan my network" is answered fully in the chat by the real-time
+    // local-subnet scanner, so the panel flow is skipped for it.)
+    if (isNmapRequest(lowerText) && !isNetworkScanRequest(lowerText)) {
       openNmapPanel();
       setNmapStageHint(cleanText);
     }
@@ -2941,6 +2985,147 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       sendMessage(chatInput.value);
     }
   });
+
+  // ===== CHATGPT-STYLE VOICE INPUT =====
+  // Mic button inside the existing chat input row. Clicking it immediately
+  // starts microphone listening (permission is requested by the browser on
+  // first use) and continuously transcribes speech INTO THE SAME chat input.
+  // Tapping the mic again stops listening and submits the recognized text
+  // through the EXISTING sendMessage() pipeline — so voice and typed input
+  // follow the exact same ZYRA processing flow. No separate voice page.
+  const chatMic = document.getElementById('chat-mic');
+  const CHAT_INPUT_PLACEHOLDER = 'Message ZYRA...';
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let voiceRec = null;        // active SpeechRecognition instance
+  let voiceActive = false;    // true while the user wants to keep listening
+  let voiceBase = '';         // input text before this listening session
+  let voiceFinal = '';        // finalized transcript segments
+  let voiceInterim = '';      // in-flight (not yet final) segment
+
+  function voiceRenderInput() {
+    if (!chatInput) return;
+    const spacer = (voiceBase && (voiceFinal || voiceInterim)) ? ' ' : '';
+    chatInput.value =
+      (voiceBase + spacer + voiceFinal + (voiceFinal && voiceInterim ? ' ' : '') + voiceInterim);
+  }
+
+  function voiceSetMicUI(listening) {
+    if (!chatMic) return;
+    chatMic.classList.toggle('listening', listening);
+    chatMic.title = listening ? 'Stop voice input and send' : 'Voice input';
+    chatMic.textContent = listening ? '⏹' : '🎤';
+  }
+
+  function voiceReportError(code) {
+    if (code === 'not-allowed' || code === 'service-not-allowed') {
+      addMessage('Microphone access was denied. Allow microphone permission for ZYRA and try again.', 'system');
+    } else if (code === 'audio-capture') {
+      addMessage('No microphone was found. Please connect a microphone and try again.', 'system');
+    } else if (code === 'network') {
+      addMessage('Speech recognition needs an internet connection. Please check your network and try again.', 'system');
+    } else if (code && code !== 'aborted' && code !== 'no-speech') {
+      addMessage('Voice input error: ' + code, 'system');
+    }
+  }
+
+  function voiceCleanup() {
+    voiceRec = null;
+    voiceActive = false;
+    voiceBase = '';
+    voiceFinal = '';
+    voiceInterim = '';
+    voiceSetMicUI(false);
+    if (chatInput) chatInput.placeholder = CHAT_INPUT_PLACEHOLDER;
+  }
+
+  function voiceStopListening() {
+    if (voiceRec) {
+      try { voiceRec.stop(); } catch (err) { /* already stopped */ }
+    }
+    voiceCleanup();
+  }
+
+  function voiceStartListening() {
+    if (!chatInput || !chatMic) return;
+    if (voiceActive) return;
+    if (!SpeechRec) {
+      addMessage('Voice input is not supported in this browser/runtime. Please type your message instead.', 'system');
+      return;
+    }
+    voiceBase = chatInput.value.trim();
+    voiceFinal = '';
+    voiceInterim = '';
+    try {
+      voiceRec = new SpeechRec();
+    } catch (err) {
+      addMessage('Voice input could not start: ' + (err && err.message ? err.message : err), 'system');
+      voiceRec = null;
+      return;
+    }
+    voiceRec.continuous = true;
+    voiceRec.interimResults = true;
+    voiceRec.lang = navigator.language || 'en-US';
+
+    voiceRec.onstart = function () {
+      voiceActive = true;
+      voiceSetMicUI(true);
+      chatInput.placeholder = 'Listening... tap the mic to stop and send';
+    };
+
+    voiceRec.onresult = function (event) {
+      voiceInterim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        if (res.isFinal) {
+          const seg = String(res[0].transcript).trim();
+          if (seg) voiceFinal = (voiceFinal ? voiceFinal + ' ' : '') + seg;
+        } else {
+          voiceInterim = String(res[0].transcript);
+        }
+      }
+      voiceRenderInput();
+    };
+
+    voiceRec.onerror = function (event) {
+      const code = event && event.error;
+      if (code === 'no-speech') return; // keep listening; silence is fine
+      voiceReportError(code);
+      voiceCleanup();
+      try { if (voiceRec) voiceRec.stop(); } catch (err) { /* ignore */ }
+    };
+
+    voiceRec.onend = function () {
+      // Chromium auto-ends the session after silence pauses — restart while
+      // the user still wants continuous listening (until they tap the mic).
+      if (voiceActive && voiceRec) {
+        try { voiceRec.start(); return; } catch (err) { /* fall through */ }
+      }
+      voiceCleanup();
+    };
+
+    try {
+      voiceRec.start();
+    } catch (err) {
+      addMessage('Voice input could not start: ' + (err && err.message ? err.message : err), 'system');
+      voiceCleanup();
+      return;
+    }
+  }
+
+  if (chatMic) {
+    chatMic.addEventListener('click', function () {
+      if (voiceActive) {
+        // Stop listening. The recognized text (already visible in the chat
+        // input) is submitted through the EXACT same existing pipeline.
+        voiceStopListening();
+        const text = (chatInput && chatInput.value || '').trim();
+        if (text) sendMessage(text);
+      } else {
+        voiceStartListening();
+      }
+    });
+  }
+
 
   // ===== SYSTEM MONITOR CONTROLLER =====
   const monitorCard = document.getElementById('system-monitor-card');
@@ -3267,6 +3452,24 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
   function isNmapRequest(lowerText) {
     return NMAP_TRIGGER_PHRASES.some(function (p) { return lowerText.includes(p); });
+  }
+
+  // Real-time local-subnet scan phrases (mirrors backend is_network_scan_intent).
+  // "Scan my network" etc. are answered fully inside the chat, so they must
+  // NOT trigger the separate Nmap Scanner panel flow.
+  const NETWORK_SCAN_TRIGGER_PHRASES = [
+    'scan my network', 'scan the network', 'scan my local network',
+    'scan the local network', 'scan network', 'network scan',
+    'show devices on my network', 'show devices on the network',
+    'discover devices on my network', 'discover devices on the network',
+    'devices on my network', 'find devices on my network',
+    'what devices are on my network', 'discover hosts on my network',
+    'show devices on my wifi', 'scan my wifi network'
+  ];
+  function isNetworkScanRequest(lowerText) {
+    if (!lowerText) return false;
+    if (/\b(?:\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?\b/.test(lowerText)) return false;
+    return NETWORK_SCAN_TRIGGER_PHRASES.some(function (p) { return lowerText.includes(p); });
   }
 
   function openNmapPanel() {

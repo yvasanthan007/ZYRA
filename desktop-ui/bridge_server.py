@@ -38,6 +38,11 @@ from system_monitor import (
     start_system_monitor,
 )
 
+# ── "Scan My Network" (real-time local subnet host discovery) ──
+# Same shared backend scan function the FastAPI chat bridge uses, so typed
+# and spoken network-scan requests behave identically in both UIs.
+from backend.network_scan import is_network_scan_intent, scan_my_network
+
 COMMAND_MAP = {
     "open_chrome": open_chrome,
     "open_vscode": open_vscode,
@@ -87,6 +92,15 @@ def handle_message(msg):
         if isinstance(data, str):
             if is_system_monitor_intent(data):
                 return {"success": True, "data": format_system_monitor_text()}
+            # Real-time local network scan — results returned directly in chat.
+            if is_network_scan_intent(data):
+                return {
+                    "success": True,
+                    "data": scan_my_network().get(
+                        "chat_response",
+                        "The network scan could not be completed.",
+                    ),
+                }
             answer = ask_ai(data)
             return {"success": True, "data": answer}
         return {"success": False, "error": "Invalid chat data"}

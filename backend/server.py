@@ -54,6 +54,7 @@ from system_monitor import (
     start_system_monitor,
 )
 from nmap_handler import is_nmap_intent
+from backend.network_scan import is_network_scan_intent
 from backend.nmap_service import (
     SCAN_OPERATIONS,
     build_nmap_command,
@@ -1608,6 +1609,10 @@ async def websocket_endpoint(websocket: WebSocket):
                     msg_type in ("chat", "voice")
                     and bool(nmap_text)
                     and (result.get("action") == "nmap_scan" or is_nmap_intent(nmap_text))
+                    # "Scan my network" is answered fully inside the chat by
+                    # the shared real-time local-subnet scanner — no separate
+                    # panel scan is launched for it (avoids a double scan).
+                    and not is_network_scan_intent(nmap_text)
                 )
                 if nmap_intent:
                     op_key, op_meta = resolve_operation(nmap_text)

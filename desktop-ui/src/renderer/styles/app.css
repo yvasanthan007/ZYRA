@@ -277,6 +277,35 @@ body {
   cursor: not-allowed;
 }
 
+/* Voice input (mic) button — ChatGPT-style, inside the existing chat input */
+.mic-button {
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  transition: var(--transition);
+  align-self: flex-end;
+}
+
+.mic-button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.mic-button.listening {
+  background: var(--accent);
+  color: white;
+  animation: micPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 136, 68, 0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 136, 68, 0); }
+}
+
 /* ===== Command Panel ===== */
 .command-panel {
   display: flex;
