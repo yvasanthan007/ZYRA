@@ -477,6 +477,128 @@ def ask_ai(question) -> str:
 
 
 # ──────────────────────────────────────────────
+# Streaming voice path (latency-optimized)
+# ──────────────────────────────────────────────
+
+def ask_ai_stream(question) -> "generator":
+    """Streaming variant of ask_ai for the voice loop.
+
+    Yields sentence chunks as the model generates them, so the voice loop can
+    start speaking from the very first sentence instead of waiting for the
+    full reply. Conversation state, system prompt, memory injection, and the
+    thread-safe locking behave exactly like ask_ai. On error, yields a single
+    friendly fallback message (never raises).
+    """
+    if not question or not str(question).strip():
+        yield "Please say something!"
+        return
+
+    question = str(question).strip()
+    system_text = _build_system_prompt(_memory_digest(), datetime.datetime.now())
+
+    with _conversation_lock:
+        _refresh_system_locked(system_text)
+        conversation.append({"role": "user", "content": question})
+        _prune_locked()
+
+    messages_snapshot = list(conversation)
+    started = time.monotonic()
+    collected: List[str] = []
+    first_token_at = None
+
+    try:
+        sender = _get_client() or ollama
+        stream = sender.chat(
+            model=_ACTIVE_MODEL,
+            messages=messages_snapshot,
+            keep_alive=AI_KEEP_ALIVE,
+            stream=True,
+            options={
+                "temperature": AI_TEMPERATURE,
+                "num_predict": AI_NUM_PREDICT,
+            },
+        )
+        for part in stream:
+            try:
+                content = part["message"]["content"]
+            except (KeyError, TypeError, AttributeError):
+                content = ""
+            if not content:
+                continue
+            if first_token_at is None:
+                first_token_at = time.monotonic()
+                print(
+                    f"brain: first token in {first_token_at - started:.2f}s "
+                    f"(model={get_model()})"
+                )
+            collected.append(content)
+
+            # Emit sentence-sized chunks for natural TTS pacing.
+            buffer = "".join(collected)
+            while True:
+                m = re.search(r"[.!?](?=\s|$)", buffer)
+                if not m:
+                    break
+                sentence = buffer[: m.end()].strip()
+                buffer = buffer[m.end():].strip()
+                if sentence:
+                    yield sentence
+                collected = [buffer] if buffer else []
+
+        # Flush whatever is left over (a trailing fragment without final
+        # punctuation, or the whole answer when it had none).
+        leftover = "".join(collected).strip()
+        if leftover:
+            yield _sanitize_answer(leftover)
+
+    except Exception as exc:  # noqa: BLE001 - never break the voice loop
+        elapsed = time.monotonic() - started
+        print(f"brain: streaming AI error after {elapsed:.1f}s: {exc}")
+        # Emit a friendly error so the user still hears a reply.
+        if isinstance(exc, ollama.ResponseError):
+            yield _friendly_ollama_error(exc)
+        else:
+            yield (
+                "Sorry, I'm having trouble reaching the AI model. "
+                "Please make sure Ollama is running and try again."
+            )
+        return
+
+    # Record the assistant reply in conversation history (thread-safe).
+    answer = _sanitize_answer("".join(collected))
+    if answer:
+        with _conversation_lock:
+            conversation.append({"role": "assistant", "content": answer})
+            _prune_locked()
+        print(
+            f"brain: stream reply complete in {time.monotonic() - started:.2f}s "
+            f"({len(answer)} chars)"
+        )
+    elif first_token_at is None:
+        # Nothing was ever produced — fall back to a non-streaming call so the
+        # user still gets a spoken answer (reliability preserved).
+        print("brain: streaming produced no tokens, falling back to ask_ai")
+        yield ask_ai(question)
+
+
+__all__ = [
+    "ask_ai",
+    "ask_ai_stream",
+    "available_models",
+    "clear_conversation",
+    "get_conversation",
+    "get_model",
+    "set_model",
+    "conversation",
+    "warm_up_model",
+    "warm_up_async",
+    "MAX_HISTORY",
+    "AI_TIMEOUT_SECONDS",
+    "AI_RESPONSE_BUDGET_SECONDS",
+]
+
+
+# ──────────────────────────────────────────────
 # Model warm-up (removes the cold-start penalty)
 # ──────────────────────────────────────────────
 

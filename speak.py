@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 import tempfile
+import threading
 
 import edge_tts
 import pygame
@@ -15,10 +16,25 @@ MAX_RETRIES = 3
 RETRY_DELAY = 1.2          # seconds, multiplied by attempt number
 MAX_TEXT_LEN = 2000
 
+# Latency tuning: first TTS attempt gets one fast retry instead of three slow
+# ones so a transient endpoint hiccup doesn't stall the voice reply for
+# multiple seconds. (Reliability is preserved by the caller's error handling.)
+MAX_RETRIES_FIRST_CHUNK = 2
+
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _WS_RE = re.compile(r"\s+")
 
 pygame.mixer.init()
+
+# One persistent event loop is created once at import time and reused for
+# every TTS call — `asyncio.run()` in the old code built and tore down a full
+# event loop (plus a fresh HTTPS connection pool) on every single reply.
+_tts_loop = asyncio.new_event_loop()
+threading.Thread(target=_tts_loop.run_forever, name="zyra-tts-loop", daemon=True).start()
+
+# Tracks the currently-playing audio so a new interaction can cleanly
+# interrupt the previous utterance instead of speaking over it.
+_speak_lock = threading.Lock()
 
 
 def sanitize_tts_text(text):
@@ -61,6 +77,17 @@ def _sapi_fallback(text):
         return False
 
 
+def _speak_text_now(text):
+    """Blocking convenience used by the async helpers below.
+
+    Runs `wait_for_speech` on the persistent loop and returns its result.
+    """
+    future = asyncio.run_coroutine_threadsafe(
+        _render_audio(text, _get_output_file()), _tts_loop
+    )
+    return future.result()
+
+
 async def _render_audio(text, output_file):
     """Synthesize text to the output mp3 file with retry + non-empty check.
 
@@ -80,10 +107,30 @@ async def _render_audio(text, output_file):
     return False
 
 
-async def _speak_async(text):
-    # Use a temporary file to avoid conflicts
+def _get_output_file():
+    """Stable temp path reused between calls (no churn of temp files)."""
     temp_dir = tempfile.gettempdir()
-    output_file = os.path.join(temp_dir, "zyra_voice.mp3")
+    return os.path.join(temp_dir, "zyra_voice.mp3")
+
+
+def stop_speaking():
+    """Immediately stop any currently-playing TTS audio.
+
+    Used when the user starts a new interaction while ZYRA is still talking,
+    so the old response never speaks over the new one.
+    """
+    try:
+        if pygame.mixer.get_init():
+            pygame.mixer.music.stop()
+            pygame.mixer.music.unload()
+    except Exception:
+        pass
+
+
+async def _speak_async(text):
+    # Reuse a stable temp file path instead of creating/deleting a new one
+    # for every utterance.
+    output_file = _get_output_file()
 
     success = await _render_audio(text, output_file)
     if not success:
@@ -121,15 +168,11 @@ def speak(text):
         if not pygame.mixer.get_init():
             pygame.mixer.init()
 
-        spoke = asyncio.run(_speak_async(text))
-    except RuntimeError:
-        # If event loop is already running, create a new one
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            spoke = loop.run_until_complete(_speak_async(text))
-        finally:
-            loop.close()
+        with _speak_lock:
+            # A fresh interaction interrupts whatever was still playing.
+            stop_speaking()
+            future = asyncio.run_coroutine_threadsafe(_speak_async(text), _tts_loop)
+            spoke = future.result()
     except Exception as e:
         print(f"TTS Error: {e}")
 

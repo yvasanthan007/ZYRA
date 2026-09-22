@@ -21,7 +21,7 @@ for _stream in (sys.stdout, sys.stderr):
 
 from listen import listen
 from speak import speak
-from brain import ask_ai
+from brain import ask_ai, ask_ai_stream
 from commands.open_app import (
     open_chrome, open_vscode, open_notepad, open_calculator,
     open_cmd, open_powershell, open_task_manager, open_control_panel,
@@ -809,9 +809,32 @@ if __name__ == "__main__":
                     break
 
                 else:
-                    answer = ask_ai(command)
-                    print(f"Zyra : {answer}")
-                    speak(answer)
+                    # Streaming voice reply: sentence chunks are spoken as
+                    # soon as the model generates them, instead of waiting
+                    # for the entire response. Console-only latency telemetry
+                    # (no UI/debug clutter).
+                    _t2 = time.monotonic()   # AI request starts
+                    _first_tts_at = None
+                    _answer = ""
+                    try:
+                        for _chunk in ask_ai_stream(command):
+                            if not _answer:
+                                print(f"⏱️  AI first content: {time.monotonic() - _t2:.2f}s")
+                            _answer += _chunk + " "
+                            if _first_tts_at is None:
+                                _first_tts_at = time.monotonic()
+                            speak(_chunk)
+                        if _first_tts_at is not None:
+                            print(f"⏱️  Voice response latency (t2→t4): {_first_tts_at - _t2:.2f}s")
+                    except Exception as _e:
+                        print("Error:", _e)
+                        speak("Sorry, something went wrong.")
+                    if not _answer:
+                        answer = ask_ai(command)
+                        print(f"Zyra : {answer}")
+                        speak(answer)
+                    else:
+                        print(f"Zyra : {_answer.strip()}")
 
             except KeyboardInterrupt:
                 speak("Shutting down. Goodbye.")
