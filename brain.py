@@ -370,14 +370,37 @@ def _friendly_ollama_error(exc: BaseException) -> str:
 # Core chat runner (retry + backoff)
 # ──────────────────────────────────────────────
 
+def _reselect_missing_model(chat_kwargs: Dict[str, Any]) -> bool:
+    """Re-discover installed models after a 404 'model not found'.
+
+    _ACTIVE_MODEL is frozen at import time; if Ollama was unreachable then
+    (or the model was removed later) every chat fails with a 404. Re-running
+    the selection now lets ZYRA heal itself by switching to a model that is
+    actually installed. Returns True when a different model was picked.
+    """
+    global _ACTIVE_MODEL
+    previous = _ACTIVE_MODEL
+    try:
+        candidate = _select_model()
+    except Exception:  # noqa: BLE001 - selection is best effort
+        return False
+    if not candidate or candidate == previous:
+        return False
+    print(f"brain: model '{previous}' not found — switching to '{candidate}'")
+    _ACTIVE_MODEL = candidate
+    chat_kwargs["model"] = candidate
+    return True
+
+
 def _run_chat(messages: List[Dict[str, str]]) -> Any:
     """Invoke Ollama within the hard reply budget.
 
     A deadline is enforced across attempts: the first call gets the whole
     budget and the single retry only happens when enough of it is left, so
-    the total wall time never exceeds AI_RESPONSE_BUDGET_SECONDS. Raises the
-    original final exception on persistent failure; ask_ai converts it into
-    a friendly message.
+    the total wall time never exceeds AI_RESPONSE_BUDGET_SECONDS. A 404
+    (stale model pick) triggers one re-discovery + retry instead of failing.
+    Raises the original final exception on persistent failure; ask_ai
+    converts it into a friendly message.
     """
     sender = _get_client() or ollama
     chat_kwargs = {
@@ -391,14 +414,18 @@ def _run_chat(messages: List[Dict[str, str]]) -> Any:
     }
     deadline = time.monotonic() + AI_RESPONSE_BUDGET_SECONDS
     last_exc: Optional[BaseException] = None
+    reselected = False
     for attempt in range(_MAX_ATTEMPTS):
         try:
             return sender.chat(**chat_kwargs)
         except ollama.ResponseError as exc:
             status = getattr(exc, "status_code", None)
-            # 429/500/503 are transient (rate limit / model still loading);
-            # 404 means the model is not pulled and will not fix itself.
-            if attempt == 0 and status in (429, 500, 503):
+            # 429/500/503 are transient (rate limit / model still loading).
+            # 404 means the model is missing: re-discover what IS installed
+            # and retry once with that instead of hard-failing.
+            if attempt == 0 and status == 404 and _reselect_missing_model(chat_kwargs):
+                reselected = True
+            elif attempt == 0 and status in (429, 500, 503):
                 last_exc = exc
             else:
                 raise
@@ -407,7 +434,8 @@ def _run_chat(messages: List[Dict[str, str]]) -> Any:
         # Never retry when the reply budget is already spent (a timeout means
         # the whole window is gone — retrying would double the wait).
         remaining = deadline - time.monotonic()
-        if attempt + 1 >= _MAX_ATTEMPTS or remaining < 1.0:
+        can_retry = attempt + 1 < _MAX_ATTEMPTS and remaining >= 1.0
+        if not can_retry or (last_exc is None and not reselected):
             if last_exc is not None:
                 raise last_exc
             raise RuntimeError("chat failed")
