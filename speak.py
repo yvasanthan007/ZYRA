@@ -10,13 +10,13 @@ What this module guarantees
   • Barge-in: ``stop_speaking()`` instantly stops playback, drops everything
     queued and invalidates in-flight synthesis, so an interrupted answer can
     never "come back" after the user starts a new request.
-  • Natural voice: Microsoft Edge neural voices, calm male voice by default,
-    moderate rate and slight depth.
+  • Natural voice: Microsoft Edge neural voices, natural female voice by default,
+    moderate rate and clear pronunciation.
   • Only clean, speakable text is ever voiced — markdown, emoji, ANSI codes,
     log prefixes ("brain:", "AI error …") and debug output are stripped.
 
 Environment configuration
-  ZYRA_TTS_VOICE=en-US-AndrewNeural     (calm, natural, slightly deep)
+  ZYRA_TTS_VOICE=en-US-JennyNeural        (natural, clear, professional female)
   ZYRA_TTS_RATE=+4%                     (moderate conversational pace)
   ZYRA_TTS_PITCH=-2Hz                   ("" disables the pitch tweak)
   ZYRA_TTS_VOLUME=+0%
@@ -50,8 +50,8 @@ import edge_tts
 # Configuration
 # ──────────────────────────────────────────────
 
-DEFAULT_VOICE = "en-US-AndrewNeural"          # calm, composed, slightly deep
-FALLBACK_VOICES = ("en-US-GuyNeural", "en-US-AriaNeural")
+DEFAULT_VOICE = "en-US-JennyNeural"          # natural, clear, professional female
+FALLBACK_VOICES = ("en-US-AriaNeural", "en-US-AvaNeural", "en-US-EmmaNeural")  # female fallbacks
 
 VOICE = os.environ.get("ZYRA_TTS_VOICE", DEFAULT_VOICE).strip() or DEFAULT_VOICE
 RATE = os.environ.get("ZYRA_TTS_RATE", "+4%").strip()
