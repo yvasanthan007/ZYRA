@@ -1,0 +1,3504 @@
+[
+ {
+  "scan_id": "url_20260831_082200_184180",
+  "url": "http://test-bank-alert.com",
+  "domain": "test-bank-alert.com",
+  "score": 65,
+  "risk_level": "MEDIUM",
+  "risk_level_label": "MEDIUM",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-08-31T08:22:00",
+  "timestamp_display": "31 Aug 2026 08:22",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260831_082200_184180",
+   "url": "http://test-bank-alert.com",
+   "display_url": "http://test-bank-alert.com",
+   "hostname": "test-bank-alert.com",
+   "domain_display": "test-bank-alert.com",
+   "score": 65,
+   "risk_level": "MEDIUM",
+   "risk_level_label": "MEDIUM",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-10 MEDIUM: Connection is not encrypted (HTTP)",
+    "-3 LOW: Urgency / manipulation keywords"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "test-bank-alert.com",
+    "registered_domain": "test-bank-alert.com",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 80,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "test-bank-alert.com",
+    "registered_domain": "test-bank-alert.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "no_https",
+     "severity": "MEDIUM",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "The URL uses plain HTTP - traffic is not encrypted.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "urgency_keywords",
+     "severity": "LOW",
+     "category": "intent",
+     "title": "Urgency / manipulation keywords",
+     "detail": "URL contains pressure keywords: alert - typical of social-engineering pages.",
+     "score_impact": 3,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-08-31T08:22:00",
+   "timestamp_display": "31 Aug 2026 08:22",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_222824_182bd6",
+  "url": "http://test-bank-alert.com",
+  "domain": "test-bank-alert.com",
+  "score": 65,
+  "risk_level": "MEDIUM",
+  "risk_level_label": "MEDIUM",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-08-30T22:28:24",
+  "timestamp_display": "30 Aug 2026 22:28",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_222824_182bd6",
+   "url": "http://test-bank-alert.com",
+   "display_url": "http://test-bank-alert.com",
+   "hostname": "test-bank-alert.com",
+   "domain_display": "test-bank-alert.com",
+   "score": 65,
+   "risk_level": "MEDIUM",
+   "risk_level_label": "MEDIUM",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-10 MEDIUM: Connection is not encrypted (HTTP)",
+    "-3 LOW: Urgency / manipulation keywords"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "test-bank-alert.com",
+    "registered_domain": "test-bank-alert.com",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 80,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "test-bank-alert.com",
+    "registered_domain": "test-bank-alert.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "no_https",
+     "severity": "MEDIUM",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "The URL uses plain HTTP - traffic is not encrypted.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "urgency_keywords",
+     "severity": "LOW",
+     "category": "intent",
+     "title": "Urgency / manipulation keywords",
+     "detail": "URL contains pressure keywords: alert - typical of social-engineering pages.",
+     "score_impact": 3,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-08-30T22:28:24",
+   "timestamp_display": "30 Aug 2026 22:28",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_222330_5e6946",
+  "url": "http://vulnweb.com",
+  "domain": "vulnweb.com",
+  "score": 90,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T22:23:30",
+  "timestamp_display": "30 Aug 2026 22:23",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_222330_5e6946",
+   "url": "http://vulnweb.com",
+   "display_url": "http://vulnweb.com",
+   "hostname": "vulnweb.com",
+   "domain_display": "vulnweb.com",
+   "score": 90,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "-10 MEDIUM: Connection is not encrypted (HTTP)"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "vulnweb.com",
+    "registered_domain": "vulnweb.com",
+    "subdomain_count": 0,
+    "ip_address": "44.228.249.3",
+    "ips": [
+     "44.228.249.3"
+    ],
+    "port": 80,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "vulnweb.com",
+    "registered_domain": "vulnweb.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "44.228.249.3"
+    ],
+    "ip_address": "44.228.249.3",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "no_https",
+     "severity": "MEDIUM",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "The URL uses plain HTTP - traffic is not encrypted.",
+     "score_impact": 10,
+     "positive": false
+    }
+   ],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T22:23:30",
+   "timestamp_display": "30 Aug 2026 22:23",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_222143_a15127",
+  "url": "https://owasp.org/www-project-juice-shop",
+  "domain": "owasp.org",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T22:21:43",
+  "timestamp_display": "30 Aug 2026 22:21",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_222143_a15127",
+   "url": "https://owasp.org/www-project-juice-shop",
+   "display_url": "https://owasp.org/www-project-juice-shop",
+   "hostname": "owasp.org",
+   "domain_display": "owasp.org",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "owasp.org",
+    "registered_domain": "owasp.org",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b7:f23a:8c3b:91e:7511:414f",
+    "ips": [
+     "2606:4700:83b7:f23a:8c3b:91e:7511:414f",
+     "104.20.44.163",
+     "172.66.157.115"
+    ],
+    "port": 443,
+    "path": "/www-project-juice-shop",
+    "query": null,
+    "fragment": null,
+    "redirects": 1,
+    "redirect_chain": [
+     {
+      "status": 301,
+      "from": "https://owasp.org/www-project-juice-shop",
+      "to": "https://owasp.org/www-project-juice-shop/"
+     }
+    ],
+    "final_url": "https://owasp.org/www-project-juice-shop/"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE1",
+    "subject": "owasp.org",
+    "expires": "Oct  6 05:06:52 2026 GMT",
+    "expires_in_days": 36,
+    "not_before": "Jul  8 04:07:11 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "owasp.org",
+     "*.owasp.org"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "owasp.org",
+    "registered_domain": "owasp.org",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b7:f23a:8c3b:91e:7511:414f",
+     "104.20.44.163",
+     "172.66.157.115"
+    ],
+    "ip_address": "2606:4700:83b7:f23a:8c3b:91e:7511:414f",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T22:21:43",
+   "timestamp_display": "30 Aug 2026 22:21",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_222014_403bcf",
+  "url": "http://testaspnet.vulnweb.com",
+  "domain": "vulnweb.com",
+  "score": 90,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T22:20:14",
+  "timestamp_display": "30 Aug 2026 22:20",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_222014_403bcf",
+   "url": "http://testaspnet.vulnweb.com",
+   "display_url": "http://testaspnet.vulnweb.com",
+   "hostname": "testaspnet.vulnweb.com",
+   "domain_display": "vulnweb.com",
+   "score": 90,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "-10 MEDIUM: Connection is not encrypted (HTTP)"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "testaspnet.vulnweb.com",
+    "registered_domain": "vulnweb.com",
+    "subdomain_count": 1,
+    "ip_address": "44.238.29.244",
+    "ips": [
+     "44.238.29.244"
+    ],
+    "port": 80,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "http://testaspnet.vulnweb.com"
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "testaspnet.vulnweb.com",
+    "registered_domain": "vulnweb.com",
+    "subdomain_count": 1,
+    "subdomains": [
+     "testaspnet"
+    ],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "44.238.29.244"
+    ],
+    "ip_address": "44.238.29.244",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "no_https",
+     "severity": "MEDIUM",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "The URL uses plain HTTP - traffic is not encrypted.",
+     "score_impact": 10,
+     "positive": false
+    }
+   ],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T22:20:14",
+   "timestamp_display": "30 Aug 2026 22:20",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_214649_a3bb6b",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T21:46:49",
+  "timestamp_display": "30 Aug 2026 21:46",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_214649_a3bb6b",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T21:46:49",
+   "timestamp_display": "30 Aug 2026 21:46",
+   "source": "chat"
+  }
+ },
+ {
+  "scan_id": "url_20260830_214612_48ccb5",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T21:46:12",
+  "timestamp_display": "30 Aug 2026 21:46",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_214612_48ccb5",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T21:46:12",
+   "timestamp_display": "30 Aug 2026 21:46",
+   "source": "chat"
+  }
+ },
+ {
+  "scan_id": "url_20260830_214322_6511ee",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T21:43:22",
+  "timestamp_display": "30 Aug 2026 21:43",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_214322_6511ee",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f23b:91f:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f23b:91f:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T21:43:22",
+   "timestamp_display": "30 Aug 2026 21:43",
+   "source": "finalcheck"
+  }
+ },
+ {
+  "scan_id": "url_20260830_214206_973ace",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T21:42:06",
+  "timestamp_display": "30 Aug 2026 21:42",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_214206_973ace",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T21:42:06",
+   "timestamp_display": "30 Aug 2026 21:42",
+   "source": "chat"
+  }
+ },
+ {
+  "scan_id": "url_20260830_202550_1b2d54",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T20:25:50",
+  "timestamp_display": "30 Aug 2026 20:25",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_202550_1b2d54",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T20:25:50",
+   "timestamp_display": "30 Aug 2026 20:25",
+   "source": "chat"
+  }
+ },
+ {
+  "scan_id": "url_20260830_202435_0ceeb4",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T20:24:35",
+  "timestamp_display": "30 Aug 2026 20:24",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_202435_0ceeb4",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T20:24:35",
+   "timestamp_display": "30 Aug 2026 20:24",
+   "source": "chat"
+  }
+ },
+ {
+  "scan_id": "url_20260830_202349_110d50",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T20:23:49",
+  "timestamp_display": "30 Aug 2026 20:23",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_202349_110d50",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T20:23:49",
+   "timestamp_display": "30 Aug 2026 20:23",
+   "source": "chat"
+  }
+ },
+ {
+  "scan_id": "url_20260830_202251_998004",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T20:22:51",
+  "timestamp_display": "30 Aug 2026 20:22",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_202251_998004",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fe:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fe:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T20:22:51",
+   "timestamp_display": "30 Aug 2026 20:22",
+   "source": "chat"
+  }
+ },
+ {
+  "scan_id": "url_20260830_202204_856baa",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T20:22:04",
+  "timestamp_display": "30 Aug 2026 20:22",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_202204_856baa",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T20:22:04",
+   "timestamp_display": "30 Aug 2026 20:22",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_201709_3fd86b",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T20:17:09",
+  "timestamp_display": "30 Aug 2026 20:17",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_201709_3fd86b",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T20:17:09",
+   "timestamp_display": "30 Aug 2026 20:17",
+   "source": "test"
+  }
+ },
+ {
+  "scan_id": "url_20260830_144116_cbbca8",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:41:16",
+  "timestamp_display": "30 Aug 2026 14:41",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_144116_cbbca8",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:41:16",
+   "timestamp_display": "30 Aug 2026 14:41",
+   "source": "test"
+  }
+ },
+ {
+  "scan_id": "url_20260830_143634_b14e9e",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:36:34",
+  "timestamp_display": "30 Aug 2026 14:36",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_143634_b14e9e",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:36:34",
+   "timestamp_display": "30 Aug 2026 14:36",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_143312_ea6b82",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:33:12",
+  "timestamp_display": "30 Aug 2026 14:33",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_143312_ea6b82",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fe:91f:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:33:12",
+   "timestamp_display": "30 Aug 2026 14:33",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_142732_6fbb4c",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:27:32",
+  "timestamp_display": "30 Aug 2026 14:27",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_142732_6fbb4c",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fd:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:27:32",
+   "timestamp_display": "30 Aug 2026 14:27",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_141217_7123f8",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:12:17",
+  "timestamp_display": "30 Aug 2026 14:12",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_141217_7123f8",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:12:17",
+   "timestamp_display": "30 Aug 2026 14:12",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_140651_542f74",
+  "url": "https://not-a-valid-url",
+  "domain": "not-a-valid-url",
+  "score": 75,
+  "risk_level": "LOW_MEDIUM",
+  "risk_level_label": "LOW-MEDIUM",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-08-30T14:06:51",
+  "timestamp_display": "30 Aug 2026 14:07",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_140651_542f74",
+   "url": "https://not-a-valid-url",
+   "display_url": "https://not-a-valid-url",
+   "hostname": "not-a-valid-url",
+   "domain_display": "not-a-valid-url",
+   "score": 75,
+   "risk_level": "LOW_MEDIUM",
+   "risk_level_label": "LOW-MEDIUM",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-3 LOW: Multiple hyphens in domain name"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "not-a-valid-url",
+    "registered_domain": "not-a-valid-url",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "unreachable",
+    "https_enabled": true,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Domain could not be resolved."
+   },
+   "domain": {
+    "hostname": "not-a-valid-url",
+    "registered_domain": "not-a-valid-url",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "hyphenated_domain",
+     "severity": "LOW",
+     "category": "domain",
+     "title": "Multiple hyphens in domain name",
+     "detail": "Hyphen-heavy domains are frequently registered to imitate legitimate brands (e.g. secure-paypal-login).",
+     "score_impact": 3,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-08-30T14:06:51",
+   "timestamp_display": "30 Aug 2026 14:07",
+   "source": "test"
+  }
+ },
+ {
+  "scan_id": "url_20260830_140627_e8f3e5",
+  "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+  "domain": "secure-update.click",
+  "score": 26,
+  "risk_level": "HIGH",
+  "risk_level_label": "HIGH",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-08-30T14:06:27",
+  "timestamp_display": "30 Aug 2026 14:06",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_140627_e8f3e5",
+   "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+   "display_url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evi...",
+   "hostname": "login-paypal.secure-update.click",
+   "domain_display": "secure-update.click",
+   "score": 26,
+   "risk_level": "HIGH",
+   "risk_level_label": "HIGH",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-22 HIGH: Connection is not encrypted (HTTP)",
+    "-10 MEDIUM: Credential / account-related keywords",
+    "-10 MEDIUM: URL embedded inside query parameters",
+    "-10 MEDIUM: High-risk top-level domain '.click'"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "ip_address": null,
+    "ips": [],
+    "port": 80,
+    "path": "/auth",
+    "query": "session=abc123&return=http://evil.com",
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "subdomains": [
+     "login-paypal"
+    ],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "no_https",
+     "severity": "HIGH",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "Sensitive pages contacted over plain HTTP expose anything the user submits to network observers.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "credential_keywords",
+     "severity": "MEDIUM",
+     "category": "intent",
+     "title": "Credential / account-related keywords",
+     "detail": "URL contains credential-related keyword(s): auth, login, secure, update. Combined with other indicators this suggests a phishing lure.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "param_redirect",
+     "severity": "MEDIUM",
+     "category": "structure",
+     "title": "URL embedded inside query parameters",
+     "detail": "A query parameter contains another URL - a common open-redirect or cloaking technique.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "suspicious_tld",
+     "severity": "MEDIUM",
+     "category": "domain",
+     "title": "High-risk top-level domain '.click'",
+     "detail": "The '.click' TLD is heavily abused in phishing and malware campaigns.",
+     "score_impact": 10,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-08-30T14:06:27",
+   "timestamp_display": "30 Aug 2026 14:06",
+   "source": "test"
+  }
+ },
+ {
+  "scan_id": "url_20260830_140609_5b3a86",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:06:09",
+  "timestamp_display": "30 Aug 2026 14:06",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_140609_5b3a86",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:06:09",
+   "timestamp_display": "30 Aug 2026 14:06",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_140551_2a6343",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:05:51",
+  "timestamp_display": "30 Aug 2026 14:05",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_140551_2a6343",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:05:51",
+   "timestamp_display": "30 Aug 2026 14:05",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260830_140537_eb6c10",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-08-30T14:05:37",
+  "timestamp_display": "30 Aug 2026 14:05",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260830_140537_eb6c10",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
+    "ips": [
+     "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 58,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
+     "172.66.147.243",
+     "104.20.23.154"
+    ],
+    "ip_address": "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-08-30T14:05:37",
+   "timestamp_display": "30 Aug 2026 14:05",
+   "source": "panel"
+  }
+ }
+]

@@ -1,0 +1,93 @@
+{
+  "name": "zyra",
+  "productName": "ZYRA",
+  "version": "1.0.0",
+  "description": "ZYRA AI Assistant — Desktop Application (wrapper around the existing ZYRA web app)",
+  "main": "desktop/main.js",
+  "author": "Vasanthan Y",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "desktop:dev": "electron desktop",
+    "desktop:start": "electron desktop",
+    "desktop:pack": "electron-builder --dir",
+    "desktop:build": "electron-builder --win",
+    "desktop:build:dir": "electron-builder --win --dir",
+    "desktop:build:full": "electron-builder --win --config desktop/builder-full.json"
+  },
+  "devDependencies": {
+    "electron": "33.4.11",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.zyra.desktop",
+    "productName": "ZYRA",
+    "copyright": "Copyright © 2026 Vasanthan Y",
+    "directories": {
+      "output": "desktop-dist",
+      "buildResources": "desktop"
+    },
+    "files": [
+      "desktop/main.js",
+      "desktop/preload.js",
+      "desktop/package.json",
+      "desktop/zyra.ico",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": ".",
+        "to": "zyra",
+        "filter": [
+          "main.py",
+          "brain.py",
+          "listen.py",
+          "speak.py",
+          "memory.py",
+          "nmap_handler.py",
+          "nmap_scanner.py",
+          "zyra_handler.py",
+          "link_analysis.py",
+          "screen_ocr.py",
+          "system_monitor.py",
+          "requirements.txt",
+          "backend/**",
+          "commands/**",
+          "desktop-dashboard/**",
+          "memory/**",
+          "tools/**"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "desktop/zyra.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ZYRA",
+      "artifactName": "ZYRA-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "icon": "desktop",
+      "category": "Utility",
+      "target": ["AppImage"],
+      "artifactName": "ZYRA-${version}.${ext}"
+    },
+    "mac": {
+      "icon": "desktop",
+      "category": "public.app-category.productivity",
+      "target": ["dmg"],
+      "artifactName": "ZYRA-${version}.${ext}"
+    }
+  }
+}

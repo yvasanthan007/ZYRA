@@ -9,9 +9,32 @@ import platform
 import urllib.request
 import urllib.error
 
-from listen import listen
-from speak import speak
-from brain import ask_ai
+# ── Windows console safety ──────────────────────────────────────────────
+# Force UTF-8 output before any module that prints emoji is imported, so
+# status prints never crash with UnicodeEncodeError on cp1252 consoles.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
+from listen import listen, warm_up_async as warm_up_speech_async
+from speak import (
+    speak,
+    speak_async,
+    stop_speaking,
+    is_speaking,
+    wait_until_done,
+    warm_up_async as warm_up_voice_async,
+)
+from brain import (
+    ask_ai,
+    ask_ai_stream,
+    begin_request_session,
+    cancel_current_request,
+    is_current_session,
+)
 from commands.open_app import (
     open_chrome, open_vscode, open_notepad, open_calculator,
     open_cmd, open_powershell, open_task_manager, open_control_panel,
@@ -26,12 +49,21 @@ from commands.close_app import close_app
 from memory import remember, recall
 from backend.server import start_server_thread, broadcast_system_monitor_trigger
 from zyra_handler import handle_analyze_link_intent, is_link_analysis_intent
+from backend.url_analyzer import (
+    extract_target_url,
+    is_url_analysis_intent,
+)
+from backend.dns_lookup import (
+    extract_dns_target,
+    is_dns_intent,
+)
 from system_monitor import (
     is_system_monitor_intent,
     format_system_monitor_text,
     get_voice_summary,
     get_system_metrics,
 )
+from nmap_handler import handle_nmap_intent, is_nmap_intent
 
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
@@ -41,6 +73,7 @@ DASHBOARD_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 # Global state for clean shutdown
 server_thread = None
 edge_process = None
+desktop_shell_process = None
 running = True
 
 
@@ -143,6 +176,65 @@ def open_dashboard_in_edge(url):
     return True
 
 
+def find_desktop_shell_command():
+    """
+    Locate the ZYRA Desktop shell (Electron) bundled with the project.
+
+    Returns:
+        tuple: (electron_exe_path, shell_dir) or (None, None) when unavailable
+    """
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    electron_exe = os.path.join(project_root, "node_modules", "electron", "dist", "electron.exe")
+    shell_dir = os.path.join(project_root, "desktop")
+    shell_manifest = os.path.join(shell_dir, "package.json")
+
+    if os.path.exists(electron_exe) and os.path.exists(shell_manifest):
+        return electron_exe, shell_dir
+    return None, None
+
+
+def open_dashboard_in_desktop_shell(url):
+    """
+    Launch the dashboard in the native ZYRA Desktop window (Electron shell).
+
+    The backend server is already running inside THIS Python process, so the
+    shell is launched in "external" mode (ZYRA_EXTERNAL_SHELL=1): it only
+    opens the native window pointing at the existing server — it does not
+    spawn its own backend. When the window is closed, the shell stops this
+    Python process (ZYRA_PARENT_PID), so the whole app shuts down cleanly.
+
+    Returns:
+        bool: True when the desktop window was launched, False when the
+              shell is unavailable (caller can fall back to the browser).
+    """
+    global desktop_shell_process
+
+    electron_exe, shell_dir = find_desktop_shell_command()
+    if not electron_exe:
+        print("   ⚠️  ZYRA Desktop shell not found (node_modules/electron missing)")
+        return False
+
+    try:
+        env = os.environ.copy()
+        env["ZYRA_EXTERNAL_SHELL"] = "1"
+        env["ZYRA_URL"] = url
+        env["ZYRA_PARENT_PID"] = str(os.getpid())
+
+        desktop_shell_process = subprocess.Popen(
+            [electron_exe, shell_dir],
+            cwd=os.path.dirname(shell_dir),
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        print("   ✅ ZYRA Desktop window launched")
+        return True
+    except Exception as e:
+        print(f"   ⚠️  Could not launch the ZYRA Desktop shell ({e})")
+        desktop_shell_process = None
+        return False
+
+
 def wait_for_server(url, max_retries=10, retry_interval=1.0):
     """
     Poll the backend server's health endpoint until it responds.
@@ -196,12 +288,39 @@ def signal_handler(signum, frame):
 def cleanup():
     """
     Perform clean shutdown of all spawned processes:
+    - Terminate the ZYRA Desktop window if we launched it
     - Terminate the Edge browser process if we launched it
     - The backend server thread is a daemon and will exit automatically
     """
     global edge_process
+    global desktop_shell_process
 
     print("\n🧹 Cleaning up...")
+
+    # Stop the voice pipeline first: end the listening session and cut off any
+    # speech still queued or playing.
+    try:
+        import listen as _listen
+        _listen.stop_listening()
+    except Exception:
+        pass
+    try:
+        stop_speaking(clear_queue=True)
+    except Exception:
+        pass
+
+    if desktop_shell_process is not None:
+        try:
+            desktop_shell_process.terminate()
+            desktop_shell_process.wait(timeout=3)
+            print("   ✅ ZYRA Desktop window closed")
+        except Exception:
+            try:
+                desktop_shell_process.kill()
+                print("   ✅ ZYRA Desktop window force-closed")
+            except Exception:
+                pass
+        desktop_shell_process = None
 
     if edge_process is not None:
         try:
@@ -248,6 +367,232 @@ def start_backend_server():
     return server_thread
 
 
+# ========== URL Analyzer Voice Integration ==========
+# Real backend URL scans are streamed to the dashboard panel by the server
+# (start_url_scan broadcasts live status over WebSocket). This voice entry
+# point reuses the existing listen() speech-to-text loop: it detects the
+# URL_ANALYSIS intent, opens the panel, and speaks the result when the scan
+# completes.
+
+
+def _broadcast_url_analyzer(url: str, state=None):
+    """Open the URL Analyzer panel on every connected dashboard client."""
+    try:
+        from backend.server import broadcast_message_sync
+        broadcast_message_sync({"type": "show_url_analyzer", "data": state, "url": url})
+    except Exception:
+        pass
+
+
+def _url_voice_completion_watcher(scan_id: str):
+    """
+    Poll the in-memory scan registry until the analysis finishes, then speak
+    the voice summary (or a failure notice). Best-effort background thread.
+    """
+    try:
+        from backend.url_analyzer import build_voice_summary
+        from backend.url_analyzer.analyzer import get_scan_state
+    except Exception as e:
+        print(f"[URL WATCHER] import error: {e}")
+        return
+
+    deadline = time.time() + 100
+    while time.time() < deadline:
+        try:
+            state = get_scan_state(scan_id)
+        except Exception:
+            state = None
+        if state:
+            status = str(state.get("status") or "").upper()
+            if status == "COMPLETE":
+                result = state.get("result")
+                if result:
+                    try:
+                        speak(build_voice_summary(result))
+                    except Exception:
+                        pass
+                return
+            if status == "ERROR":
+                reason = state.get("error") or "Please try again."
+                speak(f"The URL analysis failed. {reason}")
+                return
+        time.sleep(1.0)
+    speak("The URL analysis could not be completed within the allowed time.")
+
+
+def handle_url_analysis_voice(command: str):
+    """
+    Voice entry point for the ZYRA URL Analyzer.
+
+    When a URL is present in the spoken command it is analyzed for real by the
+    backend: the scan runs in a background thread, live progress streams to
+    the dashboard's URL Analyzer panel, and the spoken summary is delivered on
+    completion. When no URL was spoken it falls back to the existing
+    screen/clipboard link-analysis handler so legacy behavior is preserved.
+    """
+    from backend.server import start_url_scan
+
+    target = extract_target_url(command)
+    if not target:
+        print("   🔗 No URL in the command — falling back to screen/clipboard link analysis.")
+        result = handle_analyze_link_intent(command)
+        if result and result.get("success") and result.get("checks"):
+            print(f"   🔗 URL: {result.get('url')} | Score: {result.get('score')} | Verdict: {result.get('verdict')}")
+        return
+
+    print(f"\n🔗 Starting ZYRA URL Analyzer on: {target}")
+    launch = start_url_scan(target, source="voice")
+    if not launch.get("success"):
+        reason = launch.get("error") or "Please try again."
+        print(f"   ⚠️  URL scan could not start: {reason}")
+        speak(f"I couldn't start the URL analysis. {reason}")
+        return
+
+    _broadcast_url_analyzer(target)
+    print("   📡 URL Analyzer panel open — streaming live progress to the dashboard.")
+    speak(f"Running a security analysis on {target}. Please wait.")
+    threading.Thread(
+        target=_url_voice_completion_watcher,
+        args=(launch["scan_id"],),
+        daemon=True,
+    ).start()
+
+
+# ========== DNS Lookup Voice Integration ==========
+# Real backend DNS lookups are streamed to the dashboard panel by the server
+# (start_dns_lookup_job broadcasts live status over WebSocket). This voice
+# entry point reuses the existing listen() speech-to-text loop: it detects
+# the DNS_LOOKUP intent, opens the panel, and speaks the result when the
+# lookup completes.
+
+
+def _broadcast_dns_lookup(domain: str, state=None):
+    """Open the DNS Lookup panel on every connected dashboard client."""
+    try:
+        from backend.server import broadcast_message_sync
+        broadcast_message_sync({"type": "show_dns_lookup", "data": state, "domain": domain})
+    except Exception:
+        pass
+
+
+def _dns_voice_completion_watcher(lookup_id: str):
+    """
+    Poll the in-memory lookup registry until the lookup finishes, then speak
+    the voice summary (or a failure notice). Best-effort background thread.
+    """
+    try:
+        from backend.dns_lookup import build_voice_summary as build_dns_voice_summary
+        from backend.dns_lookup.analyzer import get_scan_state
+    except Exception as e:
+        print(f"[DNS WATCHER] import error: {e}")
+        return
+
+    deadline = time.time() + 100
+    while time.time() < deadline:
+        try:
+            state = get_scan_state(lookup_id)
+        except Exception:
+            state = None
+        if state:
+            status = str(state.get("status") or "").upper()
+            if status == "COMPLETE":
+                result = state.get("result")
+                if result:
+                    try:
+                        speak(build_dns_voice_summary(result))
+                    except Exception:
+                        pass
+                return
+            if status == "ERROR":
+                reason = state.get("error") or "Please try again."
+                speak(f"The DNS lookup failed. {reason}")
+                return
+        time.sleep(1.0)
+    speak("The DNS lookup could not be completed within the allowed time.")
+
+
+def handle_dns_analysis_voice(command: str):
+    """
+    Voice entry point for the ZYRA DNS Lookup.
+
+    When a domain (or IP) is present in the spoken command a real DNS lookup
+    runs in the backend: progress streams to the dashboard's DNS Lookup
+    panel and the spoken summary is delivered on completion. When no domain
+    was spoken, ZYRA asks for one.
+    """
+    from backend.server import start_dns_lookup_job
+
+    target = extract_dns_target(command)
+    if not target:
+        print("   🌐 No domain in the command — asking the user for one.")
+        speak("DNS Lookup activated. Please tell me the domain you want me to look up, for example, analyze DNS of example dot com.")
+        return
+
+    print(f"\n🌐 Starting ZYRA DNS Lookup on: {target}")
+    launch = start_dns_lookup_job(target, source="voice")
+    if not launch.get("success"):
+        reason = launch.get("error") or "Please try again."
+        print(f"   ⚠️  DNS lookup could not start: {reason}")
+        speak(f"I couldn't start the DNS lookup. {reason}")
+        return
+
+    _broadcast_dns_lookup(target)
+    print("   📡 DNS Lookup panel open — streaming live progress to the dashboard.")
+    speak(f"Looking up DNS records for {target}. Please wait.")
+    threading.Thread(
+        target=_dns_voice_completion_watcher,
+        args=(launch["lookup_id"],),
+        daemon=True,
+    ).start()
+
+
+# ========== Voice turn state (exactly one pipeline per utterance) ==========
+# Every utterance opens ONE turn. Starting a turn cancels any in-flight AI
+# generation and clears the TTS queue, so a stale answer can never be spoken
+# after a newer request has arrived. Barge-in (the user speaking while ZYRA is
+# talking) uses the same path: interrupt → clear → capture → process.
+
+_turn_lock = threading.Lock()
+_turn_counter = 0
+
+
+def start_voice_turn() -> int:
+    """Open a new voice turn, cancelling the previous answer completely."""
+    global _turn_counter
+    with _turn_lock:
+        _turn_counter += 1
+        turn = _turn_counter
+    cancel_current_request()          # stale AI tokens stop being produced
+    stop_speaking(clear_queue=True)   # stop talking now, drop queued sentences
+    return turn
+
+
+def _turn_is_current(turn: int) -> bool:
+    with _turn_lock:
+        return turn == _turn_counter
+
+
+def answer_voice_stream(command: str, turn: int) -> None:
+    """Stream the AI answer: first sentence → TTS while the rest generates.
+
+    Runs in its own thread so the main loop can immediately go back to
+    listening (which is what makes barge-in possible). Only the newest turn may
+    speak: any older turn stops silently.
+    """
+    session_id = begin_request_session()
+    print("🧠 ZYRA thinking...")
+    try:
+        for sentence in ask_ai_stream(command, session_id=session_id):
+            if not _turn_is_current(turn) or not is_current_session(session_id):
+                print("⏹️  Reply cancelled — a newer request took over.")
+                return
+            speak_async(sentence)      # queued; keeps generating meanwhile
+        # Let the queued sentences finish; barge-in can interrupt this wait.
+        wait_until_done(timeout=300)
+    except Exception as exc:  # noqa: BLE001 - never crash the voice loop
+        print(f"⚠️  Voice answer failed: {type(exc).__name__}: {exc}")
+
+
 # ========== Main Entry Point ==========
 
 if __name__ == "__main__":
@@ -272,31 +617,69 @@ if __name__ == "__main__":
     # This polls the /api/health endpoint with retries
     server_ready = wait_for_server(DASHBOARD_URL, max_retries=8, retry_interval=1.0)
 
-    if server_ready:
-        # Open the dashboard in Microsoft Edge
-        open_dashboard_in_edge(DASHBOARD_URL)
+    # ZYRA Desktop mode: the Electron desktop shell (desktop/main.js) loads
+    # the dashboard in its own native window, so the Edge-kiosk browser
+    # launch must be skipped. Normal `python main.py` behavior is unchanged.
+    if os.environ.get("ZYRA_DESKTOP") == "1":
+        if server_ready:
+            print("\n🖥️  ZYRA Desktop mode — dashboard is served to the ZYRA desktop window")
+        else:
+            print("\n⚠️  Server may not be fully ready. The desktop window will retry.")
+        print("\n✨ ZYRA is now running!")
+        print("   🎤 Voice commands: Speak into your microphone")
+        print("   🖥️  Dashboard: ZYRA desktop window (http://127.0.0.1:8080)")
+        print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
     else:
-        print("\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway...")
-        open_dashboard_in_edge(DASHBOARD_URL)
+        # Default: open the dashboard in the native ZYRA Desktop window
+        shell_started = open_dashboard_in_desktop_shell(DASHBOARD_URL)
+        if not shell_started:
+            # Desktop shell unavailable (node_modules/electron missing) —
+            # fall back to the classic Microsoft Edge kiosk mode.
+            print("   ↪️  Falling back to Microsoft Edge kiosk mode")
+            if server_ready:
+                open_dashboard_in_edge(DASHBOARD_URL)
+            else:
+                print("\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway...")
+                open_dashboard_in_edge(DASHBOARD_URL)
 
-    print("\n✨ ZYRA is now running!")
-    print("   🎤 Voice commands: Speak into your microphone")
-    print("   🌐 Dashboard: Open in browser at", DASHBOARD_URL)
-    print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
+        print("\n✨ ZYRA is now running!")
+        print("   🎤 Voice commands: Speak into your microphone")
+        print("   🖥️  Dashboard: ZYRA Desktop window (http://127.0.0.1:8080)")
+        print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
+
+    # Warm up the voice stack in the background so the first utterance is fast:
+    # the STT model loads, the TTS voice session is established and (via the
+    # backend) the Ollama model is pulled into memory.
+    warm_up_speech_async()
+    warm_up_voice_async()
 
     speak("Hello, I am Zyra. How can I help you today?")
 
     try:
         while running:
             try:
-                command = listen()
+                # While ZYRA is speaking the microphone stays open in barge-in
+                # mode: if the user starts talking, the current answer is cut
+                # off, its queue is cleared and the new request is processed.
+                # is_speaking is passed as a callable so it is evaluated per
+                # audio frame (playback may start mid-capture).
+                command = listen(
+                    should_continue=lambda: running,
+                    barge_in=is_speaking,
+                )
 
                 if not command:
                     continue
 
+                # Preserve the recognized text for the AI (natural casing and
+                # punctuation improve answer quality) and match intents on a
+                # lowercase copy of it.
+                spoken_text = command
                 command = command.lower()
 
-                print(f"You : {command}")
+                # ONE pipeline per utterance: this cancels any answer still in
+                # flight and clears anything still queued for speech.
+                turn = start_voice_turn()
 
                 if command.startswith("close "):
                     app = command.replace("close ", "").strip()
@@ -482,6 +865,18 @@ if __name__ == "__main__":
                     voice_text = get_voice_summary(metrics)
                     speak(voice_text)
 
+                elif is_dns_intent(command):
+                    # ZYRA DNS Lookup — real backend DNS queries streamed live
+                    # to the dashboard panel with the spoken result delivered
+                    # when the lookup completes.
+                    handle_dns_analysis_voice(command)
+
+                elif is_url_analysis_intent(command):
+                    # ZYRA URL Analyzer — real backend scan streamed live to the
+                    # dashboard panel (opens the URL Analyzer on the right) with
+                    # the spoken result delivered when the analysis completes.
+                    handle_url_analysis_voice(command)
+
                 elif is_link_analysis_intent(command):
                     # Use the new real-time screen capture link analysis
                     # Captures screen OCR + clipboard, runs 8-check heuristic,
@@ -495,16 +890,31 @@ if __name__ == "__main__":
                         print(f"⚖️  Verdict: {result['verdict']}")
                         print(f"🗣️  Speech: {result['speech_text']}")
 
+                elif is_nmap_intent(command):
+                    # Network scanning with Nmap
+                    # Discovers hosts, scans ports, detects services,
+                    # and identifies security vulnerabilities
+                    result = handle_nmap_intent(command)
+
                 elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
                     speak("Goodbye. Have a nice day.")
                     break
 
                 else:
-                    answer = ask_ai(command)
-                    print(f"Zyra : {answer}")
-                    speak(answer)
+                    # Conversational answer: streaming STT → Ollama → TTS.
+                    # The worker streams sentences into the TTS queue, so ZYRA
+                    # starts speaking as soon as the first sentence exists and
+                    # keeps talking while the model finishes the rest. The main
+                    # loop immediately resumes listening (barge-in).
+                    threading.Thread(
+                        target=answer_voice_stream,
+                        args=(spoken_text, turn),
+                        name="zyra-voice-answer",
+                        daemon=True,
+                    ).start()
 
             except KeyboardInterrupt:
+                stop_speaking(clear_queue=True)
                 speak("Shutting down. Goodbye.")
                 break
 
