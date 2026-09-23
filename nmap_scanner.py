@@ -30,9 +30,12 @@ Verdict Mapping:
   - Score 6+: Critical (Red)
 """
 
-import subprocess
+import os
 import re
+import shutil
+import subprocess
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 
@@ -135,14 +138,84 @@ def build_scan_args(
     return args
 
 
-def get_nmap_version(nmap_path: str = NMAP_COMMAND) -> str:
+# Portable/locally-bundled Nmap locations searched before falling back to PATH.
+# On Windows, tools/setup_nmap.ps1 auto-installs a portable copy (no admin needed).
+_NMAP_CANDIDATE_PATHS = [
+    "tools/nmap/nmap.exe",   # bundled inside the repository (tools/nmap/)
+    "vendor/nmap/nmap.exe",  # alternate convention
+]
+
+
+def resolve_nmap_path() -> str:
     """
-    Return the installed Nmap version string (e.g. "7.98").
+    Locate a usable Nmap executable.
+
+    Search order:
+      1. The ZYRA_NMAP_PATH environment variable override
+      2. Portable copies bundled with Zyra (tools/nmap, vendor/nmap)
+      3. A user-local install (%LOCALAPPDATA%\\Zyra\\tools\\nmap)
+      4. Standard Windows install locations
+      5. The system PATH via shutil.which()
+
+    Returns the absolute path to the nmap executable, or raises a
+    RuntimeError with install guidance.
+    """
+    candidates: List[Path] = []
+
+    env_override = os.environ.get("ZYRA_NMAP_PATH")
+    if env_override:
+        candidates.append(Path(env_override))
+
+    repo_root = Path(__file__).resolve().parent
+    for rel in _NMAP_CANDIDATE_PATHS:
+        candidates.append(repo_root / rel)
+
+    local_appdata = os.environ.get("LOCALAPPDATA", "")
+    if local_appdata:
+        candidates.append(Path(local_appdata) / "Zyra" / "tools" / "nmap" / "nmap.exe")
+
+    program_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+    program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+    candidates.extend([
+        Path(program_files_x86) / "Nmap" / "nmap.exe",
+        Path(program_files) / "Nmap" / "nmap.exe",
+        Path(os.environ.get("SystemDrive", "C:") + r"\Nmap") / "nmap.exe",
+    ])
+
+    for candidate in candidates:
+        try:
+            if candidate.is_file():
+                return str(candidate)
+        except OSError:
+            continue
+
+    which = shutil.which("nmap")
+    if which:
+        return which
+
+    raise RuntimeError(
+        "Nmap is not installed or not in PATH. Zyra also searched for a portable "
+        "copy in 'tools/nmap' and '%LOCALAPPDATA%\\Zyra\\tools\\nmap'. "
+        "Install Nmap from https://nmap.org/download.html, or run "
+        "'tools/setup_nmap.ps1' to install a portable copy automatically."
+    )
+
+
+def get_nmap_version(nmap_path: Optional[str] = None) -> str:
+    """
+    Return the installed Nmap version string (e.g. "7.991").
     Returns "unknown" if Nmap cannot be located.
     """
+    if nmap_path:
+        cmd = nmap_path
+    else:
+        try:
+            cmd = resolve_nmap_path()
+        except RuntimeError:
+            cmd = NMAP_COMMAND
     try:
         result = subprocess.run(
-            [nmap_path, "--version"],
+            [cmd, "--version"],
             capture_output=True,
             text=True,
             timeout=10,
@@ -164,14 +237,16 @@ class NmapScanner:
     Handles command construction, execution, and result parsing.
     """
     
-    def __init__(self, nmap_path: str = NMAP_COMMAND):
+    def __init__(self, nmap_path: Optional[str] = None):
         """
         Initialize the Nmap scanner.
-        
+
         Args:
-            nmap_path: Path to the nmap executable
+            nmap_path: Path to the nmap executable. When None (default), Zyra
+                automatically locates Nmap: a bundled portable copy (tools/nmap),
+                a user-local install, a standard install location, or PATH.
         """
-        self.nmap_path = nmap_path
+        self.nmap_path = nmap_path or resolve_nmap_path()
         self._check_nmap_installed()
     
     def _check_nmap_installed(self) -> bool:
@@ -187,8 +262,10 @@ class NmapScanner:
             return result.returncode == 0
         except FileNotFoundError:
             raise RuntimeError(
-                "Nmap is not installed or not in PATH. "
-                "Please install Nmap from https://nmap.org/download.html"
+                "Nmap is not installed or not in PATH. Tried executable: "
+                f"'{self.nmap_path}'. Please install Nmap from "
+                "https://nmap.org/download.html or run 'tools/setup_nmap.ps1' "
+                "to install a portable copy."
             )
         except subprocess.TimeoutExpired:
             raise RuntimeError("Nmap command timed out during version check")

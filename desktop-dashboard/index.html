@@ -2165,9 +2165,16 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
             <span class="zs-label">Interface theme<small>Animations stay enabled</small></span>
             <div class="zs-control">
               <select id="zs-theme" class="zs-select">
-                <option value="dark">Dark — Black &amp; Blue</option>
+                <option value="dark">Dark — Black &amp; Orange</option>
                 <option value="light">Light — Blue &amp; White</option>
               </select>
+            </div>
+          </div>
+          <div class="zs-row">
+            <span class="zs-label">Color scheme<small>Light theme accent palette</small></span>
+            <div class="zs-control">
+              <select id="zs-color-scheme" class="zs-select">
+                <option value="black-blue">Black &amp; Blue</option>              </select>
             </div>
           </div>
         </div>
@@ -2531,26 +2538,27 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   mainGroup.add(scatterParticles);
 
   // ===== GLOW SPRITE =====
-  function createGlowTexture(isLight) {
-    const canvas = document.createElement('canvas');
+  // Dark = original amber/orange glow, light = cyan/blue glow (same falloff curve)
+  function createGlowTexture(isLight) {    const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
     if (isLight) {
-      grad.addColorStop(0, 'rgba(100, 200, 255, 1)');
-      grad.addColorStop(0.1, 'rgba(50, 150, 255, 0.8)');
-      grad.addColorStop(0.3, 'rgba(30, 100, 255, 0.4)');
-      grad.addColorStop(0.5, 'rgba(20, 80, 255, 0.15)');
-      grad.addColorStop(0.7, 'rgba(10, 50, 200, 0.05)');
+      const glowStops = ['rgba(180,225,255,1)', 'rgba(80,175,255,.8)', 'rgba(22,119,255,.4)', 'rgba(15,90,220,.15)', 'rgba(6,59,120,.05)'];
+      grad.addColorStop(0, glowStops[0]);
+      grad.addColorStop(0.1, glowStops[1]);
+      grad.addColorStop(0.3, glowStops[2]);
+      grad.addColorStop(0.5, glowStops[3]);
+      grad.addColorStop(0.7, glowStops[4]);
     } else {
-      grad.addColorStop(0, 'rgba(255, 200, 100, 1)');
-      grad.addColorStop(0.1, 'rgba(255, 150, 50, 0.8)');
-      grad.addColorStop(0.3, 'rgba(255, 100, 30, 0.4)');
-      grad.addColorStop(0.5, 'rgba(255, 80, 20, 0.15)');
-      grad.addColorStop(0.7, 'rgba(200, 50, 10, 0.05)');
-    }
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      const glowStops = ['rgba(255,200,100,1)', 'rgba(255,150,50,.8)', 'rgba(255,100,30,.4)', 'rgba(255,80,20,.15)', 'rgba(200,50,10,.05)'];
+      grad.addColorStop(0, glowStops[0]);
+      grad.addColorStop(0.1, glowStops[1]);
+      grad.addColorStop(0.3, glowStops[2]);
+      grad.addColorStop(0.5, glowStops[3]);
+      grad.addColorStop(0.7, glowStops[4]);
+    }    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
     return new THREE.CanvasTexture(canvas);
@@ -2559,8 +2567,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   const glowTextureLight = createGlowTexture(true);
 
   const glowSpriteMat = new THREE.SpriteMaterial({
-    map: glowTextureDark,
-    blending: THREE.AdditiveBlending,
+    map: glowTextureDark,    blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.5,
     depthWrite: false
@@ -2571,8 +2578,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
   // Smaller inner glow
   const innerGlowMat = new THREE.SpriteMaterial({
-    map: glowTextureDark,
-    blending: THREE.AdditiveBlending,
+    map: glowTextureDark,    blending: THREE.AdditiveBlending,
     transparent: true,
     opacity: 0.3,
     depthWrite: false
@@ -2637,7 +2643,6 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   // Exposed so the settings theme system (zsApplyTheme) can drive it.
   window.zyraSetNeuralTheme = applyNeuralTheme;
   applyNeuralTheme(document.body.classList.contains('zyra-light'));
-
   // ===== ANIMATION =====
   let time = 0;
 
@@ -4568,9 +4573,9 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   // ===================================================================
   var ZS_KEY = 'zyra_settings_v1';
   var ZS_DEFAULTS = {
-    theme: 'dark', fontSize: '100', accent: '#ff8800',
-    voiceEnabled: true, voiceVolume: 80, wakeWord: 'Hey ZYRA'
-  };
+    theme: 'dark', colorScheme: 'black-blue', fontSize: '100', accent: '#ff8800',
+    voiceEnabled: true, voiceVolume: 80, wakeWord: 'Hey ZYRA',
+    saveHistory: true, sidebarOpen: true, sidebarCollapsed: false  };
   var zs = JSON.parse(JSON.stringify(ZS_DEFAULTS));
   try { var saved = JSON.parse(localStorage.getItem(ZS_KEY) || '{}'); if (saved) for (var k in ZS_DEFAULTS) if (k in saved) zs[k] = saved[k]; } catch (e) {}
 
@@ -4610,8 +4615,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     var light = zs.theme === 'light';
     document.body.classList.toggle('zyra-light', light);
     // Drive the neural core palette (orange dark / blue light).
-    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }
-  }
+    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }  }
   function zsApplyFontSize() { document.body.style.zoom = (parseInt(zs.fontSize,10) / 100).toString(); }
 
   function zsApplyAll() { zsApplyTheme(); zsApplyFontSize(); zsApplyAccent(); zsRenderSwatches(); }
@@ -4633,13 +4637,27 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
   // ---- Bind controls ----
   var zsThemeSel = document.getElementById('zs-theme');
+  var zsColorSchemeSel = document.getElementById('zs-color-scheme');
   var zsFontSel = document.getElementById('zs-fontsize');
   var zsVoiceToggle = document.getElementById('zs-voice-toggle');
   var zsVoiceVol = document.getElementById('zs-voice-volume');
   var zsVoiceVolVal = document.getElementById('zs-voice-volume-val');
   var zsWake = document.getElementById('zs-wakeword');
-  if (zsThemeSel) zsThemeSel.addEventListener('change', function(){ zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); });
-  if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
+  if (zsThemeSel) {
+    zsThemeSel.addEventListener('change', function(){ zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); });
+    zsThemeSel.addEventListener('input', function(){ zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); });
+  }
+  function zsColorSchemeChanged() { zs.colorScheme = zsColorSchemeSel.value; zsApplyTheme(); zsSave(); }
+  if (zsColorSchemeSel) {
+    zsColorSchemeSel.addEventListener('change', zsColorSchemeChanged);
+    zsColorSchemeSel.addEventListener('input', zsColorSchemeChanged);
+  }
+  // Keep programmatic selector changes in sync as well as normal user changes.
+  // This also supports automation and restores the core palette immediately.
+  setInterval(function(){
+    if (zsThemeSel && zsThemeSel.value !== zs.theme) zsThemeSel.value = zs.theme;
+    if (zsColorSchemeSel && zsColorSchemeSel.value !== (zs.colorScheme || 'black-blue')) zsColorSchemeSel.value = zs.colorScheme || 'black-blue';
+  }, 100);  if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
   if (zsVoiceToggle) zsVoiceToggle.addEventListener('click', function(){ zs.voiceEnabled = !zs.voiceEnabled; zsApplyVoiceToggle(); zsSave(); });
   function zsApplyVoiceToggle() { if (!zsVoiceToggle) return; zsVoiceToggle.classList.toggle('on', zs.voiceEnabled); zsVoiceToggle.setAttribute('aria-checked', zs.voiceEnabled ? 'true' : 'false'); }
   if (zsVoiceVol) zsVoiceVol.addEventListener('input', function(){ zs.voiceVolume = parseInt(zsVoiceVol.value,10); if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; zsSave(); });
@@ -4648,6 +4666,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   });
   function zsSyncControls() {
     if (zsThemeSel) zsThemeSel.value = zs.theme;
+    if (zsColorSchemeSel) zsColorSchemeSel.value = zs.colorScheme || 'black-blue';
     if (zsFontSel) zsFontSel.value = String(zs.fontSize);
     if (zsVoiceVol) { zsVoiceVol.value = zs.voiceVolume; if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; }
     if (zsWake) zsWake.value = zs.wakeWord;

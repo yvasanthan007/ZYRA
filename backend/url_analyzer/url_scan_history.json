@@ -1,5 +1,953 @@
 [
  {
+  "scan_id": "url_20260912_152001_197107",
+  "url": "https://example.org",
+  "domain": "example.org",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-09-12T15:20:01",
+  "timestamp_display": "12 Sep 2026 15:20",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260912_152001_197107",
+   "url": "https://example.org",
+   "display_url": "https://example.org",
+   "hostname": "example.org",
+   "domain_display": "example.org",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.org",
+    "registered_domain": "example.org",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:83b6:6c5e:b13b:797:525:2b85",
+    "ips": [
+     "2606:4700:83b6:6c5e:b13b:797:525:2b85",
+     "172.66.157.237",
+     "104.20.26.136"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.org"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.org",
+    "expires": "Oct 27 21:29:51 2026 GMT",
+    "expires_in_days": 45,
+    "not_before": "Jul 29 21:22:47 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.org",
+     "*.example.org"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.org",
+    "registered_domain": "example.org",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:83b6:6c5e:b13b:797:525:2b85",
+     "172.66.157.237",
+     "104.20.26.136"
+    ],
+    "ip_address": "2606:4700:83b6:6c5e:b13b:797:525:2b85",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-09-12T15:20:01",
+   "timestamp_display": "12 Sep 2026 15:20",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260912_151913_342fee",
+  "url": "https://example.com",
+  "domain": "example.com",
+  "score": 92,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-09-12T15:19:13",
+  "timestamp_display": "12 Sep 2026 15:19",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260912_151913_342fee",
+   "url": "https://example.com",
+   "display_url": "https://example.com",
+   "hostname": "example.com",
+   "domain_display": "example.com",
+   "score": 92,
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "ip_address": "2606:4700:9765:72db:f2fe:6b3:ef6b:ff98",
+    "ips": [
+     "2606:4700:9765:72db:f2fe:6b3:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://example.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "Cloudflare TLS Issuing ECC CA 3",
+    "subject": "example.com",
+    "expires": "Oct 27 22:17:21 2026 GMT",
+    "expires_in_days": 45,
+    "not_before": "Jul 29 22:10:08 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "example.com",
+     "*.example.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "example.com",
+    "registered_domain": "example.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2606:4700:9765:72db:f2fe:6b3:ef6b:ff98",
+     "104.20.23.154",
+     "172.66.147.243"
+    ],
+    "ip_address": "2606:4700:9765:72db:f2fe:6b3:ef6b:ff98",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-09-12T15:19:13",
+   "timestamp_display": "12 Sep 2026 15:19",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20260912_151556_13c9db",
+  "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+  "domain": "secure-update.click",
+  "score": 26,
+  "risk_level": "HIGH",
+  "risk_level_label": "HIGH",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-09-12T15:15:56",
+  "timestamp_display": "12 Sep 2026 15:15",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260912_151556_13c9db",
+   "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+   "display_url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evi...",
+   "hostname": "login-paypal.secure-update.click",
+   "domain_display": "secure-update.click",
+   "score": 26,
+   "risk_level": "HIGH",
+   "risk_level_label": "HIGH",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-22 HIGH: Connection is not encrypted (HTTP)",
+    "-10 MEDIUM: Credential / account-related keywords",
+    "-10 MEDIUM: URL embedded inside query parameters",
+    "-10 MEDIUM: High-risk top-level domain '.click'"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "ip_address": null,
+    "ips": [],
+    "port": 80,
+    "path": "/auth",
+    "query": "session=abc123&return=http://evil.com",
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "subdomains": [
+     "login-paypal"
+    ],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "no_https",
+     "severity": "HIGH",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "Sensitive pages contacted over plain HTTP expose anything the user submits to network observers.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "credential_keywords",
+     "severity": "MEDIUM",
+     "category": "intent",
+     "title": "Credential / account-related keywords",
+     "detail": "URL contains credential-related keyword(s): auth, login, secure, update. Combined with other indicators this suggests a phishing lure.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "param_redirect",
+     "severity": "MEDIUM",
+     "category": "structure",
+     "title": "URL embedded inside query parameters",
+     "detail": "A query parameter contains another URL - a common open-redirect or cloaking technique.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "suspicious_tld",
+     "severity": "MEDIUM",
+     "category": "domain",
+     "title": "High-risk top-level domain '.click'",
+     "detail": "The '.click' TLD is heavily abused in phishing and malware campaigns.",
+     "score_impact": 10,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-09-12T15:15:56",
+   "timestamp_display": "12 Sep 2026 15:15",
+   "source": "test"
+  }
+ },
+ {
+  "scan_id": "url_20260912_151523_939280",
+  "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+  "domain": "secure-update.click",
+  "score": 26,
+  "risk_level": "HIGH",
+  "risk_level_label": "HIGH",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-09-12T15:15:23",
+  "timestamp_display": "12 Sep 2026 15:15",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260912_151523_939280",
+   "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+   "display_url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evi...",
+   "hostname": "login-paypal.secure-update.click",
+   "domain_display": "secure-update.click",
+   "score": 26,
+   "risk_level": "HIGH",
+   "risk_level_label": "HIGH",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-22 HIGH: Connection is not encrypted (HTTP)",
+    "-10 MEDIUM: Credential / account-related keywords",
+    "-10 MEDIUM: URL embedded inside query parameters",
+    "-10 MEDIUM: High-risk top-level domain '.click'"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "ip_address": null,
+    "ips": [],
+    "port": 80,
+    "path": "/auth",
+    "query": "session=abc123&return=http://evil.com",
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "subdomains": [
+     "login-paypal"
+    ],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "no_https",
+     "severity": "HIGH",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "Sensitive pages contacted over plain HTTP expose anything the user submits to network observers.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "credential_keywords",
+     "severity": "MEDIUM",
+     "category": "intent",
+     "title": "Credential / account-related keywords",
+     "detail": "URL contains credential-related keyword(s): auth, login, secure, update. Combined with other indicators this suggests a phishing lure.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "param_redirect",
+     "severity": "MEDIUM",
+     "category": "structure",
+     "title": "URL embedded inside query parameters",
+     "detail": "A query parameter contains another URL - a common open-redirect or cloaking technique.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "suspicious_tld",
+     "severity": "MEDIUM",
+     "category": "domain",
+     "title": "High-risk top-level domain '.click'",
+     "detail": "The '.click' TLD is heavily abused in phishing and malware campaigns.",
+     "score_impact": 10,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-09-12T15:15:23",
+   "timestamp_display": "12 Sep 2026 15:15",
+   "source": "test"
+  }
+ },
+ {
+  "scan_id": "url_20260912_151433_89e5b0",
+  "url": "https://not-a-valid-url",
+  "domain": "not-a-valid-url",
+  "score": 75,
+  "risk_level": "LOW_MEDIUM",
+  "risk_level_label": "LOW-MEDIUM",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-09-12T15:14:33",
+  "timestamp_display": "12 Sep 2026 15:14",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260912_151433_89e5b0",
+   "url": "https://not-a-valid-url",
+   "display_url": "https://not-a-valid-url",
+   "hostname": "not-a-valid-url",
+   "domain_display": "not-a-valid-url",
+   "score": 75,
+   "risk_level": "LOW_MEDIUM",
+   "risk_level_label": "LOW-MEDIUM",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-3 LOW: Multiple hyphens in domain name"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "not-a-valid-url",
+    "registered_domain": "not-a-valid-url",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "unreachable",
+    "https_enabled": true,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Domain could not be resolved."
+   },
+   "domain": {
+    "hostname": "not-a-valid-url",
+    "registered_domain": "not-a-valid-url",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "hyphenated_domain",
+     "severity": "LOW",
+     "category": "domain",
+     "title": "Multiple hyphens in domain name",
+     "detail": "Hyphen-heavy domains are frequently registered to imitate legitimate brands (e.g. secure-paypal-login).",
+     "score_impact": 3,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-09-12T15:14:33",
+   "timestamp_display": "12 Sep 2026 15:14",
+   "source": "test"
+  }
+ },
+ {
+  "scan_id": "url_20260912_151432_27eb02",
+  "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+  "domain": "secure-update.click",
+  "score": 26,
+  "risk_level": "HIGH",
+  "risk_level_label": "HIGH",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-09-12T15:14:32",
+  "timestamp_display": "12 Sep 2026 15:14",
+  "result": {
+   "success": true,
+   "scan_id": "url_20260912_151432_27eb02",
+   "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
+   "display_url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evi...",
+   "hostname": "login-paypal.secure-update.click",
+   "domain_display": "secure-update.click",
+   "score": 26,
+   "risk_level": "HIGH",
+   "risk_level_label": "HIGH",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-22 HIGH: Connection is not encrypted (HTTP)",
+    "-10 MEDIUM: Credential / account-related keywords",
+    "-10 MEDIUM: URL embedded inside query parameters",
+    "-10 MEDIUM: High-risk top-level domain '.click'"
+   ],
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "skip",
+      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "ip_address": null,
+    "ips": [],
+    "port": 80,
+    "path": "/auth",
+    "query": "session=abc123&return=http://evil.com",
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "not_https",
+    "https_enabled": false,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
+   },
+   "domain": {
+    "hostname": "login-paypal.secure-update.click",
+    "registered_domain": "secure-update.click",
+    "subdomain_count": 1,
+    "subdomains": [
+     "login-paypal"
+    ],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "no_https",
+     "severity": "HIGH",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "Sensitive pages contacted over plain HTTP expose anything the user submits to network observers.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "credential_keywords",
+     "severity": "MEDIUM",
+     "category": "intent",
+     "title": "Credential / account-related keywords",
+     "detail": "URL contains credential-related keyword(s): auth, login, secure, update. Combined with other indicators this suggests a phishing lure.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "param_redirect",
+     "severity": "MEDIUM",
+     "category": "structure",
+     "title": "URL embedded inside query parameters",
+     "detail": "A query parameter contains another URL - a common open-redirect or cloaking technique.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "suspicious_tld",
+     "severity": "MEDIUM",
+     "category": "domain",
+     "title": "High-risk top-level domain '.click'",
+     "detail": "The '.click' TLD is heavily abused in phishing and malware campaigns.",
+     "score_impact": 10,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-09-12T15:14:32",
+   "timestamp_display": "12 Sep 2026 15:14",
+   "source": "test"
+  }
+ },
+ {
   "scan_id": "url_20260831_082200_184180",
   "url": "http://test-bank-alert.com",
   "domain": "test-bank-alert.com",
@@ -2632,872 +3580,6 @@
    "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
    "timestamp": "2026-08-30T14:27:32",
    "timestamp_display": "30 Aug 2026 14:27",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20260830_141217_7123f8",
-  "url": "https://example.com",
-  "domain": "example.com",
-  "score": 92,
-  "risk_level": "LOW",
-  "risk_level_label": "LOW",
-  "classification": "LIKELY_SAFE",
-  "classification_label": "LIKELY SAFE",
-  "timestamp": "2026-08-30T14:12:17",
-  "timestamp_display": "30 Aug 2026 14:12",
-  "result": {
-   "success": true,
-   "scan_id": "url_20260830_141217_7123f8",
-   "url": "https://example.com",
-   "display_url": "https://example.com",
-   "hostname": "example.com",
-   "domain_display": "example.com",
-   "score": 92,
-   "risk_level": "LOW",
-   "risk_level_label": "LOW",
-   "classification": "LIKELY_SAFE",
-   "classification_label": "LIKELY SAFE",
-   "classification_summary": "Likely Safe",
-   "reasoning": [
-    "Base score: 100",
-    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
-   ],
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "warn",
-      "detail": "Reputation data unavailable"
-     },
-     {
-      "name": "Domain Age",
-      "status": "warn",
-      "detail": "Information unavailable"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
-    "ips": [
-     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
-     "104.20.23.154",
-     "172.66.147.243"
-    ],
-    "port": 443,
-    "path": "/",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": "https://example.com"
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "https_enabled": true,
-    "valid": true,
-    "issuer": "Cloudflare TLS Issuing ECC CA 3",
-    "subject": "example.com",
-    "expires": "Oct 27 22:17:21 2026 GMT",
-    "expires_in_days": 58,
-    "not_before": "Jul 29 22:10:08 2026 GMT",
-    "self_signed": false,
-    "hostname_mismatch": false,
-    "tls_version": "TLSv1.3",
-    "cipher": "TLS_AES_256_GCM_SHA384",
-    "san": [
-     "example.com",
-     "*.example.com"
-    ],
-    "error": null
-   },
-   "domain": {
-    "hostname": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "subdomains": [],
-    "is_ip_address": false,
-    "resolved": true,
-    "ips": [
-     "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
-     "104.20.23.154",
-     "172.66.147.243"
-    ],
-    "ip_address": "2606:4700:83b5:72db:f23b:91e:ef6b:ff98",
-    "dns_error": null,
-    "whois_available": false,
-    "domain_age": "Information unavailable",
-    "registrar": null,
-    "hosting_asn": null,
-    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
-   },
-   "reputation": {
-    "available": false,
-    "provider": null,
-    "reputation": "Unknown",
-    "malware": "Unknown",
-    "phishing": "Unknown",
-    "engines": null,
-    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
-   },
-   "findings": [],
-   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
-   "timestamp": "2026-08-30T14:12:17",
-   "timestamp_display": "30 Aug 2026 14:12",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20260830_140651_542f74",
-  "url": "https://not-a-valid-url",
-  "domain": "not-a-valid-url",
-  "score": 75,
-  "risk_level": "LOW_MEDIUM",
-  "risk_level_label": "LOW-MEDIUM",
-  "classification": "UNKNOWN",
-  "classification_label": "UNKNOWN",
-  "timestamp": "2026-08-30T14:06:51",
-  "timestamp_display": "30 Aug 2026 14:07",
-  "result": {
-   "success": true,
-   "scan_id": "url_20260830_140651_542f74",
-   "url": "https://not-a-valid-url",
-   "display_url": "https://not-a-valid-url",
-   "hostname": "not-a-valid-url",
-   "domain_display": "not-a-valid-url",
-   "score": 75,
-   "risk_level": "LOW_MEDIUM",
-   "risk_level_label": "LOW-MEDIUM",
-   "classification": "UNKNOWN",
-   "classification_label": "UNKNOWN",
-   "classification_summary": "Unable to Determine",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: Domain could not be resolved",
-    "-3 LOW: Multiple hyphens in domain name"
-   ],
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "fail",
-      "detail": "Domain could not be resolved."
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "fail",
-      "detail": "Domain could not be resolved."
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "warn",
-      "detail": "Reputation data unavailable"
-     },
-     {
-      "name": "Domain Age",
-      "status": "warn",
-      "detail": "Information unavailable"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "not-a-valid-url",
-    "registered_domain": "not-a-valid-url",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": false,
-    "status": "unreachable",
-    "https_enabled": true,
-    "valid": false,
-    "issuer": null,
-    "subject": null,
-    "expires": null,
-    "expires_in_days": null,
-    "not_before": null,
-    "self_signed": false,
-    "hostname_mismatch": false,
-    "tls_version": null,
-    "cipher": null,
-    "san": [],
-    "error": "Domain could not be resolved."
-   },
-   "domain": {
-    "hostname": "not-a-valid-url",
-    "registered_domain": "not-a-valid-url",
-    "subdomain_count": 0,
-    "subdomains": [],
-    "is_ip_address": false,
-    "resolved": false,
-    "ips": [],
-    "ip_address": null,
-    "dns_error": "Domain could not be resolved.",
-    "whois_available": false,
-    "domain_age": "Information unavailable",
-    "registrar": null,
-    "hosting_asn": null,
-    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
-   },
-   "reputation": {
-    "available": false,
-    "provider": null,
-    "reputation": "Unknown",
-    "malware": "Unknown",
-    "phishing": "Unknown",
-    "engines": null,
-    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
-   },
-   "findings": [
-    {
-     "id": "dns_failure",
-     "severity": "HIGH",
-     "category": "domain",
-     "title": "Domain could not be resolved",
-     "detail": "Domain could not be resolved.",
-     "score_impact": 22,
-     "positive": false
-    },
-    {
-     "id": "hyphenated_domain",
-     "severity": "LOW",
-     "category": "domain",
-     "title": "Multiple hyphens in domain name",
-     "detail": "Hyphen-heavy domains are frequently registered to imitate legitimate brands (e.g. secure-paypal-login).",
-     "score_impact": 3,
-     "positive": false
-    }
-   ],
-   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
-   "timestamp": "2026-08-30T14:06:51",
-   "timestamp_display": "30 Aug 2026 14:07",
-   "source": "test"
-  }
- },
- {
-  "scan_id": "url_20260830_140627_e8f3e5",
-  "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
-  "domain": "secure-update.click",
-  "score": 26,
-  "risk_level": "HIGH",
-  "risk_level_label": "HIGH",
-  "classification": "UNKNOWN",
-  "classification_label": "UNKNOWN",
-  "timestamp": "2026-08-30T14:06:27",
-  "timestamp_display": "30 Aug 2026 14:06",
-  "result": {
-   "success": true,
-   "scan_id": "url_20260830_140627_e8f3e5",
-   "url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evil.com",
-   "display_url": "http://login-paypal.secure-update.click/auth?session=abc123&return=http://evi...",
-   "hostname": "login-paypal.secure-update.click",
-   "domain_display": "secure-update.click",
-   "score": 26,
-   "risk_level": "HIGH",
-   "risk_level_label": "HIGH",
-   "classification": "UNKNOWN",
-   "classification_label": "UNKNOWN",
-   "classification_summary": "Unable to Determine",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: Domain could not be resolved",
-    "-22 HIGH: Connection is not encrypted (HTTP)",
-    "-10 MEDIUM: Credential / account-related keywords",
-    "-10 MEDIUM: URL embedded inside query parameters",
-    "-10 MEDIUM: High-risk top-level domain '.click'"
-   ],
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "fail",
-      "detail": "Plain HTTP"
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "skip",
-      "detail": "Target does not use HTTPS — SSL/TLS analysis skipped."
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "fail",
-      "detail": "Domain could not be resolved."
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "warn",
-      "detail": "Reputation data unavailable"
-     },
-     {
-      "name": "Domain Age",
-      "status": "warn",
-      "detail": "Information unavailable"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTP",
-    "domain": "login-paypal.secure-update.click",
-    "registered_domain": "secure-update.click",
-    "subdomain_count": 1,
-    "ip_address": null,
-    "ips": [],
-    "port": 80,
-    "path": "/auth",
-    "query": "session=abc123&return=http://evil.com",
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": false,
-    "status": "not_https",
-    "https_enabled": false,
-    "valid": false,
-    "issuer": null,
-    "subject": null,
-    "expires": null,
-    "expires_in_days": null,
-    "not_before": null,
-    "self_signed": false,
-    "hostname_mismatch": false,
-    "tls_version": null,
-    "cipher": null,
-    "san": [],
-    "error": "Target does not use HTTPS — SSL/TLS analysis skipped."
-   },
-   "domain": {
-    "hostname": "login-paypal.secure-update.click",
-    "registered_domain": "secure-update.click",
-    "subdomain_count": 1,
-    "subdomains": [
-     "login-paypal"
-    ],
-    "is_ip_address": false,
-    "resolved": false,
-    "ips": [],
-    "ip_address": null,
-    "dns_error": "Domain could not be resolved.",
-    "whois_available": false,
-    "domain_age": "Information unavailable",
-    "registrar": null,
-    "hosting_asn": null,
-    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
-   },
-   "reputation": {
-    "available": false,
-    "provider": null,
-    "reputation": "Unknown",
-    "malware": "Unknown",
-    "phishing": "Unknown",
-    "engines": null,
-    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
-   },
-   "findings": [
-    {
-     "id": "dns_failure",
-     "severity": "HIGH",
-     "category": "domain",
-     "title": "Domain could not be resolved",
-     "detail": "Domain could not be resolved.",
-     "score_impact": 22,
-     "positive": false
-    },
-    {
-     "id": "no_https",
-     "severity": "HIGH",
-     "category": "protocol",
-     "title": "Connection is not encrypted (HTTP)",
-     "detail": "Sensitive pages contacted over plain HTTP expose anything the user submits to network observers.",
-     "score_impact": 22,
-     "positive": false
-    },
-    {
-     "id": "credential_keywords",
-     "severity": "MEDIUM",
-     "category": "intent",
-     "title": "Credential / account-related keywords",
-     "detail": "URL contains credential-related keyword(s): auth, login, secure, update. Combined with other indicators this suggests a phishing lure.",
-     "score_impact": 10,
-     "positive": false
-    },
-    {
-     "id": "param_redirect",
-     "severity": "MEDIUM",
-     "category": "structure",
-     "title": "URL embedded inside query parameters",
-     "detail": "A query parameter contains another URL - a common open-redirect or cloaking technique.",
-     "score_impact": 10,
-     "positive": false
-    },
-    {
-     "id": "suspicious_tld",
-     "severity": "MEDIUM",
-     "category": "domain",
-     "title": "High-risk top-level domain '.click'",
-     "detail": "The '.click' TLD is heavily abused in phishing and malware campaigns.",
-     "score_impact": 10,
-     "positive": false
-    }
-   ],
-   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
-   "timestamp": "2026-08-30T14:06:27",
-   "timestamp_display": "30 Aug 2026 14:06",
-   "source": "test"
-  }
- },
- {
-  "scan_id": "url_20260830_140609_5b3a86",
-  "url": "https://example.com",
-  "domain": "example.com",
-  "score": 92,
-  "risk_level": "LOW",
-  "risk_level_label": "LOW",
-  "classification": "LIKELY_SAFE",
-  "classification_label": "LIKELY SAFE",
-  "timestamp": "2026-08-30T14:06:09",
-  "timestamp_display": "30 Aug 2026 14:06",
-  "result": {
-   "success": true,
-   "scan_id": "url_20260830_140609_5b3a86",
-   "url": "https://example.com",
-   "display_url": "https://example.com",
-   "hostname": "example.com",
-   "domain_display": "example.com",
-   "score": 92,
-   "risk_level": "LOW",
-   "risk_level_label": "LOW",
-   "classification": "LIKELY_SAFE",
-   "classification_label": "LIKELY SAFE",
-   "classification_summary": "Likely Safe",
-   "reasoning": [
-    "Base score: 100",
-    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
-   ],
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "warn",
-      "detail": "Reputation data unavailable"
-     },
-     {
-      "name": "Domain Age",
-      "status": "warn",
-      "detail": "Information unavailable"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-    "ips": [
-     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-     "172.66.147.243",
-     "104.20.23.154"
-    ],
-    "port": 443,
-    "path": "/",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": "https://example.com"
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "https_enabled": true,
-    "valid": true,
-    "issuer": "Cloudflare TLS Issuing ECC CA 3",
-    "subject": "example.com",
-    "expires": "Oct 27 22:17:21 2026 GMT",
-    "expires_in_days": 58,
-    "not_before": "Jul 29 22:10:08 2026 GMT",
-    "self_signed": false,
-    "hostname_mismatch": false,
-    "tls_version": "TLSv1.3",
-    "cipher": "TLS_AES_256_GCM_SHA384",
-    "san": [
-     "example.com",
-     "*.example.com"
-    ],
-    "error": null
-   },
-   "domain": {
-    "hostname": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "subdomains": [],
-    "is_ip_address": false,
-    "resolved": true,
-    "ips": [
-     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-     "172.66.147.243",
-     "104.20.23.154"
-    ],
-    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-    "dns_error": null,
-    "whois_available": false,
-    "domain_age": "Information unavailable",
-    "registrar": null,
-    "hosting_asn": null,
-    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
-   },
-   "reputation": {
-    "available": false,
-    "provider": null,
-    "reputation": "Unknown",
-    "malware": "Unknown",
-    "phishing": "Unknown",
-    "engines": null,
-    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
-   },
-   "findings": [],
-   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
-   "timestamp": "2026-08-30T14:06:09",
-   "timestamp_display": "30 Aug 2026 14:06",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20260830_140551_2a6343",
-  "url": "https://example.com",
-  "domain": "example.com",
-  "score": 92,
-  "risk_level": "LOW",
-  "risk_level_label": "LOW",
-  "classification": "LIKELY_SAFE",
-  "classification_label": "LIKELY SAFE",
-  "timestamp": "2026-08-30T14:05:51",
-  "timestamp_display": "30 Aug 2026 14:05",
-  "result": {
-   "success": true,
-   "scan_id": "url_20260830_140551_2a6343",
-   "url": "https://example.com",
-   "display_url": "https://example.com",
-   "hostname": "example.com",
-   "domain_display": "example.com",
-   "score": 92,
-   "risk_level": "LOW",
-   "risk_level_label": "LOW",
-   "classification": "LIKELY_SAFE",
-   "classification_label": "LIKELY SAFE",
-   "classification_summary": "Likely Safe",
-   "reasoning": [
-    "Base score: 100",
-    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
-   ],
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "warn",
-      "detail": "Reputation data unavailable"
-     },
-     {
-      "name": "Domain Age",
-      "status": "warn",
-      "detail": "Information unavailable"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-    "ips": [
-     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-     "172.66.147.243",
-     "104.20.23.154"
-    ],
-    "port": 443,
-    "path": "/",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": "https://example.com"
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "https_enabled": true,
-    "valid": true,
-    "issuer": "Cloudflare TLS Issuing ECC CA 3",
-    "subject": "example.com",
-    "expires": "Oct 27 22:17:21 2026 GMT",
-    "expires_in_days": 58,
-    "not_before": "Jul 29 22:10:08 2026 GMT",
-    "self_signed": false,
-    "hostname_mismatch": false,
-    "tls_version": "TLSv1.3",
-    "cipher": "TLS_AES_256_GCM_SHA384",
-    "san": [
-     "example.com",
-     "*.example.com"
-    ],
-    "error": null
-   },
-   "domain": {
-    "hostname": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "subdomains": [],
-    "is_ip_address": false,
-    "resolved": true,
-    "ips": [
-     "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-     "172.66.147.243",
-     "104.20.23.154"
-    ],
-    "ip_address": "2606:4700:83b5:72db:f2fe:50c:ef6b:ff98",
-    "dns_error": null,
-    "whois_available": false,
-    "domain_age": "Information unavailable",
-    "registrar": null,
-    "hosting_asn": null,
-    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
-   },
-   "reputation": {
-    "available": false,
-    "provider": null,
-    "reputation": "Unknown",
-    "malware": "Unknown",
-    "phishing": "Unknown",
-    "engines": null,
-    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
-   },
-   "findings": [],
-   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
-   "timestamp": "2026-08-30T14:05:51",
-   "timestamp_display": "30 Aug 2026 14:05",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20260830_140537_eb6c10",
-  "url": "https://example.com",
-  "domain": "example.com",
-  "score": 92,
-  "risk_level": "LOW",
-  "risk_level_label": "LOW",
-  "classification": "LIKELY_SAFE",
-  "classification_label": "LIKELY SAFE",
-  "timestamp": "2026-08-30T14:05:37",
-  "timestamp_display": "30 Aug 2026 14:05",
-  "result": {
-   "success": true,
-   "scan_id": "url_20260830_140537_eb6c10",
-   "url": "https://example.com",
-   "display_url": "https://example.com",
-   "hostname": "example.com",
-   "domain_display": "example.com",
-   "score": 92,
-   "risk_level": "LOW",
-   "risk_level_label": "LOW",
-   "classification": "LIKELY_SAFE",
-   "classification_label": "LIKELY SAFE",
-   "classification_summary": "Likely Safe",
-   "reasoning": [
-    "Base score: 100",
-    "Score capped at 92: reputation data unavailable, safety cannot be fully verified."
-   ],
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "warn",
-      "detail": "Reputation data unavailable"
-     },
-     {
-      "name": "Domain Age",
-      "status": "warn",
-      "detail": "Information unavailable"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "ip_address": "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
-    "ips": [
-     "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
-     "172.66.147.243",
-     "104.20.23.154"
-    ],
-    "port": 443,
-    "path": "/",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": "https://example.com"
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "https_enabled": true,
-    "valid": true,
-    "issuer": "Cloudflare TLS Issuing ECC CA 3",
-    "subject": "example.com",
-    "expires": "Oct 27 22:17:21 2026 GMT",
-    "expires_in_days": 58,
-    "not_before": "Jul 29 22:10:08 2026 GMT",
-    "self_signed": false,
-    "hostname_mismatch": false,
-    "tls_version": "TLSv1.3",
-    "cipher": "TLS_AES_256_GCM_SHA384",
-    "san": [
-     "example.com",
-     "*.example.com"
-    ],
-    "error": null
-   },
-   "domain": {
-    "hostname": "example.com",
-    "registered_domain": "example.com",
-    "subdomain_count": 0,
-    "subdomains": [],
-    "is_ip_address": false,
-    "resolved": true,
-    "ips": [
-     "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
-     "172.66.147.243",
-     "104.20.23.154"
-    ],
-    "ip_address": "2606:4700:83b5:72db:f23b:59f:ef6b:ff98",
-    "dns_error": null,
-    "whois_available": false,
-    "domain_age": "Information unavailable",
-    "registrar": null,
-    "hosting_asn": null,
-    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
-   },
-   "reputation": {
-    "available": false,
-    "provider": null,
-    "reputation": "Unknown",
-    "malware": "Unknown",
-    "phishing": "Unknown",
-    "engines": null,
-    "note": "Reputation data unavailable — no threat intelligence provider configured (set THREAT_INTEL_PROVIDER / THREAT_INTEL_API_KEY)."
-   },
-   "findings": [],
-   "recommendation": "No significant malicious indicators were detected, but reputation data was unavailable during this scan. Users should still verify the destination before entering credentials or sensitive information.",
-   "timestamp": "2026-08-30T14:05:37",
-   "timestamp_display": "30 Aug 2026 14:05",
    "source": "panel"
   }
  }
