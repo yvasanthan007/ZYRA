@@ -19,9 +19,22 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
-from listen import listen
-from speak import speak
-from brain import ask_ai
+from listen import listen, warm_up_async as warm_up_speech_async
+from speak import (
+    speak,
+    speak_async,
+    stop_speaking,
+    is_speaking,
+    wait_until_done,
+    warm_up_async as warm_up_voice_async,
+)
+from brain import (
+    ask_ai,
+    ask_ai_stream,
+    begin_request_session,
+    cancel_current_request,
+    is_current_session,
+)
 from commands.open_app import (
     open_chrome, open_vscode, open_notepad, open_calculator,
     open_cmd, open_powershell, open_task_manager, open_control_panel,
@@ -284,6 +297,18 @@ def cleanup():
 
     print("\n🧹 Cleaning up...")
 
+    # Stop the voice pipeline first: end the listening session and cut off any
+    # speech still queued or playing.
+    try:
+        import listen as _listen
+        _listen.stop_listening()
+    except Exception:
+        pass
+    try:
+        stop_speaking(clear_queue=True)
+    except Exception:
+        pass
+
     if desktop_shell_process is not None:
         try:
             desktop_shell_process.terminate()
@@ -521,6 +546,53 @@ def handle_dns_analysis_voice(command: str):
     ).start()
 
 
+# ========== Voice turn state (exactly one pipeline per utterance) ==========
+# Every utterance opens ONE turn. Starting a turn cancels any in-flight AI
+# generation and clears the TTS queue, so a stale answer can never be spoken
+# after a newer request has arrived. Barge-in (the user speaking while ZYRA is
+# talking) uses the same path: interrupt → clear → capture → process.
+
+_turn_lock = threading.Lock()
+_turn_counter = 0
+
+
+def start_voice_turn() -> int:
+    """Open a new voice turn, cancelling the previous answer completely."""
+    global _turn_counter
+    with _turn_lock:
+        _turn_counter += 1
+        turn = _turn_counter
+    cancel_current_request()          # stale AI tokens stop being produced
+    stop_speaking(clear_queue=True)   # stop talking now, drop queued sentences
+    return turn
+
+
+def _turn_is_current(turn: int) -> bool:
+    with _turn_lock:
+        return turn == _turn_counter
+
+
+def answer_voice_stream(command: str, turn: int) -> None:
+    """Stream the AI answer: first sentence → TTS while the rest generates.
+
+    Runs in its own thread so the main loop can immediately go back to
+    listening (which is what makes barge-in possible). Only the newest turn may
+    speak: any older turn stops silently.
+    """
+    session_id = begin_request_session()
+    print("🧠 ZYRA thinking...")
+    try:
+        for sentence in ask_ai_stream(command, session_id=session_id):
+            if not _turn_is_current(turn) or not is_current_session(session_id):
+                print("⏹️  Reply cancelled — a newer request took over.")
+                return
+            speak_async(sentence)      # queued; keeps generating meanwhile
+        # Let the queued sentences finish; barge-in can interrupt this wait.
+        wait_until_done(timeout=300)
+    except Exception as exc:  # noqa: BLE001 - never crash the voice loop
+        print(f"⚠️  Voice answer failed: {type(exc).__name__}: {exc}")
+
+
 # ========== Main Entry Point ==========
 
 if __name__ == "__main__":
@@ -575,19 +647,39 @@ if __name__ == "__main__":
         print("   🖥️  Dashboard: ZYRA Desktop window (http://127.0.0.1:8080)")
         print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
 
+    # Warm up the voice stack in the background so the first utterance is fast:
+    # the STT model loads, the TTS voice session is established and (via the
+    # backend) the Ollama model is pulled into memory.
+    warm_up_speech_async()
+    warm_up_voice_async()
+
     speak("Hello, I am Zyra. How can I help you today?")
 
     try:
         while running:
             try:
-                command = listen()
+                # While ZYRA is speaking the microphone stays open in barge-in
+                # mode: if the user starts talking, the current answer is cut
+                # off, its queue is cleared and the new request is processed.
+                # is_speaking is passed as a callable so it is evaluated per
+                # audio frame (playback may start mid-capture).
+                command = listen(
+                    should_continue=lambda: running,
+                    barge_in=is_speaking,
+                )
 
                 if not command:
                     continue
 
+                # Preserve the recognized text for the AI (natural casing and
+                # punctuation improve answer quality) and match intents on a
+                # lowercase copy of it.
+                spoken_text = command
                 command = command.lower()
 
-                print(f"You : {command}")
+                # ONE pipeline per utterance: this cancels any answer still in
+                # flight and clears anything still queued for speech.
+                turn = start_voice_turn()
 
                 if command.startswith("close "):
                     app = command.replace("close ", "").strip()
@@ -809,11 +901,20 @@ if __name__ == "__main__":
                     break
 
                 else:
-                    answer = ask_ai(command)
-                    print(f"Zyra : {answer}")
-                    speak(answer)
+                    # Conversational answer: streaming STT → Ollama → TTS.
+                    # The worker streams sentences into the TTS queue, so ZYRA
+                    # starts speaking as soon as the first sentence exists and
+                    # keeps talking while the model finishes the rest. The main
+                    # loop immediately resumes listening (barge-in).
+                    threading.Thread(
+                        target=answer_voice_stream,
+                        args=(spoken_text, turn),
+                        name="zyra-voice-answer",
+                        daemon=True,
+                    ).start()
 
             except KeyboardInterrupt:
+                stop_speaking(clear_queue=True)
                 speak("Shutting down. Goodbye.")
                 break
 
