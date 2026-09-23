@@ -1,0 +1,9 @@
+{
+  "name": "zyra-desktop-shell",
+  "productName": "ZYRA",
+  "version": "1.0.0",
+  "description": "ZYRA Desktop — native window shell wrapping the existing ZYRA app",
+  "main": "main.js",
+  "author": "Vasanthan Y",
+  "license": "MIT"
+}

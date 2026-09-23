@@ -9,6 +9,18 @@ import time
 import asyncio
 import threading
 import webbrowser
+
+# ── Windows console safety ──────────────────────────────────────────────
+# Reconfigure stdout/stderr to UTF-8 so emoji status prints (🚀 📡 🔍 …)
+# can never raise UnicodeEncodeError on cp1252 Windows consoles — an
+# unhandled encode error here would abort the server before uvicorn starts.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 from typing import Optional, Dict, Any
 from pathlib import Path
 
@@ -28,6 +40,7 @@ from backend.zyra_bridge import (
     process_message,
     speak_text,
 )
+from brain import warm_up_async
 from backend.link_security import (
     analyze_url_security,
     format_security_report,
@@ -148,6 +161,9 @@ _server_loop: Optional[asyncio.AbstractEventLoop] = None
 async def on_startup():
     global _server_loop
     _server_loop = asyncio.get_running_loop()
+    # Preload the AI model in the background so the first chat reply doesn't
+    # pay the cold-load penalty (keeps every reply inside the 5-10s budget).
+    warm_up_async()
 
 
 def broadcast_message_sync(message: Dict[str, Any]) -> None:
