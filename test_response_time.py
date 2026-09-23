@@ -1,11 +1,12 @@
 """
 test_response_time.py — Regression tests for ZYRA's guaranteed reply window.
 
-brain.ask_ai must return within AI_RESPONSE_BUDGET_SECONDS (default 10s) even
-when the model backend is slow or hangs: the HTTP timeout is capped by the
-budget, the retry policy is deadline-aware (no retry once the window is spent),
-and timeouts fall back to a fast, honest message. These tests run fully
-offline by stubbing the Ollama client.
+brain.ask_ai must honour AI_RESPONSE_BUDGET_SECONDS (default 120s) instead of
+cutting a slow CPU model off at 10s — a reply that takes several seconds is
+returned in full. The HTTP timeout is capped by the budget, the retry policy is
+deadline-aware (no retry once the window is spent), and only a genuinely hung
+backend falls back to the fast, honest message. These tests run fully offline
+by stubbing the Ollama client.
 """
 import time
 import unittest
@@ -33,12 +34,38 @@ class ResponseTimeBudgetTests(unittest.TestCase):
     def tearDown(self):
         brain.clear_conversation()
 
-    def test_default_budget_is_within_10_seconds(self):
-        self.assertLessEqual(brain.AI_RESPONSE_BUDGET_SECONDS, 10.0)
-        # The HTTP timeout can never exceed the reply budget.
+    def test_default_budget_allows_slow_cpu_models(self):
+        # CPU inference is slow (a one-line phi3 answer takes ~10s, llama3 more),
+        # so the default budget must be generous — the old 10s cut-off made
+        # every reply look like "Ollama is not working" — but still bounded.
+        self.assertGreaterEqual(brain.AI_RESPONSE_BUDGET_SECONDS, 30.0)
+        self.assertLessEqual(brain.AI_RESPONSE_BUDGET_SECONDS, 300.0)
+        # The HTTP timeout can never exceed the reply budget, and it is no
+        # longer clamped down to 10s.
         self.assertLessEqual(brain.AI_TIMEOUT_SECONDS, brain.AI_RESPONSE_BUDGET_SECONDS)
-        # Generation is capped so answers finish inside the window.
+        self.assertGreater(brain.AI_TIMEOUT_SECONDS, 10.0)
+        # Generation is still capped so answers finish quickly once warm.
         self.assertLessEqual(brain.AI_NUM_PREDICT, 150)
+
+    def test_slow_reply_within_budget_is_returned_not_aborted(self):
+        # A slow-but-progressing CPU reply inside the budget must come back as
+        # the real answer (this is the exact regression that made every chat
+        # reply time out at the old 10s budget).
+        budget = 6.0
+
+        def slow_reply(**kw):
+            time.sleep(3.0)
+            return {"message": {"content": "Slow but working."}}
+
+        fake = _FakeClient(slow_reply)
+        with mock.patch.object(brain, "AI_RESPONSE_BUDGET_SECONDS", budget), \
+                mock.patch.object(brain, "_get_client", return_value=fake):
+            started = time.monotonic()
+            answer = brain.ask_ai("hello")
+            elapsed = time.monotonic() - started
+        self.assertEqual(answer, "Slow but working.")
+        self.assertEqual(len(fake.calls), 1)
+        self.assertLess(elapsed, budget)
 
     def test_fast_backend_returns_answer_and_passes_keep_alive(self):
         fake = _FakeClient(lambda **kw: {"message": {"content": "Hi there!"}})

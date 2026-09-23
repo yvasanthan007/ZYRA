@@ -9,6 +9,7 @@ import sys
 import time
 import unittest
 from typing import Dict, Any
+from unittest import mock
 
 # Ensure project root is in path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,6 +19,9 @@ from system_monitor import (
     format_system_monitor_text,
     get_voice_summary,
     is_system_monitor_intent,
+    classify_system_query,
+    answer_system_query,
+    top_processes,
     start_system_monitor,
     make_progress_bar,
     format_bytes,
@@ -27,11 +31,13 @@ from system_monitor import (
 )
 from backend.zyra_bridge import (
     process_chat,
+    process_chat_stream,
     process_command,
     process_voice_command,
     process_message,
     COMMAND_MAP,
 )
+from backend import server as server_module
 from backend.server import app
 from fastapi.testclient import TestClient
 
@@ -244,6 +250,180 @@ class TestSystemMonitor(unittest.TestCase):
         self.assertTrue(data.get("success"))
         self.assertIn("formatted", data)
         self.assertIn("SYSTEM MONITOR", data["formatted"])
+
+
+    # ──────────────────────────────────────────────
+    # Natural-language question routing (regression: metric questions used to
+    # fall through to the language model, which has no access to this machine)
+    # ──────────────────────────────────────────────
+
+    def test_question_topics_are_classified(self):
+        """Realistic questions map onto the metric topic they ask about."""
+        cases = {
+            "what is my cpu usage": "cpu",
+            "whats my cpu usage right now": "cpu",
+            "how much ram is being used": "ram",
+            "memory usage": "ram",
+            "is my disk full": "disk",
+            "how much disk space is left": "disk",
+            "check my battery": "battery",
+            "is my battery charging": "battery",
+            "how long has my pc been on": "uptime",
+            "what is my uptime": "uptime",
+            "is my pc overheating": "temperature",
+            "what processes are using the most memory": "processes",
+            "which app is eating my cpu": "processes",
+            "what is my ip address": "network",
+            "how fast is my internet": "network",
+            "tell me my system info": "system",
+            "monitor my system": "overall",
+            "system status": "overall",
+            "why is my computer slow": "overall",
+            "system performance": "overall",
+        }
+        for question, expected in cases.items():
+            self.assertEqual(
+                classify_system_query(question), expected,
+                f"wrong topic for {question!r}")
+            self.assertTrue(is_system_monitor_intent(question), question)
+
+    def test_unrelated_messages_are_not_hijacked(self):
+        """Normal chat must never be routed to the system monitor."""
+        for message in (
+            "open chrome",
+            "what is the time",
+            "search google for dogs",
+            "play music",
+            "tell me a joke",
+            "what is 2 plus 3",
+            "name one colour",
+            "thanks",
+            "why is the sky blue",
+            "python memory usage",
+            "what is node memory usage",
+            "how do I free up disk space",
+            "write a function to get cpu usage",
+            "is my code slow",
+            "open notepad",
+        ):
+            self.assertIsNone(classify_system_query(message), message)
+            self.assertFalse(is_system_monitor_intent(message), message)
+
+    def test_answers_use_real_metrics(self):
+        """Each topic answers with live values, never model guesses."""
+        metrics = get_system_metrics()
+        cpu_answer = answer_system_query("what is my cpu usage", metrics)
+        self.assertIn(f"{int(round(metrics['cpu']['percent']))}%", cpu_answer)
+
+        ram_answer = answer_system_query("how much ram is being used", metrics)
+        self.assertIn(metrics["memory"]["total_str"], ram_answer)
+
+        disk_answer = answer_system_query("is my disk full", metrics)
+        self.assertIn(metrics["disk"]["total_str"], disk_answer)
+
+        uptime_answer = answer_system_query("how long has my pc been on", metrics)
+        self.assertIn(metrics["uptime"]["formatted"], uptime_answer)
+
+        system_answer = answer_system_query("tell me my system info", metrics)
+        self.assertIn(metrics["system"]["hostname"], system_answer)
+
+        battery_answer = answer_system_query("check my battery", metrics)
+        self.assertIn("battery", battery_answer.lower())
+
+        processes_answer = answer_system_query(
+            "what processes are using the most memory", metrics)
+        self.assertIn("Busiest by memory", processes_answer)
+
+        # An explicit monitor request still returns the full card.
+        card = answer_system_query("monitor my system", metrics)
+        self.assertIn("SYSTEM MONITOR", card)
+
+    def test_top_processes_shape_and_limits(self):
+        """The process helper returns bounded, well-formed rows."""
+        rows = top_processes(3, by="memory")
+        self.assertLessEqual(len(rows), 3)
+        for row in rows:
+            self.assertIn("pid", row)
+            self.assertIn("name", row)
+            self.assertIn("cpu_percent", row)
+            self.assertIn("memory_percent", row)
+
+
+    def test_bridge_answers_metric_questions_without_the_model(self):
+        """Chat/voice questions are answered from metrics, not by the LLM."""
+        answer = process_chat("what is my cpu usage")
+        self.assertIn("CPU is at", answer)
+
+        voice = process_voice_command("what is my cpu usage")
+        self.assertEqual(voice.get("action"), "system_monitor_answer")
+        self.assertIn("CPU is at", voice.get("response", ""))
+
+        # An explicit monitor request keeps the panel-opening action.
+        voice_card = process_voice_command("Monitor my system")
+        self.assertEqual(voice_card.get("action"), "system_monitor")
+        self.assertIn("metrics", voice_card)
+
+    def test_stream_router_splits_static_from_ai(self):
+        """Deterministic answers stay local; only real questions hit the model."""
+        static = process_chat_stream("what is my cpu usage")
+        self.assertEqual(static.get("kind"), "static")
+        self.assertIn("CPU is at", static.get("data", ""))
+
+        monitor = process_chat_stream("monitor my system")
+        self.assertEqual(monitor.get("kind"), "static")
+        self.assertEqual(monitor.get("monitor_topic"), "overall")
+
+        ai = process_chat_stream("Tell me a short story about a robot")
+        self.assertEqual(ai.get("kind"), "ai")
+        self.assertEqual(ai.get("question"), "Tell me a short story about a robot")
+
+        empty = process_chat_stream("   ")
+        self.assertEqual(empty.get("kind"), "static")
+
+    def test_broadcast_system_monitor_trigger_actually_broadcasts(self):
+        """Regression: the broadcast body was lost in a merge, so voice
+        activation never opened the dashboard panel."""
+        metrics = get_system_metrics()
+        with mock.patch.object(server_module, "broadcast_message_sync") as sender:
+            server_module.broadcast_system_monitor_trigger(metrics)
+        self.assertEqual(sender.call_count, 1)
+        payload = sender.call_args[0][0]
+        self.assertEqual(payload["type"], "show_system_monitor")
+        self.assertIs(payload["data"], metrics)
+        self.assertIn("SYSTEM MONITOR", payload["formatted"])
+
+    def test_streaming_chat_sends_chunks(self):
+        """chat + stream:true streams chat_chunk/chat_end (model stubbed)."""
+        def fake_stream(question):
+            yield "Hello"
+            yield " world"
+
+        client = TestClient(app)
+        with mock.patch.object(server_module, "stream_ai", fake_stream):
+            with client.websocket_connect("/ws") as ws:
+                ws.send_json({"type": "chat", "data": "Say hi to me", "stream": True})
+                messages = [ws.receive_json() for _ in range(3)]
+        self.assertEqual([m["type"] for m in messages],
+                         ["chat_chunk", "chat_chunk", "chat_end"])
+        self.assertEqual(messages[0]["data"], "Hello")
+        self.assertEqual(messages[2]["data"], "Hello world")
+
+    def test_monitor_chat_opens_panel_and_question_does_not(self):
+        """'Monitor my system' broadcasts the panel; a question only answers."""
+        client = TestClient(app)
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"type": "chat", "data": "Monitor my system", "stream": True})
+            first = ws.receive_json()
+            second = ws.receive_json()
+        types = {first["type"], second["type"]}
+        self.assertIn("response", types)
+        self.assertIn("show_system_monitor", types)
+        response = first if first["type"] == "response" else second
+        self.assertIn("SYSTEM MONITOR", response["data"])
+
+        # A metric question is answered in the chat feed (no panel broadcast),
+        # which the classifier guarantees by not returning 'overall'.
+        self.assertNotEqual(classify_system_query("what is my cpu usage"), "overall")
 
 
 def run_tests():

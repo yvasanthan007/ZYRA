@@ -95,10 +95,12 @@ python start_zyra.py
   - `ZYRA_OLLAMA_MODEL`, `ZYRA_OLLAMA_HOST`
   - `ZYRA_AI_TEMPERATURE`, `ZYRA_AI_NUM_PREDICT`
   - `ZYRA_AI_MAX_HISTORY`, `ZYRA_AI_TIMEOUT_SECONDS`
-  - `ZYRA_AI_RESPONSE_BUDGET_SECONDS` (hard reply deadline, default 10s),
-    `ZYRA_AI_KEEP_ALIVE` (keeps the model warm so replies stay fast)
+  - `ZYRA_AI_RESPONSE_BUDGET_SECONDS` (hard reply deadline, default 120s so a
+    slow CPU model is never cut off mid-answer), `ZYRA_AI_KEEP_ALIVE`
+    (keeps the model warm so replies stay fast)
   - `ZYRA_AI_MAX_RESPONSE_CHARS`, `ZYRA_AI_MEMORY`
 - ✅ **Retry with backoff** for transient Ollama failures + response hardening (ANSI/control chars stripped, capped length)
+- ✅ **Realistic reply window** — the old 10s cut-off made slow CPU replies time out ("Ollama is not working"); the budget is now 120s (env-tunable) and the REST `/api/chat` call runs in a worker thread so a long answer never freezes the dashboard
 
 
 ### 5. **Main Application (main.py)**
@@ -250,6 +252,14 @@ Do not click or enter credentials — close the page and report the source of th
 ### AI not responding?
 - Make sure Ollama is running: `ollama serve`
 - Pull the Llama3 model: `ollama pull llama3`
+- Slow replies are normal on CPU: a short `phi3` answer takes ~10s and `llama3`
+  (8B) can take 30s+. Zyra waits up to `ZYRA_AI_RESPONSE_BUDGET_SECONDS`
+  (default 120s) before giving up, so raise it if your machine is slower:
+  `set ZYRA_AI_RESPONSE_BUDGET_SECONDS=180` (PowerShell:
+  `$env:ZYRA_AI_RESPONSE_BUDGET_SECONDS=180`)
+- Want faster replies? Use a smaller model — `ollama pull phi3` then set
+  `ZYRA_OLLAMA_MODEL=phi3` (Zyra already prefers small models automatically
+  and keeps the chosen one warm with `ZYRA_AI_KEEP_ALIVE=30m`)
 
 ### Dashboard not loading?
 - Check if backend server started (look for "Dashboard will be available at: http://127.0.0.1:8080")

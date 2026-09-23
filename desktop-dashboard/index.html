@@ -2771,6 +2771,39 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     typingEl = null;
   }
 
+  // ===== STREAMING REPLY BUBBLE =====
+  // Ollama streams the answer token-by-token (chat_chunk / chat_end), so the
+  // first words appear within ~1s instead of after the whole reply.
+  let streamEl = null;
+  let streamBody = null;
+  let streamText = '';
+
+  function appendStreamChunk(text) {
+    if (!streamEl) {
+      removeTypingIndicator();
+      streamEl = document.createElement('div');
+      streamEl.className = 'msg zyra';
+      const label = document.createElement('div');
+      label.className = 'zyra-label';
+      label.textContent = 'ZYRA';
+      streamBody = document.createElement('span');
+      streamEl.appendChild(label);
+      streamEl.appendChild(streamBody);
+      chatMessages.appendChild(streamEl);
+      streamText = '';
+    }
+    streamText += text;
+    // textContent (not innerHTML) so model output can never inject markup.
+    streamBody.textContent = streamText;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function finishStream() {
+    streamEl = null;
+    streamBody = null;
+    streamText = '';
+  }
+
   // ===== CENTER-TOP SCAN COMPLETION NOTIFICATION =====
   // Scan/analysis completion is shown as a centered top toast for 15 seconds
   // instead of being posted into the chat feed.
@@ -2827,23 +2860,42 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
       ws.onmessage = function(event) {
         try {
-          removeTypingIndicator();
           const data = JSON.parse(event.data);
-          if (data.type === 'show_system_monitor') {
+          if (data.type === 'chat_chunk') {
+            // Streaming answer in progress: replace the dots with real words.
+            appendStreamChunk(String(data.data == null ? '' : data.data));
+          } else if (data.type === 'chat_end') {
+            removeTypingIndicator();
+            if (streamEl) {
+              finishStream();
+            } else if (data.data) {
+              addMessage(data.data, 'zyra');
+            }
+            if (typeof data.data === 'string' && data.data.includes('SYSTEM MONITOR')) {
+              startSystemMonitor();
+            }
+          } else if (data.type === 'show_system_monitor') {
+            removeTypingIndicator();
             startSystemMonitor();
             if (data.data) {
               updateSystemMonitorUI(data.data);
             }
           } else if (data.type === 'system_metrics' && data.data) {
+            // Live monitor poll — never touches the chat feed or its typing
+            // indicator (this used to clear it every 1.5s and made chat look
+            // unresponsive while the monitor was open).
             updateSystemMonitorUI(data.data);
           } else if (data.type === 'show_nmap_scanner') {
+            removeTypingIndicator();
             openNmapPanel();
             if (data.data) updateNmapUI(data.data);
           } else if (data.type === 'nmap_status') {
             if (data.data) updateNmapUI(data.data);
           } else if (data.type === 'nmap_error') {
+            removeTypingIndicator();
             showNmapError(data.data && data.data.reason);
           } else if (data.type === 'response' && data.success) {
+            removeTypingIndicator();
             // Metric payloads (objects) belong to the live monitor, not the chat feed
             if (data.data && typeof data.data === 'object' && data.data.cpu) {
               updateSystemMonitorUI(data.data);
@@ -2854,24 +2906,30 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
               }
             }
           } else if (data.type === 'error') {
+            removeTypingIndicator();
             addMessage('Error: ' + (data.error || 'Unknown error'), 'system');
           } else if (data.type === 'show_url_analyzer') {
+            removeTypingIndicator();
             openUrlPanel();
             if (data.url && urlInput && !urlInput.value) urlInput.value = data.url;
             if (data.data) updateUrlUI(data.data);
           } else if (data.type === 'url_status') {
             if (data.data) updateUrlUI(data.data);
           } else if (data.type === 'url_error') {
+            removeTypingIndicator();
             showUrlError(data.data && data.data.reason);
           } else if (data.type === 'show_dns_lookup') {
+            removeTypingIndicator();
             openDnsPanel();
             if (data.domain && dnsInput && !dnsInput.value) dnsInput.value = data.domain;
             if (data.data) updateDnsUI(data.data);
           } else if (data.type === 'dns_status') {
             if (data.data) updateDnsUI(data.data);
           } else if (data.type === 'dns_error') {
+            removeTypingIndicator();
             showDnsError(data.data && data.data.reason);
           } else if (data.type === 'voice_response') {
+            removeTypingIndicator();
             addMessage(data.data, 'zyra');
             if (typeof data.data === 'string' && data.data.toLowerCase().includes('system monitor')) {
               startSystemMonitor();
@@ -2892,10 +2950,9 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     if (!text || !text.trim()) return;
     const cleanText = text.trim();
     const lowerText = cleanText.toLowerCase();
-    if (lowerText.includes('monitor my system') ||
-        lowerText.includes('system monitor') ||
-        lowerText.includes('monitor system') ||
-        lowerText.includes('start system monitor')) {
+    // Opening the panel early keeps the UI instant; the backend also
+    // broadcasts 'show_system_monitor' once it classifies the request.
+    if (SYSTEM_MONITOR_PHRASES_RE.test(lowerText)) {
       startSystemMonitor();
     }
     // URL analysis requests: open the URL Analyzer panel immediately; the
@@ -2925,7 +2982,10 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       return;
     }
     addMessage(cleanText, 'user');
-    ws.send(JSON.stringify({ type: 'chat', data: cleanText }));
+    // 'stream: true' asks the backend to stream the answer token-by-token
+    // (chat_chunk / chat_end). An older backend simply ignores the flag and
+    // replies with a normal 'response' message, which is handled as well.
+    ws.send(JSON.stringify({ type: 'chat', data: cleanText, stream: true }));
     showTypingIndicator();
     chatInput.value = '';
   }
@@ -3677,6 +3737,10 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     'trustworthy', 'malicious', 'scam', 'fraud', 'phish', 'threat',
   ];
   const URL_BARE_RE = /(https?:\/\/|www\.)\S+/i;
+  // System-monitor phrasing (mirrors system_monitor.SYSTEM_MONITOR_TRIGGERS) so
+  // the panel opens as soon as the message is sent; the backend confirms with a
+  // 'show_system_monitor' broadcast.
+  const SYSTEM_MONITOR_PHRASES_RE = /(monitor (?:my |the )?system|system monitor|system monitoring|start system monitor|open system monitor|show system monitor|launch system monitor|display system monitor|check system monitor|run system monitor|system status|system stats|pc stats|hardware stats)/i;
 
   function isUrlRequest(lowerText) {
     if (URL_BARE_RE.test(lowerText)) {

@@ -30,6 +30,8 @@ from system_monitor import (
     format_system_monitor_text,
     get_voice_summary,
     is_system_monitor_intent,
+    classify_system_query,
+    answer_system_query,
     start_system_monitor,
 )
 
@@ -148,8 +150,11 @@ def process_chat(message: str) -> str:
         return analyze_link_request(message)
 
     # ── System Monitor ──
+    # Answered from real psutil data: an explicit monitor request returns the
+    # full card, metric questions ("what is my cpu usage?") get a focused
+    # answer — the language model is never asked to guess hardware numbers.
     if is_system_monitor_intent(message):
-        return format_system_monitor_text()
+        return answer_system_query(message)
 
     # ── DNS Lookup ──
     # Intent detection is handled here; the actual lookup runs in the server
@@ -167,6 +172,55 @@ def process_chat(message: str) -> str:
 
     answer = ask_ai(message)
     return answer
+
+
+def process_chat_stream(message: str) -> Dict[str, Any]:
+    """Route a chat message without invoking the model when it isn't needed.
+
+    Used by the streaming WebSocket path so deterministic answers (System
+    Monitor, DNS, Nmap, link analysis, empty input) come back instantly while
+    real questions are streamed token-by-token by the AI brain.
+
+    Returns:
+        {"kind": "static", ...}  — answer already available in "data"
+        {"kind": "ai", "question": str}  — needs the language model
+    """
+    if not message or not str(message).strip():
+        return {"kind": "static", "success": True, "data": "Please say something!"}
+
+    text = str(message).strip()
+
+    # Same order as process_chat so behaviour can never diverge.
+    if is_link_analysis_request(text):
+        return {"kind": "static", "success": True, "data": analyze_link_request(text)}
+
+    if is_system_monitor_intent(text):
+        return {
+            "kind": "static",
+            "success": True,
+            "data": answer_system_query(text),
+            "monitor_topic": classify_system_query(text) or "overall",
+        }
+
+    if is_dns_intent(text):
+        return {
+            "kind": "static",
+            "success": True,
+            "data": dns_build_chat_ack(extract_dns_target(text)),
+            "action": "dns_lookup",
+            "dns_request": text,
+        }
+
+    if is_nmap_intent(text):
+        return {
+            "kind": "static",
+            "success": True,
+            "data": _nmap_starting_message(text),
+            "action": "nmap_scan",
+            "nmap_request": text,
+        }
+
+    return {"kind": "ai", "question": text}
 
 
 def process_command(command_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -266,6 +320,15 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
     # ── System Monitor intent ──
     if is_system_monitor_intent(text):
         metrics = get_system_metrics()
+        topic = classify_system_query(text) or "overall"
+        if topic != "overall":
+            # A question about one metric: answer it directly and let the
+            # caller decide whether to open the live panel.
+            return {
+                "response": answer_system_query(text, metrics),
+                "action": "system_monitor_answer",
+                "topic": topic,
+            }
         voice_resp = get_voice_summary(metrics)
         return {
             "response": voice_resp,

@@ -46,6 +46,8 @@ from backend.dns_lookup import (
 )
 from system_monitor import (
     is_system_monitor_intent,
+    classify_system_query,
+    answer_system_query,
     format_system_monitor_text,
     get_voice_summary,
     get_system_metrics,
@@ -669,16 +671,24 @@ if __name__ == "__main__":
                         speak("I don't know your favorite language yet.")
 
                 elif is_system_monitor_intent(command):
-                    # Start / show System Monitor, print ASCII card, broadcast to dashboard, and speak summary
+                    # System Monitor. A metric question ("what is my cpu
+                    # usage?") is answered straight from live psutil data; an
+                    # explicit "monitor my system" also opens/feeds the
+                    # dashboard panel and prints the full card.
                     metrics = get_system_metrics()
-                    report = format_system_monitor_text(metrics)
-                    print(f"\n{report}\n")
-                    try:
-                        broadcast_system_monitor_trigger(metrics)
-                    except Exception:
-                        pass
-                    voice_text = get_voice_summary(metrics)
-                    speak(voice_text)
+                    topic = classify_system_query(command) or "overall"
+                    if topic == "overall":
+                        report = format_system_monitor_text(metrics)
+                        print(f"\n{report}\n")
+                        try:
+                            broadcast_system_monitor_trigger(metrics)
+                        except Exception:
+                            pass
+                        speak(get_voice_summary(metrics))
+                    else:
+                        answer = answer_system_query(command, metrics)
+                        print(f"\n{answer}\n")
+                        speak(answer)
 
                 elif is_dns_intent(command):
                     # ZYRA DNS Lookup — real backend DNS queries streamed live

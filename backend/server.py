@@ -35,12 +35,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.zyra_bridge import (
     process_chat,
+    process_chat_stream,
     process_command,
     process_voice_command,
     process_message,
     speak_text,
 )
-from brain import warm_up_async
+from brain import stream_ai, warm_up_async
 from backend.link_security import (
     analyze_url_security,
     format_security_report,
@@ -51,6 +52,7 @@ from system_monitor import (
     format_system_monitor_text,
     get_voice_summary,
     is_system_monitor_intent,
+    classify_system_query,
     start_system_monitor,
 )
 from nmap_handler import is_nmap_intent
@@ -162,7 +164,7 @@ async def on_startup():
     global _server_loop
     _server_loop = asyncio.get_running_loop()
     # Preload the AI model in the background so the first chat reply doesn't
-    # pay the cold-load penalty (keeps every reply inside the 5-10s budget).
+    # pay the cold-load penalty (a warm model answers in seconds).
     warm_up_async()
 
 
@@ -177,9 +179,22 @@ def broadcast_message_sync(message: Dict[str, Any]) -> None:
 
 
 def broadcast_system_monitor_trigger(metrics: Optional[Dict[str, Any]] = None) -> None:
-    """Broadcast system monitor activation to all connected clients."""
+    """Broadcast system monitor activation to all connected clients.
+
+    Called from the voice loop thread (main.py) when the user asks to monitor
+    the system, and by the chat/voice intents. The broadcast is what opens the
+    dashboard's System Monitor panel and seeds it with the current metrics —
+    without it the panel never appears for voice/chat activation.
+    """
     if metrics is None:
         metrics = get_system_metrics()
+    broadcast_message_sync({
+        "type": "show_system_monitor",
+        "data": metrics,
+        "formatted": format_system_monitor_text(metrics),
+    })
+
+
 # ========== Nmap Scan Manager ==========
 # Runs scans in background threads (Nmap can take minutes), tracks live status,
 # and broadcasts progress to the dashboard over WebSocket.
@@ -887,7 +902,9 @@ async def chat_endpoint(data: Dict[str, Any]):
         )
 
     try:
-        response = process_chat(message)
+        # Offloaded to a worker thread: a slow model reply (up to the AI reply
+        # budget) must never block the event loop and freeze dashboard traffic.
+        response = await asyncio.to_thread(process_chat, message)
         return {"success": True, "response": response}
     except Exception as e:
         return JSONResponse(
@@ -1510,6 +1527,59 @@ async def dns_report_generate_endpoint(data: Dict[str, Any]):
 
 # ========== WebSocket Endpoint ==========
 
+async def _aiter_ai(question: str):
+    """Bridge the blocking brain.stream_ai() generator into the event loop.
+
+    The generator runs in a worker thread and pushes pieces through a queue, so
+    token streaming never blocks the dashboard's other WebSocket traffic.
+    """
+    loop = asyncio.get_running_loop()
+    queue: "asyncio.Queue" = asyncio.Queue()
+    done = object()
+
+    def worker():
+        try:
+            for piece in stream_ai(question):
+                loop.call_soon_threadsafe(queue.put_nowait, piece)
+        except Exception as exc:  # noqa: BLE001 - forwarded to the consumer
+            loop.call_soon_threadsafe(queue.put_nowait, exc)
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, done)
+
+    threading.Thread(target=worker, name="zyra-ai-stream", daemon=True).start()
+
+    while True:
+        item = await queue.get()
+        if item is done:
+            return
+        if isinstance(item, BaseException):
+            raise item
+        yield item
+
+
+async def _stream_ai_to(websocket: WebSocket, question: str) -> Dict[str, Any]:
+    """Stream an AI answer to the requesting client; return the aggregate result.
+
+    Protocol: ``chat_chunk`` messages carry each new piece of text, a final
+    ``chat_end`` carries the complete answer (so a client that missed chunks
+    still renders correctly).
+    """
+    text = ""
+    try:
+        async for piece in _aiter_ai(question):
+            text += piece
+            await manager.send_personal(
+                {"type": "chat_chunk", "success": True, "data": piece}, websocket)
+    except Exception as exc:  # noqa: BLE001 - surface a friendly message instead
+        print(f"WebSocket stream error: {exc}")
+        if not text:
+            text = ("Sorry, something went wrong while answering. "
+                    "Please make sure Ollama is running and try again.")
+    await manager.send_personal(
+        {"type": "chat_end", "success": True, "data": text}, websocket)
+    return {"success": True, "data": text, "streamed": True}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """
@@ -1517,13 +1587,13 @@ async def websocket_endpoint(websocket: WebSocket):
 
     Message format (JSON):
     {
-        "type": "chat|command|voice|speak|remember|recall",
+        "type": "chat|chat_stream|command|voice|speak|remember|recall",
         "data": "..."
     }
 
     Response format:
     {
-        "type": "response",
+        "type": "response|chat_chunk|chat_end|system_metrics",
         "success": true,
         "data": "..."
     }
@@ -1550,7 +1620,24 @@ async def websocket_endpoint(websocket: WebSocket):
             # Offloaded to a worker thread so a slow AI/Nmap/DNS call can never
             # block the event loop (which would freeze all dashboard traffic).
             try:
-                result = await asyncio.to_thread(process_message, msg_type, msg_data)
+                streamed = False
+                wants_stream = (
+                    msg_type == "chat_stream"
+                    or (msg_type == "chat" and bool(data.get("stream")))
+                )
+                if wants_stream and isinstance(msg_data, str):
+                    # Route first: intents (System Monitor / DNS / Nmap / link
+                    # analysis) answer instantly and are sent as a normal
+                    # response; only real questions reach the model, and those
+                    # are streamed so the chat shows words within ~1s.
+                    routed = await asyncio.to_thread(process_chat_stream, msg_data)
+                    if routed.get("kind") == "ai":
+                        result = await _stream_ai_to(websocket, routed["question"])
+                        streamed = True
+                    else:
+                        result = routed
+                else:
+                    result = await asyncio.to_thread(process_message, msg_type, msg_data)
 
                 # Metrics-type requests answer with their own message type so the
                 # dashboard updates the live monitor card instead of the chat feed.
@@ -1570,14 +1657,20 @@ async def websocket_endpoint(websocket: WebSocket):
                 if "error" in result:
                     response["error"] = result["error"]
 
-                await manager.send_personal(response, websocket)
+                if not streamed:
+                    # Streamed answers were already delivered as chat_chunk /
+                    # chat_end messages.
+                    await manager.send_personal(response, websocket)
 
                 # If it's a system monitor intent or action, broadcast card trigger
                 # (covers both voice commands and chat messages like "Monitor my system")
+                # Open the live monitor panel only for an explicit "monitor my
+                # system" style request; a metric question is answered directly
+                # in the chat feed instead.
                 chat_monitor_intent = (
                     msg_type == "chat"
                     and isinstance(msg_data, str)
-                    and is_system_monitor_intent(msg_data)
+                    and classify_system_query(msg_data) == "overall"
                 )
                 if result.get("action") == "system_monitor" or chat_monitor_intent:
                     metrics = result.get("metrics") or get_system_metrics()

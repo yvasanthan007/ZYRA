@@ -35,6 +35,8 @@ from system_monitor import (
     format_system_monitor_text,
     get_voice_summary,
     is_system_monitor_intent,
+    classify_system_query,
+    answer_system_query,
     start_system_monitor,
 )
 
@@ -86,7 +88,13 @@ def handle_message(msg):
     if msg_type == "chat":
         if isinstance(data, str):
             if is_system_monitor_intent(data):
-                return {"success": True, "data": format_system_monitor_text()}
+                # Answered locally from live metrics: metric questions get a
+                # focused answer, an explicit monitor request gets the card.
+                return {
+                    "success": True,
+                    "data": answer_system_query(data),
+                    "monitor_topic": classify_system_query(data) or "overall",
+                }
             answer = ask_ai(data)
             return {"success": True, "data": answer}
         return {"success": False, "error": "Invalid chat data"}
