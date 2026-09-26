@@ -143,7 +143,10 @@ def test_virustotal_integration():
     print("  Testing with a known safe URL...")
 
     test_url = "https://www.google.com"
-    verdict, details = check_url_virustotal(test_url)
+    # check_url_virustotal (alias of _check_virustotal) returns a plain
+    # status string: "malicious", "suspicious", "safe" or "error".
+    verdict = check_url_virustotal(test_url)
+    details = f"VirusTotal status: {verdict}"
 
     print(f"\n  URL: {test_url}")
     print(f"  Verdict: {verdict.upper()}")
@@ -170,8 +173,10 @@ def test_screen_capture():
         if url:
             print(f"\n  ✅ URL found: {url}")
 
-            # Analyze the found URL
-            verdict, reasons = analyze_url(url)
+            # Analyze the found URL (analyze_url returns a structured dict)
+            result = analyze_url(url)
+            verdict = result.get("verdict", "Safe")
+            reasons = [c.get("details", "") for c in result.get("checks", [])]
             print(f"\n  📊 Analysis: {verdict.upper()}")
             for reason in reasons:
                 print(f"     • {reason}")
@@ -224,23 +229,25 @@ def print_summary():
     from link_analysis import analyze_url, get_url_smart
 
     # Analyze a specific URL
-    verdict, reasons = analyze_url("https://example.com")
-    print(f"Verdict: {verdict}")
+    result = analyze_url("https://example.com")
+    print(f"Verdict: {result['verdict']}")
+    for check in result["checks"]:
+        print(f"  • {check['details']}")
 
     # Get URL from screen/clipboard and analyze
     url = get_url_smart()
     if url:
-        verdict, reasons = analyze_url(url)
+        result = analyze_url(url)
         print(f"Found URL: {url}")
-        print(f"Verdict: {verdict}")
-        for reason in reasons:
-            print(f"  • {reason}")
+        print(f"Verdict: {result['verdict']}")
+        for check in result["checks"]:
+            print(f"  • {check['details']}")
 
     # Enable VirusTotal (optional)
     import os
     os.environ["VIRUSTOTAL_API_KEY"] = "your_api_key"
     from link_analysis import check_url_virustotal
-    verdict, details = check_url_virustotal("https://example.com")
+    verdict = check_url_virustotal("https://example.com")
     """)
 
 
