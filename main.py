@@ -102,8 +102,10 @@ def find_edge_path():
             text=True,
             shell=True,
         )
+
         if result.returncode == 0:
             edge_path = result.stdout.strip().split("\n")[0].strip()
+
             if edge_path:
                 return edge_path
     except Exception:
@@ -118,6 +120,7 @@ def register_edge_browser():
     This ensures webbrowser.open() uses Edge explicitly when called.
     """
     edge_path = find_edge_path()
+
     if edge_path:
         webbrowser.register(
             "edge",
@@ -125,6 +128,7 @@ def register_edge_browser():
             webbrowser.BackgroundBrowser(edge_path),
             preferred=True,
         )
+
         print(f"   ✅ Microsoft Edge registered: {edge_path}")
         return True
     else:
@@ -132,15 +136,103 @@ def register_edge_browser():
         return False
 
 
+def find_electron_path():
+    """
+    Find the Electron executable shipped with the ZYRA desktop shell.
+    Looks in the project's node_modules first, then the ZYRA_ELECTRON
+    environment variable, then a system-wide electron on PATH.
+    """
+    project_root = os.path.dirname(os.path.abspath(__file__))
+
+    candidates = [
+        os.path.join(
+            project_root,
+            "node_modules",
+            "electron",
+            "dist",
+            "electron.exe",
+        ),
+        os.path.join(
+            project_root,
+            "node_modules",
+            "electron",
+            "dist",
+            "electron",
+        ),
+        os.path.expanduser(r"~\.zyra\bin\electron.exe"),
+    ]
+
+    env_override = os.environ.get("ZYRA_ELECTRON")
+
+    if env_override:
+        candidates.insert(0, env_override)
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+
+    return None
+
+
+def open_dashboard_in_electron(url):
+    """
+    Open the ZYRA dashboard in the native desktop window (Electron shell).
+
+    Args:
+        url: The dashboard URL to open (e.g. http://127.0.0.1:8080)
+
+    Returns:
+        bool: True if the desktop window was launched, False if Electron
+              is unavailable (caller should fall back to the browser).
+    """
+    global electron_process
+
+    electron_path = find_electron_path()
+
+    if not electron_path:
+        print("   ⚠️  ZYRA desktop shell not found — falling back to browser")
+        return False
+
+    print("\n🖥️  Opening ZYRA Dashboard in desktop window...")
+    print(f"   URL: {url}")
+
+    try:
+        project_root = os.path.dirname(os.path.abspath(__file__))
+
+        electron_process = subprocess.Popen(
+            [electron_path, project_root],
+            cwd=project_root,
+            env={**os.environ, "ZYRA_URL": url},
+            shell=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+        print("   ✅ Dashboard opened in ZYRA desktop window")
+        return True
+
+    except Exception as e:
+        print(
+            f"   ⚠️  Desktop window failed ({e}) — falling back to browser..."
+        )
+
+        electron_process = None
+        return False
+
+
 def open_dashboard_in_edge(url):
     """
-    Open the ZYRA dashboard in Microsoft Edge.
+    Open the ZYRA dashboard in the desktop window (preferred) or Microsoft Edge.
     Uses subprocess for direct control, with webbrowser fallback.
 
     Args:
         url: The dashboard URL to open (e.g. http://127.0.0.1:8080)
     """
     global edge_process
+
+    # Preferred: native desktop window (ZYRA Desktop shell)
+    if open_dashboard_in_electron(url):
+        return True
 
     print(f"\n🌐 Opening ZYRA Dashboard in Microsoft Edge...")
     print(f"   URL: {url}")
@@ -162,16 +254,24 @@ def open_dashboard_in_edge(url):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            print("   ✅ Dashboard opened in Microsoft Edge (fullscreen/kiosk mode)")
+
+            print(
+                "   ✅ Dashboard opened in Microsoft Edge (fullscreen/kiosk mode)"
+            )
+
             return True
+
         except Exception as e:
-            print(f"   ⚠️  Edge subprocess failed ({e}), trying webbrowser fallback...")
+            print(
+                f"   ⚠️  Edge subprocess failed ({e}), trying webbrowser fallback..."
+            )
 
     # Fallback: use webbrowser module with Edge registration
     try:
         webbrowser.get("edge").open(url, new=2)
     except Exception:
         webbrowser.open(url, new=2)
+
     print("   ✅ Dashboard opened in browser")
     return True
 
@@ -184,12 +284,21 @@ def find_desktop_shell_command():
         tuple: (electron_exe_path, shell_dir) or (None, None) when unavailable
     """
     project_root = os.path.dirname(os.path.abspath(__file__))
-    electron_exe = os.path.join(project_root, "node_modules", "electron", "dist", "electron.exe")
+
+    electron_exe = os.path.join(
+        project_root,
+        "node_modules",
+        "electron",
+        "dist",
+        "electron.exe",
+    )
+
     shell_dir = os.path.join(project_root, "desktop")
     shell_manifest = os.path.join(shell_dir, "package.json")
 
     if os.path.exists(electron_exe) and os.path.exists(shell_manifest):
         return electron_exe, shell_dir
+
     return None, None
 
 
@@ -210,12 +319,16 @@ def open_dashboard_in_desktop_shell(url):
     global desktop_shell_process
 
     electron_exe, shell_dir = find_desktop_shell_command()
+
     if not electron_exe:
-        print("   ⚠️  ZYRA Desktop shell not found (node_modules/electron missing)")
+        print(
+            "   ⚠️  ZYRA Desktop shell not found (node_modules/electron missing)"
+        )
         return False
 
     try:
         env = os.environ.copy()
+
         env["ZYRA_EXTERNAL_SHELL"] = "1"
         env["ZYRA_URL"] = url
         env["ZYRA_PARENT_PID"] = str(os.getpid())
@@ -227,10 +340,15 @@ def open_dashboard_in_desktop_shell(url):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+
         print("   ✅ ZYRA Desktop window launched")
         return True
+
     except Exception as e:
-        print(f"   ⚠️  Could not launch the ZYRA Desktop shell ({e})")
+        print(
+            f"   ⚠️  Could not launch the ZYRA Desktop shell ({e})"
+        )
+
         desktop_shell_process = None
         return False
 
@@ -254,10 +372,17 @@ def wait_for_server(url, max_retries=10, retry_interval=1.0):
 
     for attempt in range(1, max_retries + 1):
         try:
-            response = urllib.request.urlopen(health_url, timeout=2)
+            response = urllib.request.urlopen(
+                health_url,
+                timeout=2,
+            )
+
             if response.status == 200:
-                print(f"   ✅ Backend server is ready (attempt {attempt})")
+                print(
+                    f"   ✅ Backend server is ready (attempt {attempt})"
+                )
                 return True
+
         except (
             urllib.error.URLError,
             urllib.error.HTTPError,
@@ -268,10 +393,15 @@ def wait_for_server(url, max_retries=10, retry_interval=1.0):
             pass
 
         if attempt < max_retries:
-            print(f"   ⏳ Waiting... (attempt {attempt}/{max_retries})")
+            print(
+                f"   ⏳ Waiting... (attempt {attempt}/{max_retries})"
+            )
             time.sleep(retry_interval)
 
-    print(f"   ⚠️  Server not ready after {max_retries} attempts — proceeding anyway")
+    print(
+        f"   ⚠️  Server not ready after {max_retries} attempts — proceeding anyway"
+    )
+
     return False
 
 
@@ -281,7 +411,9 @@ def signal_handler(signum, frame):
     Sets the global 'running' flag to False so the main loop exits cleanly.
     """
     global running
+
     print("\n\n🛑 Shutdown signal received. Cleaning up...")
+
     running = False
 
 
@@ -292,6 +424,7 @@ def cleanup():
     - Terminate the Edge browser process if we launched it
     - The backend server thread is a daemon and will exit automatically
     """
+    global electron_process
     global edge_process
     global desktop_shell_process
 
@@ -301,11 +434,15 @@ def cleanup():
     # speech still queued or playing.
     try:
         import listen as _listen
+
         _listen.stop_listening()
+
     except Exception:
         pass
+
     try:
         stop_speaking(clear_queue=True)
+
     except Exception:
         pass
 
@@ -313,26 +450,54 @@ def cleanup():
         try:
             desktop_shell_process.terminate()
             desktop_shell_process.wait(timeout=3)
+
             print("   ✅ ZYRA Desktop window closed")
+
         except Exception:
             try:
                 desktop_shell_process.kill()
+
                 print("   ✅ ZYRA Desktop window force-closed")
+
             except Exception:
                 pass
+
         desktop_shell_process = None
+
+    if electron_process is not None:
+        try:
+            electron_process.terminate()
+            electron_process.wait(timeout=3)
+
+            print("   ✅ Desktop window closed")
+
+        except Exception:
+            try:
+                electron_process.kill()
+
+                print("   ✅ Desktop window force-closed")
+
+            except Exception:
+                pass
+
+        electron_process = None
 
     if edge_process is not None:
         try:
             edge_process.terminate()
             edge_process.wait(timeout=3)
+
             print("   ✅ Edge browser closed")
+
         except Exception:
             try:
                 edge_process.kill()
+
                 print("   ✅ Edge browser force-closed")
+
             except Exception:
                 pass
+
         edge_process = None
 
     print("   ✅ Cleanup complete")
@@ -379,7 +544,15 @@ def _broadcast_url_analyzer(url: str, state=None):
     """Open the URL Analyzer panel on every connected dashboard client."""
     try:
         from backend.server import broadcast_message_sync
-        broadcast_message_sync({"type": "show_url_analyzer", "data": state, "url": url})
+
+        broadcast_message_sync(
+            {
+                "type": "show_url_analyzer",
+                "data": state,
+                "url": url,
+            }
+        )
+
     except Exception:
         pass
 
@@ -392,32 +565,48 @@ def _url_voice_completion_watcher(scan_id: str):
     try:
         from backend.url_analyzer import build_voice_summary
         from backend.url_analyzer.analyzer import get_scan_state
+
     except Exception as e:
         print(f"[URL WATCHER] import error: {e}")
         return
 
     deadline = time.time() + 100
+
     while time.time() < deadline:
         try:
             state = get_scan_state(scan_id)
+
         except Exception:
             state = None
+
         if state:
             status = str(state.get("status") or "").upper()
+
             if status == "COMPLETE":
                 result = state.get("result")
+
                 if result:
                     try:
                         speak(build_voice_summary(result))
                     except Exception:
                         pass
+
                 return
+
             if status == "ERROR":
                 reason = state.get("error") or "Please try again."
-                speak(f"The URL analysis failed. {reason}")
+
+                speak(
+                    f"The URL analysis failed. {reason}"
+                )
+
                 return
+
         time.sleep(1.0)
-    speak("The URL analysis could not be completed within the allowed time.")
+
+    speak(
+        "The URL analysis could not be completed within the allowed time."
+    )
 
 
 def handle_url_analysis_voice(command: str):
@@ -433,24 +622,53 @@ def handle_url_analysis_voice(command: str):
     from backend.server import start_url_scan
 
     target = extract_target_url(command)
+
     if not target:
-        print("   🔗 No URL in the command — falling back to screen/clipboard link analysis.")
+        print(
+            "   🔗 No URL in the command — falling back to screen/clipboard link analysis."
+        )
+
         result = handle_analyze_link_intent(command)
+
         if result and result.get("success") and result.get("checks"):
-            print(f"   🔗 URL: {result.get('url')} | Score: {result.get('score')} | Verdict: {result.get('verdict')}")
+            print(
+                f"   🔗 URL: {result.get('url')} | "
+                f"Score: {result.get('score')} | "
+                f"Verdict: {result.get('verdict')}"
+            )
+
         return
 
     print(f"\n🔗 Starting ZYRA URL Analyzer on: {target}")
-    launch = start_url_scan(target, source="voice")
+
+    launch = start_url_scan(
+        target,
+        source="voice",
+    )
+
     if not launch.get("success"):
         reason = launch.get("error") or "Please try again."
-        print(f"   ⚠️  URL scan could not start: {reason}")
-        speak(f"I couldn't start the URL analysis. {reason}")
+
+        print(
+            f"   ⚠️  URL scan could not start: {reason}"
+        )
+
+        speak(
+            f"I couldn't start the URL analysis. {reason}"
+        )
+
         return
 
     _broadcast_url_analyzer(target)
-    print("   📡 URL Analyzer panel open — streaming live progress to the dashboard.")
-    speak(f"Running a security analysis on {target}. Please wait.")
+
+    print(
+        "   📡 URL Analyzer panel open — streaming live progress to the dashboard."
+    )
+
+    speak(
+        f"Running a security analysis on {target}. Please wait."
+    )
+
     threading.Thread(
         target=_url_voice_completion_watcher,
         args=(launch["scan_id"],),
@@ -470,7 +688,15 @@ def _broadcast_dns_lookup(domain: str, state=None):
     """Open the DNS Lookup panel on every connected dashboard client."""
     try:
         from backend.server import broadcast_message_sync
-        broadcast_message_sync({"type": "show_dns_lookup", "data": state, "domain": domain})
+
+        broadcast_message_sync(
+            {
+                "type": "show_dns_lookup",
+                "data": state,
+                "domain": domain,
+            }
+        )
+
     except Exception:
         pass
 
@@ -481,34 +707,55 @@ def _dns_voice_completion_watcher(lookup_id: str):
     the voice summary (or a failure notice). Best-effort background thread.
     """
     try:
-        from backend.dns_lookup import build_voice_summary as build_dns_voice_summary
+        from backend.dns_lookup import (
+            build_voice_summary as build_dns_voice_summary
+        )
+
         from backend.dns_lookup.analyzer import get_scan_state
+
     except Exception as e:
         print(f"[DNS WATCHER] import error: {e}")
         return
 
     deadline = time.time() + 100
+
     while time.time() < deadline:
         try:
             state = get_scan_state(lookup_id)
+
         except Exception:
             state = None
+
         if state:
             status = str(state.get("status") or "").upper()
+
             if status == "COMPLETE":
                 result = state.get("result")
+
                 if result:
                     try:
-                        speak(build_dns_voice_summary(result))
+                        speak(
+                            build_dns_voice_summary(result)
+                        )
                     except Exception:
                         pass
+
                 return
+
             if status == "ERROR":
                 reason = state.get("error") or "Please try again."
-                speak(f"The DNS lookup failed. {reason}")
+
+                speak(
+                    f"The DNS lookup failed. {reason}"
+                )
+
                 return
+
         time.sleep(1.0)
-    speak("The DNS lookup could not be completed within the allowed time.")
+
+    speak(
+        "The DNS lookup could not be completed within the allowed time."
+    )
 
 
 def handle_dns_analysis_voice(command: str):
@@ -523,22 +770,48 @@ def handle_dns_analysis_voice(command: str):
     from backend.server import start_dns_lookup_job
 
     target = extract_dns_target(command)
+
     if not target:
-        print("   🌐 No domain in the command — asking the user for one.")
-        speak("DNS Lookup activated. Please tell me the domain you want me to look up, for example, analyze DNS of example dot com.")
+        print(
+            "   🌐 No domain in the command — asking the user for one."
+        )
+
+        speak(
+            "DNS Lookup activated. Please tell me the domain you want me to look up, for example, analyze DNS of example dot com."
+        )
+
         return
 
     print(f"\n🌐 Starting ZYRA DNS Lookup on: {target}")
-    launch = start_dns_lookup_job(target, source="voice")
+
+    launch = start_dns_lookup_job(
+        target,
+        source="voice",
+    )
+
     if not launch.get("success"):
         reason = launch.get("error") or "Please try again."
-        print(f"   ⚠️  DNS lookup could not start: {reason}")
-        speak(f"I couldn't start the DNS lookup. {reason}")
+
+        print(
+            f"   ⚠️  DNS lookup could not start: {reason}"
+        )
+
+        speak(
+            f"I couldn't start the DNS lookup. {reason}"
+        )
+
         return
 
     _broadcast_dns_lookup(target)
-    print("   📡 DNS Lookup panel open — streaming live progress to the dashboard.")
-    speak(f"Looking up DNS records for {target}. Please wait.")
+
+    print(
+        "   📡 DNS Lookup panel open — streaming live progress to the dashboard."
+    )
+
+    speak(
+        f"Looking up DNS records for {target}. Please wait."
+    )
+
     threading.Thread(
         target=_dns_voice_completion_watcher,
         args=(launch["lookup_id"],),
@@ -559,11 +832,14 @@ _turn_counter = 0
 def start_voice_turn() -> int:
     """Open a new voice turn, cancelling the previous answer completely."""
     global _turn_counter
+
     with _turn_lock:
         _turn_counter += 1
         turn = _turn_counter
-    cancel_current_request()          # stale AI tokens stop being produced
-    stop_speaking(clear_queue=True)   # stop talking now, drop queued sentences
+
+    cancel_current_request()
+    stop_speaking(clear_queue=True)
+
     return turn
 
 
@@ -580,17 +856,33 @@ def answer_voice_stream(command: str, turn: int) -> None:
     speak: any older turn stops silently.
     """
     session_id = begin_request_session()
+
     print("🧠 ZYRA thinking...")
+
     try:
-        for sentence in ask_ai_stream(command, session_id=session_id):
-            if not _turn_is_current(turn) or not is_current_session(session_id):
-                print("⏹️  Reply cancelled — a newer request took over.")
+        for sentence in ask_ai_stream(
+            command,
+            session_id=session_id,
+        ):
+            if (
+                not _turn_is_current(turn)
+                or not is_current_session(session_id)
+            ):
+                print(
+                    "⏹️  Reply cancelled — a newer request took over."
+                )
+
                 return
-            speak_async(sentence)      # queued; keeps generating meanwhile
+
+            speak_async(sentence)
+
         # Let the queued sentences finish; barge-in can interrupt this wait.
         wait_until_done(timeout=300)
-    except Exception as exc:  # noqa: BLE001 - never crash the voice loop
-        print(f"⚠️  Voice answer failed: {type(exc).__name__}: {exc}")
+
+    except Exception as exc:
+        print(
+            f"⚠️  Voice answer failed: {type(exc).__name__}: {exc}"
+        )
 
 
 # ========== Main Entry Point ==========
@@ -615,36 +907,60 @@ if __name__ == "__main__":
 
     # Wait for the server to be fully initialized and listening
     # This polls the /api/health endpoint with retries
-    server_ready = wait_for_server(DASHBOARD_URL, max_retries=8, retry_interval=1.0)
+    server_ready = wait_for_server(
+        DASHBOARD_URL,
+        max_retries=8,
+        retry_interval=1.0,
+    )
 
     # ZYRA Desktop mode: the Electron desktop shell (desktop/main.js) loads
     # the dashboard in its own native window, so the Edge-kiosk browser
     # launch must be skipped. Normal `python main.py` behavior is unchanged.
     if os.environ.get("ZYRA_DESKTOP") == "1":
         if server_ready:
-            print("\n🖥️  ZYRA Desktop mode — dashboard is served to the ZYRA desktop window")
+            print(
+                "\n🖥️  ZYRA Desktop mode — dashboard is served to the ZYRA desktop window"
+            )
         else:
-            print("\n⚠️  Server may not be fully ready. The desktop window will retry.")
+            print(
+                "\n⚠️  Server may not be fully ready. The desktop window will retry."
+            )
+
         print("\n✨ ZYRA is now running!")
         print("   🎤 Voice commands: Speak into your microphone")
-        print("   🖥️  Dashboard: ZYRA desktop window (http://127.0.0.1:8080)")
+        print(
+            "   🖥️  Dashboard: ZYRA desktop window (http://127.0.0.1:8080)"
+        )
         print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
+
     else:
         # Default: open the dashboard in the native ZYRA Desktop window
-        shell_started = open_dashboard_in_desktop_shell(DASHBOARD_URL)
+        shell_started = open_dashboard_in_desktop_shell(
+            DASHBOARD_URL
+        )
+
         if not shell_started:
             # Desktop shell unavailable (node_modules/electron missing) —
             # fall back to the classic Microsoft Edge kiosk mode.
-            print("   ↪️  Falling back to Microsoft Edge kiosk mode")
+            print(
+                "   ↪️  Falling back to Microsoft Edge kiosk mode"
+            )
+
             if server_ready:
                 open_dashboard_in_edge(DASHBOARD_URL)
+
             else:
-                print("\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway...")
+                print(
+                    "\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway..."
+                )
+
                 open_dashboard_in_edge(DASHBOARD_URL)
 
         print("\n✨ ZYRA is now running!")
         print("   🎤 Voice commands: Speak into your microphone")
-        print("   🖥️  Dashboard: ZYRA Desktop window (http://127.0.0.1:8080)")
+        print(
+            "   🖥️  Dashboard: ZYRA Desktop window (http://127.0.0.1:8080)"
+        )
         print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
 
     # Warm up the voice stack in the background so the first utterance is fast:
@@ -653,7 +969,9 @@ if __name__ == "__main__":
     warm_up_speech_async()
     warm_up_voice_async()
 
-    speak("Hello, I am Zyra. How can I help you today?")
+    speak(
+        "Hello, I am Zyra. How can I help you today?"
+    )
 
     try:
         while running:
@@ -682,8 +1000,13 @@ if __name__ == "__main__":
                 turn = start_voice_turn()
 
                 if command.startswith("close "):
-                    app = command.replace("close ", "").strip()
+                    app = command.replace(
+                        "close ",
+                        "",
+                    ).strip()
+
                     response = close_app(app)
+
                     print(response)
                     speak(response)
 
@@ -691,7 +1014,10 @@ if __name__ == "__main__":
                     speak("Opening Chrome")
                     open_chrome()
 
-                elif "open vscode" in command or "open visual studio code" in command:
+                elif (
+                    "open vscode" in command
+                    or "open visual studio code" in command
+                ):
                     speak("Opening Visual Studio Code")
                     open_vscode()
 
@@ -703,7 +1029,10 @@ if __name__ == "__main__":
                     speak("Opening Calculator")
                     open_calculator()
 
-                elif "open cmd" in command or "open command prompt" in command:
+                elif (
+                    "open cmd" in command
+                    or "open command prompt" in command
+                ):
                     speak("Opening Command Prompt")
                     open_cmd()
 
@@ -719,7 +1048,10 @@ if __name__ == "__main__":
                     speak("Opening Control Panel")
                     open_control_panel()
 
-                elif "open file explorer" in command or "open explorer" in command:
+                elif (
+                    "open file explorer" in command
+                    or "open explorer" in command
+                ):
                     speak("Opening File Explorer")
                     open_file_explorer()
 
@@ -756,12 +1088,20 @@ if __name__ == "__main__":
                     open_linkedin()
 
                 elif "search google for" in command:
-                    query = command.replace("search google for", "").strip()
+                    query = command.replace(
+                        "search google for",
+                        "",
+                    ).strip()
+
                     speak(f"Searching Google for {query}")
                     search_google(query)
 
                 elif "search youtube for" in command:
-                    query = command.replace("search youtube for", "").strip()
+                    query = command.replace(
+                        "search youtube for",
+                        "",
+                    ).strip()
+
                     speak(f"Searching YouTube for {query}")
                     search_youtube(query)
 
@@ -821,13 +1161,23 @@ if __name__ == "__main__":
                     speak("Emptying the Recycle Bin")
                     empty_recycle_bin()
 
-                elif "what is the time" in command or "current time" in command:
+                elif (
+                    "what is the time" in command
+                    or "current time" in command
+                ):
                     current_time_str = current_time()
-                    speak(f"The current time is {current_time_str}")
+                    speak(
+                        f"The current time is {current_time_str}"
+                    )
 
-                elif "today's date" in command or "current date" in command:
+                elif (
+                    "today's date" in command
+                    or "current date" in command
+                ):
                     current_date_str = current_date()
-                    speak(f"Today's date is {current_date_str}")
+                    speak(
+                        f"Today's date is {current_date_str}"
+                    )
 
                 elif "play music" in command:
                     speak("Playing music")
@@ -837,32 +1187,56 @@ if __name__ == "__main__":
                     speak("Opening Camera")
                     open_camera()
 
-                elif "open dashboard" in command or "show dashboard" in command or "launch dashboard" in command:
+                elif (
+                    "open dashboard" in command
+                    or "show dashboard" in command
+                    or "launch dashboard" in command
+                ):
                     speak("Opening ZYRA Dashboard")
                     open_dashboard_in_edge(DASHBOARD_URL)
 
                 elif "my favorite language is" in command:
-                    language = command.replace("my favorite language is", "").strip()
-                    remember("favorite_language", language)
-                    speak(f"I'll remember that. Your favorite language is {language}.")
+                    language = command.replace(
+                        "my favorite language is",
+                        "",
+                    ).strip()
+
+                    remember(
+                        "favorite_language",
+                        language,
+                    )
+
+                    speak(
+                        f"I'll remember that. Your favorite language is {language}."
+                    )
 
                 elif "what is my favorite language" in command:
                     language = recall("favorite_language")
+
                     if language:
-                        speak(f"Your favorite language is {language}.")
+                        speak(
+                            f"Your favorite language is {language}."
+                        )
                     else:
-                        speak("I don't know your favorite language yet.")
+                        speak(
+                            "I don't know your favorite language yet."
+                        )
 
                 elif is_system_monitor_intent(command):
                     # Start / show System Monitor, print ASCII card, broadcast to dashboard, and speak summary
                     metrics = get_system_metrics()
+
                     report = format_system_monitor_text(metrics)
+
                     print(f"\n{report}\n")
+
                     try:
                         broadcast_system_monitor_trigger(metrics)
                     except Exception:
                         pass
+
                     voice_text = get_voice_summary(metrics)
+
                     speak(voice_text)
 
                 elif is_dns_intent(command):
@@ -884,11 +1258,22 @@ if __name__ == "__main__":
                     result = handle_analyze_link_intent(command)
 
                     # Print detailed report to console
-                    if result.get('success') and result.get('checks'):
-                        print(f"\n🔗 URL: {result['url']}")
-                        print(f"📈 Risk Score: {result['score']}")
-                        print(f"⚖️  Verdict: {result['verdict']}")
-                        print(f"🗣️  Speech: {result['speech_text']}")
+                    if result.get("success") and result.get("checks"):
+                        print(
+                            f"\n🔗 URL: {result['url']}"
+                        )
+
+                        print(
+                            f"📈 Risk Score: {result['score']}"
+                        )
+
+                        print(
+                            f"⚖️  Verdict: {result['verdict']}"
+                        )
+
+                        print(
+                            f"🗣️  Speech: {result['speech_text']}"
+                        )
 
                 elif is_nmap_intent(command):
                     # Network scanning with Nmap
@@ -896,8 +1281,16 @@ if __name__ == "__main__":
                     # and identifies security vulnerabilities
                     result = handle_nmap_intent(command)
 
-                elif "exit" in command or "quit" in command or "goodbye" in command or "shut it down" in command:
-                    speak("Goodbye. Have a nice day.")
+                elif (
+                    "exit" in command
+                    or "quit" in command
+                    or "goodbye" in command
+                    or "shut it down" in command
+                ):
+                    speak(
+                        "Goodbye. Have a nice day."
+                    )
+
                     break
 
                 else:
@@ -915,12 +1308,19 @@ if __name__ == "__main__":
 
             except KeyboardInterrupt:
                 stop_speaking(clear_queue=True)
-                speak("Shutting down. Goodbye.")
+
+                speak(
+                    "Shutting down. Goodbye."
+                )
+
                 break
 
             except Exception as e:
                 print("Error:", e)
-                speak("Sorry, something went wrong.")
+
+                speak(
+                    "Sorry, something went wrong."
+                )
 
     finally:
         # Always run cleanup when the main loop exits

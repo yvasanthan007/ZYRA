@@ -64,7 +64,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -80,13 +82,17 @@
     "linux": {
       "icon": "desktop",
       "category": "Utility",
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "artifactName": "ZYRA-${version}.${ext}"
     },
     "mac": {
       "icon": "desktop",
       "category": "public.app-category.productivity",
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "artifactName": "ZYRA-${version}.${ext}"
     }
   }

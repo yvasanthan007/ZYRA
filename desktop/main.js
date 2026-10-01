@@ -62,6 +62,7 @@ function findPythonExecutable() {
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) return candidate;
   }
+
   return "python";
 }
 
@@ -69,8 +70,12 @@ function findPythonExecutable() {
 function zyraSourceRoot() {
   if (app.isPackaged) {
     const res = path.join(process.resourcesPath, "zyra");
-    if (fs.existsSync(path.join(res, "main.py"))) return res;
+
+    if (fs.existsSync(path.join(res, "main.py"))) {
+      return res;
+    }
   }
+
   return ZYRA_ROOT;
 }
 
@@ -81,24 +86,29 @@ function startZyra() {
 
   zyraProcess = spawn(pythonExe, ["main.py"], {
     cwd: zyraSourceRoot(),
+
     env: {
       ...process.env,
       ZYRA_DESKTOP: "1",
       PYTHONIOENCODING: "utf-8",
       PYTHONUTF8: "1",
     },
+
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
   });
 
   // Surface backend logs in the desktop terminal for diagnostics
   const log = (buf) => process.stdout.write(buf.toString());
+
   zyraProcess.stdout?.on("data", log);
   zyraProcess.stderr?.on("data", log);
 
   zyraProcess.on("exit", (code) => {
     console.log(`[ZYRA Desktop] ZYRA backend exited (code ${code})`);
+
     zyraProcess = null;
+
     // If the backend dies unexpectedly, close the window so the user
     // isn't left staring at a dead dashboard.
     if (!shuttingDown && mainWindow && !mainWindow.isDestroyed()) {
@@ -107,30 +117,40 @@ function startZyra() {
   });
 
   zyraProcess.on("error", (err) => {
-    console.error(`[ZYRA Desktop] Failed to start ZYRA backend: ${err.message}`);
+    console.error(
+      `[ZYRA Desktop] Failed to start ZYRA backend: ${err.message}`
+    );
   });
 }
 
 function stopZyra() {
   if (shuttingDown) return;
+
   shuttingDown = true;
 
   if (zyraProcess && !zyraProcess.killed) {
     const pid = zyraProcess.pid;
-    console.log(`[ZYRA Desktop] Shutting down ZYRA backend (pid ${pid})...`);
+
+    console.log(
+      `[ZYRA Desktop] Shutting down ZYRA backend (pid ${pid})...`
+    );
+
     try {
       if (process.platform === "win32") {
         // taskkill /T kills the whole tree (uvicorn thread + any children)
-        exec(`taskkill /PID ${pid} /T /F`, { windowsHide: true });
+        exec(`taskkill /PID ${pid} /T /F`, {
+          windowsHide: true,
+        });
       } else {
         zyraProcess.kill("SIGTERM");
       }
     } catch (err) {
-      console.error(`[ZYRA Desktop] Shutdown error: ${err.message}`);
+      console.error(
+        `[ZYRA Desktop] Shutdown error: ${err.message}`
+      );
     }
   }
 }
-
 
 // ─────────────────────────────────────────────────────────────────────
 // Health polling — wait until the existing backend is ready
@@ -138,11 +158,17 @@ function stopZyra() {
 
 function isBackendReady() {
   return new Promise((resolve) => {
-    const req = http.get(`${ZYRA_URL}/api/health`, { timeout: 2000 }, (res) => {
-      res.resume();
-      resolve(res.statusCode === 200);
-    });
+    const req = http.get(
+      `${ZYRA_URL}/api/health`,
+      { timeout: 2000 },
+      (res) => {
+        res.resume();
+        resolve(res.statusCode === 200);
+      }
+    );
+
     req.on("error", () => resolve(false));
+
     req.on("timeout", () => {
       req.destroy();
       resolve(false);
@@ -152,10 +178,15 @@ function isBackendReady() {
 
 async function waitForBackend(maxSeconds = 90) {
   const deadline = Date.now() + maxSeconds * 1000;
+
   while (Date.now() < deadline) {
-    if (await isBackendReady()) return true;
+    if (await isBackendReady()) {
+      return true;
+    }
+
     await new Promise((r) => setTimeout(r, 500));
   }
+
   return false;
 }
 
@@ -167,15 +198,21 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
+
     minWidth: 1024,
     minHeight: 700,
+
     title: "ZYRA",
     backgroundColor: "#000000",
+
     icon: path.join(__dirname, "zyra.ico"),
+
     show: false,
     autoHideMenuBar: true,
+
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -184,15 +221,22 @@ function createWindow() {
   });
 
   mainWindow.setMenuBarVisibility(false);
+
   mainWindow.loadURL(ZYRA_URL);
 
   // Open external links in the system browser, never inside the shell
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (!url.startsWith(ZYRA_URL)) {
       shell.openExternal(url);
-      return { action: "deny" };
+
+      return {
+        action: "deny",
+      };
     }
-    return { action: "allow" };
+
+    return {
+      action: "allow",
+    };
   });
 
   mainWindow.webContents.on("will-navigate", (event, url) => {
@@ -217,17 +261,23 @@ function createWindow() {
 // ─────────────────────────────────────────────────────────────────────
 
 const gotLock = app.requestSingleInstanceLock();
+
 if (!gotLock) {
   app.quit();
 } else {
   // External mode: this shell was launched BY an existing ZYRA backend
   // (python main.py). The backend is already running — the shell must NOT
   // spawn its own Python, and closing the window stops that parent process.
-  const externalShellMode = process.env.ZYRA_EXTERNAL_SHELL === "1";
+  const externalShellMode =
+    process.env.ZYRA_EXTERNAL_SHELL === "1";
 
+  // Single-instance behavior
   app.on("second-instance", () => {
     if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+
       mainWindow.show();
       mainWindow.focus();
     }
@@ -246,8 +296,13 @@ if (!gotLock) {
       startZyra();
     }
 
-    console.log("[ZYRA Desktop] Waiting for ZYRA backend to become ready...");
-    const ready = await waitForBackend(externalShellMode ? 20 : 90);
+    console.log(
+      "[ZYRA Desktop] Waiting for ZYRA backend to become ready..."
+    );
+
+    const ready = await waitForBackend(
+      externalShellMode ? 20 : 90
+    );
 
     if (!ready) {
       console.error(
@@ -259,21 +314,40 @@ if (!gotLock) {
   });
 
   app.on("window-all-closed", () => {
-    if (externalShellMode && process.env.ZYRA_PARENT_PID) {
+    if (
+      externalShellMode &&
+      process.env.ZYRA_PARENT_PID
+    ) {
       // The backend belongs to the parent python process. Closing the
       // desktop window shuts the whole ZYRA application down.
-      const parentPid = parseInt(process.env.ZYRA_PARENT_PID, 10);
+      const parentPid = parseInt(
+        process.env.ZYRA_PARENT_PID,
+        10
+      );
+
       if (parentPid) {
-        console.log(`[ZYRA Desktop] Window closed — stopping ZYRA backend (pid ${parentPid})...`);
+        console.log(
+          `[ZYRA Desktop] Window closed — stopping ZYRA backend (pid ${parentPid})...`
+        );
+
         try {
-          exec(`taskkill /PID ${parentPid} /T /F`, { windowsHide: true });
+          exec(
+            `taskkill /PID ${parentPid} /T /F`,
+            {
+              windowsHide: true,
+            }
+          );
         } catch (err) {
-          console.error(`[ZYRA Desktop] Failed to stop backend: ${err.message}`);
+          console.error(
+            `[ZYRA Desktop] Failed to stop backend: ${err.message}`
+          );
         }
       }
+
       setTimeout(() => app.quit(), 300);
     } else {
       stopZyra();
+
       // Give the backend a moment to die, then quit.
       setTimeout(() => app.quit(), 500);
     }
@@ -284,7 +358,8 @@ if (!gotLock) {
   });
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
   });
 }
-
