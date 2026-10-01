@@ -29,6 +29,12 @@ _GSB_ENDPOINT = "https://safebrowsing.googleapis.com/v4/threatMatches:find"
 
 
 def _env(key: str) -> Optional[str]:
+    # Ensure a project-root .env is loaded before reading process env.
+    try:
+        from backend.threat_intel import load_env as _load_env
+        _load_env()
+    except Exception:
+        pass
     value = os.environ.get(key)
     return value.strip() if value and value.strip() else None
 
@@ -101,55 +107,21 @@ def check_reputation(url: str, hostname: str) -> dict:
 # ──────────────────────────────────────────────
 
 def _check_virustotal(url: str) -> dict:
-    api_key = _env("VIRUSTOTAL_API_KEY") or _env("THREAT_INTEL_API_KEY")
-    if not api_key:
-        return _unavailable("Reputation data unavailable — VirusTotal API key missing.")
+    """
+    Delegate to the shared VirusTotal client (backend/threat_intel.py).
 
-    url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
-    resp = requests.get(
-        _VT_URL_ENDPOINT + url_id,
-        headers={"x-apikey": api_key, "User-Agent": "ZYRA-URL-Analyzer/1.0"},
-        timeout=REQUEST_TIMEOUT,
-    )
-    if resp.status_code == 404:
-        return {
-            "available": True, "provider": "virustotal",
-            "reputation": "Unknown", "malware": "Unknown", "phishing": "Unknown",
-            "engines": None,
-            "note": "URL is not present in the VirusTotal corpus yet.",
-        }
-    resp.raise_for_status()
-    data = resp.json().get("data", {})
-    attrs = data.get("attributes", {})
-    stats = attrs.get("last_analysis_stats", {}) or {}
-    malicious = int(stats.get("malicious", 0) or 0)
-    suspicious = int(stats.get("suspicious", 0) or 0)
-    harmless = int(stats.get("harmless", 0) or 0)
-    undetected = int(stats.get("undetected", 0) or 0)
-
-    if malicious > 0:
-        reputation, malware, phishing = "Malicious", "Detected", "Detected"
-    elif suspicious > 0:
-        reputation, malware, phishing = "Suspicious", "Unknown", "Unknown"
-    elif (harmless + undetected) > 0:
-        reputation, malware, phishing = "Clean", "Not Detected", "Not Detected"
-    else:
-        reputation, malware, phishing = "Unknown", "Unknown", "Unknown"
-
-    return {
-        "available": True,
-        "provider": "virustotal",
-        "reputation": reputation,
-        "malware": malware,
-        "phishing": phishing,
-        "engines": {
-            "malicious": malicious,
-            "suspicious": suspicious,
-            "harmless": harmless,
-            "undetected": undetected,
-        },
-        "note": None,
-    }
+    That client submits unknown URLs for a fresh scan and polls until the
+    analysis completes, so a brand-new phishing URL is actually scanned
+    instead of silently reported as "Unknown".
+    """
+    try:
+        from backend.threat_intel import check_url
+    except Exception as exc:  # pragma: no cover — defensive
+        return _unavailable(
+            f"Reputation data unavailable — threat-intel client import "
+            f"failed ({type(exc).__name__})."
+        )
+    return check_url(url)
 
 
 # ──────────────────────────────────────────────

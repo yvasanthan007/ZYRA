@@ -19,6 +19,19 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
+# ── Environment configuration ───────────────────────────────────────────
+# Load a project-root .env (VirusTotal / Safe Browsing keys, ML settings)
+# before importing modules that read those values at import time.
+try:
+    from backend.threat_intel import load_env as _load_env
+    _load_env()
+except Exception:
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except Exception:
+        pass
+
 from listen import listen
 from speak import speak
 from brain import ask_ai

@@ -46,6 +46,7 @@ from backend.link_security import (
     analyze_url_security,
     format_security_report,
     extract_url,
+    is_link_analysis_request,
 )
 from system_monitor import (
     get_system_metrics,
@@ -104,6 +105,19 @@ from backend.dns_lookup import (
     is_dns_intent,
     start_dns_lookup,
 )
+
+# ── ML phishing classifier (optional layer; the API works without it) ──
+try:
+    from backend.ml_phishing import analyze_url_ml, model_info as ml_model_info
+except Exception:  # ML stack (scikit-learn / joblib) may be absent
+    analyze_url_ml = None
+    ml_model_info = None
+
+# ── Shared threat-intelligence (VirusTotal) connectivity ──
+try:
+    from backend.threat_intel import provider_status as threat_intel_status
+except Exception:
+    threat_intel_status = None
 
 app = FastAPI(
     title="ZYRA AI Assistant API",
@@ -166,6 +180,19 @@ async def on_startup():
     # Preload the AI model in the background so the first chat reply doesn't
     # pay the cold-load penalty (a warm model answers in seconds).
     warm_up_async()
+
+    # Preload the OCR reader so the first on-screen link capture is fast
+    # instead of paying the one-off EasyOCR cold start (tens of seconds).
+    def _warm_ocr():
+        try:
+            from screen_ocr import warm_up_ocr
+            warm_up_ocr()
+            print("[startup] OCR reader warmed up for screen link capture")
+        except Exception:
+            pass
+
+    threading.Thread(target=_warm_ocr, name="zyra-ocr-warmup",
+                     daemon=True).start()
 
 
 def broadcast_message_sync(message: Dict[str, Any]) -> None:
@@ -1331,6 +1358,59 @@ async def url_history_endpoint():
     return {"success": True, "data": get_history(8)}
 
 
+# ========== Threat Intelligence (VirusTotal) ==========
+
+@app.get("/api/threat-intel/status")
+async def threat_intel_status_endpoint(probe: bool = True):
+    """
+    Report whether VirusTotal is connected and (optionally) reachable.
+
+    Response:
+        {"success": true, "data": {"configured", "reachable", "provider", "note"}}
+    """
+    if threat_intel_status is None:
+        return {"success": True, "data": {
+            "configured": False, "reachable": False, "provider": None,
+            "note": "Threat-intelligence client unavailable.",
+        }}
+    return {"success": True, "data": threat_intel_status(probe=probe)}
+
+
+# ========== ML Phishing Classifier API ==========
+
+@app.post("/api/ml/phishing")
+async def ml_phishing_check(data: Dict[str, Any]):
+    """
+    Instant ML-only phishing check for a URL (lexical model — no DNS/HTTP
+    probes). Returns phishing probability, verdict and top signals.
+    """
+    if analyze_url_ml is None:
+        return JSONResponse(status_code=503, content={
+            "success": False,
+            "error": "ML phishing model unavailable (scikit-learn missing or "
+                     "model not trained). Run: python -m backend.ml_phishing.train",
+        })
+    url = str(data.get("url") or "").strip()
+    if not url:
+        return JSONResponse(status_code=400, content={
+            "success": False, "error": "A 'url' field is required."})
+    try:
+        result = analyze_url_ml(url)
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={
+            "success": False, "error": f"ML analysis failed ({type(exc).__name__})."})
+    return {"success": True, "data": result}
+
+
+@app.get("/api/ml/phishing/model")
+async def ml_phishing_model_info():
+    """Metadata for the ML phishing model: algorithm, metrics, dataset."""
+    if ml_model_info is None:
+        return JSONResponse(status_code=503, content={
+            "success": False, "error": "ML phishing model unavailable."})
+    return {"success": True, "data": ml_model_info()}
+
+
 # ========== DNS Lookup Endpoints ==========
 
 @app.post("/api/dns/lookup")
@@ -1634,6 +1714,23 @@ async def websocket_endpoint(websocket: WebSocket):
                     if routed.get("kind") == "ai":
                         result = await _stream_ai_to(websocket, routed["question"])
                         streamed = True
+                    elif routed.get("kind") == "capture":
+                        # Link analysis with no URL in the message: acknowledge
+                        # immediately, then capture the on-screen/clipboard link
+                        # in a background thread and push the report when ready.
+                        # Keeps the chat reply instant (OCR is slow on CPU).
+                        await manager.send_personal(
+                            {
+                                "type": "response",
+                                "success": True,
+                                "data": ("Looking at the link on your screen — "
+                                         "analyzing it now..."),
+                            },
+                            websocket,
+                        )
+                        _spawn_link_capture(routed.get("question", ""))
+                        streamed = True
+                        result = {"success": True, "data": None}
                     else:
                         result = routed
                 else:
@@ -1805,11 +1902,29 @@ async def websocket_endpoint(websocket: WebSocket):
                                 websocket,
                             )
                     else:
+                        # No URL in the text — analyze the link the user is
+                        # looking at (screen/clipboard). When the chat path
+                        # already produced a link report (link-analysis intent),
+                        # don't capture a second time.
+                        capture_report = None
+                        if not is_link_analysis_request(url_text):
+                            try:
+                                from screen_ocr import get_active_url
+                                captured = await asyncio.to_thread(get_active_url)
+                                if captured:
+                                    capture_report = format_security_report(
+                                        analyze_url_security(captured))
+                            except Exception:
+                                capture_report = None
                         await manager.send_personal(
                             {
                                 "type": "response",
                                 "success": True,
-                                "data": "I detected a URL analysis request, but could not extract a valid URL. Please provide a full URL like https://example.com.",
+                                "data": capture_report or (
+                                    "I detected a URL analysis request, but "
+                                    "couldn't find a link on your screen or "
+                                    "clipboard. Please provide a full URL like "
+                                    "https://example.com."),
                             },
                             websocket,
                         )

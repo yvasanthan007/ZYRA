@@ -38,8 +38,15 @@ from screen_ocr import get_active_url
 # Configuration
 # ──────────────────────────────────────────────
 
-# Set this to your VirusTotal API key to enable API-based threat scanning.
-# Leave as None to use heuristic-only analysis.
+# VirusTotal API key — set VIRUSTOTAL_API_KEY in the environment or a
+# project-root .env file to enable API-based threat scanning.
+# Leave unset to use heuristic-only analysis.
+try:
+    from backend.threat_intel import load_env as _load_env
+    _load_env()
+except Exception:  # pragma: no cover — .env loading is best-effort
+    pass
+
 VIRUSTOTAL_API_KEY = os.environ.get("VIRUSTOTAL_API_KEY", None)
 
 
@@ -323,7 +330,17 @@ def analyze_url(url: str) -> dict:
             checks.append({
                 "check": "VirusTotal",
                 "score": 5,
-                "details": "Flagged as malicious by VirusTotal"
+                "details": "Flagged as malicious by VirusTotal security vendors"
+            })
+        elif vt_verdict == "suspicious":
+            total_score += 2
+            if verdict == "Safe":
+                verdict = "Suspicious"
+                speech_text = _generate_speech_text(url, verdict, total_score)
+            checks.append({
+                "check": "VirusTotal",
+                "score": 2,
+                "details": "Flagged as suspicious by VirusTotal security vendors"
             })
 
     return {
@@ -357,10 +374,10 @@ def _generate_speech_text(url: str, verdict: str, score: int) -> str:
 
 def _check_virustotal(url: str) -> str:
     """
-    Check URL against VirusTotal API (silent background check).
-
-    Args:
-        url: URL to check
+    Check URL against VirusTotal via the shared threat-intel client
+    (backend/threat_intel.check_url). That client submits unknown URLs for a
+    fresh scan and polls until the analysis completes, so brand-new phishing
+    URLs are actually analysed.
 
     Returns:
         str: "malicious", "suspicious", "safe", or "error"
@@ -369,52 +386,21 @@ def _check_virustotal(url: str) -> str:
         return "safe"
 
     try:
-        headers = {"x-apikey": VIRUSTOTAL_API_KEY}
-
-        # Submit URL for analysis
-        submit_url = "https://www.virustotal.com/api/v3/urls"
-        response = requests.post(
-            submit_url,
-            headers=headers,
-            data={"url": url},
-            timeout=15,
-        )
-
-        if response.status_code != 200:
-            return "safe"
-
-        result = response.json()
-        analysis_id = result.get("data", {}).get("id", "")
-
-        if not analysis_id:
-            return "safe"
-
-        # Get analysis results
-        analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
-        analysis_response = requests.get(
-            analysis_url,
-            headers=headers,
-            timeout=15,
-        )
-
-        if analysis_response.status_code != 200:
-            return "safe"
-
-        analysis_result = analysis_response.json()
-        stats = analysis_result.get("data", {}).get("attributes", {}).get("stats", {})
-
-        malicious = stats.get("malicious", 0)
-        suspicious = stats.get("suspicious", 0)
-
-        if malicious > 0:
-            return "malicious"
-        elif suspicious > 0:
-            return "suspicious"
-        else:
-            return "safe"
-
+        from backend.threat_intel import check_url
     except Exception:
-        return "safe"
+        return "error"
+
+    result = check_url(url)
+    if not result or not result.get("available"):
+        # Not configured or the lookup failed — never pretend it is clean.
+        return "error"
+
+    reputation = str(result.get("reputation") or "").lower()
+    if reputation == "malicious":
+        return "malicious"
+    if reputation == "suspicious":
+        return "suspicious"
+    return "safe"
 
 
 # Backward compatibility alias

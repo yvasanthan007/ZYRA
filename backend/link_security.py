@@ -331,44 +331,28 @@ def _encoded_char_findings(url, parsed):
 
 def _virustotal_check(url):
     """
-    Silent backend tool call to VirusTotal (function-calling style hook).
-    Only runs when VIRUSTOTAL_API_KEY is set in the environment.
-    Returns a details string, or None when unavailable/failed.
+    Silent backend tool call to VirusTotal via the shared threat-intel client
+    (backend/threat_intel.py). Only runs when an API key is configured.
+
+    Returns "MALICIOUS:m/total", "SUSPICIOUS:m/total", "CLEAN:total", or None
+    when the key is missing or the lookup could not be completed.
     """
-    api_key = os.environ.get("VIRUSTOTAL_API_KEY")
-    if not api_key:
-        return None
     try:
-        import requests
-        headers = {"x-apikey": api_key}
-        submit = requests.post(
-            "https://www.virustotal.com/api/v3/urls",
-            headers=headers, data={"url": url}, timeout=10,
-        )
-        if submit.status_code != 200:
-            return None
-        analysis_id = submit.json().get("data", {}).get("id", "")
-        if not analysis_id:
-            return None
-        result = requests.get(
-            f"https://www.virustotal.com/api/v3/analyses/{analysis_id}",
-            headers=headers, timeout=10,
-        )
-        if result.status_code != 200:
-            return None
-        stats = (result.json().get("data", {}).get("attributes", {})
-                 .get("stats", {}))
-        malicious = stats.get("malicious", 0)
-        suspicious = stats.get("suspicious", 0)
-        total = stats.get("total", 0)
-        if malicious > 0:
-            return f"MALICIOUS:{malicious}/{total}"
-        if suspicious > 0:
-            return f"SUSPICIOUS:{suspicious}/{total}"
-        if total > 0:
-            return f"CLEAN:{total}"
+        from backend.threat_intel import check_url
     except Exception:
         return None
+    result = check_url(url)
+    if not result or not result.get("available"):
+        return None
+    rep = str(result.get("reputation") or "").lower()
+    engines = result.get("engines") or {}
+    total = int(engines.get("total") or 0)
+    if rep == "malicious":
+        return f"MALICIOUS:{int(engines.get('malicious') or 0)}/{total}"
+    if rep == "suspicious":
+        return f"SUSPICIOUS:{int(engines.get('suspicious') or 0)}/{total}"
+    if total > 0:
+        return f"CLEAN:{total}"
     return None
 
 

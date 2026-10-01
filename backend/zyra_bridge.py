@@ -130,6 +130,33 @@ def _nmap_starting_message(text: str) -> str:
     )
 
 
+def _link_capture_report(message: str):
+    """
+    Analyze a link for chat/voice.
+
+    Uses a URL contained in the message when present; otherwise captures the
+    link the user is looking at from the screen / clipboard (so asking Zyra to
+    "analyze this link" works even when the URL is not typed).
+
+    Returns:
+        (report_text or None, url or None)
+    """
+    url = extract_url(message)
+    if not url:
+        try:
+            from screen_ocr import get_active_url
+            url = get_active_url()
+        except Exception as exc:  # OCR / optional deps may be unavailable
+            print(f"   ⚠️  Screen/clipboard capture unavailable: {exc}")
+            url = None
+        if url:
+            print(f"   🔗 Captured link: {url}")
+    if not url:
+        return None, None
+    result = analyze_url_security(url)
+    return format_security_report(result), url
+
+
 def process_chat(message: str) -> str:
     """
     Process a chat message through Zyra's AI brain.
@@ -144,10 +171,17 @@ def process_chat(message: str) -> str:
         return "Please say something!"
 
     # ── Backend-only link security analysis ──
-    # When the user provides a link or triggers analysis, return the structured
-    # text-only security report directly — no frontend/dashboard UI changes.
+    # When the user provides a link — or asks to analyze the one they are
+    # looking at — return the structured security report. When no URL is in the
+    # text the link is captured from the screen/clipboard.
     if is_link_analysis_request(message):
-        return analyze_link_request(message)
+        report, _url = _link_capture_report(message)
+        if report is not None:
+            return report
+        return (
+            "I couldn't find a link on your screen or in your clipboard. "
+            "Copy the link or show it on screen, then ask me again."
+        )
 
     # ── System Monitor ──
     # Answered from real psutil data: an explicit monitor request returns the
@@ -192,7 +226,12 @@ def process_chat_stream(message: str) -> Dict[str, Any]:
 
     # Same order as process_chat so behaviour can never diverge.
     if is_link_analysis_request(text):
-        return {"kind": "static", "success": True, "data": analyze_link_request(text)}
+        if extract_url(text):
+            report, _url = _link_capture_report(text)
+            return {"kind": "static", "success": True, "data": report}
+        # No URL in the text: the on-screen capture is slow (OCR), so let the
+        # server do it in the background and keep the chat reply instant.
+        return {"kind": "capture", "success": True, "question": text}
 
     if is_system_monitor_intent(text):
         return {
@@ -314,8 +353,13 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
 
     # ── Backend-only link security analysis ──
     # Activated by "Analyse the link" / "Analyze this URL" or any URL in text.
+    # Without a URL in the text the link is captured from the screen/clipboard.
     if is_link_analysis_request(text):
-        return {"response": analyze_link_request(text), "action": "link_analysis"}
+        report, _url = _link_capture_report(text)
+        if report is None:
+            report = ("I couldn't find a link on your screen or in your "
+                      "clipboard. Please copy the link or show it on screen.")
+        return {"response": report, "action": "link_analysis"}
 
     # ── System Monitor intent ──
     if is_system_monitor_intent(text):

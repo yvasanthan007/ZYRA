@@ -18,6 +18,8 @@ Fallback:
 import re
 import io
 import os
+import threading
+import time
 from urllib.parse import urlparse
 
 from PIL import Image
@@ -32,9 +34,39 @@ URL_REGEX = re.compile(
     r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+(?:/[^\s()<>\"']*)?"
     r"|"
     r"(?<![a-zA-Z0-9@])[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"
-    r"\.[a-zA-Z]{2,}(?:/[^\s()<>\"']*)?(?![a-zA-Z0-9])",
+    r"(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+"
+    r"(?:/[^\s()<>\"']*)?(?![a-zA-Z0-9])",
     re.IGNORECASE,
 )
+
+
+# ──────────────────────────────────────────────
+# OCR tuning (keeps screen capture responsive)
+# ──────────────────────────────────────────────
+
+# Wider screenshots are scaled down before OCR — cost scales with pixel count
+# and URLs stay legible, so this cuts the capture time on high-res displays.
+MAX_OCR_WIDTH = 1000
+# Hard cap for a single OCR pass — the capture never blocks forever. Generous
+# enough to finish on a CPU-only machine (a full-screen EasyOCR pass is slow).
+OCR_TIMEOUT_SECONDS = 45
+
+# Plausible top-level domains for BARE domains. Screen/clipboard text has no
+# scheme, so a loose match would otherwise pick up code identifiers such as
+# 'fastapi.testclient' or filenames such as 'torch.dataloader'. Only accept a
+# bare match when its final label is a real-ish TLD.
+_COMMON_TLDS = {
+    "com", "net", "org", "edu", "gov", "mil", "int", "io", "co", "ai", "app",
+    "dev", "me", "tv", "info", "biz", "online", "site", "store", "shop", "club",
+    "xyz", "top", "live", "news", "link", "click", "ly", "cc", "pw", "tk", "ml",
+    "ga", "cf", "gq", "win", "bid", "loan", "work", "date", "icu", "cam", "rest",
+    "monster", "quest", "vip", "fun", "space", "website", "press", "cloud",
+    "tech", "digital", "agency", "solutions", "media", "blog", "page", "run",
+    "sh", "gg", "to", "ws", "fm", "am", "gl", "gd", "vc", "so",
+    "us", "uk", "ca", "au", "in", "de", "fr", "jp", "cn", "ru", "br", "nl", "it",
+    "es", "se", "no", "be", "ch", "at", "dk", "fi", "pl", "gr", "pt", "cz", "ie",
+    "nz", "za", "sg", "hk", "kr", "mx",
+}
 
 
 # ──────────────────────────────────────────────
@@ -101,6 +133,40 @@ def _get_ocr_reader():
     return _ocr_reader
 
 
+def warm_up_ocr():
+    """
+    Pre-load the EasyOCR reader (and its models) so the first real capture is
+    fast instead of paying a one-off cold-start cost. Best effort, never raises.
+    """
+    try:
+        return _get_ocr_reader() is not None
+    except Exception:
+        return False
+
+
+def _readtext_bounded(reader, image_bytes, timeout=OCR_TIMEOUT_SECONDS):
+    """
+    Run EasyOCR in a worker thread and return a list of strings, or None if the
+    OCR pass exceeded the timeout (so a capture can never hang forever).
+    """
+    box = {}
+
+    def _run():
+        try:
+            box["result"] = reader.readtext(image_bytes, detail=0, paragraph=True)
+        except Exception as exc:  # noqa: BLE001
+            box["error"] = exc
+
+    worker = threading.Thread(target=_run, daemon=True)
+    worker.start()
+    worker.join(timeout)
+    if worker.is_alive():
+        return None
+    if "error" in box:
+        raise box["error"]
+    return box.get("result", [])
+
+
 def extract_text_from_image(image):
     """
     Run OCR on a PIL Image and return all detected text.
@@ -115,16 +181,32 @@ def extract_text_from_image(image):
     if reader is None:
         return ""
 
+    # Downscale large screenshots — OCR cost scales with pixel count and URLs
+    # stay legible, so this keeps the capture fast on high-res displays.
+    try:
+        width, height = image.size
+        if width > MAX_OCR_WIDTH:
+            scale = MAX_OCR_WIDTH / float(width)
+            image = image.resize((int(width * scale), int(height * scale)))
+    except Exception:
+        pass
+
+    started = time.monotonic()
     try:
         # Save image to a temporary bytes buffer for EasyOCR
         with io.BytesIO() as buf:
             image.save(buf, format="PNG")
-            buf.seek(0)
-            results = reader.readtext(buf.getvalue(), paragraph=True)
+            data = buf.getvalue()
 
-        # Concatenate all detected text
-        texts = [result[1] for result in results]
-        return " ".join(texts)
+        results = _readtext_bounded(reader, data)
+        if results is None:
+            print(f"   ⚠️  OCR timed out after {OCR_TIMEOUT_SECONDS}s.")
+            return ""
+
+        # Concatenate all detected text (detail=0 -> list of strings).
+        text = " ".join(str(item) for item in results)
+        print(f"   ⏱️  OCR completed in {time.monotonic() - started:.1f}s")
+        return text
     except Exception as e:
         print(f"   ⚠️  OCR extraction failed: {e}")
         return ""
@@ -136,36 +218,55 @@ def extract_text_from_image(image):
 
 def extract_urls_from_text(text):
     """
-    Extract all valid-looking URLs from a text string using regex.
+    Extract valid-looking URLs from a text string, best candidates first.
+
+    Explicit ``http(s)://`` and ``www.`` links are returned before bare
+    domains, and a bare domain is only accepted when its final label is a
+    plausible TLD — so code identifiers / filenames (e.g. 'fastapi.testclient',
+    'torch.dataloader') are not mistaken for links.
 
     Args:
         text: The text to search for URLs.
 
     Returns:
-        list: A list of normalized URL strings found in the text.
+        list: Normalized URL strings found in the text (best first).
     """
     if not text:
         return []
 
     matches = URL_REGEX.findall(text)
-    urls = []
+    prioritized = []   # http(s):// or www. links
+    bare = []          # scheme-less domain.tld links
+    seen = set()
 
     for match in matches:
         url = match.strip().rstrip(".,;:!?)")
+        if not url or url in seen:
+            continue
 
-        # Normalize: prepend https:// if missing
-        if url.startswith("www."):
-            url = f"https://{url}"
-        elif not url.startswith(("http://", "https://")):
-            # It's a bare domain like "example.com"
-            url = f"https://{url}"
+        lowered = url.lower()
+        if lowered.startswith(("http://", "https://")):
+            normalized = url
+            bucket = prioritized
+        elif lowered.startswith("www."):
+            normalized = f"https://{url}"
+            bucket = prioritized
+        else:
+            # Bare domain — require a plausible TLD to avoid false positives.
+            tld = lowered.rsplit(".", 1)[-1].split("/", 1)[0]
+            if tld not in _COMMON_TLDS:
+                continue
+            normalized = f"https://{url}"
+            bucket = bare
 
-        # Validate basic URL structure
-        parsed = urlparse(url)
-        if parsed.netloc and "." in parsed.netloc:
-            urls.append(url)
+        parsed = urlparse(normalized)
+        if not (parsed.netloc and "." in parsed.netloc):
+            continue
 
-    return urls
+        seen.add(url)
+        bucket.append(normalized)
+
+    return prioritized + bare
 
 
 # ──────────────────────────────────────────────
@@ -195,19 +296,53 @@ def get_url_from_clipboard():
 # 5. Main Function: get_active_url()
 # ──────────────────────────────────────────────
 
+def _clipboard_exact_url():
+    """
+    Return the clipboard URL only when the clipboard holds *just* a URL.
+
+    This is the fast path: copying a link is the most common way users hand
+    Zyra a URL, and it resolves instantly without any screen OCR. When the
+    clipboard contains prose (not a bare link) this returns None so the
+    on-screen link is used instead.
+    """
+    try:
+        import pyperclip
+        text = (pyperclip.paste() or "").strip()
+    except Exception:
+        return None
+
+    if not text or len(text) > 2048 or any(ch.isspace() for ch in text):
+        return None
+
+    candidate = text if text.startswith(("http://", "https://")) else f"https://{text}"
+    parsed = urlparse(candidate)
+    if parsed.netloc and "." in parsed.netloc:
+        return candidate
+    return None
+
+
 def get_active_url():
     """
-    Capture the user's primary monitor using OCR and extract any visible URL.
-    If no URL is found on screen, immediately check the clipboard.
+    Resolve the link the user is looking at.
+
+    Order of resolution:
+      1. Clipboard holding exactly one URL  → instant (fast path)
+      2. On-screen URL via OCR (downscaled + bounded)
+      3. Any URL inside clipboard text      → fallback
 
     This is the main entry point for Zyra's link analysis feature.
 
     Returns:
         str: The extracted URL string, or None if no URL found.
     """
-    # Step 1: Try to capture URL from screen via OCR
-    print("\n📸 Capturing screen for URL detection...")
+    # Fast path: the clipboard is a single URL -> no OCR needed.
+    url = _clipboard_exact_url()
+    if url:
+        print(f"   ✅ URL found in clipboard (fast path): {url}")
+        return url
 
+    # Step 1: capture the on-screen URL via OCR (bounded).
+    print("\n📸 Capturing screen for URL detection...")
     image = capture_screen()
     if image is not None:
         print(f"   ✅ Screen captured ({image.size[0]}x{image.size[1]}px)")
@@ -227,14 +362,13 @@ def get_active_url():
     else:
         print("   ❌ Screen capture failed.")
 
-    # Step 2: Fallback to clipboard
+    # Step 3: fall back to any URL inside clipboard text.
     print("   📋 Checking clipboard for URL...")
     url = get_url_from_clipboard()
     if url:
         print(f"   ✅ URL found in clipboard: {url}")
         return url
 
-    # Step 3: No URL found anywhere
     print("   ❌ No URL found on screen or in clipboard.")
     return None
 

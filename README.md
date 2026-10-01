@@ -270,6 +270,41 @@ Do not click or enter credentials — close the page and report the source of th
 - Ensure you're using the updated `backend/link_security.py`
 - Check console output for analysis results
 - Voice summary requires URL in the command
+- If VirusTotal checks are skipped, set `VIRUSTOTAL_API_KEY` (see below)
+
+## VirusTotal & ML Phishing Detection Setup
+
+All phishing detection runs in the backend and is used by **both** the voice
+"Link analysis" feature (`link_analysis.py`) and the dashboard **URL Analyzer**
+(`backend/url_analyzer/`), through one shared client (`backend/threat_intel.py`).
+
+### 1. Connect VirusTotal (optional but recommended)
+1. Get a free API key: https://www.virustotal.com/gui/my-apikey
+2. Copy `.env.example` to `.env` and set:
+   ```
+   VIRUSTOTAL_API_KEY=your_key_here
+   ```
+   (Or set the environment variable directly.) The key is read at runtime and
+   is never sent to the frontend or hard-coded.
+3. Verify connectivity:
+   - CLI/console: the startup banner prints `VirusTotal: connected` /
+     `not configured`.
+   - API: `GET /api/threat-intel/status`
+     → `{"configured": true, "reachable": true, ...}`
+
+When configured, unknown URLs are submitted to VirusTotal and the analysis is
+polled to completion, so brand-new phishing URLs are actually scanned (instead
+of being reported as "Unknown" or silently treated as safe).
+
+### 2. ML phishing classifier (local, offline)
+The URL Analyzer runs a local lexical ML model as an extra advisory signal:
+- Train / retrain: `python -m backend.ml_phishing.train`
+- Model metadata: `GET /api/ml/phishing/model`
+- Instant ML check: `POST /api/ml/phishing` `{"url": "..."}`
+- Disable at runtime: `ZYRA_ML_DISABLE=1`
+
+Contribution tiers: probability ≥ 0.90 forces **MALICIOUS**; ≥ 0.75 raises a
+clean/unknown URL to **SUSPICIOUS**; the ML layer never makes a URL look safer.
 
 ## Development
 

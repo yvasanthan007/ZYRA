@@ -1,0 +1,175 @@
+{
+  "version": "1.0.0",
+  "algorithm": "RandomForestClassifier",
+  "feature_names": [
+    "url_length",
+    "hostname_length",
+    "num_dots_host",
+    "num_hyphens_host",
+    "num_digits_host",
+    "digit_ratio_host",
+    "num_subdomains",
+    "max_label_length",
+    "domain_entropy",
+    "has_ip_host",
+    "is_https",
+    "has_nonstandard_port",
+    "suspicious_tld",
+    "is_shortener",
+    "has_punycode",
+    "has_userinfo_trick",
+    "double_slash_in_path",
+    "num_percent_encoded",
+    "num_special_chars",
+    "num_at",
+    "path_length",
+    "path_depth",
+    "query_length",
+    "num_query_params",
+    "credential_keywords",
+    "urgency_keywords",
+    "brand_misplaced",
+    "has_hex_blob"
+  ],
+  "feature_importances": [
+    [
+      "suspicious_tld",
+      0.2633284923087219
+    ],
+    [
+      "num_digits_host",
+      0.1021653602767406
+    ],
+    [
+      "digit_ratio_host",
+      0.1016081331487517
+    ],
+    [
+      "query_length",
+      0.08254192518835651
+    ],
+    [
+      "num_hyphens_host",
+      0.07887586347479589
+    ],
+    [
+      "credential_keywords",
+      0.07530095132626313
+    ],
+    [
+      "num_dots_host",
+      0.037749264512142076
+    ],
+    [
+      "max_label_length",
+      0.03311636131799924
+    ],
+    [
+      "num_subdomains",
+      0.02988968972775438
+    ],
+    [
+      "domain_entropy",
+      0.023389721753681203
+    ],
+    [
+      "num_percent_encoded",
+      0.022692362135097663
+    ],
+    [
+      "url_length",
+      0.02256726565555358
+    ],
+    [
+      "is_shortener",
+      0.02177386171020065
+    ],
+    [
+      "hostname_length",
+      0.01950887139441733
+    ],
+    [
+      "is_https",
+      0.017399432367860023
+    ],
+    [
+      "urgency_keywords",
+      0.014189154950246101
+    ],
+    [
+      "has_ip_host",
+      0.012268770838098702
+    ],
+    [
+      "num_special_chars",
+      0.011999298104316193
+    ],
+    [
+      "path_length",
+      0.01082301442998512
+    ],
+    [
+      "num_query_params",
+      0.00989914685979105
+    ],
+    [
+      "path_depth",
+      0.004409815909591923
+    ],
+    [
+      "brand_misplaced",
+      0.002429731078493616
+    ],
+    [
+      "has_punycode",
+      0.0018521986226659073
+    ],
+    [
+      "has_userinfo_trick",
+      0.00015414722801205183
+    ],
+    [
+      "num_at",
+      5.92505497192222e-05
+    ],
+    [
+      "has_hex_blob",
+      7.915130744130404e-06
+    ],
+    [
+      "has_nonstandard_port",
+      0.0
+    ],
+    [
+      "double_slash_in_path",
+      0.0
+    ]
+  ],
+  "metrics": {
+    "RandomForestClassifier": {
+      "accuracy": 0.9979,
+      "precision": 1.0,
+      "recall": 0.9958,
+      "f1": 0.9979,
+      "roc_auc": 0.9973,
+      "test_size": 480
+    },
+    "LogisticRegression": {
+      "accuracy": 0.9958,
+      "precision": 1.0,
+      "recall": 0.9917,
+      "f1": 0.9958,
+      "roc_auc": 0.9999,
+      "test_size": 480
+    }
+  },
+  "dataset": {
+    "source": "builtin-seed-dataset",
+    "size": 2400,
+    "phishing": 1200,
+    "legitimate": 1200
+  },
+  "trained_at": "2026-10-01 23:35:38",
+  "sklearn_version": "1.9.1",
+  "python": "3.13.5"
+}

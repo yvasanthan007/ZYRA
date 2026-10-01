@@ -130,37 +130,23 @@ def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:
     print("\n🔍 Step 2: Running security analysis...")
     result = analyze_url(url)
     
-    # Step 4: Check VirusTotal if configured
-    vt_override = False
-    if VIRUSTOTAL_API_KEY:
-        print("\n🔬 Step 3: Checking VirusTotal database...")
-        from link_analysis import _check_virustotal
-        vt_result = _check_virustotal(url)
-        
-        if vt_result == "malicious":
-            # VirusTotal overrides everything
-            result["verdict"] = "Dangerous"
-            result["speech_text"] = f"Warning! VirusTotal flagged {url} as malicious."
-            result["score"] = max(result["score"], 5)
-            result["checks"].append({
-                "check": "VirusTotal",
-                "score": 5,
-                "details": "Flagged as malicious by VirusTotal security vendors"
-            })
-            vt_override = True
-            print("   ⚠️  VirusTotal: MALICIOUS")
-        elif vt_result == "suspicious":
-            result["score"] += 2
-            result["checks"].append({
-                "check": "VirusTotal",
-                "score": 2,
-                "details": "Flagged as suspicious by VirusTotal security vendors"
-            })
-            print("   ⚠️  VirusTotal: SUSPICIOUS")
-        else:
-            print("   ✅ VirusTotal: Clean")
+    # Step 4: VirusTotal is already merged into the analysis above when an
+    # API key is configured (see link_analysis.analyze_url). Derive the
+    # override flag from the returned checks instead of scanning twice.
+    vt_override = any(
+        c.get("check") == "VirusTotal" and c.get("score", 0) >= 5
+        for c in result.get("checks", [])
+    )
+    vt_flagged = any(c.get("check") == "VirusTotal"
+                     for c in result.get("checks", []))
+    if not VIRUSTOTAL_API_KEY:
+        print("\n\u2139\ufe0f  Step 3: VirusTotal not configured (skipping)")
+    elif vt_override:
+        print("   \u26a0\ufe0f  VirusTotal: MALICIOUS")
+    elif vt_flagged:
+        print("   \u26a0\ufe0f  VirusTotal: SUSPICIOUS")
     else:
-        print("\nℹ️  Step 3: VirusTotal not configured (skipping)")
+        print("   \u2705 VirusTotal: Clean")
     
     # Step 5: Speak the result directly to user
     print(f"\n🗣️  Step 4: Speaking verdict...")
