@@ -144,20 +144,19 @@ def find_electron_path():
     """
     project_root = os.path.dirname(os.path.abspath(__file__))
 
+    electron_dist = os.path.join(
+        project_root, "node_modules", "electron", "dist"
+    )
+
     candidates = [
-        os.path.join(
-            project_root,
-            "node_modules",
-            "electron",
-            "dist",
-            "electron.exe",
-        ),
-        os.path.join(
-            project_root,
-            "node_modules",
-            "electron",
-            "dist",
-            "electron",
+        os.path.join(electron_dist, "electron.exe"),  # Windows
+        os.path.join(electron_dist, "electron"),  # Linux
+        os.path.join(  # macOS
+            electron_dist,
+            "Electron.app",
+            "Contents",
+            "MacOS",
+            "Electron",
         ),
         os.path.expanduser(r"~\.zyra\bin\electron.exe"),
     ]
@@ -280,24 +279,44 @@ def find_desktop_shell_command():
     """
     Locate the ZYRA Desktop shell (Electron) bundled with the project.
 
+    The Electron runtime is installed by `npm install` into
+    node_modules/electron/dist. Its binary name/location differs per
+    platform, so all known layouts are checked:
+
+      * Windows: <dist>\\electron.exe
+      * Linux:   <dist>/electron
+      * macOS:   <dist>/Electron.app/Contents/MacOS/Electron
+
     Returns:
         tuple: (electron_exe_path, shell_dir) or (None, None) when unavailable
     """
     project_root = os.path.dirname(os.path.abspath(__file__))
 
-    electron_exe = os.path.join(
-        project_root,
-        "node_modules",
-        "electron",
-        "dist",
-        "electron.exe",
-    )
-
     shell_dir = os.path.join(project_root, "desktop")
     shell_manifest = os.path.join(shell_dir, "package.json")
 
-    if os.path.exists(electron_exe) and os.path.exists(shell_manifest):
-        return electron_exe, shell_dir
+    if not os.path.exists(shell_manifest):
+        return None, None
+
+    electron_dist = os.path.join(
+        project_root, "node_modules", "electron", "dist"
+    )
+
+    candidates = [
+        os.path.join(electron_dist, "electron.exe"),  # Windows
+        os.path.join(electron_dist, "electron"),  # Linux
+        os.path.join(  # macOS
+            electron_dist,
+            "Electron.app",
+            "Contents",
+            "MacOS",
+            "Electron",
+        ),
+    ]
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate, shell_dir
 
     return None, None
 
@@ -322,7 +341,13 @@ def open_dashboard_in_desktop_shell(url):
 
     if not electron_exe:
         print(
-            "   ⚠️  ZYRA Desktop shell not found (node_modules/electron missing)"
+            "   ⚠️  ZYRA Desktop window unavailable — Electron is not installed."
+        )
+        print(
+            "       Fix: run `npm install` in the project root (needs Node.js),"
+        )
+        print(
+            "       then start ZYRA again with `python main.py`."
         )
         return False
 

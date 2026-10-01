@@ -20,6 +20,32 @@ ZYRA Desktop Application (Electron shell: desktop/main.js)
                └── Ollama / edge-tts / mic (system services, unchanged)
 ```
 
+## Prerequisites (required for the desktop window)
+
+The native desktop window is powered by **Electron**, which is a Node.js
+dependency and is **not committed to git** (`node_modules/` is ignored).
+A fresh clone/pull therefore starts in browser (Edge) fallback mode until you
+install it **once**:
+
+1. Install **Node.js LTS** (v18+) — https://nodejs.org — then reopen the terminal.
+   Verify with `node -v` and `npm -v`.
+2. In the **project root** (next to `package.json`) install the desktop shell:
+
+   ```bash
+   npm install
+   ```
+
+   This downloads `electron` into `node_modules/electron/dist`.
+3. Start ZYRA as usual:
+
+   ```bash
+   python main.py
+   ```
+
+You should see `✅ ZYRA Desktop window launched`. If instead you see
+`⚠️  ZYRA Desktop window unavailable — Electron is not installed`, run
+`npm install` again and make sure `node -v` works in the same terminal.
+
 ## Running
 
 ### `python main.py` — now opens the ZYRA Desktop window (default)
@@ -30,8 +56,9 @@ python main.py
 - Opens the **native ZYRA Desktop window** with the dashboard instead of Edge
 - Closing the window stops ZYRA (backend included) cleanly
 - Ctrl+C in the console also closes the desktop window
-- If the Electron shell is missing (no `node_modules/electron`), it falls
-  back to the classic Edge kiosk mode automatically
+- If the Electron shell is missing (no `node_modules/electron` — run
+  `npm install` once), it falls back to the classic Edge kiosk mode
+  automatically
 
 ### Desktop development mode (Electron-first)
 ```bash
