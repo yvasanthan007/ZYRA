@@ -1,5 +1,6 @@
 [
  {
+
   "scan_id": "url_20260912_152001_197107",
   "url": "https://example.org",
   "domain": "example.org",
@@ -10,6 +11,7 @@
   "classification_label": "LIKELY SAFE",
   "timestamp": "2026-09-12T15:20:01",
   "timestamp_display": "12 Sep 2026 15:20",
+
   "result": {
    "success": true,
    "scan_id": "url_20260912_152001_197107",
@@ -3446,6 +3448,7 @@
    "timestamp_display": "30 Aug 2026 14:33",
    "source": "panel"
   }
+
  },
  {
   "scan_id": "url_20260830_142732_6fbb4c",
@@ -3582,5 +3585,6 @@
    "timestamp_display": "30 Aug 2026 14:27",
    "source": "panel"
   }
+
  }
 ]
