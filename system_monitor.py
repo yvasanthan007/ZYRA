@@ -88,15 +88,58 @@ _QUERY_HINTS = (
 
 # Metric words that appear in questions about *other* things — never route these.
 _UNRELATED_PATTERNS = (
-    r"\b(python|java|javascript|node|nodejs|c\+\+|rust|golang|docker|kubernetes|"
-    r"excel|sql)\b",
+    r"\b(python|java|javascript|typescript|node|nodejs|c\+\+|rust|golang|docker|"
+    r"kubernetes|excel|sql|kotlin|swift|ruby|php|react)\b",
     r"\b(cpu|gpu)\s+vs\b",
     r"\b(buy|purchase|upgrade|install|recommend|suggest|best|cheapest|compare|"
     r"review|price|spec sheet)\b",
     r"\bhow (do|can|should) i\b.*\b(free|clear|clean|increase|reduce|optimize|optimise|"
     r"speed up|boost|fix)\b",
     r"\b(code|script|function|class|variable|array|list|dict|dictionary|library|"
-    r"api|react|component|design|pattern|architecture)\b",
+    r"api|component|design|pattern|architecture|syntax|algorithm)\b",
+    # General-knowledge questions that merely share a metric word.
+    r"\b(status|situation|news|update)s? (of|on|about|for) (my|our|the)? ?"
+    r"(order|shipment|delivery|package|job|application|resume|cv|homework|"
+    r"assignment|exam|class|course|repo|repository|project|task|ticket|issue|"
+    r"bill|invoice|account|password|email|inbox|calendar|meeting)\b",
+    r"\b(how much|what) (memory|ram|disk space|storage) (does|do|would|will|is) "
+    r"(a|an|the|chrome|firefox|edge|word|excel|node|java|python)\b",
+    r"\b(memory|performance|health) (tips?|advice|problems?|issues?)\b",
+    r"\bwhat (is|are) (the )?(status|situation) of\b",
+    r"\b(tips?|advice|guide|examples?|benefits?|drawbacks?) (for|on|about) (my )?"
+    r"(health|fitness|studying|sleep|diet|exercise|career)\b",
+)
+
+# The sentence must be *about this machine*. Two ways to say that:
+#   1. a self-reference  — "my pc", "this machine", "my laptop"
+#   2. a possessive metric — "my ram", "my disk space", "my battery"
+# Without one of these, bare words like "status", "health" or "memory" belong to
+# whatever the user is actually asking about (their order, a browser tab, a
+# programming language) and the language model must handle it instead.
+_SELF_PATTERNS = (
+    # "my pc" / "this computer" / "our laptop" / "the system"
+    r"\b(my|this|our|the|your)\s+(pc|computer|laptop|desktop|workstation|mac|"
+    r"macbook|system|machine|device|box|server|hardware)\b",
+    # "my cpu" / "my ram" / "my disk space" / "my battery"
+    r"\b(my|this|our)\s+(cpu|processor|cores?|ram|memory|disk|disks|drive|drives|"
+    r"storage|ssd|battery|uptime|temperature|thermals?|network|wifi|internet|"
+    r"ethernet|bandwidth|screen|display|performance|speed)\b",
+    # First-person complaints: "my pc is slow", "my laptop keeps crashing".
+    r"\b(my|this|the)\s+\w{0,12}\s*(is|are|feels?|seems?|keeps?|started?|was|has|have)\b"
+    r"[a-z ]{0,24}\b(slow|laggy|lagging|freez\w*|crash\w*|hang\w*|overheat\w*|"
+    r"stutter\w*|unresponsive|unusable|stuck|choking|struggling)\b",
+    # "everything on my pc is slow", "this machine feels slow"
+    r"\b(everything|anything|it|this|that|here)\b[^.?!]{0,40}\b(is|are|feels?|"
+    r"seems?|running)\b[^.?!]{0,20}\b(slow|laggy|freez\w*|crash\w*|hot|heavy)\b",
+)
+
+# A question shape that, combined with a metric topic, is safe to route even
+# without an explicit "my" — e.g. "how long has the pc been on".
+_QUESTION_HINT_RE = re.compile(
+    r"\b(how much|how many|how full|how fast|how hot|how long|what(?:'s| is| are)|"
+    r"whats|which|is (?:my|the)|are (?:my|the)|am i|why is|why are|why does|"
+    r"why do|check|show me|show my|tell me|give me|report|usage|used|using|"
+    r"left|remaining|available|currently|right now|at the moment)\b"
 )
 
 
@@ -121,7 +164,12 @@ def classify_system_query(text: str) -> Optional[str]:
         if re.search(pattern, clean):
             return None
 
-    if not any(hint in clean for hint in _QUERY_HINTS):
+    # Must be phrased as a question/request ...
+    if not _QUESTION_HINT_RE.search(clean):
+        return None
+    # ... *and* be about this machine. Without the self-reference check a bare
+    # "status"/"health"/"memory" word was enough to hijack ordinary chat.
+    if not any(re.search(pattern, clean) for pattern in _SELF_PATTERNS):
         return None
 
     for topic, pattern in _TOPIC_PATTERNS:
@@ -585,6 +633,17 @@ _PROCESS_CACHE: Dict[str, Any] = {"ts": 0.0, "rows": []}
 _PROCESS_CACHE_TTL = 2.0
 _PROCESS_CACHE_LOCK = threading.Lock()
 
+# How old the cached table may be before a caller insists on a fresh walk.
+# The dashboard polls every 1.5s and chat answers reuse the table, so a short
+# window keeps the "busiest process" name honest without re-walking ~300
+# processes on every question.
+_PROCESS_CACHE_MAX_STALE = 10.0
+
+# Background sampler state. One daemon thread keeps the table warm so the first
+# monitor question after a quiet period does not pay a full process walk.
+_SAMPLER: Dict[str, Any] = {"thread": None, "stop": threading.Event()}
+_SAMPLER_LOCK = threading.Lock()
+
 
 # Windows pseudo-processes that represent idle time / kernel time, not an app.
 _IDLE_PROCESS_NAMES = {"system idle process", "idle", "system"}
@@ -617,36 +676,102 @@ def _sample_processes() -> List[Dict[str, Any]]:
 
 
 def _process_rows() -> List[Dict[str, Any]]:
-    """Full process list with CPU/memory percentages (cached ~2s).
+    """Full process list with CPU/memory percentages (cached, kept warm).
 
-    psutil needs two samples for a meaningful per-process CPU percentage, so
-    the first call primes the values and later calls (the dashboard polls every
-    1.5s) return real deltas. The brief cache means answering a question never
-    costs a process walk of its own.
+    A walk of the whole process table costs ~1-2s on Windows (300+ processes),
+    and psutil needs two samples before ``cpu_percent`` is a real delta rather
+    than the 0% it reports on the first pass. Doing that inline made "what is my
+    cpu usage?" — routed locally to answer instantly — slower than the language
+    model it bypasses.
+
+    So the table is refreshed by a background sampler thread and callers read
+    whatever is cached:
+
+      * within ``_PROCESS_CACHE_TTL``  -> fresh snapshot, no walk;
+      * up to ``_PROCESS_CACHE_MAX_STALE`` old -> answered immediately and the
+        sampler is nudged, because a "busiest process" name from a few seconds
+        ago is far better than a multi-second stall;
+      * older / empty -> one blocking walk, because there is nothing to show.
+
+    The cache timestamp is recorded *after* the walk completes. Stamping it
+    before meant a 2s walk immediately burned most of the 2s TTL, so the cache
+    effectively never hit.
     """
     if not psutil:
         return []
-    now = time.time()
     with _PROCESS_CACHE_LOCK:
         rows = _PROCESS_CACHE["rows"]
-        if rows and (now - _PROCESS_CACHE["ts"]) < _PROCESS_CACHE_TTL:
-            return rows
+        age = time.time() - _PROCESS_CACHE["ts"]
+    if rows and age < _PROCESS_CACHE_TTL:
+        return rows
+    # Something usable is cached: answer now and let the sampler refresh it.
+    if rows and age < _PROCESS_CACHE_MAX_STALE:
+        _ensure_process_sampler()
+        return rows
+    return _walk_processes()
 
+
+def _walk_processes() -> List[Dict[str, Any]]:
+    """Sample the process table and cache it (blocking ~1-2s)."""
     collected: List[Dict[str, Any]] = []
     try:
         collected = _sample_processes()
         # psutil reports 0% for every process on its first sample; when that
         # happens, take a second reading immediately so the values are real
-        # (the delta is measured against the first pass).
-        if collected and not any(row["cpu_percent"] for row in collected[:50]):
+        # (the delta is measured against the first pass). The check covers the
+        # whole table, not just the first 50 rows — on a busy machine the busy
+        # processes sit anywhere in the list, so a partial check triggered a
+        # redundant second full walk on nearly every cold call.
+        if collected and not any(row["cpu_percent"] for row in collected):
             collected = _sample_processes() or collected
     except Exception:  # noqa: BLE001 - the process list is best effort
         collected = []
 
+    # Stamp on completion, so the TTL is measured from data that is actually
+    # fresh rather than from the moment the walk started.
     with _PROCESS_CACHE_LOCK:
         _PROCESS_CACHE["rows"] = collected
-        _PROCESS_CACHE["ts"] = now
+        _PROCESS_CACHE["ts"] = time.time()
     return collected
+
+
+def _sample_loop() -> None:
+    """Keep the process table warm until asked to stop."""
+    while not _SAMPLER["stop"].wait(_PROCESS_CACHE_TTL):
+        with _PROCESS_CACHE_LOCK:
+            age = time.time() - _PROCESS_CACHE["ts"]
+        if age < _PROCESS_CACHE_TTL:
+            continue  # somebody else refreshed it already
+        try:
+            _walk_processes()
+        except Exception:  # noqa: BLE001 - never kill the sampler
+            pass
+
+
+def _ensure_process_sampler() -> None:
+    """Start the warm sampler on first use (idempotent, never raises)."""
+    with _SAMPLER_LOCK:
+        thread = _SAMPLER["thread"]
+        if thread is not None and thread.is_alive():
+            return
+        _SAMPLER["stop"] = threading.Event()
+        try:
+            _SAMPLER["thread"] = threading.Thread(
+                target=_sample_loop, name="zyra-process-sampler", daemon=True
+            )
+            _SAMPLER["thread"].start()
+        except Exception:  # noqa: BLE001 - warm cache is an optimisation
+            _SAMPLER["thread"] = None
+
+
+def start_process_sampler() -> None:
+    """Warm the process table in the background (safe to call at startup)."""
+    _ensure_process_sampler()
+
+
+def stop_process_sampler() -> None:
+    """Stop the warm sampler (used by tests and shutdown paths)."""
+    _SAMPLER["stop"].set()
 
 
 def top_processes(limit: int = 3, by: str = "cpu") -> List[Dict[str, Any]]:
