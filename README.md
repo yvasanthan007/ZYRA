@@ -90,6 +90,16 @@ python start_zyra.py
 - ✅ Security persona injection to prevent LLM from fabricating link analyses
 - ✅ **Thread-safe conversations** — voice loop, web API and desktop bridge can chat concurrently without corrupting context
 - ✅ **Automatic model discovery** — picks the configured Ollama model or falls back to any installed one instead of hard-failing on "llama3"
+- ✅ **Instruct-capable model preferred** — defaults to `phi3` (3.8B). Do *not* point
+  Zyra at `tinyllama` (1.1B): it cannot hold an instruction and answers "Hii" with
+  *"Sure, here's a revised version of the text ... You are Zyra, a helpful,
+  intelligent AI assistant"* — it rewrites the system prompt instead of replying,
+  which makes chat look broken. `llama3` (8B) also works but is slower to load.
+  Override with `ZYRA_OLLAMA_MODEL` (e.g. `ZYRA_OLLAMA_MODEL=llama3`).
+- ✅ **Startup warm-up** — the server and the voice loop both pre-load the model and
+  pre-fill the system prompt into Ollama's KV cache in the background, so the first
+  message answers in ~2s instead of ~15-20s (CPU-only machines pay the model load
+  and prompt prefill on the first request otherwise)
 - ✅ **Long-term memory integration** — remembered facts are injected into every prompt so Zyra answers from what she knows
 - ✅ **Configurable via environment variables**:
   - `ZYRA_OLLAMA_MODEL`, `ZYRA_OLLAMA_HOST`
@@ -297,7 +307,10 @@ polled to completion, so brand-new phishing URLs are actually scanned (instead
 of being reported as "Unknown" or silently treated as safe).
 
 ### 2. ML phishing classifier (local, offline)
-The URL Analyzer runs a local lexical ML model as an extra advisory signal:
+Every link surface now runs the same local lexical ML model as an extra
+advisory signal — voice "analyse this link" (`link_analysis.py`), chat /
+dashboard quick-link reports (`backend/link_security.py`), and the deep
+**URL Analyzer** (`backend/url_analyzer/` via `risk_scorer.py`):
 - Train / retrain: `python -m backend.ml_phishing.train`
 - Model metadata: `GET /api/ml/phishing/model`
 - Instant ML check: `POST /api/ml/phishing` `{"url": "..."}`
@@ -305,6 +318,8 @@ The URL Analyzer runs a local lexical ML model as an extra advisory signal:
 
 Contribution tiers: probability ≥ 0.90 forces **MALICIOUS**; ≥ 0.75 raises a
 clean/unknown URL to **SUSPICIOUS**; the ML layer never makes a URL look safer.
+Voice replies append an ML sentence when flagged ("The machine learning
+classifier estimates N percent phishing probability").
 
 ## Development
 

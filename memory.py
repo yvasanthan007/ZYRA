@@ -47,6 +47,11 @@ def memory_file_path() -> str:
     return _DEFAULT_MEMORY_FILE
 
 
+def _current_memory_file() -> str:
+    """Resolve the store location now (env override wins over the default)."""
+    return memory_file_path()
+
+
 MEMORY_FILE = memory_file_path()
 
 
@@ -61,10 +66,11 @@ def _ensure_dir_exists(path: str) -> None:
 
 def _load_unlocked() -> Dict[str, Any]:
     """Read and parse the store. Callers must already hold _MEMORY_LOCK."""
-    if not os.path.exists(MEMORY_FILE):
+    path = _current_memory_file()
+    if not os.path.exists(path):
         return {}
     try:
-        with open(MEMORY_FILE, "r", encoding="utf-8") as fh:
+        with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
         if not isinstance(data, dict):
             raise ValueError(
@@ -76,8 +82,8 @@ def _load_unlocked() -> Dict[str, Any]:
         # the assistant keeps working instead of crashing on every recall.
         try:
             stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup = f"{MEMORY_FILE}.corrupt-{stamp}"
-            os.replace(MEMORY_FILE, backup)
+            backup = f"{path}.corrupt-{stamp}"
+            os.replace(path, backup)
             print(f"memory: repaired damaged store -> {backup} ({exc})")
         except OSError:
             pass
@@ -86,23 +92,34 @@ def _load_unlocked() -> Dict[str, Any]:
 
 def _save_unlocked(data: Dict[str, Any]) -> None:
     """Atomically persist the store. Callers must already hold _MEMORY_LOCK."""
-    _ensure_dir_exists(MEMORY_FILE)
+    path = _current_memory_file()
+    _ensure_dir_exists(path)
     tmp_fd, tmp_path = tempfile.mkstemp(
         prefix="zyra_memory_",
-        dir=os.path.dirname(MEMORY_FILE),
+        dir=os.path.dirname(path),
         suffix=".json",
     )
     try:
         # Write via the already-open file descriptor, then atomically replace.
         with os.fdopen(tmp_fd, "w", encoding="utf-8") as fh:
             json.dump(data or {}, fh, ensure_ascii=False, indent=4)
-        os.replace(tmp_path, MEMORY_FILE)
+        os.replace(tmp_path, path)
     finally:
         if os.path.exists(tmp_path):
             try:
                 os.remove(tmp_path)
             except OSError:
                 pass
+
+
+def stats() -> Dict[str, Any]:
+    """Small diagnostic payload for health checks / dashboards."""
+    data = load_memory()
+    return {
+        "file": _current_memory_file(),
+        "facts": len(data),
+        "keys": sorted(str(k) for k in data.keys())[:50],
+    }
 
 
 def load_memory() -> Dict[str, Any]:
@@ -161,16 +178,6 @@ def clear_memory() -> None:
     """Wipe the store back to an empty dict."""
     with _MEMORY_LOCK:
         _save_unlocked({})
-
-
-def stats() -> Dict[str, Any]:
-    """Small diagnostic payload for health checks / dashboards."""
-    data = load_memory()
-    return {
-        "file": MEMORY_FILE,
-        "facts": len(data),
-        "keys": sorted(str(k) for k in data.keys())[:50],
-    }
 
 
 if __name__ == "__main__":

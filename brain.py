@@ -108,19 +108,24 @@ _RETRY_DELAY_SECONDS = 0.5
 _WARMUP_TIMEOUT_SECONDS = max(120.0, AI_RESPONSE_BUDGET_SECONDS)
 
 # Ordered fallback preferences (used only when the configured model is absent).
-# Small, fast models come first: on a CPU-only machine prefill/decode scale with
-# model size (measured here: tinyllama 1B ≈ 48 tok/s prefill, 9.5 tok/s decode;
-# phi3 3.8B ≈ 12 tok/s prefill, 3.8 tok/s decode). Set ZYRA_OLLAMA_MODEL to
-# override (e.g. "tinyllama" for maximum speed, "llama3" for more quality).
+# tinyllama (1.1B) is deliberately NOT preferred: it is fast but cannot hold an
+# instruction. Measured, it answers "Hii" with "Sure, here's a revised version of
+# the text ... You are Zyra, a helpful, intelligent AI assistant" — it echoes and
+# rewrites the system prompt instead of replying, which makes chat look broken.
+# phi3 (3.8B) gives correct, natural replies and stays responsive once warm
+# (measured 1-4s warm; the slow first call is just loading the weights).
+# llama3 (8B) is higher quality but slower warm (3-5s) with a 78s cold load, so
+# it is a fallback rather than the default.
+# Set ZYRA_OLLAMA_MODEL to override (e.g. "llama3" for maximum quality).
 _PREFERRED_MODELS = [
     "phi3",
     "llama3.2",
     "qwen2.5",
     "mistral",
     "gemma",
-    "tinyllama",
     "llama3",
     "llama3.1",
+    "tinyllama",
 ]
 
 try:
@@ -657,6 +662,18 @@ def warm_up_model() -> bool:
     """Preload the active model into Ollama memory so the first real reply
     is fast.
 
+    Two costs have to be paid before a reply is instant on CPU-only hardware:
+
+    1. Loading the weights themselves.
+    2. Prefilling the (stable) system prompt into the KV cache. Ollama reuses
+       the longest common prompt prefix between requests, so sending the real
+       system prompt here means the user's first message only has to prefill
+       their own few tokens instead of the whole prompt.
+
+    Both use the same options as a real reply so Ollama sizes the KV cache at
+    AI_NUM_CTX (warming up without them loads it at its 4096 default, and the
+    first real request then reallocates it down inside the user's message).
+
     Best effort and never raises — safe to call from a background thread at
     server startup. Returns True when the model is loaded and resident
     (keep_alive keeps it that way between requests).
@@ -664,10 +681,27 @@ def warm_up_model() -> bool:
     try:
         sender = _warmup_client() or _get_client() or ollama
         started = time.monotonic()
-        sender.generate(model=_ACTIVE_MODEL, prompt="", keep_alive=AI_KEEP_ALIVE)
+        options = {
+            "temperature": AI_TEMPERATURE,
+            "num_predict": AI_NUM_PREDICT,
+            "num_ctx": AI_NUM_CTX,
+        }
+        # Exactly the system prefix a real turn sends, so the KV cache it builds
+        # is reused. This does not touch `conversation` — the priming turn is
+        # discarded so it can never appear in the user's chat history.
+        with _conversation_lock:
+            system_content = conversation[0]["content"] if conversation else ""
+        sender.chat(
+            model=_ACTIVE_MODEL,
+            messages=[{"role": "system", "content": system_content}],
+            stream=False,
+            keep_alive=AI_KEEP_ALIVE,
+            options={**options, "num_predict": 1},
+        )
         print(
             f"brain: model '{_ACTIVE_MODEL}' warmed up in "
-            f"{time.monotonic() - started:.1f}s (kept alive {AI_KEEP_ALIVE})"
+            f"{time.monotonic() - started:.1f}s "
+            f"(kept alive {AI_KEEP_ALIVE}, num_ctx {AI_NUM_CTX})"
         )
         return True
     except Exception as exc:  # noqa: BLE001 - warm-up is optional

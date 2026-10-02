@@ -21,6 +21,26 @@ from link_analysis import analyze_url, VIRUSTOTAL_API_KEY
 from speak import speak
 
 
+def _url_from_text(user_text: Optional[str]) -> Optional[str]:
+    """Return the first URL spoken/typed in the command, or None.
+
+    Speech recognition renders URLs as real characters ("http://paypal.com"),
+    so when the user actually says the link we analyze it directly instead of
+    paying the slow screen-OCR capture (which can take 40+ seconds and often
+    finds nothing).
+    """
+    if not user_text:
+        return None
+    try:
+        from backend.link_security import extract_url
+    except Exception:
+        return None
+    try:
+        return extract_url(user_text)
+    except Exception:
+        return None
+
+
 # ──────────────────────────────────────────────
 # Trigger Phrase Detection
 # ──────────────────────────────────────────────
@@ -83,14 +103,15 @@ def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:
     Main entry point for link analysis intent handling.
     
     This function:
-    1. Extracts URL from screen OCR or clipboard (ignores user_text for URL extraction)
+    1. Extracts the URL from the command text when the user says it, and
+       otherwise falls back to screen OCR / clipboard capture
     2. Runs the 8-check heuristic analysis pipeline
     3. Optionally checks VirusTotal (if API key configured)
     4. Speaks the exact verdict directly to the user
     5. Returns structured result
     
     Args:
-        user_text: Optional user command text (used for logging/context only)
+        user_text: Optional user command text (source of the URL when spoken)
         
     Returns:
         dict: Complete analysis result containing:
@@ -105,9 +126,14 @@ def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:
     print("🔗 ZYRA LINK ANALYSIS — REAL-TIME SCREEN SCAN")
     print("=" * 60)
     
-    # Step 1: Get URL from screen OCR or clipboard
-    print("\n📸 Step 1: Capturing screen for URL detection...")
-    url = get_active_url()
+    # Step 1: Prefer the URL spoken in the command; it is instant and exact.
+    url = _url_from_text(user_text)
+    if url:
+        print(f"\n✅ URL spoken in command: {url}")
+    else:
+        # No URL in the command — capture it from screen OCR or clipboard.
+        print("\n📸 Step 1: Capturing screen for URL detection...")
+        url = get_active_url()
     
     # Step 2: Handle no URL found case
     if not url:

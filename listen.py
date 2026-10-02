@@ -1,6 +1,4 @@
 import speech_recognition as sr
-import sounddevice as sd
-import numpy as np
 
 recognizer = sr.Recognizer()
 
@@ -11,18 +9,32 @@ recognizer.pause_threshold = 0.8
 
 
 def listen():
-    """Listen for voice input from the microphone using sounddevice."""
+    """Listen for voice input from the microphone with automatic silence detection."""
+    print("\n🎤 Listening...")
+
+    # Primary method: speech_recognition Microphone (auto-stops when user stops speaking)
     try:
-        print("\n🎤 Listening...")
-
-        # Audio parameters
-        sample_rate = 16000  # 16kHz sampling rate
-        channels = 1  # Mono audio
-        duration = 10  # Maximum recording duration in seconds
-        chunk_size = 1024
-
-        # Record audio using sounddevice
+        with sr.Microphone() as source:
+            # Quick ambient noise adjustment
+            recognizer.adjust_for_ambient_noise(source, duration=0.2)
+            audio = recognizer.listen(source, timeout=6, phrase_time_limit=10)
+            command = recognizer.recognize_google(audio)
+            return command
+    except (sr.WaitTimeoutError, sr.UnknownValueError):
+        return ""
+    except sr.RequestError:
+        print("❌ Unable to connect to Google's speech service.")
+        return ""
+    except Exception:
+        # Fallback to sounddevice if sr.Microphone is unavailable on some hardware
         try:
+            import sounddevice as sd
+            import numpy as np
+
+            sample_rate = 16000
+            channels = 1
+            duration = 5  # Reduced fallback duration
+
             audio_data = sd.rec(
                 int(duration * sample_rate),
                 samplerate=sample_rate,
@@ -30,40 +42,16 @@ def listen():
                 dtype=np.int16,
                 blocking=True
             )
-            
-            # Convert numpy array to bytes
             audio_bytes = audio_data.tobytes()
-            
-            # Create AudioData object for speech_recognition
-            audio = sr.AudioData(
-                audio_bytes,
-                sample_rate=sample_rate,
-                sample_width=2  # 16-bit = 2 bytes
-            )
-
-        except Exception as e:
-            print(f"❌ Recording error: {e}")
-            return ""
-
-        try:
+            audio = sr.AudioData(audio_bytes, sample_rate=sample_rate, sample_width=2)
             command = recognizer.recognize_google(audio)
             return command
-
-        except sr.UnknownValueError:
-            print("❌ I couldn't understand that.")
+        except (sr.UnknownValueError, sr.WaitTimeoutError):
             return ""
-
         except sr.RequestError:
             print("❌ Unable to connect to Google's speech service.")
             return ""
-
         except Exception as e:
-            print("Error:", e)
+            print(f"❌ Microphone error: {e}")
             return ""
 
-    except OSError as e:
-        print(f"❌ Microphone error: {e}")
-        return ""
-    except Exception as e:
-        print(f"❌ Listening error: {e}")
-        return ""

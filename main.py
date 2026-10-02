@@ -497,6 +497,15 @@ if __name__ == "__main__":
     print("   🌐 Dashboard: Open in browser at", DASHBOARD_URL)
     print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
 
+    # Load the AI model in the background. On CPU this costs ~15s (weights +
+    # system-prompt prefill); doing it now means the first spoken command
+    # answers in about a second instead of waiting on a cold model.
+    try:
+        from brain import warm_up_async
+        warm_up_async()
+    except Exception:
+        pass
+
     speak("Hello, I am Zyra. How can I help you today?")
 
     try:

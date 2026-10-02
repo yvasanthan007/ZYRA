@@ -325,6 +325,54 @@ def _encoded_char_findings(url, parsed):
     return findings, score
 
 
+# ML phishing classifier (optional advisory layer — same local lexical model
+# the deep URL Analyzer uses; never raises, never requires network).
+def _ml_assessment(url):
+    """Run the local ML phishing classifier, returning its payload dict."""
+    try:
+        from backend.ml_phishing import analyze_url_ml
+    except Exception:
+        return {"available": False}
+    try:
+        result = analyze_url_ml(url)
+    except Exception:
+        return {"available": False}
+    return result if isinstance(result, dict) else {"available": False}
+
+
+def _ml_observation(ml_analysis):
+    """One transparent observation line for an ML flag (or None)."""
+    if not ml_analysis or not ml_analysis.get("available"):
+        return None
+    try:
+        prob = float(ml_analysis.get("probability") or 0.0)
+    except (TypeError, ValueError):
+        return None
+    if prob < 0.55:
+        return None
+    percent = int(round(prob * 100))
+    algo = ml_analysis.get("algorithm") or "ML classifier"
+    verdict = str(ml_analysis.get("verdict") or "").replace("_", " ")
+    return (
+        f"ML phishing classifier ({algo}) estimates {percent}% phishing "
+        f"probability ({verdict})."
+    )
+
+
+def _ml_voice_sentence(ml_analysis):
+    """Voice-friendly ML sentence for TTS summaries (empty when quiet)."""
+    if not ml_analysis or not ml_analysis.get("available"):
+        return ""
+    try:
+        prob = float(ml_analysis.get("probability") or 0.0)
+    except (TypeError, ValueError):
+        return ""
+    if prob < 0.55:
+        return ""
+    percent = int(round(prob * 100))
+    return f" The machine learning classifier estimates {percent} percent phishing probability."
+
+
 # ──────────────────────────────────────────────
 # Optional Backend Tool: VirusTotal (silent)
 # ──────────────────────────────────────────────
@@ -543,6 +591,33 @@ def analyze_url_security(url):
         else:
             domain_notes.append(f"VirusTotal backend scan clean ({detail} vendors)")
 
+    # ── ML phishing classifier (local, offline advisory layer) ──
+    # Same model the deep URL Analyzer uses. Tiers mirror
+    # backend/url_analyzer/risk_scorer.py: >=0.90 forces MALICIOUS,
+    # >=0.75 raises a clean URL to SUSPICIOUS; the ML layer never
+    # makes a flagged URL look safer.
+    ml_analysis = _ml_assessment(original_url)
+    ml_prob = 0.0
+    if ml_analysis and ml_analysis.get("available"):
+        try:
+            ml_prob = float(ml_analysis.get("probability") or 0.0)
+        except (TypeError, ValueError):
+            ml_prob = 0.0
+    if ml_prob >= 0.90:
+        risk = max(risk, 8)
+        ml_obs = _ml_observation(ml_analysis)
+        if ml_obs:
+            findings.append(ml_obs + " Treated as malicious.")
+    elif ml_prob >= 0.75:
+        risk = max(risk, 3)
+        ml_obs = _ml_observation(ml_analysis)
+        if ml_obs:
+            findings.append(ml_obs + " Classification raised to suspicious.")
+    elif ml_prob >= 0.55:
+        ml_obs = _ml_observation(ml_analysis)
+        if ml_obs:
+            findings.append(ml_obs)
+
     # ── Verdict & risk mapping ──
     if risk >= 8:
         verdict, risk_score = "PHISHING DETECTED", "Critical"
@@ -600,6 +675,7 @@ def analyze_url_security(url):
         "risk_points": risk,
         "observations": observations,
         "recommendation": recommendation,
+        "ml_phishing": ml_analysis if isinstance(ml_analysis, dict) else {"available": False},
     }
 
 
@@ -655,16 +731,17 @@ def summarize_for_voice(result):
     """Short voice-friendly summary of an analysis dict (for main.py TTS)."""
     verdict = result.get("verdict", "SUSPICIOUS")
     risk = str(result.get("risk_score", "")).lower()
+    ml_sentence = _ml_voice_sentence(result.get("ml_phishing"))
     if verdict == "SAFE":
-        return "I analyzed the link. It appears to be safe."
+        return "I analyzed the link. It appears to be safe." + ml_sentence
     if verdict == "SUSPICIOUS":
         return (
             f"Caution. The link looks suspicious with {risk} risk. "
-            "Please check the detailed report before opening it."
+            "Please check the detailed report before opening it." + ml_sentence
         )
     return (
         f"Warning! Phishing detected with {risk} risk. "
-        "Do not click or enter any credentials."
+        "Do not click or enter any credentials." + ml_sentence
     )
 
 

@@ -194,24 +194,33 @@ def test_speech_text_generation():
     """Test that speech text matches exact requirements."""
     print_section("TEST 4: Speech Text Generation")
     
+    # Voice replies speak the URL's host only (never the full path/query) so the
+    # TTS doesn't spell every character out loud, and drop it entirely when the
+    # host is too long to say quickly.
     test_cases = [
-        ("https://www.google.com", "Safe", 
-         "I've analyzed the link: https://www.google.com. It appears to be safe."),
+        ("https://www.google.com", "Safe",
+         "I've analyzed the link: google.com. It appears to be safe."),
         ("http://suspicious.tk/login", "Suspicious",
-         "Caution. The link http://suspicious.tk/login from your screen appears suspicious."),
+         "Caution. The link suspicious.tk from your screen appears suspicious."),
         ("http://evil.xyz/malware", "Dangerous",
-         "Warning! The link http://evil.xyz/malware from your screen appears unsafe."),
+         "Warning! The link evil.xyz from your screen appears unsafe."),
+        # Host too long to speak -> URL omitted, sentence stays grammatical.
+        ("http://paypa1-secure-login.verify-account-now.xyz/login.php?token=abc",
+         "Dangerous",
+         "Warning! The link on your screen appears unsafe."),
     ]
-    
+
     all_passed = True
-    for url, verdict, expected_speech in test_cases:
+    for url, verdict, expected_prefix in test_cases:
         result = analyze_url(url)
         # Manually set verdict to test speech generation
         result["verdict"] = verdict
         from link_analysis import _generate_speech_text
         speech = _generate_speech_text(url, verdict, result["score"])
-        
-        passed = speech == expected_speech
+
+        # ML sentence is appended only when the classifier flags the URL, so
+        # compare against the heuristic prefix (startswith), not exact match.
+        passed = speech.startswith(expected_prefix)
         all_passed = all_passed and passed
         print_test(f"Speech text for {verdict}", passed, f"Got: {speech[:60]}...")
     
@@ -308,10 +317,33 @@ def test_virustotal_config():
     # Test that the function exists and is callable
     from link_analysis import _check_virustotal
     result = _check_virustotal("https://www.google.com")
-    print_test("VirusTotal check function", True, 
+    print_test("VirusTotal check function", True,
                f"Returns: {result} (safe when not configured)")
-    
+
     return True
+
+
+def test_ml_classifier_layer():
+    """Test the ML phishing layer fused into the voice link engine."""
+    print_section("TEST 8b: ML Phishing Classifier")
+
+    from backend.ml_phishing import predictor
+    info = predictor.model_info()
+    print(f"   ML available: {info.get('available')} ({info.get('algorithm')})")
+
+    phish = analyze_url("http://paypa1-secure-login.verify-account-now.xyz/login.php?token=a1b2c3d4e5f60718")
+    legit = analyze_url("https://www.amazon.com/dp/B08N5WRWNW")
+    passed_phish = (phish["ml_phishing"].get("available") is True
+                    and phish["ml_phishing"].get("probability", 0) >= 0.60
+                    and phish["verdict"] == "Dangerous")
+    print_test("Phish flagged by ML + heuristic", passed_phish,
+               f"prob={phish['ml_phishing'].get('probability')} verdict={phish['verdict']}")
+    passed_legit = (legit["ml_phishing"].get("available") is True
+                    and legit["ml_phishing"].get("probability", 1) < 0.50
+                    and legit["verdict"] == "Safe")
+    print_test("Legit stays Safe with low ML prob", passed_legit,
+               f"prob={legit['ml_phishing'].get('probability')} verdict={legit['verdict']}")
+    return passed_phish and passed_legit
 
 
 def test_integration_handler():
@@ -415,6 +447,7 @@ def run_all_tests():
         ("No URL Scenario", test_no_url_scenario),
         ("Score-Verdict Mapping", test_score_verdict_mapping),
         ("VirusTotal Config", test_virustotal_config),
+        ("ML Classifier Layer", test_ml_classifier_layer),
         ("Integration Handler", test_integration_handler),
         ("Edge Cases", test_edge_cases),
     ]

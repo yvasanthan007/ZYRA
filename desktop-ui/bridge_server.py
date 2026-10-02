@@ -87,15 +87,23 @@ def handle_message(msg):
 
     if msg_type == "chat":
         if isinstance(data, str):
-            if is_system_monitor_intent(data):
-                # Answered locally from live metrics: metric questions get a
-                # focused answer, an explicit monitor request gets the card.
-                return {
-                    "success": True,
-                    "data": answer_system_query(data),
-                    "monitor_topic": classify_system_query(data) or "overall",
-                }
-            answer = ask_ai(data)
+            # Route through the same backend bridge as the dashboard so link
+            # security (now ML-fused), system monitor, DNS and nmap intents
+            # behave identically everywhere and plain chat reaches Ollama.
+            try:
+                sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                from backend.zyra_bridge import process_chat as _bridge_chat
+                answer = _bridge_chat(data)
+            except Exception:
+                if is_system_monitor_intent(data):
+                    # Answered locally from live metrics: metric questions get a
+                    # focused answer, an explicit monitor request gets the card.
+                    return {
+                        "success": True,
+                        "data": answer_system_query(data),
+                        "monitor_topic": classify_system_query(data) or "overall",
+                    }
+                answer = ask_ai(data)
             return {"success": True, "data": answer}
         return {"success": False, "error": "Invalid chat data"}
 

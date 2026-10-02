@@ -127,6 +127,36 @@ def test_heuristic_analysis():
             print(f"       • {reason}")
 
 
+def test_ml_phishing_classifier():
+    """Test the local ML phishing classifier fused into both link engines."""
+    print_section("TEST 3b: ML Phishing Classifier (local, offline)")
+
+    from backend.ml_phishing import predictor
+
+    info = predictor.model_info()
+    print(f"\n  Model available: {info.get('available')}")
+    print(f"  Algorithm: {info.get('algorithm')}")
+    if info.get("metrics"):
+        rf = info["metrics"].get("RandomForestClassifier", {})
+        print(f"  Hold-out F1: {rf.get('f1')} (acc {rf.get('accuracy')})")
+
+    cases = [
+        ("http://paypa1-secure-login.verify-account-now.xyz/login.php?token=a1b2c3d4e5f60718", "phish"),
+        ("https://www.amazon.com/dp/B08N5WRWNW", "legit"),
+    ]
+    for url, kind in cases:
+        legacy = analyze_url(url)
+        ml = legacy.get("ml_phishing", {})
+        print(f"\n  {'🚫' if kind == 'phish' else '✅'} {kind.upper()} | {url[:60]}")
+        print(f"     Verdict: {legacy.get('verdict')} (score {legacy.get('score')})")
+        print(f"     ML: available={ml.get('available')} prob={ml.get('probability')} verdict={ml.get('verdict')}")
+        # Chat/dashboard engine must agree and carry the same ML payload.
+        from backend.link_security import analyze_url_security
+        be = analyze_url_security(url)
+        print(f"     Backend: {be.get('verdict')} ({be.get('risk_score')}) ML prob={be.get('ml_phishing', {}).get('probability')}")
+        assert be.get("ml_phishing", {}).get("available") is True, "ML payload missing from backend engine"
+
+
 def test_virustotal_integration():
     """Test VirusTotal API integration (if configured)."""
     print_section("TEST 3: VirusTotal API Integration")
@@ -252,13 +282,24 @@ def print_summary():
 
 
 if __name__ == "__main__":
-    print("\n" + "╔" + "═" * 68 + "╗")
-    print("║" + " " * 15 + "ZYRA LINK SECURITY - PIPELINE DEMO" + " " * 20 + "║")
-    print("╚" + "═" * 68 + "╝")
+    try:
+        import sys as _sys
+        for _s in (_sys.stdout, _sys.stderr):
+            if _sys is not None and hasattr(_s, "reconfigure"):
+                try:
+                    _s.reconfigure(encoding="utf-8", errors="replace")
+                except (ValueError, OSError):
+                    pass
+    except Exception:
+        pass
+    print("\n" + "=" * 70)
+    print("ZYRA LINK SECURITY - PIPELINE DEMO")
+    print("=" * 70)
 
     # Run all tests
     test_url_regex()
     test_heuristic_analysis()
+    test_ml_phishing_classifier()
     test_virustotal_integration()
 
     # Optional: Screen capture test (comment out if not needed)

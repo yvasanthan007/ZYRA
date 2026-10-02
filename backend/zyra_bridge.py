@@ -117,13 +117,19 @@ def _nmap_starting_message(text: str) -> str:
 
     The scan itself is executed asynchronously by the server (which broadcasts
     live status + results to the Nmap Scanner panel), so this just confirms
-    what Zyra is about to do.
+    what Zyra is about to do. Invalid targets get an actionable message
+    instead of silently falling through to the LLM.
     """
     op_key, op = resolve_operation(text)
     target = extract_target(text) or op.get("default_target", "127.0.0.1")
     valid, msg = validate_target(target)
     if not valid:
-        return f"I couldn't use that target. {msg}"
+        return (
+            f"NMAP SCANNER ACTIVATED\nTarget: {target}\n"
+            f"Operation: {op.get('label', op_key)}\n"
+            f"That target looks invalid ({msg}), so the scan was not started. "
+            "Please provide a valid IP address or domain."
+        )
     return (
         f"Running a {op['label']} scan on {target}. I'll show the live results "
         f"in the Nmap Scanner panel when it completes."
@@ -172,8 +178,9 @@ def process_chat(message: str) -> str:
 
     # ── Backend-only link security analysis ──
     # When the user provides a link — or asks to analyze the one they are
-    # looking at — return the structured security report. When no URL is in the
-    # text the link is captured from the screen/clipboard.
+    # looking at — return the structured security report (now with the local
+    # ML phishing verdict fused in). When no URL is in the text the link is
+    # captured from the screen/clipboard.
     if is_link_analysis_request(message):
         report, _url = _link_capture_report(message)
         if report is not None:

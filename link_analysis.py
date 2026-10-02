@@ -32,6 +32,44 @@ from urllib.parse import urlparse
 import requests
 
 from screen_ocr import get_active_url
+from speak import shorten_url_for_speech
+
+
+# ML phishing classifier (optional advisory layer — same local lexical model
+# the deep URL Analyzer uses; never raises, never requires network).
+def _ml_check(url):
+    """Run the local ML phishing classifier, returning its payload dict."""
+    try:
+        from backend.ml_phishing import analyze_url_ml
+    except Exception:
+        return {"available": False}
+    try:
+        result = analyze_url_ml(url)
+    except Exception:
+        return {"available": False}
+    return result if isinstance(result, dict) else {"available": False}
+
+
+def _ml_contribution(ml_analysis):
+    """(extra_score, observation_line) for an ML flag; (0, None) when quiet."""
+    if not ml_analysis or not ml_analysis.get("available"):
+        return 0, None
+    try:
+        prob = float(ml_analysis.get("probability") or 0.0)
+    except (TypeError, ValueError):
+        return 0, None
+    if prob < 0.55:
+        return 0, None
+    percent = int(round(prob * 100))
+    algo = ml_analysis.get("algorithm") or "ML classifier"
+    verdict = str(ml_analysis.get("verdict") or "").replace("_", " ")
+    line = (f"ML phishing classifier ({algo}) estimates {percent}% phishing "
+            f"probability ({verdict}).")
+    if prob >= 0.90:
+        return 5, line + " Treated as dangerous."
+    if prob >= 0.75:
+        return 2, line + " Classification raised to suspicious."
+    return 0, line
 
 
 # ──────────────────────────────────────────────
@@ -310,6 +348,21 @@ def analyze_url(url: str) -> dict:
             "details": f"Impersonates {brand_name} (expected {original_domain})"
         })
 
+    # ── Check 9: ML phishing classifier (local, offline advisory layer) ──
+    # Tiers mirror the deep URL Analyzer: >=0.90 forces Dangerous, >=0.75
+    # raises a clean URL to Suspicious; the ML layer never lowers a score.
+    ml_analysis = _ml_check(url)
+    ml_extra, ml_line = _ml_contribution(ml_analysis)
+    if ml_line:
+        total_score += ml_extra
+        checks.append({
+            "check": "ML Phishing Classifier",
+            "score": ml_extra,
+            "details": ml_line
+        })
+        if ml_extra >= 5:
+            total_score = max(total_score, 5)
+
     # ── Determine verdict based on score ──
     if total_score >= 5:
         verdict = "Dangerous"
@@ -319,7 +372,7 @@ def analyze_url(url: str) -> dict:
         verdict = "Safe"
 
     # ── Generate exact speech text per requirements ──
-    speech_text = _generate_speech_text(url, verdict, total_score)
+    speech_text = _generate_speech_text(url, verdict, total_score, ml_analysis)
 
     # ── VirusTotal override (if enabled and malicious) ──
     if VIRUSTOTAL_API_KEY:
@@ -336,7 +389,7 @@ def analyze_url(url: str) -> dict:
             total_score += 2
             if verdict == "Safe":
                 verdict = "Suspicious"
-                speech_text = _generate_speech_text(url, verdict, total_score)
+                speech_text = _generate_speech_text(url, verdict, total_score, ml_analysis)
             checks.append({
                 "check": "VirusTotal",
                 "score": 2,
@@ -348,11 +401,12 @@ def analyze_url(url: str) -> dict:
         "score": total_score,
         "verdict": verdict,
         "speech_text": speech_text,
-        "checks": checks
+        "checks": checks,
+        "ml_phishing": ml_analysis if isinstance(ml_analysis, dict) else {"available": False}
     }
 
 
-def _generate_speech_text(url: str, verdict: str, score: int) -> str:
+def _generate_speech_text(url: str, verdict: str, score: int, ml_analysis=None) -> str:
     """
     Generate the exact voice response text based on verdict category.
 
@@ -360,16 +414,40 @@ def _generate_speech_text(url: str, verdict: str, score: int) -> str:
         url: The analyzed URL
         verdict: "Safe", "Suspicious", or "Dangerous"
         score: Total risk score
+        ml_analysis: Optional ML payload — appends an ML sentence when flagged.
 
     Returns:
         str: Exact speech text for Zyra to speak
     """
+    ml_sentence = ""
+    if isinstance(ml_analysis, dict) and ml_analysis.get("available"):
+        try:
+            prob = float(ml_analysis.get("probability") or 0.0)
+        except (TypeError, ValueError):
+            prob = 0.0
+        if prob >= 0.55:
+            ml_sentence = (f" The machine learning classifier estimates "
+                           f"{int(round(prob * 100))} percent phishing probability.")
+    # Speaking a long domain character-by-character is slow and unintelligible,
+    # so drop the URL from the sentence when its host is too long to say quickly.
+    spoken_url = shorten_url_for_speech(url)
+    if len(spoken_url) > 24:
+        spoken_url = ""
     if verdict == "Safe":
-        return f"I've analyzed the link: {url}. It appears to be safe."
+        if spoken_url:
+            return (f"I've analyzed the link: {spoken_url}. "
+                    f"It appears to be safe.{ml_sentence}")
+        return f"I've analyzed the link. It appears to be safe.{ml_sentence}"
     elif verdict == "Suspicious":
-        return f"Caution. The link {url} from your screen appears suspicious."
+        if spoken_url:
+            return (f"Caution. The link {spoken_url} from your screen "
+                    f"appears suspicious.{ml_sentence}")
+        return f"Caution. The link on your screen appears suspicious.{ml_sentence}"
     else:  # Dangerous
-        return f"Warning! The link {url} from your screen appears unsafe."
+        if spoken_url:
+            return (f"Warning! The link {spoken_url} from your screen "
+                    f"appears unsafe.{ml_sentence}")
+        return f"Warning! The link on your screen appears unsafe.{ml_sentence}"
 
 
 def _check_virustotal(url: str) -> str:

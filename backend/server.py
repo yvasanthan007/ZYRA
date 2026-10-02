@@ -1935,7 +1935,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     websocket
                 )
 
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, RuntimeError):
         manager.disconnect(websocket)
     except Exception as e:
         print(f"WebSocket error: {e}")
