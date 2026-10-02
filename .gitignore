@@ -22,6 +22,10 @@ node_modules/
 # Electron
 desktop-ui/node_modules/
 
+# Electron packaging (root shell)
+node_modules/
+installer-output/
+
 # Build
 dist/
 build/

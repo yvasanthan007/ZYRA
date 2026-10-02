@@ -1,3 +1,10 @@
+import sys
+# Native desktop mode is the default source entry point. The existing voice/server
+# runtime remains available with `python main.py --voice` and is not duplicated.
+if __name__ == "__main__" and "--voice" not in sys.argv:
+    from desktop_app import run_desktop
+    raise SystemExit(run_desktop())
+
 import threading
 import time
 import os

@@ -1,0 +1,74 @@
+{
+  "name": "zyra",
+  "version": "1.0.0",
+  "description": "ZYRA AI Assistant - Desktop Application (Electron wrapper around the existing FastAPI + holographic dashboard)",
+  "main": "electron/main.js",
+  "private": true,
+  "scripts": {
+    "web": "python start_zyra.py",
+    "web:server": "python -m uvicorn backend.server:app --host 127.0.0.1 --port 8080",
+    "dev": "concurrently \"npm run web:server\" \"wait-on http://127.0.0.1:8080 && electron ./electron/main.js\"",
+    "desktop": "electron ./electron/main.js",
+    "desktop:dev": "electron ./electron/main.js",
+    "build:frontend": "echo \"ZYRA frontend is served by FastAPI (desktop-dashboard/index.html) - no bundle step required.\"",
+    "dist": "electron-builder --win nsis",
+    "pack": "electron-builder --dir --win",
+    "verify": "node electron/verify.js",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "electron": "^38.0.0",
+    "electron-builder": "^25.1.8",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.zyra.desktop",
+    "productName": "ZYRA",
+    "copyright": "Copyright © 2026 ZYRA",
+    "directories": {
+      "output": "installer-output",
+      "buildResources": "electron/build-resources"
+    },
+    "files": [
+      "electron/**/*",
+      "backend/**/*",
+      "!backend/__pycache__/**/*",
+      "desktop-dashboard/**/*",
+      "commands/**/*",
+      "memory/**/*",
+      "*.py",
+      "!test_*.py",
+      "requirements.txt",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend"
+      },
+      {
+        "from": "desktop-dashboard",
+        "to": "desktop-dashboard"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "ZYRA Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ZYRA"
+    }
+  }
+}

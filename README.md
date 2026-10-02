@@ -30,14 +30,36 @@ pip install -r requirements.txt
 ```
 
 ### Running ZYRA
-
-Simply run:
+The source entry point now launches the native Windows desktop application:
 
 ```bash
 python main.py
 ```
 
-Or use the startup script:
+The previous voice + FastAPI/browser runtime is preserved explicitly:
+
+```bash
+python main.py --voice
+```
+
+The desktop interface reuses the existing URL Analyzer, risk engine, Nmap
+service, Ollama assistant, Edge TTS bridge, DNS lookup and JSON history. Nmap
+is an external Windows prerequisite and must be installed separately. Secrets
+such as `VIRUSTOTAL_API_KEY`, `ZYRA_OLLAMA_HOST`, and `ZYRA_OLLAMA_MODEL` are
+read from environment variables.
+
+### Windows packaging
+Source remains the master copy. After testing the source application, build the
+release executable with:
+
+```bash
+pyinstaller --clean ZYRA.spec
+```
+
+This produces `dist\\ZYRA\\ZYRA.exe`. The optional `installer.iss` script can
+then be opened with Inno Setup to produce `ZYRA-Setup.exe`.
+
+Or use the startup script for the dependency check:
 
 ```bash
 python start_zyra.py
