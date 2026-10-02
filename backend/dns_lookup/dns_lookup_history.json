@@ -1,0 +1,17 @@
+[
+ {
+  "lookup_id": "x",
+  "domain": "example.com",
+  "status": null,
+  "query_type": "ANY",
+  "response_time_ms": null,
+  "dnssec": null,
+  "timestamp": null,
+  "timestamp_display": null,
+  "result": {
+   "success": true,
+   "domain": "example.com",
+   "lookup_id": "x"
+  }
+ }
+]
