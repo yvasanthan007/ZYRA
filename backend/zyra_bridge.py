@@ -4,7 +4,6 @@ Bridges FastAPI backend with Zyra's AI modules (brain, speak, listen, commands)
 """
 import sys
 import os
-import json
 import threading
 from typing import Optional, Dict, Any
 
@@ -41,7 +40,6 @@ from backend.link_security import (
     analyze_link_request,
     analyze_url_security,
     format_security_report,
-    summarize_for_voice,
     extract_url,
 )
 
@@ -53,14 +51,12 @@ from backend.dns_lookup import (
 )
 
 # ── Nmap Network Scanner Module (backend service layer) ──
+from nmap_handler import is_nmap_intent
 from backend.nmap_service import (
-    is_nmap_intent,
     resolve_operation,
     extract_target,
     validate_target,
-    run_scan,
     nmap_available,
-    build_nmap_command,
 )
 
 # Command map for executing voice commands programmatically

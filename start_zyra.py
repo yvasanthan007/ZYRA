@@ -3,7 +3,6 @@ ZYRA Startup Script
 Checks dependencies and starts the application
 """
 import sys
-import subprocess
 import importlib
 
 # ── Windows console safety ──────────────────────────────────────────────
@@ -76,11 +75,8 @@ def main():
     
     # Import and run main
     try:
-        from main import main as run_zyra
-        # Note: main.py uses if __name__ == "__main__" so we need to exec it
         import main
-        import threading
-        
+
         # Start in a way that works
         print("\n✨ ZYRA is starting...")
         print("   🎤 Voice commands: Speak into your microphone")
@@ -88,7 +84,7 @@ def main():
         print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
         
         # Execute main
-        exec(open("main.py").read())
+        exec(open("main.py", encoding="utf-8").read(), main.__dict__)
         
     except KeyboardInterrupt:
         print("\n\n👋 ZYRA shutdown complete")

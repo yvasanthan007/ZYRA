@@ -9,6 +9,7 @@ import time
 import asyncio
 import threading
 import webbrowser
+from contextlib import asynccontextmanager
 
 # ── Windows console safety ──────────────────────────────────────────────
 # Reconfigure stdout/stderr to UTF-8 so emoji status prints (🚀 📡 🔍 …)
@@ -22,12 +23,10 @@ for _stream in (sys.stdout, sys.stderr):
             pass
 
 from typing import Optional, Dict, Any
-from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse, Response
 import uvicorn
 
 # Add parent directory to path for importing Zyra modules
@@ -50,10 +49,7 @@ from backend.link_security import (
 from system_monitor import (
     get_system_metrics,
     format_system_monitor_text,
-    get_voice_summary,
-    is_system_monitor_intent,
     classify_system_query,
-    start_system_monitor,
 )
 from nmap_handler import is_nmap_intent
 from backend.nmap_service import (
@@ -73,13 +69,11 @@ from backend.nmap_report import (
     report_to_text,
 )
 from backend.url_analyzer import (
-    SCAN_STAGES,
     build_chat_ack,
     build_report_data as url_build_report_data,
     build_voice_summary,
     extract_target_url,
     get_history,
-    get_last_scan,
     get_scan_state,
     is_url_analysis_intent,
     report_filename,
@@ -92,23 +86,34 @@ from backend.dns_lookup import (
     build_chat_ack as dns_build_chat_ack,
     build_voice_summary as dns_build_voice_summary,
     build_dns_report_data as dns_build_report_data,
+    dns_history_add,
     dns_history_recent,
     dns_report_filename,
     dns_report_to_pdf,
     dns_report_to_text,
     extract_dns_record_type,
     extract_dns_target,
-    get_dns_lookup,
-    get_dns_server_info,
     get_scan_state as get_dns_scan_state,
     is_dns_intent,
     start_dns_lookup,
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: capture the loop and warm the AI model on startup."""
+    global _server_loop
+    _server_loop = asyncio.get_running_loop()
+    # Preload the AI model in the background so the first chat reply doesn't
+    # pay the cold-load penalty (a warm model answers in seconds).
+    warm_up_async()
+    yield
+
+
 app = FastAPI(
     title="ZYRA AI Assistant API",
     description="Backend API for ZYRA - Your AI Desktop Assistant",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # CORS middleware - allow all origins for development
@@ -157,15 +162,6 @@ manager = ConnectionManager()
 
 # Event loop reference for thread-safe cross-thread broadcasting
 _server_loop: Optional[asyncio.AbstractEventLoop] = None
-
-
-@app.on_event("startup")
-async def on_startup():
-    global _server_loop
-    _server_loop = asyncio.get_running_loop()
-    # Preload the AI model in the background so the first chat reply doesn't
-    # pay the cold-load penalty (a warm model answers in seconds).
-    warm_up_async()
 
 
 def broadcast_message_sync(message: Dict[str, Any]) -> None:

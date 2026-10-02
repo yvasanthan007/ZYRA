@@ -17,7 +17,6 @@ Fallback:
 
 import re
 import io
-import os
 from urllib.parse import urlparse
 
 from PIL import Image

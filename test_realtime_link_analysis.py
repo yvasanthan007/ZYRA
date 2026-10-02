@@ -90,7 +90,7 @@ def test_url_regex_extraction():
         all_passed = all_passed and passed
         print_test(description, passed, f"Expected: {expected}, Got: {result}")
     
-    return all_passed
+    assert all_passed
 
 
 def test_helper_functions():
@@ -157,7 +157,7 @@ def test_helper_functions():
         details = f"Detected: {is_typo}, Brand: {brand}" if is_typo else "No typosquatting"
         print_test(f"Typosquatting check: {host}", passed, details)
     
-    return all_passed
+    assert all_passed
 
 
 def test_heuristic_analysis():
@@ -187,7 +187,7 @@ def test_heuristic_analysis():
         details = f"Verdict: {result['verdict']} (expected: {expected_verdict}), Score: {result['score']}"
         print_test(description, passed, details)
     
-    return all_passed
+    assert all_passed
 
 
 def test_speech_text_generation():
@@ -215,7 +215,7 @@ def test_speech_text_generation():
         all_passed = all_passed and passed
         print_test(f"Speech text for {verdict}", passed, f"Got: {speech[:60]}...")
     
-    return all_passed
+    assert all_passed
 
 
 def test_trigger_detection():
@@ -238,7 +238,7 @@ def test_trigger_detection():
         all_passed = all_passed and passed
         print_test(description, passed, f"Expected: {expected}, Got: {result}")
     
-    return all_passed
+    assert all_passed
 
 
 def test_no_url_scenario():
@@ -263,7 +263,7 @@ def test_no_url_scenario():
         )
         print_test("No URL found handling", passed, 
                    f"Verdict: {result['verdict']}, Speech: {result['speech_text'][:50]}...")
-        return passed
+        assert passed
     finally:
         link_analysis.get_active_url = original_func
 
@@ -295,7 +295,9 @@ def test_score_verdict_mapping():
     print_test("Dangerous verdict (score 5+)", passed_dangerous,
                f"Score: {result3['score']}, Verdict: {result3['verdict']}")
     
-    return passed_safe and passed_suspicious and passed_dangerous
+    assert passed_safe, "Safe verdict (score 0-1) failed"
+    assert passed_suspicious, "Suspicious verdict (score 2-4) failed"
+    assert passed_dangerous, "Dangerous verdict (score 5+) failed"
 
 
 def test_virustotal_config():
@@ -308,10 +310,9 @@ def test_virustotal_config():
     # Test that the function exists and is callable
     from link_analysis import _check_virustotal
     result = _check_virustotal("https://www.google.com")
+    assert result is not None, "_check_virustotal must return a result even when unconfigured"
     print_test("VirusTotal check function", True, 
                f"Returns: {result} (safe when not configured)")
-    
-    return True
 
 
 def test_integration_handler():
@@ -358,7 +359,7 @@ def test_integration_handler():
         print_test("Handler integration", passed,
                    f"Verdict: {result['verdict']}, Spoken: {len(spoken_texts)} messages")
         
-        return passed
+        assert passed
     finally:
         speak_module.speak = original_speak
         zyra_handler.speak = original_speak
@@ -391,7 +392,7 @@ def test_edge_cases():
     print_test("Long path detection", passed, f"Score: {result['score']}")
     all_passed = all_passed and passed
     
-    return all_passed
+    assert all_passed
 
 
 # ──────────────────────────────────────────────
@@ -422,8 +423,12 @@ def run_all_tests():
     results = []
     for test_name, test_func in tests:
         try:
-            passed = test_func()
-            results.append((test_name, passed))
+            # The test functions assert internally, so a clean return means pass.
+            test_func()
+            results.append((test_name, True))
+        except AssertionError as e:
+            print(f"\n❌ FAILED in {test_name}: {e or 'assertion failed'}")
+            results.append((test_name, False))
         except Exception as e:
             print(f"\n❌ ERROR in {test_name}: {e}")
             import traceback

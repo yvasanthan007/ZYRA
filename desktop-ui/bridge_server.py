@@ -1,6 +1,5 @@
 import sys
 import json
-import importlib.util
 import os
 
 # ── Windows console safety ──────────────────────────────────────────────
@@ -24,12 +23,11 @@ from commands.open_app import (
     open_cmd, open_powershell, open_task_manager, open_control_panel,
     open_file_explorer, open_settings, open_google, open_youtube,
     open_github, open_chatgpt, open_gmail, open_leetcode, open_linkedin,
-    search_google, search_youtube, open_downloads, open_documents,
+    open_downloads, open_documents,
     open_desktop, shutdown_pc, restart_pc, sleep_pc, lock_pc,
     screenshot, volume_up, volume_down, mute, wifi_on, wifi_off,
     empty_recycle_bin, current_time, current_date, play_music, open_camera,
 )
-from commands.close_app import close_app
 from system_monitor import (
     get_system_metrics,
     format_system_monitor_text,

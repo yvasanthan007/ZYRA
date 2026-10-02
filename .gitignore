@@ -30,4 +30,13 @@ build/
 .vscode/
 .idea/
 .postqode/
+.kilo/
+
+# Local runtime state (generated)
+backend/dns_lookup/dns_lookup_history.json
+backend/url_analyzer/url_scan_history.json
+
+# Test / coverage artifacts
+.coverage
+htmlcov/
 

@@ -21,8 +21,6 @@ Supported commands (chat or voice):
 import re
 from typing import Optional
 
-from backend.dns_lookup.validator import is_ip_address
-
 # Bare domain / IP extractor: the first token that looks like a hostname.
 # Deliberately permissive here — the validator re-checks everything.
 _DOMAIN_RE = re.compile(

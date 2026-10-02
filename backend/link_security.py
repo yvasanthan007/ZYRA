@@ -47,7 +47,7 @@ Optional Backend Tool Hook (function-calling style):
 import os
 import re
 import socket
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse
 
 
 # ──────────────────────────────────────────────

@@ -24,9 +24,9 @@ Trigger Phrases:
 """
 
 import re
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
-from nmap_scanner import NmapScanner, analyze_scan_results, get_voice_summary, get_scan_summary
+from nmap_scanner import NmapScanner, analyze_scan_results, get_voice_summary
 from speak import speak
 
 

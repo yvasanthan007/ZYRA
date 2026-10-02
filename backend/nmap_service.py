@@ -34,10 +34,7 @@ from nmap_scanner import (
     get_nmap_version,
     analyze_scan_results,
 )
-from nmap_handler import (
-    is_nmap_intent,
-    extract_target_from_command,
-)
+from nmap_handler import extract_target_from_command
 
 
 # ──────────────────────────────────────────────

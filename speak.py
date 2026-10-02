@@ -36,31 +36,6 @@ def sanitize_tts_text(text):
     return t
 
 
-def _sapi_fallback(text):
-    """Offline Windows SAPI voice, used only when Edge TTS keeps failing.
-
-    Uses the built-in System.Speech on Windows so ZYRA can still speak without
-    depending on Microsoft's online endpoint. Returns True on success.
-    """
-    # Disabled: the system SAPI fallback can introduce a second voice.
-    return False
-    try:
-        safe = text.replace("'", "''")
-        ps = (
-            "Add-Type -AssemblyName System.Speech; "
-            "$s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
-            "$s.Speak('{0}')".format(safe)
-        )
-        proc = subprocess.run(
-            ["powershell", "-NoProfile", "-Command", ps],
-            capture_output=True,
-            timeout=180,
-        )
-        return proc.returncode == 0
-    except Exception:
-        return False
-
-
 async def _render_audio(text, output_file):
     """Synthesize text to the output mp3 file with retry + non-empty check.
 

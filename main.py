@@ -5,7 +5,6 @@ import sys
 import signal
 import webbrowser
 import subprocess
-import platform
 import urllib.request
 import urllib.error
 
