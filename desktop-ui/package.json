@@ -3,19 +3,74 @@
   "version": "1.0.0",
   "description": "Desktop UI for ZYRA AI Assistant",
   "main": "dist/main/main.js",
+  "author": "Vasanthan Y",
   "scripts": {
     "build:main": "webpack --config webpack.config.js --env target=main",
     "build:preload": "webpack --config webpack.config.js --env target=preload",
     "build:renderer": "webpack --config webpack.config.js --env target=renderer",
     "build": "npm run build:main && npm run build:preload && npm run build:renderer",
     "start": "npm run build && electron .",
-    "dev": "npm run build && electron ."
+    "dev": "npm run build && electron .",
+    "build:backend": "powershell -NoProfile -ExecutionPolicy Bypass -File ../tools/build_installer.ps1 -BackendOnly",
+    "dist": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File ../tools/build_installer.ps1",
+    "pack": "npm run build && electron-builder --win --dir --publish never"
+  },
+  "build": {
+    "appId": "com.zyra.desktop",
+    "productName": "ZYRA",
+    "copyright": "Copyright (c) 2026 ZYRA",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-assets"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/ZYRA-backend",
+        "to": "zyra",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build-assets/icon.ico",
+      "artifactName": "ZYRA-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ZYRA",
+      "menuCategory": false,
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "installerIcon": "build-assets/icon.ico",
+      "uninstallerIcon": "build-assets/icon.ico",
+      "installerHeaderIcon": "build-assets/icon.ico"
+    }
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "css-loader": "^6.8.0",
     "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "html-webpack-plugin": "^5.5.0",
     "style-loader": "^3.3.0",
     "ts-loader": "^9.5.0",

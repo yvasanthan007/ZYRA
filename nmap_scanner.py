@@ -36,6 +36,11 @@ import xml.etree.ElementTree as ET
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 
+try:  # dev + packaged: resolves the writable data directory (see zyra_paths)
+    import zyra_paths
+except ImportError:  # pragma: no cover - defensive fallback
+    zyra_paths = None
+
 
 # ──────────────────────────────────────────────
 # Configuration
@@ -399,7 +404,13 @@ class NmapScanner:
             Dictionary with scan results
         """
         args = []
-        xml_file = f"nmap_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+        # XML output goes to the writable data directory, never next to the
+        # (read-only) application files in a packaged build.
+        _xml_name = f"nmap_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+        if zyra_paths is not None:
+            xml_file = zyra_paths.writable_path("nmap", _xml_name)
+        else:
+            xml_file = _xml_name
         
         # Always request XML output for parsing
         args.extend(["-oX", xml_file])

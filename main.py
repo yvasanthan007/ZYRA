@@ -478,6 +478,19 @@ if __name__ == "__main__":
     # Register Microsoft Edge as the preferred browser
     register_edge_browser()
 
+    # When ZYRA is launched by the Electron desktop shell (ZYRA_NO_EDGE=1) the
+    # dashboard is hosted inside the Electron window, so the external Microsoft
+    # Edge kiosk window must NOT be opened.
+    #
+    # A frozen build (an installed ZYRA) ALWAYS hosts the dashboard inside the
+    # Electron shell, so it defaults to embedded mode. A source checkout keeps
+    # the original Edge-kiosk behaviour unless ZYRA_NO_EDGE is set explicitly.
+    _no_edge_env = os.environ.get("ZYRA_NO_EDGE")
+    if _no_edge_env is None:
+        embed_in_electron = bool(getattr(sys, "frozen", False))
+    else:
+        embed_in_electron = _no_edge_env.strip().lower() in ("1", "true", "yes", "on")
+
     # Start the backend server in background thread (non-blocking)
     server_thread = start_backend_server()
 
@@ -485,7 +498,10 @@ if __name__ == "__main__":
     # This polls the /api/health endpoint with retries
     server_ready = wait_for_server(DASHBOARD_URL, max_retries=8, retry_interval=1.0)
 
-    if server_ready:
+    if embed_in_electron:
+        # Electron already owns the dashboard window; open no external browser.
+        print("   🖥️  Desktop mode: dashboard is embedded in Electron (no Edge window).")
+    elif server_ready:
         # Open the dashboard in Microsoft Edge
         open_dashboard_in_edge(DASHBOARD_URL)
     else:

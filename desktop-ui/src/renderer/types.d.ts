@@ -13,6 +13,14 @@ interface ZyraAPI {
   recall: (key: string) => Promise<string | null>;
   getCommands: () => Promise<CommandItem[]>;
   getSystemMetrics: () => Promise<any>;
+
+  // ── FastAPI backend lifecycle (started automatically by Electron) ──
+  getBackendStatus?: () => Promise<any>;
+  onBackendStatus?: (callback: (status: any) => void) => () => void;
+  getBackendLogs?: () => Promise<string[]>;
+  restartBackend?: () => Promise<any>;
+  requestBackend?: (method: string, apiPath: string, payload?: unknown) => Promise<any>;
+  openDesktopUi?: () => Promise<boolean>;
 }
 
 interface Window {

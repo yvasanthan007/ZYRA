@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';" />
+    <title>ZYRA - Starting</title>
+    <style>
+      :root {
+        --bg: #0c0c14;
+        --fg: #e8e8f0;
+        --muted: #8a8aa0;
+        --accent: #ff8803;
+        --ok: #00cc88;
+        --err: #ff5555;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: radial-gradient(circle at 50% 40%, #161625 0%, var(--bg) 70%);
+        color: var(--fg);
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        text-align: center;
+        padding: 24px;
+      }
+      .logo {
+        font-size: 46px;
+        font-weight: 700;
+        letter-spacing: 8px;
+        background: linear-gradient(180deg, #ffd9a0 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .subtitle { color: var(--muted); font-size: 14px; margin-top: -10px; }
+      .spinner {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 136, 3, 0.2);
+        border-top-color: var(--accent);
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .status {
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 13px;
+        color: var(--accent);
+        min-height: 20px;
+      }
+      .detail {
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 11px;
+        color: var(--muted);
+        max-width: 640px;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
+      .logs {
+        display: none;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 10.5px;
+        color: #b9b9cc;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 10px 12px;
+        max-width: 680px;
+        max-height: 220px;
+        overflow: auto;
+        text-align: left;
+        white-space: pre-wrap;
+      }
+      .hint { font-size: 12px; color: var(--muted); }
+      .hidden { display: none; }
+      button {
+        margin-top: 6px;
+        padding: 8px 20px;
+        border-radius: 8px;
+        border: 1px solid var(--accent);
+        background: transparent;
+        color: var(--accent);
+        font-size: 13px;
+        cursor: pointer;
+      }
+      button:hover { background: rgba(255, 136, 3, 0.12); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="logo">ZYRA</div>
+      <div class="subtitle">AI Assistant</div>
+      <div class="spinner" id="spinner"></div>
+      <div class="status" id="status">Starting ZYRA backend...</div>
+      <div class="detail" id="detail"></div>
+      <pre class="logs" id="logs"></pre>
+      <button class="hidden" id="retry">Retry backend startup</button>
+      <div class="hint" id="hint">
+        The ZYRA interface opens as soon as the backend is ready.
+      </div>
+    </div>
+
+    <script>
+      // Startup screen only. It reads the live backend status through the same
+      // preload bridge the ZYRA UI uses, so what is shown here is the real state
+      // of the FastAPI process Electron is starting.
+      (function () {
+        var statusEl = document.getElementById('status');
+        var detailEl = document.getElementById('detail');
+        var spinnerEl = document.getElementById('spinner');
+        var hintEl = document.getElementById('hint');
+        var logsEl = document.getElementById('logs');
+        var retryEl = document.getElementById('retry');
+
+        if (!window.zyraAPI || !window.zyraAPI.getBackendStatus) {
+          statusEl.textContent = 'Starting...';
+          detailEl.textContent = 'Preload bridge unavailable - the desktop shell did not load correctly.';
+          return;
+        }
+
+        function showLogs() {
+          window.zyraAPI.getBackendLogs().then(function (lines) {
+            if (lines && lines.length) {
+              logsEl.textContent = lines.slice(-40).join('\n');
+              logsEl.style.display = 'block';
+            }
+          }).catch(function () {});
+        }
+
+        function render(status) {
+          if (!status) return;
+          if (status.state === 'ready') {
+            retryEl.classList.add('hidden');
+            logsEl.style.display = 'none';
+            statusEl.textContent = 'Backend ready';
+            statusEl.style.color = 'var(--ok)';
+            detailEl.textContent =
+              (status.url || '') + (status.pid ? '  (PID ' + status.pid + ')' : '  (adopted)') +
+              ' - loading the ZYRA interface...';
+            spinnerEl.classList.add('hidden');
+            hintEl.textContent = 'Loading the holographic ZYRA dashboard...';
+          } else if (status.state === 'failed') {
+            statusEl.textContent = 'Backend failed to start';
+            statusEl.style.color = 'var(--err)';
+            detailEl.textContent = status.error || 'See the ZYRA window for details.';
+            spinnerEl.classList.add('hidden');
+            retryEl.classList.remove('hidden');
+            hintEl.textContent = 'Check that Python and the ZYRA dependencies are available, then retry.';
+            showLogs();
+          } else if (status.state === 'starting' || status.state === 'idle') {
+            retryEl.classList.add('hidden');
+            statusEl.textContent = 'Starting ZYRA backend...';
+            statusEl.style.color = 'var(--accent)';
+            detailEl.textContent =
+              'Waiting for /api/health' + (status.port ? ' on port ' + status.port : '') +
+              '. The first run also loads the AI model and OCR.';
+            spinnerEl.classList.remove('hidden');
+          }
+        }
+
+        if (window.zyraAPI.onBackendStatus) {
+          window.zyraAPI.onBackendStatus(render);
+        }
+        window.zyraAPI.getBackendStatus().then(render).catch(function () {});
+
+        retryEl.addEventListener('click', function () {
+          retryEl.classList.add('hidden');
+          logsEl.style.display = 'none';
+          statusEl.textContent = 'Restarting ZYRA backend...';
+          statusEl.style.color = 'var(--accent)';
+          detailEl.textContent = '';
+          spinnerEl.classList.remove('hidden');
+          if (window.zyraAPI.restartBackend) {
+            window.zyraAPI.restartBackend().catch(function () {});
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

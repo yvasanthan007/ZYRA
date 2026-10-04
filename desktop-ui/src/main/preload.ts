@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { BackendStatus } from './backend-service';
 
 contextBridge.exposeInMainWorld('zyraAPI', {
   // AI Chat
@@ -30,4 +31,27 @@ contextBridge.exposeInMainWorld('zyraAPI', {
   // System Monitor Metrics
   getSystemMetrics: (): Promise<any> =>
     ipcRenderer.invoke('system:metrics'),
+
+  // ── FastAPI backend lifecycle (started automatically by Electron) ──
+  getBackendStatus: (): Promise<BackendStatus | null> =>
+    ipcRenderer.invoke('backend:status'),
+
+  onBackendStatus: (callback: (status: BackendStatus | null) => void): (() => void) => {
+    const listener = (_event: unknown, status: BackendStatus | null) => callback(status);
+    ipcRenderer.on('backend:status', listener);
+    return () => ipcRenderer.removeListener('backend:status', listener);
+  },
+
+  getBackendLogs: (): Promise<string[]> =>
+    ipcRenderer.invoke('backend:logs'),
+
+  restartBackend: (): Promise<BackendStatus | null> =>
+    ipcRenderer.invoke('backend:restart'),
+
+  requestBackend: (method: string, apiPath: string, payload?: unknown): Promise<unknown> =>
+    ipcRenderer.invoke('backend:request', method, apiPath, payload),
+
+  // Open the existing React desktop UI in its own window.
+  openDesktopUi: (): Promise<boolean> =>
+    ipcRenderer.invoke('ui:open-desktop'),
 });

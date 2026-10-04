@@ -33,6 +33,8 @@ import uvicorn
 # Add parent directory to path for importing Zyra modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import zyra_paths
+
 from backend.zyra_bridge import (
     process_chat,
     process_chat_stream,
@@ -134,8 +136,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dashboard directory
-DASHBOARD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "desktop-dashboard")
+# Dashboard directory — bundled read-only asset in a packaged build, the
+# project's desktop-dashboard/ folder in development (see zyra_paths).
+DASHBOARD_DIR = zyra_paths.resource_path("desktop-dashboard")
 
 # WebSocket connection manager
 class ConnectionManager:
@@ -1121,6 +1124,59 @@ async def list_commands():
         "commands": commands,
         "count": len(commands)
     }
+
+
+# ========== Memory API (remember / recall) ==========
+# Additive: exposes the existing `memory.py` store over HTTP so the Electron
+# desktop UI can share this single backend process instead of running a second
+# Python bridge process. No existing endpoint behaviour is changed.
+
+@app.post("/api/memory/remember")
+async def memory_remember_endpoint(data: Dict[str, Any]):
+    """Store a key/value fact in Zyra's long-term memory.
+
+    Request body:  {"key": "favourite_colour", "value": "blue"}
+    Response:      {"success": true, "data": "Remembered favourite_colour"}
+    """
+    key = str(data.get("key") or "").strip()
+    value = data.get("value")
+    if not key:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "key is required"}
+        )
+    try:
+        from memory import remember as _remember
+        _remember(key, value)
+        return {"success": True, "data": f"Remembered {key}"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.post("/api/memory/recall")
+async def memory_recall_endpoint(data: Dict[str, Any]):
+    """Retrieve a stored fact from Zyra's long-term memory.
+
+    Request body:  {"key": "favourite_colour"}
+    Response:      {"success": true, "data": "blue"}
+    """
+    key = str(data.get("key") or "").strip()
+    if not key:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": "key is required"}
+        )
+    try:
+        from memory import recall as _recall
+        return {"success": True, "data": _recall(key)}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
 
 
 # ========== Nmap Scanner API ==========

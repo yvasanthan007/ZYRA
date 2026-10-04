@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ZYRA application icon.
+
+  A simple rounded "Z" mark in ZYRA's holographic orange (#ff8803) on a dark
+  navy plate (#0c0c14), generated at 256x256 and exported as a multi-resolution
+  .ico (16/24/32/48/64/128/256) so Windows shows it correctly in Explorer, the
+  Start Menu, the taskbar and the installer itself.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#16162a"/>
+      <stop offset="100%" stop-color="#0a0a14"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd9a0"/>
+      <stop offset="55%" stop-color="#ff8803"/>
+      <stop offset="100%" stop-color="#e06000"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="8" y="8" width="240" height="240" rx="52" ry="52" fill="url(#plate)"/>
+  <rect x="8" y="8" width="240" height="240" rx="52" ry="52"
+        fill="none" stroke="#ff8803" stroke-opacity="0.55" stroke-width="4"/>
+
+  <!-- Neural-core ring, echoing the holographic dashboard. -->
+  <circle cx="128" cy="128" r="86" fill="none"
+          stroke="#ff8803" stroke-opacity="0.22" stroke-width="3"/>
+
+  <!-- The Z. -->
+  <path d="M78 84 H182 L182 112 L120 176 H182 V204 H76 V176 L138 112 H78 Z"
+        fill="url(#mark)"/>
+</svg>

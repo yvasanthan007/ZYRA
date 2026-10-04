@@ -29,13 +29,15 @@ import tempfile
 import threading
 from typing import Any, Dict, Optional
 
+import zyra_paths
+
 
 _MEMORY_LOCK = threading.RLock()
 
 _DEFAULT_MEMORY_FILE = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "memory",
-    "data.json",
+    # Writable: %LOCALAPPDATA%\ZYRA\data\memory\data.json when packaged, the
+    # project's memory\ directory in development. Never inside the app install.
+    zyra_paths.writable_path("memory", "data.json"),
 )
 
 

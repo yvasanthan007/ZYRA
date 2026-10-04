@@ -70,6 +70,18 @@ electron_1.contextBridge.exposeInMainWorld('zyraAPI', {
     getCommands: () => electron_1.ipcRenderer.invoke('commands:list'),
     // System Monitor Metrics
     getSystemMetrics: () => electron_1.ipcRenderer.invoke('system:metrics'),
+    // ── FastAPI backend lifecycle (started automatically by Electron) ──
+    getBackendStatus: () => electron_1.ipcRenderer.invoke('backend:status'),
+    onBackendStatus: (callback) => {
+        const listener = (_event, status) => callback(status);
+        electron_1.ipcRenderer.on('backend:status', listener);
+        return () => electron_1.ipcRenderer.removeListener('backend:status', listener);
+    },
+    getBackendLogs: () => electron_1.ipcRenderer.invoke('backend:logs'),
+    restartBackend: () => electron_1.ipcRenderer.invoke('backend:restart'),
+    requestBackend: (method, apiPath, payload) => electron_1.ipcRenderer.invoke('backend:request', method, apiPath, payload),
+    // Open the existing React desktop UI in its own window.
+    openDesktopUi: () => electron_1.ipcRenderer.invoke('ui:open-desktop'),
 });
 
 })();

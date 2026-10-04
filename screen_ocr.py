@@ -113,6 +113,9 @@ def capture_screen(monitor_index=1):
 _ocr_reader = None
 
 
+import zyra_paths
+
+
 def _get_ocr_reader():
     """Get or initialize the EasyOCR reader singleton."""
     global _ocr_reader
@@ -120,9 +123,16 @@ def _get_ocr_reader():
         try:
             import easyocr
             print("   🔍 Initializing EasyOCR (first load may take a moment)...")
+            # Optional OCR weights are read-only; honour the frozen bundle first
+            # and only then download to the user's profile cache.
+            model_storage_directory = None
+            _bundled = zyra_paths.resource_path("easyocr", "model")
+            if os.path.isdir(_bundled):
+                model_storage_directory = _bundled
             _ocr_reader = easyocr.Reader(
                 ["en"],
                 gpu=False,  # Use CPU to avoid CUDA dependency issues
+                model_storage_directory=model_storage_directory,
             )
         except ImportError:
             print("   ⚠️  EasyOCR not installed. OCR unavailable.")

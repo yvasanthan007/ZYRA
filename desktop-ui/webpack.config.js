@@ -62,6 +62,15 @@ module.exports = (env) => {
       new HtmlWebpackPlugin({
         template: './src/renderer/index.html',
       }),
+      // The startup screen Electron shows until the FastAPI backend is ready.
+      // `inject: false` keeps the compiled renderer bundle out of it.
+      new HtmlWebpackPlugin({
+        template: './src/renderer/splash.html',
+        filename: 'splash.html',
+        inject: false,
+        chunks: [],
+        minify: false,
+      }),
     ],
   };
 };

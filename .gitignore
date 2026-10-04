@@ -26,6 +26,12 @@ desktop-ui/node_modules/
 dist/
 build/
 
+# Packaging output (electron-builder / NSIS installers)
+desktop-ui/release/
+# Generated icons (source of truth: desktop-ui/build-assets/icon.svg)
+desktop-ui/build-assets/icon.ico
+desktop-ui/build-assets/icon.png
+
 # IDE / local tooling
 .vscode/
 .idea/

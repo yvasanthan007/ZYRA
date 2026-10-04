@@ -13,17 +13,26 @@ import os
 import threading
 from datetime import datetime
 
+try:  # dev + packaged: resolves the writable data directory (see zyra_paths)
+    import zyra_paths
+except ImportError:  # pragma: no cover - defensive fallback
+    zyra_paths = None
+
 _MAX_ENTRIES = 25
 
 _LOCK = threading.Lock()
-_HISTORY_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "url_scan_history.json"
-)
+
+
+def _history_path() -> str:
+    """Writable location for url_scan_history.json (never inside the app dir)."""
+    if zyra_paths is not None:
+        return zyra_paths.writable_path("url_scan_history.json")
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "url_scan_history.json")
 
 
 def _load_unlocked() -> list:
     try:
-        with open(_HISTORY_PATH, "r", encoding="utf-8") as fh:
+        with open(_history_path(), "r", encoding="utf-8") as fh:
             data = json.load(fh)
         return data if isinstance(data, list) else []
     except (OSError, ValueError):
@@ -32,7 +41,7 @@ def _load_unlocked() -> list:
 
 def _save_unlocked(entries: list) -> None:
     try:
-        with open(_HISTORY_PATH, "w", encoding="utf-8") as fh:
+        with open(_history_path(), "w", encoding="utf-8") as fh:
             json.dump(entries, fh, ensure_ascii=False, indent=1)
     except OSError:
         pass  # history is best-effort; never break a scan over it

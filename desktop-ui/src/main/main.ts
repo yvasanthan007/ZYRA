@@ -1,37 +1,231 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell, MenuItemConstructorOptions } from 'electron';
 import * as path from 'path';
 import { PythonBridge } from './python-bridge';
+import { BackendService, BackendStatus } from './backend-service';
 
 let mainWindow: BrowserWindow | null = null;
+let desktopWindow: BrowserWindow | null = null;
 let pythonBridge: PythonBridge | null = null;
+let backendService: BackendService | null = null;
+let dashboardLoaded = false;
+let quitting = false;
+let shutdownDone = false;
+
+function preloadPath(): string {
+  return path.join(__dirname, 'preload.js');
+}
+
+/** Path to a file emitted next to main.js by webpack (dist/renderer/<name>). */
+function rendererFile(name: string): string {
+  return path.join(__dirname, '..', 'renderer', name);
+}
+
+function sendBackendStatus(status: BackendStatus | null): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) {
+      win.webContents.send('backend:status', status);
+    }
+  }
+}
+
+/** True once the FastAPI backend is serving (spawned by us or adopted). */
+function backendReady(): boolean {
+  return !!backendService && backendService.getStatus().state === 'ready';
+}
+
+/** Call a FastAPI endpoint and return the parsed body; throws on failure. */
+async function backendCall(method: string, apiPath: string, payload?: unknown): Promise<unknown> {
+  if (!backendService) throw new Error('Backend not initialised');
+  const result = await backendService.request(method, apiPath, payload);
+  if (!result.ok) {
+    const body = result.body as { error?: string } | null;
+    throw new Error(body?.error || result.error || `Backend request failed (${result.status})`);
+  }
+  return result.body;
+}
+
+/**
+ * The FastAPI backend is the primary data path for the React UI. The legacy
+ * `bridge_server.py` process is started here ONLY as a fallback, so a normal
+ * desktop session runs a single Python process instead of two.
+ */
+function ensureBridge(): PythonBridge | null {
+  try {
+    if (!pythonBridge) {
+      pythonBridge = new PythonBridge();
+      console.log('desktop: legacy Python bridge started as a fallback path');
+    }
+    if (!pythonBridge.isRunning()) {
+      pythonBridge.start();
+    }
+    return pythonBridge;
+  } catch (err) {
+    console.error('desktop: failed to start the Python bridge fallback:', err);
+    return null;
+  }
+}
+
+/** Fallback path: talk to the lazily-started legacy Python bridge. */
+async function bridgeCommand(type: string, data: unknown): Promise<unknown> {
+  const bridge = ensureBridge();
+  if (!bridge) throw new Error('Python bridge unavailable');
+  return bridge.sendCommand({ type, data });
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
+    width: 1280,
+    height: 860,
+    minWidth: 1000,
+    minHeight: 700,
+    backgroundColor: '#0c0c14',
     title: 'ZYRA - AI Assistant',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: preloadPath(),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+  // Show the startup screen first; the holographic dashboard is swapped in once
+  // the FastAPI backend reports ready. The once() guard prevents a reload loop.
+  void mainWindow.loadFile(rendererFile('splash.html'));
+  mainWindow.webContents.once('did-finish-load', () => {
+    if (backendService && backendService.isRunning() && !dashboardLoaded) {
+      loadDashboard();
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-app.whenReady().then(() => {
+/** Load the existing Three.js dashboard, served by the local FastAPI backend. */
+function loadDashboard(): void {
+  if (!mainWindow || !backendService) return;
+  const status = backendService.getStatus();
+  if (status.state !== 'ready' || !status.url) return;
+  dashboardLoaded = true;
+  mainWindow.loadURL(status.url).catch((err: Error) => {
+    console.error('Failed to load the ZYRA dashboard:', err);
+  });
+}
+
+/** The existing React desktop UI, kept available as a secondary window. */
+function openDesktopUiWindow(): void {
+  if (desktopWindow && !desktopWindow.isDestroyed()) {
+    desktopWindow.focus();
+    return;
+  }
+  desktopWindow = new BrowserWindow({
+    // The React window's index.html renders a fixed 1420x900 laptop bezel, so
+    // the window must be at least that large or the UI gets clipped.
+    width: 1480,
+    height: 960,
+    minWidth: 1100,
+    minHeight: 760,
+    title: 'ZYRA - Desktop UI',
+    backgroundColor: '#0a0a0f',
+    webPreferences: {
+      preload: preloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  desktopWindow.loadFile(rendererFile('index.html')).catch((err: Error) => {
+    console.error('Failed to load the ZYRA desktop UI window:', err);
+  });
+  desktopWindow.on('closed', () => {
+    desktopWindow = null;
+  });
+}
+
+function buildMenu(): void {
+  const template: MenuItemConstructorOptions[] = [
+    {
+      label: 'File',
+      submenu: [
+        { label: 'Reload Dashboard', accelerator: 'CmdOrCtrl+R', click: () => { dashboardLoaded = false; loadDashboard(); } },
+        { label: 'Open Desktop UI', accelerator: 'CmdOrCtrl+Shift+D', click: () => openDesktopUiWindow() },
+        {
+          label: 'Open Backend API Docs',
+          click: () => {
+            const url = backendService?.getStatus().url;
+            if (url) void shell.openExternal(`${url}/docs`);
+          },
+        },
+        { type: 'separator' },
+        { role: 'quit' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'toggleDevTools' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'Backend Status', click: () => sendBackendStatus(backendService?.getStatus() ?? null) },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+async function shutdown(): Promise<void> {
+  if (shutdownDone) return;
+  shutdownDone = true;
+  try {
+    if (pythonBridge) pythonBridge.stop();
+  } catch (err) {
+    console.error('Error stopping the Python bridge:', err);
+  }
+  try {
+    if (backendService) await backendService.stop();
+  } catch (err) {
+    console.error('Error stopping the ZYRA backend:', err);
+  }
+}
+
+app.whenReady().then(async () => {
+  buildMenu();
   createWindow();
 
-  // Initialize Python bridge
-  pythonBridge = new PythonBridge();
-  pythonBridge.start();
+  // Launch flag: `electron . --desktop-ui` opens the classic React desktop UI
+  // window at startup (useful for developing/verifying the secondary window).
+  if (process.argv.includes('--desktop-ui')) {
+    openDesktopUiWindow();
+  }
+
+  // NOTE: the legacy `bridge_server.py` bridge is NOT started here. The React UI
+  // talks to the FastAPI backend below, so a normal desktop session runs a
+  // single Python process. The bridge is started lazily by ensureBridge() only
+  // if a request ever needs the fallback path.
+  //
+  // Primary: start ZYRA's FastAPI backend, then load the dashboard when ready.
+  backendService = new BackendService();
+  backendService.on('status', (status: BackendStatus) => {
+    sendBackendStatus(status);
+    if (status.state === 'ready' && !dashboardLoaded) {
+      loadDashboard();
+    }
+    if (status.state === 'failed') {
+      console.error('ZYRA backend failed to start:', status.error);
+    }
+  });
+
+  const result = await backendService.start();
+  if (result.state === 'ready' && !dashboardLoaded) {
+    loadDashboard();
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -41,56 +235,91 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  if (pythonBridge) {
-    pythonBridge.stop();
-  }
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
+app.on('before-quit', () => {
+  quitting = true;
+});
+
+app.on('will-quit', () => {
+  void shutdown();
+});
+
+// Last-resort synchronous reap so a killed Electron never orphans uvicorn.
+process.on('exit', () => {
+  if (quitting && backendService) {
+    backendService.forceKillSync();
+  }
+});
+
 // IPC Handlers
+//
+// Primary path: the running FastAPI backend (one Python process, the same one
+// serving the dashboard). Fallback: the legacy `bridge_server.py` bridge, which
+// is started lazily and only if the backend cannot serve the request. This
+// keeps every existing React feature working while avoiding a second Python
+// process in normal use.
 
-// Send message to Python AI
-ipcMain.handle('ai:chat', async (_event, message: string) => {
-  if (!pythonBridge) return 'Error: Python bridge not initialized';
-  return pythonBridge.sendCommand({ type: 'chat', data: message });
+// Send message to Zyra's AI brain (Ollama).
+ipcMain.handle('ai:chat', async (_event, message: string): Promise<string> => {
+  if (backendReady()) {
+    const body = (await backendCall('POST', '/api/chat', { message })) as {
+      success?: boolean;
+      response?: string;
+    };
+    if (typeof body?.response === 'string') return body.response;
+    throw new Error('Unexpected response from /api/chat');
+  }
+  return (await bridgeCommand('chat', message)) as string;
 });
 
-// Execute a system command
-ipcMain.handle('command:execute', async (_event, command: string) => {
-  if (!pythonBridge) return 'Error: Python bridge not initialized';
-  return pythonBridge.sendCommand({ type: 'command', data: command });
+// Execute a system command.
+ipcMain.handle('command:execute', async (_event, command: string): Promise<unknown> => {
+  if (backendReady()) {
+    return backendCall('POST', '/api/command', { command });
+  }
+  return bridgeCommand('command', command);
 });
 
-// Toggle voice listening
-ipcMain.handle('voice:toggle', async (_event, enabled: boolean) => {
-  if (!pythonBridge) return 'Error: Python bridge not initialized';
-  return pythonBridge.sendCommand({ type: 'voice_toggle', data: enabled });
+// Toggle voice listening. ZYRA's real voice loop lives in the backend process;
+// this keeps the React UI's control surface working as before.
+ipcMain.handle('voice:toggle', async (_event, enabled: boolean): Promise<string> => {
+  return (await bridgeCommand('voice_toggle', enabled)) as string;
 });
 
-// Get voice status
-ipcMain.handle('voice:status', async () => {
-  if (!pythonBridge) return { listening: false };
-  return pythonBridge.sendCommand({ type: 'voice_status', data: null });
+// Get voice status.
+ipcMain.handle('voice:status', async (): Promise<unknown> => {
+  return bridgeCommand('voice_status', null);
 });
 
-// Remember something
-ipcMain.handle('memory:remember', async (_event, key: string, value: string) => {
-  if (!pythonBridge) return 'Error: Python bridge not initialized';
-  return pythonBridge.sendCommand({ type: 'remember', data: { key, value } });
+// Remember something.
+ipcMain.handle('memory:remember', async (_event, key: string, value: string): Promise<unknown> => {
+  if (backendReady()) {
+    return backendCall('POST', '/api/memory/remember', { key, value });
+  }
+  return bridgeCommand('remember', { key, value });
 });
 
-// Recall something
-ipcMain.handle('memory:recall', async (_event, key: string) => {
-  if (!pythonBridge) return null;
-  return pythonBridge.sendCommand({ type: 'recall', data: key });
+// Recall something.
+ipcMain.handle('memory:recall', async (_event, key: string): Promise<unknown> => {
+  if (backendReady()) {
+    const body = (await backendCall('POST', '/api/memory/recall', { key })) as {
+      data?: string | null;
+    };
+    return body?.data ?? null;
+  }
+  return bridgeCommand('recall', key);
 });
 
-// System Monitor metrics
-ipcMain.handle('system:metrics', async () => {
-  if (!pythonBridge) return null;
-  return pythonBridge.sendCommand({ type: 'system_metrics', data: null });
+// System Monitor metrics.
+ipcMain.handle('system:metrics', async (): Promise<unknown> => {
+  if (backendReady()) {
+    return backendCall('GET', '/api/system/metrics');
+  }
+  return bridgeCommand('system_metrics', null);
 });
 
 // Get available commands list
@@ -130,3 +359,36 @@ ipcMain.handle('commands:list', async () => {
     { id: 'open_camera', label: 'Open Camera', category: 'media' },
   ];
 });
+
+// ── Backend (FastAPI) IPC ───────────────────────────────────────────────────
+
+// Current FastAPI backend lifecycle status (splash screen / React UI).
+ipcMain.handle('backend:status', () => backendService?.getStatus() ?? null);
+
+// Recent backend stdout/stderr, for the failure panel.
+ipcMain.handle('backend:logs', () => backendService?.getLogs() ?? []);
+
+// Retry backend startup (surfaced by the UI Retry button).
+ipcMain.handle('backend:restart', async () => {
+  if (!backendService) return null;
+  dashboardLoaded = false;
+  return backendService.retry();
+});
+
+// Call the existing FastAPI API on the renderer's behalf.
+ipcMain.handle(
+  'backend:request',
+  async (_event, method: string, apiPath: string, payload?: unknown) => {
+    if (!backendService) {
+      return { ok: false, status: 0, body: null, error: 'Backend not initialised' };
+    }
+    return backendService.request(method, apiPath, payload);
+  },
+);
+
+// Open the existing React desktop UI in its own window.
+ipcMain.handle('ui:open-desktop', () => {
+  openDesktopUiWindow();
+  return true;
+});
+
