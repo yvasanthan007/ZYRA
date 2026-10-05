@@ -84,15 +84,23 @@ function startZyra() {
 
   console.log(`[ZYRA Desktop] Starting ZYRA backend: ${pythonExe} main.py`);
 
+  const childEnv = {
+    ...process.env,
+    ZYRA_DESKTOP: "1",
+    PYTHONIOENCODING: "utf-8",
+    PYTHONUTF8: "1",
+  };
+
+  // A stray PYTHONHOME/PYTHONPATH in the user environment can hijack the
+  // bundled interpreter (e.g. point it at a system Python). Start the child
+  // from a clean Python environment so the bundled runtime is always used.
+  delete childEnv.PYTHONHOME;
+  delete childEnv.PYTHONPATH;
+
   zyraProcess = spawn(pythonExe, ["main.py"], {
     cwd: zyraSourceRoot(),
 
-    env: {
-      ...process.env,
-      ZYRA_DESKTOP: "1",
-      PYTHONIOENCODING: "utf-8",
-      PYTHONUTF8: "1",
-    },
+    env: childEnv,
 
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,

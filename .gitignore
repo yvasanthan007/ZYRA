@@ -26,6 +26,9 @@ desktop/node_modules/
 # Desktop build output
 desktop-dist/
 
+# Portable Python runtime staging (created by desktop/stage-python.ps1)
+.build/
+
 # Build
 dist/
 build/

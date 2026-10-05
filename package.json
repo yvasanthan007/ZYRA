@@ -13,7 +13,8 @@
     "desktop:pack": "electron-builder --dir",
     "desktop:build": "electron-builder --win",
     "desktop:build:dir": "electron-builder --win --dir",
-    "desktop:build:full": "electron-builder --win --config desktop/builder-full.json"
+    "desktop:stage-python": "powershell -NoProfile -ExecutionPolicy Bypass -File desktop/stage-python.ps1",
+    "desktop:build:full": "npm run desktop:stage-python && electron-builder --win --config desktop/builder-full.json"
   },
   "devDependencies": {
     "electron": "33.4.11",

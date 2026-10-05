@@ -34,9 +34,12 @@
         "commands/**",
         "desktop-dashboard/**",
         "memory/**",
-        "tools/**",
-        ".venv/**"
+        "tools/**"
       ]
+    },
+    {
+      "from": ".build/python",
+      "to": "zyra/python"
     }
   ],
   "win": {
