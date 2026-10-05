@@ -165,6 +165,15 @@ def process_chat(message: str) -> str:
     if is_nmap_intent(message):
         return _nmap_starting_message(message)
 
+    # ── Agent core: multi-step tasks, file/app/browser tools, safety ──
+    try:
+        from backend.agent_core import run_agent
+        agent = run_agent(message)
+        if agent.get("handled"):
+            return agent["response"]
+    except Exception:
+        pass  # agent failure must never break chat
+
     answer = ask_ai(message)
     return answer
 
@@ -396,6 +405,15 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
         query = text.replace("search youtube for", "").strip()
         search_youtube(query)
         return {"response": f"Searching YouTube for {query}", "action": "search_youtube"}
+
+    # ── Agent core: multi-step tasks, file/app/browser tools, safety ──
+    try:
+        from backend.agent_core import run_agent
+        agent = run_agent(transcribed_text)
+        if agent.get("handled"):
+            return {"response": agent["response"], "action": "agent"}
+    except Exception:
+        pass  # agent failure must never break voice
 
     # Default: use AI brain
     answer = ask_ai(text)
