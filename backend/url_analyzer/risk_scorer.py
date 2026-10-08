@@ -45,13 +45,13 @@ BASE_SCORE = 100
 
 
 def _risk_level(score: int) -> str:
-    if score >= 90:
+    # Mandated mapping: higher score = safer = lower risk.
+    # 0-24 = LOW, 25-49 = MEDIUM, 50-74 = HIGH, 75-100 = CRITICAL
+    if score < 25:
         return "LOW"
-    if score >= 70:
-        return "LOW_MEDIUM"
-    if score >= 40:
+    if score < 50:
         return "MEDIUM"
-    if score >= 20:
+    if score < 75:
         return "HIGH"
     return "CRITICAL"
 

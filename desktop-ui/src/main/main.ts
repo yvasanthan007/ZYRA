@@ -290,6 +290,7 @@ ipcMain.handle('voice:toggle', async (_event, enabled: boolean): Promise<string>
   return (await bridgeCommand('voice_toggle', enabled)) as string;
 });
 
+
 // Get voice status.
 ipcMain.handle('voice:status', async (): Promise<unknown> => {
   return bridgeCommand('voice_status', null);
@@ -391,4 +392,5 @@ ipcMain.handle('ui:open-desktop', () => {
   openDesktopUiWindow();
   return true;
 });
+
 

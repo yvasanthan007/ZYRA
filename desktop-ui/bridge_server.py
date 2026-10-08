@@ -39,6 +39,16 @@ from system_monitor import (
     answer_system_query,
     start_system_monitor,
 )
+# ── Voice pipeline imports (used by voice_toggle) ───────────────────────────
+import speech_recognition as sr
+from backend.server import process_voice_command, voice_endpoint
+
+# Cache so repeated voice toggles re-use a single Recognizer + Microphone.
+_voice_recognizer = None
+_voice_microphone = None
+
+VOICE_LISTEN_TIMEOUT = 8.0   # seconds before we stop listening for silence
+VOICE_PHRASE_TIMEOUT = 0.75  # seconds of silence to end an utterance
 
 COMMAND_MAP = {
     "open_chrome": open_chrome,
@@ -134,8 +144,101 @@ def handle_message(msg):
         return {"success": False, "error": "Invalid recall data"}
 
     elif msg_type == "voice_toggle":
-        # Voice toggle is handled by the UI; this is a placeholder
-        return {"success": True, "data": "Voice toggled"}
+        # Zyra voice toggle: capture STT audio, run speech-to-text, forward the
+        # transcribed text to the existing backend voice endpoint, and return
+        # { transcript, response } to the UI so VoiceControl.setTranscript and
+        # VoiceControl.setResponse are driven from a single place.
+        #
+        # The backend voice endpoint is the existing FastAPI Pipeline:
+        #   backend/server.py process_voice_command() -> { response, action }
+        # This keeps the message-routing path consistent with the WebSocket
+        # /ws 'voice' type and the /api/voice endpoint rather than creating a
+        # second voice architecture.
+
+        # Use the cached Recognizer/Microphone, creating them on first use.
+        global _voice_recognizer, _voice_microphone
+        if _voice_recognizer is None:
+            _voice_recognizer = sr.Recognizer()
+        if _voice_microphone is None:
+            _voice_microphone = sr.Microphone()
+
+        try:
+            # Capture a short audio segment (the UI drives the toggle; the
+            # bridge captures until silence or the timeout).
+            with _voice_microphone as source:
+                _voice_recognizer.adjust_for_ambient_noise(source, duration=0.3)
+                audio = _voice_recognizer.listen(
+                    source,
+                    timeout=VOICE_LISTEN_TIMEOUT,
+                    phrase_time_limit=VOICE_LISTEN_TIMEOUT,
+                )
+
+            # Run speech-to-text. Google STT is the default; if it is
+            # unavailable, surface the failure explicitly instead of
+            # silently dropping the utterance.
+            text = _voice_recognizer.recognize_google(audio).strip()
+        except sr.UnknownValueError:
+            # No speech detected — surface an explicit, non-fatal result.
+            return {
+                "success": True,
+                "data": {
+                    "transcript": "",
+                    "response": "I didn't catch that. Please speak louder or try again.",
+                },
+            }
+        except sr.RequestError as exc:
+            # STT service unavailable (e.g. no network) — fail explicitly.
+            return {
+                "success": False,
+                "data": {
+                    "transcript": "",
+                    "response": f"STT unavailable: {exc}. Check network connectivity and try again.",
+                },
+            }
+        except Exception as exc:
+            return {
+                "success": False,
+                "data": {
+                    "transcript": "",
+                    "response": f"Voice capture error: {exc}",
+                },
+            }
+
+        if not text:
+            return {
+                "success": True,
+                "data": {"transcript": "", "response": "I didn't catch that. Please try again."},
+            }
+
+        # Forward the recognized text to the existing backend voice endpoint
+        # (backend/server.py process_voice_command), which is the same
+        # function /api/voice and the WebSocket 'voice' type use.
+        try:
+            result = process_voice_command(text)
+        except Exception as exc:
+            return {
+                "success": False,
+                "data": {
+                    "transcript": text,
+                    "response": f"Voice backend error: {exc}",
+                },
+            }
+
+        transcript = text
+        response = result.get("response", "") if isinstance(result, dict) else ""
+        if response:
+            return {
+                "success": True,
+                "data": {"transcript": transcript, "response": response},
+            }
+
+        return {
+            "success": True,
+            "data": {
+                "transcript": transcript,
+                "response": "(Zyra has nothing to say for this command.)",
+            },
+        }
 
     elif msg_type == "voice_status":
         return {"success": True, "data": {"listening": False}}
