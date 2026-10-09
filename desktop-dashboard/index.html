@@ -1307,10 +1307,9 @@ canvas {
   color: #ffdd99;
 }
 
-/* Reference-inspired cyan holographic voice workspace */
-canvas { filter: hue-rotate(145deg) saturate(.92); }
+/* Approved dark navy/cyan dashboard finish; retain the original hologram palette and layout. */
 #dashboard-overlay { justify-content: space-between; }
-#top-bar { padding: 22px 34px; align-items: flex-start; }
+#top-bar { padding: 16px 28px; align-items: flex-start; }
 .top-title { color: #c9f4ff; text-shadow: 0 0 18px rgba(45,190,255,.45); }
 .top-subtitle { color: rgba(119,202,255,.58); }
 .top-logo { color: #48cfff; text-shadow: 0 0 14px rgba(36,174,255,.8); }
@@ -1318,16 +1317,16 @@ canvas { filter: hue-rotate(145deg) saturate(.92); }
 .top-btn:hover, .top-btn.active { background: rgba(20,126,190,.22); border-color: rgba(77,208,255,.7); color: #e7fbff; box-shadow: 0 0 22px rgba(0,174,255,.2); }
 .btn-dot { background: #42cfff; box-shadow: 0 0 9px #23aaff; }
 .system-monitor-card, .nmap-scanner-card, .url-analyzer-card { border-color: rgba(57,181,255,.34); box-shadow: 0 12px 36px rgba(0,0,0,.65), 0 0 30px rgba(0,142,255,.13); }
-#bottom-controls { padding: 18px 28px 24px; background: linear-gradient(0deg, rgba(3,9,20,.96), rgba(3,9,20,.76) 72%, transparent); }
-#chat-container { max-width: 760px; gap: 12px; padding: 14px; border: 1px solid rgba(64,190,255,.42); border-radius: 18px; background: rgba(5,16,34,.74); backdrop-filter: blur(18px); box-shadow: 0 0 35px rgba(0,150,255,.13), inset 0 0 28px rgba(31,134,203,.05); }
-#chat-messages { max-height: min(20vh, 180px); min-height: 76px; background: transparent; border: 0; padding: 4px 6px; scrollbar-color: rgba(52,174,255,.4) transparent; }
+#bottom-controls { padding: 12px 28px 16px; background: linear-gradient(0deg, rgba(3,9,20,.88), rgba(3,9,20,.52) 65%, transparent); }
+#chat-container { max-width: 700px; gap: 8px; padding: 10px 12px; border: 1px solid rgba(64,190,255,.34); border-radius: 16px; background: rgba(5,16,34,.68); backdrop-filter: blur(16px); box-shadow: 0 0 26px rgba(0,150,255,.1), inset 0 0 22px rgba(31,134,203,.04); }
+#chat-messages { max-height: min(14vh, 112px); min-height: 0; background: transparent; border: 0; padding: 2px 4px; scrollbar-color: rgba(52,174,255,.4) transparent; }
 #chat-messages::-webkit-scrollbar-thumb { background: rgba(52,174,255,.4); }
 .msg { font-size: 13px; }
 .msg.user { background: rgba(21,118,188,.19); border-color: rgba(59,182,255,.29); color: #c4efff; }
 .msg.zyra { background: rgba(24,96,145,.15); border-color: rgba(67,179,238,.18); color: #d5f4ff; }
 .msg.zyra .zyra-label { color: #65d9ff; }
 #chat-input-row { gap: 9px; }
-#chat-input { min-width: 0; padding: 13px 18px; background: rgba(3,11,25,.82); border-color: rgba(75,183,240,.34); color: #e2f8ff; }
+#chat-input { min-width: 0; padding: 10px 16px; background: rgba(3,11,25,.82); border-color: rgba(75,183,240,.34); color: #e2f8ff; }
 #chat-input:focus { border-color: rgba(67,201,255,.75); box-shadow: 0 0 18px rgba(0,165,255,.13); }
 #chat-input::placeholder { color: rgba(166,213,235,.48); }
 #chat-send { flex: 0 0 44px; background: rgba(17,113,188,.22); border-color: rgba(58,187,255,.54); color: #a8eaff; }
@@ -1350,6 +1349,10 @@ canvas { filter: hue-rotate(145deg) saturate(.92); }
 .voice-active .voice-wave i:nth-child(3n) { animation-delay:-.45s; }
 @keyframes wave { to { height:16px;opacity:1; } }
 #voice-toggle { min-height:36px;padding:0 16px;border:1px solid rgba(66,195,255,.56);border-radius:20px;background:linear-gradient(110deg,rgba(15,120,191,.33),rgba(14,77,140,.38));color:#c8f4ff;font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;white-space:nowrap;box-shadow:0 0 16px rgba(0,154,255,.16);transition:all .2s ease; }
+#voice-toggle.active { border-color:rgba(66,217,255,.75);background:rgba(18,153,214,.24); }
+#voice-state[data-state="PROCESSING"] .voice-state-dot { background:#42cfff;box-shadow:0 0 12px #23aaff;animation:voiceDot .7s infinite; }
+#voice-state[data-state="SPEAKING"] .voice-state-dot { background:#7ceaff;box-shadow:0 0 12px #38cfff;animation:voiceDot .55s infinite; }
+#voice-state[data-state="ERROR"] .voice-state-dot { background:#ff7084;box-shadow:0 0 12px #ff4967; }
 #voice-toggle:hover { background:rgba(18,153,214,.45);border-color:#69ddff;box-shadow:0 0 22px rgba(0,181,255,.3);transform:translateY(-1px); }
 #voice-toggle[disabled] { opacity:.6;cursor:wait; }
 .orb-hud-label { position:fixed; top:46%; z-index:3; pointer-events:none; font-size:9px; letter-spacing:.2em; color:rgba(166,222,245,.45); }
@@ -1368,8 +1371,8 @@ canvas { filter: hue-rotate(145deg) saturate(.92); }
   .top-actions-col { gap:7px; }
   .top-btn { padding:7px 10px; font-size:11px; }
   #bottom-controls { padding: 12px 12px 14px; }
-  #chat-container { padding:10px; gap:8px; }
-  #chat-messages { max-height: 18vh; min-height:62px; }
+  #chat-container { padding:8px 9px; gap:6px; }
+  #chat-messages { max-height: 14vh; min-height:0; }
   #voice-error { position:absolute; bottom:100%; left:0; background:rgba(5,16,34,.94); padding:8px; border-radius:8px; }
   .voice-state { font-size:10px; }
   #voice-toggle { padding:0 12px; }
@@ -1381,7 +1384,8 @@ canvas { filter: hue-rotate(145deg) saturate(.92); }
   .top-title { font-size:14px; }
   .top-actions-col { align-items:flex-start; }
   .top-btn { font-size:10px; padding:6px 8px; }
-  #chat-input { padding:11px 12px; font-size:13px; }
+  #chat-input { padding:9px 12px; font-size:13px; }
+  #voice-toggle { padding:0 10px; font-size:11px; }
   #chat-send { flex-basis:40px; width:40px;height:40px; }
   .voice-state { gap:7px; letter-spacing:.03em; }
   .voice-wave { display:none; }
@@ -1389,7 +1393,7 @@ canvas { filter: hue-rotate(145deg) saturate(.92); }
 @media (max-height: 700px) {
   #top-bar { padding-top:12px; }
   #bottom-controls { padding-top:8px;padding-bottom:12px; }
-  #chat-messages { max-height: 15vh; min-height:50px; }
+  #chat-messages { max-height: 12vh; min-height:0; }
 }
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important; }
@@ -2842,15 +2846,15 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     if (!status || !voiceState) return;
     if (voiceRequestPending) return;
     voiceEnabled = !!status.enabled;
-    const state = voiceEnabled ? (status.state || 'LISTENING').toUpperCase() : 'IDLE';
-    const labels = { IDLE: 'Voice ready', LISTENING: 'Listening...', PROCESSING: 'Thinking...', SPEAKING: 'ZYRA is speaking...', ERROR: 'Voice error — retry available', STOPPING: 'Stopping voice...' };
+    const state = status.state === 'ERROR' ? 'ERROR' : (voiceEnabled ? (status.state || 'LISTENING').toUpperCase() : 'IDLE');
+    const labels = { IDLE: 'Voice ready', LISTENING: 'Listening...', PROCESSING: 'Thinking...', SPEAKING: 'Speaking...', ERROR: 'Voice error — retry available', STOPPING: 'Stopping voice...' };
     voiceState.dataset.state = state;
     voiceState.classList.toggle('voice-active', voiceEnabled);
     voiceStateLabel.textContent = labels[state] || 'Voice ready';
     const hudVoiceStatus = document.getElementById('hud-voice-status');
     if (hudVoiceStatus) hudVoiceStatus.textContent = state === 'IDLE' ? 'STANDBY' : state;
     voiceButton.setAttribute('aria-pressed', voiceEnabled ? 'true' : 'false');
-    voiceButton.textContent = voiceRequestPending ? 'Starting...' : (voiceEnabled ? '■ End Voice Session' : '🎙 Start Voice');
+    voiceButton.textContent = voiceRequestPending ? (voiceEnabled ? 'Stopping...' : 'Starting...') : (voiceEnabled ? '■ Stop Voice' : '🎙 Start Voice');
     voiceButton.classList.toggle('active', voiceEnabled);
     voiceButton.disabled = voiceRequestPending;
     if (status.error) {
@@ -2861,7 +2865,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
         fetch('/api/voice/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) }).catch(function () {});
       }
       voiceButton.setAttribute('aria-pressed', 'false');
-      voiceButton.textContent = '🎙 Retry Voice';
+      voiceButton.textContent = '🎙 Start Voice';
       voiceButton.classList.remove('active');
     } else {
       voiceError.textContent = '';
@@ -2887,19 +2891,22 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
   async function toggleVoiceSession() {
     if (voiceRequestPending) return;
+    const wasEnabled = voiceEnabled;
     voiceRequestPending = true;
+    voiceEnabled = !wasEnabled;
     voiceSessionVersion += 1;
     const requestVersion = voiceSessionVersion;
-    renderVoiceStatus({ enabled: voiceEnabled, state: voiceEnabled ? 'LISTENING' : 'IDLE' });
+    renderVoiceStatus({ enabled: voiceEnabled, state: wasEnabled ? 'STOPPING' : 'LISTENING' });
     try {
       const response = await fetch('/api/voice/session', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !voiceEnabled })
+        body: JSON.stringify({ enabled: !wasEnabled })
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || 'Could not change voice session.');
       if (voiceSessionVersion !== requestVersion) return;
       voiceRequestPending = false;
+      voiceEnabled = !!result.enabled;
       renderVoiceStatus(result);
       if (result.enabled) {
         voiceError.classList.remove('visible');
