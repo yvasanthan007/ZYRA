@@ -100,6 +100,15 @@ function startZyra() {
 
   // Surface backend logs in the desktop terminal for diagnostics
   const log = (buf) => process.stdout.write(buf.toString());
+  const startupTimer = setTimeout(() => {
+    if (zyraProcess && mainWindow && !mainWindow.isDestroyed()) {
+      console.error("[ZYRA Desktop] Backend did not start; check the log above for missing dependencies or configuration.");
+      mainWindow.webContents.executeJavaScript(
+        "document.dispatchEvent(new CustomEvent('zyra-backend-error', { detail: 'Backend failed to start. Check the desktop console for Python dependency or configuration errors.' }))"
+      ).catch(() => {});
+    }
+  }, 90000);
+  zyraProcess.once("exit", () => clearTimeout(startupTimer));
 
   zyraProcess.stdout?.on("data", log);
   zyraProcess.stderr?.on("data", log);
@@ -254,6 +263,24 @@ function createWindow() {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+  // Voice uses the existing Python VAD capture loop rather than Chromium's
+  // getUserMedia pipeline; keep media permission denied by default.
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    console.error(`[ZYRA Desktop] Renderer exited: ${details.reason}`);
+    if (process.platform === "win32" && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.close();
+    }
+  });
+  mainWindow.webContents.on("did-fail-load", (_event, code, description, validatedURL, isMainFrame) => {
+    if (isMainFrame) {
+      console.error(`[ZYRA Desktop] Dashboard failed to load (${code}): ${description} — ${validatedURL}`);
+    }
+  });
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    if (level >= 2) {
+      console.error(`[ZYRA Renderer] ${message} (${sourceId}:${line})`);
+    }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -284,6 +311,10 @@ if (!gotLock) {
   });
 
   app.whenReady().then(async () => {
+    app.on("child-process-gone", (_event, details) => {
+      console.error(`[ZYRA Desktop] Child process exited: ${details.type} (${details.reason})`);
+    });
+
     // Permission policy: allow microphone for the dashboard voice features,
     // deny everything else (no geolocation, notifications, etc.).
     session.defaultSession.setPermissionRequestHandler(

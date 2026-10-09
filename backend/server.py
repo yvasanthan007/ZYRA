@@ -40,6 +40,7 @@ from backend.zyra_bridge import (
     process_message,
     speak_text,
 )
+import voice_runtime
 from brain import warm_up_async
 from backend.link_security import (
     analyze_url_security,
@@ -852,6 +853,46 @@ async def get_dashboard():
         raise HTTPException(status_code=404, detail="Dashboard not found")
     return FileResponse(index_path)
 
+
+@app.get("/api/voice/status")
+async def voice_status_endpoint():
+    # Return state from the existing single voice capture/response loop.
+    result = voice_runtime.status()
+    if result["enabled"]:
+        try:
+            import listen as voice_listener
+            from speak import is_speaking as tts_is_speaking
+            if tts_is_speaking():
+                result["state"] = "SPEAKING"
+            elif voice_listener.is_listening():
+                result["state"] = "LISTENING"
+            else:
+                result["state"] = "PROCESSING"
+        except Exception:
+            pass
+    return {"success": True, **result}
+
+@app.post("/api/voice/session")
+async def voice_session_endpoint(data: Dict[str, Any]):
+    # Enable/stop the existing desktop voice loop; never opens a second mic.
+    enabled = bool(data.get("enabled", False))
+    actual = voice_runtime.set_enabled(enabled)
+    try:
+        import listen as voice_listener
+        from brain import cancel_current_request
+        from speak import stop_speaking
+        if not enabled:
+            voice_listener.stop_listening()
+            cancel_current_request()
+            stop_speaking(clear_queue=True)
+            broadcast_message_sync({"type": "voice_session_stopped"})
+        elif voice_listener.is_listening():
+            voice_listener.clear_stop()
+    except Exception as exc:
+        if enabled:
+            voice_runtime.set_enabled(False)
+        return {"success": False, "enabled": voice_runtime.is_enabled(), "error": f"Voice cleanup failed: {exc}"}
+    return {"success": True, **voice_runtime.status(), "enabled": actual}
 
 @app.get("/api/health")
 async def health_check():

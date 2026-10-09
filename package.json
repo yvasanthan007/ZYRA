@@ -50,6 +50,7 @@
           "link_analysis.py",
           "screen_ocr.py",
           "system_monitor.py",
+          "voice_runtime.py",
           "requirements.txt",
           "backend/**",
           "commands/**",
@@ -95,5 +96,8 @@
       ],
       "artifactName": "ZYRA-${version}.${ext}"
     }
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
   }
 }

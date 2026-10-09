@@ -78,7 +78,7 @@ from voice_session import (
     get_last_transcript,
     get_last_response,
 )
-
+import voice_runtime
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8080
@@ -425,10 +425,10 @@ def signal_handler(signum, frame):
     Sets the global 'running' flag to False so the main loop exits cleanly.
     """
     global running
-
     print("\n\n🛑 Shutdown signal received. Cleaning up...")
 
     running = False
+    voice_runtime.set_enabled(False)
 
 
 def cleanup():
@@ -444,13 +444,15 @@ def cleanup():
 
     print("\n🧹 Cleaning up...")
 
-    # Stop the voice pipeline first: end the listening session and cut off any
-    # speech still queued or playing.
+    # Stop desktop voice capture before releasing the audio playback stack.
+    voice_runtime.set_enabled(False)
     try:
         import listen as _listen
-
         _listen.stop_listening()
-
+    except Exception:
+        pass
+    try:
+        cancel_current_request()
     except Exception:
         pass
 
@@ -873,68 +875,45 @@ def _turn_is_current(turn: int) -> bool:
 
 
 def answer_voice_stream(command: str, turn: int) -> None:
-    """Stream the AI answer: first sentence → TTS while the rest generates.
-
-    Runs in its own thread so the main loop can immediately go back to
-    listening (which is what makes barge-in possible). Only the newest turn may
-    speak: any older turn stops silently.
-
-    The voice session state machine is driven by this call:
-      PROCESSING -> SPEAKING -> LISTENING (on finish) / ERROR (on failure).
-    """
-    # Make this turn current in the session state machine before generating.
+    # Stream the AI answer through the existing single TTS pipeline."
     with session()._lock:
         session().turn = turn
         session().session_id = begin_request_session()
 
     session().last_start_time = time.monotonic()
     session().state = VoiceSessionState.PROCESSING
-    session().next_state = VoiceSessionState.SPEAKING
+    voice_runtime.update_state("PROCESSING")
+    print("ZYRA thinking...")
 
-    print("🧠 ZYRA thinking...")
-
+    response_parts = []
     try:
-        for sentence in ask_ai_stream(
-            command,
-            session_id=session().session_id,
-        ):
-            if (
-                not _turn_is_current(turn)
-                or not is_current_session(session().session_id)
-            ):
-                print(
-                    "⏹️  Reply cancelled — a newer request took over."
-                )
-
-                # A newer request interrupted this answer.
+        for sentence in ask_ai_stream(command, session_id=session().session_id):
+            if not _turn_is_current(turn) or not is_current_session(session().session_id):
                 session().state = VoiceSessionState.IDLE
                 return
-
+            response_parts.append(sentence)
+            voice_runtime.update_turn(response=" ".join(response_parts))
+            voice_runtime.update_state("SPEAKING")
             speak_async(sentence)
 
-        # Let the queued sentences finish; barge-in can interrupt this wait.
         wait_until_done(timeout=300)
-
-        # The answer is fully spoken; hand back control to the main loop
-        # (continuous LISTENING) so the user can keep talking.
         session().state = VoiceSessionState.IDLE
         session().session_id = None
-
+        voice_runtime.update_state("LISTENING" if voice_runtime.is_enabled() else "IDLE")
     except Exception as exc:
-        print(
-            f"⚠️  Voice answer failed: {type(exc).__name__}: {exc}"
-        )
+        print(f"Voice answer failed: {type(exc).__name__}: {exc}")
         session().has_error(f"Voice answer failed: {exc}")
-
-        # Return to LISTENING so the user can try again.
+        voice_runtime.update_state("ERROR", f"Voice answer failed: {exc}")
         session().state = VoiceSessionState.IDLE
         session().session_id = None
-
+        if voice_runtime.is_enabled():
+            voice_runtime.update_state("LISTENING")
     finally:
-        # Safety net: always leave the session in a sane state.
         if session().state is VoiceSessionState.PROCESSING:
             session().state = VoiceSessionState.IDLE
             session().session_id = None
+        if voice_runtime.is_enabled() and session().state is VoiceSessionState.IDLE:
+            voice_runtime.update_state("LISTENING")
 
 # ========== Main Entry Point ==========
 
@@ -1014,6 +993,10 @@ if __name__ == "__main__":
         )
         print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
 
+    # Desktop voice is opt-in from the Start Voice control. The CLI retains its
+    # historic always-listening behavior, with one microphone loop in either mode.
+    voice_runtime.configure_for_process(os.environ.get("ZYRA_DESKTOP") == "1")
+
     # Warm up the voice stack in the background so the first utterance is fast:
     # the STT model loads, the TTS voice session is established and (via the
     # backend) the Ollama model is pulled into memory.
@@ -1027,24 +1010,45 @@ if __name__ == "__main__":
     try:
         while running:
             try:
+                if os.environ.get("ZYRA_DESKTOP") == "1":
+                    if not voice_runtime.wait_until_enabled(lambda: running):
+                        break
+                    import listen as voice_listener
+                    voice_listener.clear_stop()
+                    voice_runtime.update_state("LISTENING")
+
                 # While ZYRA is speaking the microphone stays open in barge-in
                 # mode: if the user starts talking, the current answer is cut
                 # off, its queue is cleared and the new request is processed.
                 # is_speaking is passed as a callable so it is evaluated per
                 # audio frame (playback may start mid-capture).
                 command = listen(
-                    should_continue=lambda: running,
+                    should_continue=lambda: running and (
+                        os.environ.get("ZYRA_DESKTOP") != "1" or voice_runtime.is_enabled()
+                    ),
                     barge_in=is_speaking,
                 )
 
                 if not command:
+                    if os.environ.get("ZYRA_DESKTOP") == "1":
+                        if not voice_runtime.is_enabled():
+                            voice_runtime.update_state("IDLE")
+                        else:
+                            voice_runtime.update_state("LISTENING")
                     continue
-
                 # Preserve the recognized text for the AI (natural casing and
                 # punctuation improve answer quality) and match intents on a
                 # lowercase copy of it.
                 spoken_text = command
                 command = command.lower()
+                turn_state = voice_runtime.update_turn(transcript=spoken_text)
+                voice_runtime.update_state("PROCESSING")
+                if os.environ.get("ZYRA_DESKTOP") == "1":
+                    try:
+                        from backend.server import broadcast_message_sync
+                        broadcast_message_sync({"type": "voice_transcript", "data": turn_state})
+                    except Exception:
+                        pass
 
                 # ONE pipeline per utterance: this cancels any answer still in
                 # flight and clears anything still queued for speech.
@@ -1345,11 +1349,7 @@ if __name__ == "__main__":
                     break
 
                 else:
-                    # Conversational answer: streaming STT → Ollama → TTS.
-                    # The worker streams sentences into the TTS queue, so ZYRA
-                    # starts speaking as soon as the first sentence exists and
-                    # keeps talking while the model finishes the rest. The main
-                    # loop immediately resumes listening (barge-in).
+                    # Conversational answer: stream existing AI output through TTS.
                     threading.Thread(
                         target=answer_voice_stream,
                         args=(spoken_text, turn),

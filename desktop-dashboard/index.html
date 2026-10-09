@@ -8,13 +8,13 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  background: #080812;
+  background: #050914;
   overflow: hidden;
   width: 100vw;
   height: 100vh;
-  cursor: crosshair;
+  cursor: default;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #ff8844;
+  color: #b9e9ff;
 }
 canvas {
   display: block;
@@ -1307,11 +1307,92 @@ canvas {
   color: #ffdd99;
 }
 
-/* Responsive */
+/* Reference-inspired cyan holographic voice workspace */
+canvas { filter: hue-rotate(145deg) saturate(.92); }
+#dashboard-overlay { justify-content: space-between; }
+#top-bar { padding: 22px 34px; align-items: flex-start; }
+.top-title { color: #c9f4ff; text-shadow: 0 0 18px rgba(45,190,255,.45); }
+.top-subtitle { color: rgba(119,202,255,.58); }
+.top-logo { color: #48cfff; text-shadow: 0 0 14px rgba(36,174,255,.8); }
+.top-btn { background: rgba(5,18,38,.64); border-color: rgba(63,190,255,.32); color: #9ce7ff; }
+.top-btn:hover, .top-btn.active { background: rgba(20,126,190,.22); border-color: rgba(77,208,255,.7); color: #e7fbff; box-shadow: 0 0 22px rgba(0,174,255,.2); }
+.btn-dot { background: #42cfff; box-shadow: 0 0 9px #23aaff; }
+.system-monitor-card, .nmap-scanner-card, .url-analyzer-card { border-color: rgba(57,181,255,.34); box-shadow: 0 12px 36px rgba(0,0,0,.65), 0 0 30px rgba(0,142,255,.13); }
+#bottom-controls { padding: 18px 28px 24px; background: linear-gradient(0deg, rgba(3,9,20,.96), rgba(3,9,20,.76) 72%, transparent); }
+#chat-container { max-width: 760px; gap: 12px; padding: 14px; border: 1px solid rgba(64,190,255,.42); border-radius: 18px; background: rgba(5,16,34,.74); backdrop-filter: blur(18px); box-shadow: 0 0 35px rgba(0,150,255,.13), inset 0 0 28px rgba(31,134,203,.05); }
+#chat-messages { max-height: min(20vh, 180px); min-height: 76px; background: transparent; border: 0; padding: 4px 6px; scrollbar-color: rgba(52,174,255,.4) transparent; }
+#chat-messages::-webkit-scrollbar-thumb { background: rgba(52,174,255,.4); }
+.msg { font-size: 13px; }
+.msg.user { background: rgba(21,118,188,.19); border-color: rgba(59,182,255,.29); color: #c4efff; }
+.msg.zyra { background: rgba(24,96,145,.15); border-color: rgba(67,179,238,.18); color: #d5f4ff; }
+.msg.zyra .zyra-label { color: #65d9ff; }
+#chat-input-row { gap: 9px; }
+#chat-input { min-width: 0; padding: 13px 18px; background: rgba(3,11,25,.82); border-color: rgba(75,183,240,.34); color: #e2f8ff; }
+#chat-input:focus { border-color: rgba(67,201,255,.75); box-shadow: 0 0 18px rgba(0,165,255,.13); }
+#chat-input::placeholder { color: rgba(166,213,235,.48); }
+#chat-send { flex: 0 0 44px; background: rgba(17,113,188,.22); border-color: rgba(58,187,255,.54); color: #a8eaff; }
+#chat-send:hover { background: rgba(29,150,219,.38); box-shadow: 0 0 20px rgba(0,169,255,.26); }
+#zyra-settings-btn { border-color: rgba(63,190,255,.4); background: rgba(4,16,34,.86); color: #9ce7ff; box-shadow: 0 0 18px rgba(0,159,255,.2); }
+#zyra-settings-btn:hover { border-color: rgba(88,211,255,.8); box-shadow: 0 0 26px rgba(0,174,255,.38); }
+#zyra-settings-panel { border-color: rgba(57,181,255,.34); }
+.voice-control-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 8px 6px 0; border-top:1px solid rgba(76,179,231,.13); }
+.voice-state { display:flex; align-items:center; gap:10px; min-width:0; color:rgba(190,227,245,.67); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+.voice-state-dot { width:7px;height:7px;flex:none;border-radius:50%;background:#587386;box-shadow:0 0 0 4px rgba(88,115,134,.1); }
+.voice-state[data-state="LISTENING"] .voice-state-dot { background:#42d9ff;box-shadow:0 0 12px #42d9ff;animation:voiceDot 1.2s infinite; }
+.voice-state[data-state="PROCESSING"] .voice-state-dot { background:#b991ff;box-shadow:0 0 12px #a477ff;animation:voiceDot .7s infinite; }
+.voice-state[data-state="SPEAKING"] .voice-state-dot { background:#5bffcb;box-shadow:0 0 12px #38efba;animation:voiceDot .55s infinite; }
+.voice-state[data-state="ERROR"] .voice-state-dot { background:#ff7084;box-shadow:0 0 12px #ff4967; }
+@keyframes voiceDot { 50% { opacity:.45; transform:scale(.78); } }
+.voice-wave { display:flex; align-items:center; gap:3px; height:18px; margin-left:2px; }
+.voice-wave i { width:2px;height:5px;border-radius:2px;background:#4bcaff;opacity:.55; }
+.voice-active .voice-wave i { animation:wave .75s ease-in-out infinite alternate; }
+.voice-active .voice-wave i:nth-child(2n) { animation-delay:-.22s; }
+.voice-active .voice-wave i:nth-child(3n) { animation-delay:-.45s; }
+@keyframes wave { to { height:16px;opacity:1; } }
+#voice-toggle { min-height:36px;padding:0 16px;border:1px solid rgba(66,195,255,.56);border-radius:20px;background:linear-gradient(110deg,rgba(15,120,191,.33),rgba(14,77,140,.38));color:#c8f4ff;font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;white-space:nowrap;box-shadow:0 0 16px rgba(0,154,255,.16);transition:all .2s ease; }
+#voice-toggle:hover { background:rgba(18,153,214,.45);border-color:#69ddff;box-shadow:0 0 22px rgba(0,181,255,.3);transform:translateY(-1px); }
+#voice-toggle[disabled] { opacity:.6;cursor:wait; }
+.orb-hud-label { position:fixed; top:46%; z-index:3; pointer-events:none; font-size:9px; letter-spacing:.2em; color:rgba(166,222,245,.45); }
+.orb-hud-label b { display:block; margin:7px 0 5px; color:rgba(91,211,255,.8); font-size:11px; font-weight:600; letter-spacing:.16em; }
+.orb-hud-label small { font-size:8px; letter-spacing:.16em; color:rgba(133,180,206,.3); }
+.hud-left { left:7%; }.hud-right { right:7%; text-align:right; }
+.hud-mark { display:inline-block; width:5px;height:5px;margin-right:7px;border-radius:50%;background:#45caff;box-shadow:0 0 9px #29aaff;vertical-align:1px; }
+#voice-state[data-state="LISTENING"] ~ .voice-wave { opacity:1; }
+@media(max-width:768px) { .orb-hud-label { top:43%;font-size:7px; }.hud-left { left:3%; }.hud-right { right:3%; } }
+#voice-error { display:none; width:100%; color:#ff9dab; font-size:11px; padding: 0 7px; }
+#voice-error.visible { display:block; }
 @media (max-width: 768px) {
   #top-bar { padding: 12px 16px; }
-  #bottom-controls { padding: 12px 16px 16px; }
-  #chat-messages { max-height: 140px; }
+  .top-brand { flex-wrap:wrap; }
+  .top-subtitle { display:none; }
+  .top-actions-col { gap:7px; }
+  .top-btn { padding:7px 10px; font-size:11px; }
+  #bottom-controls { padding: 12px 12px 14px; }
+  #chat-container { padding:10px; gap:8px; }
+  #chat-messages { max-height: 18vh; min-height:62px; }
+  #voice-error { position:absolute; bottom:100%; left:0; background:rgba(5,16,34,.94); padding:8px; border-radius:8px; }
+  .voice-state { font-size:10px; }
+  #voice-toggle { padding:0 12px; }
+  #zyra-settings-btn { left:10px; bottom:10px; width:40px;height:40px; }
+}
+@media (max-width: 480px) {
+  .orb-hud-label { display:none; }
+  #top-bar { padding:10px; }
+  .top-title { font-size:14px; }
+  .top-actions-col { align-items:flex-start; }
+  .top-btn { font-size:10px; padding:6px 8px; }
+  #chat-input { padding:11px 12px; font-size:13px; }
+  #chat-send { flex-basis:40px; width:40px;height:40px; }
+  .voice-state { gap:7px; letter-spacing:.03em; }
+  .voice-wave { display:none; }
+}
+@media (max-height: 700px) {
+  #top-bar { padding-top:12px; }
+  #bottom-controls { padding-top:8px;padding-bottom:12px; }
+  #chat-messages { max-height: 15vh; min-height:50px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after { animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important; }
 }
 
 /* =====================================================================
@@ -1719,6 +1800,8 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       </div>
     </div>
   </div>
+  <div class="orb-hud-label hud-left"><span class="hud-mark"></span>NEURAL CORE <b>ONLINE</b><small>RESPONSE MATRIX / 01</small></div>
+  <div class="orb-hud-label hud-right"><span class="hud-mark"></span>VOICE LINK <b id="hud-voice-status">STANDBY</b><small>ENCRYPTED CHANNEL</small></div>
 
   <!-- Center-top scan completion notification (auto-hides after 15s) -->
   <div id="scan-toast" class="scan-toast" role="status" aria-live="polite">
@@ -2132,13 +2215,21 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       </div>
     </div>
  </div>
-  <!-- Bottom Controls -->
+  <!-- Bottom conversation and continuous voice controls -->
   <div id="bottom-controls">
     <div id="chat-container">
-      <div id="chat-messages"></div>
+      <div id="chat-messages" aria-live="polite"></div>
       <div id="chat-input-row">
-        <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off">
-        <button id="chat-send" title="Send message">➤</button>
+        <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off" aria-label="Message ZYRA">
+        <button id="voice-toggle" type="button" aria-pressed="false">🎙 Start Voice</button>
+        <button id="chat-send" title="Send message" aria-label="Send message">➤</button>
+      </div>
+      <div class="voice-control-bar">
+        <div id="voice-state" class="voice-state" data-state="IDLE" role="status" aria-live="polite">
+          <span class="voice-state-dot"></span><span id="voice-state-label">Voice ready</span>
+          <span class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+        <div id="voice-error" role="alert"></div>
       </div>
     </div>
   </div>
@@ -2738,6 +2829,116 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   const chatSend = document.getElementById('chat-send');
 
   let ws = null;
+  const voiceButton = document.getElementById('voice-toggle');
+  const voiceState = document.getElementById('voice-state');
+  const voiceStateLabel = document.getElementById('voice-state-label');
+  const voiceError = document.getElementById('voice-error');
+  let voiceEnabled = false;
+  let voiceRequestPending = false;
+  let voicePollTimer = null;
+  let lastVoiceTurnId = 0;
+
+  function renderVoiceStatus(status) {
+    if (!status || !voiceState) return;
+    if (voiceRequestPending) return;
+    voiceEnabled = !!status.enabled;
+    const state = voiceEnabled ? (status.state || 'LISTENING').toUpperCase() : 'IDLE';
+    const labels = { IDLE: 'Voice ready', LISTENING: 'Listening...', PROCESSING: 'Thinking...', SPEAKING: 'ZYRA is speaking...', ERROR: 'Voice error — retry available', STOPPING: 'Stopping voice...' };
+    voiceState.dataset.state = state;
+    voiceState.classList.toggle('voice-active', voiceEnabled);
+    voiceStateLabel.textContent = labels[state] || 'Voice ready';
+    const hudVoiceStatus = document.getElementById('hud-voice-status');
+    if (hudVoiceStatus) hudVoiceStatus.textContent = state === 'IDLE' ? 'STANDBY' : state;
+    voiceButton.setAttribute('aria-pressed', voiceEnabled ? 'true' : 'false');
+    voiceButton.textContent = voiceRequestPending ? 'Starting...' : (voiceEnabled ? '■ End Voice Session' : '🎙 Start Voice');
+    voiceButton.classList.toggle('active', voiceEnabled);
+    voiceButton.disabled = voiceRequestPending;
+    if (status.error) {
+      voiceError.textContent = status.error + ' You can retry by ending and starting voice again.';
+      voiceError.classList.add('visible');
+      if (voiceEnabled) {
+        voiceEnabled = false;
+        fetch('/api/voice/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: false }) }).catch(function () {});
+      }
+      voiceButton.setAttribute('aria-pressed', 'false');
+      voiceButton.textContent = '🎙 Retry Voice';
+      voiceButton.classList.remove('active');
+    } else {
+      voiceError.textContent = '';
+      voiceError.classList.remove('visible');
+    }
+    const turn = status.turn || {};
+    if (turn.id && turn.id > lastVoiceTurnId) {
+      lastVoiceTurnId = turn.id;
+      if (turn.transcript) addMessage(turn.transcript, 'user');
+    }
+    if (turn.id && turn.id === lastVoiceTurnId && turn.response) {
+      let responseNode = chatMessages.querySelector('[data-voice-turn="' + turn.id + '"]');
+      if (!responseNode) {
+        responseNode = document.createElement('div');
+        responseNode.className = 'msg zyra';
+        responseNode.dataset.voiceTurn = String(turn.id);
+        chatMessages.appendChild(responseNode);
+      }
+      responseNode.textContent = turn.response;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }
+
+  async function toggleVoiceSession() {
+    if (voiceRequestPending) return;
+    voiceRequestPending = true;
+    voiceSessionVersion += 1;
+    const requestVersion = voiceSessionVersion;
+    renderVoiceStatus({ enabled: voiceEnabled, state: voiceEnabled ? 'LISTENING' : 'IDLE' });
+    try {
+      const response = await fetch('/api/voice/session', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !voiceEnabled })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || 'Could not change voice session.');
+      if (voiceSessionVersion !== requestVersion) return;
+      voiceRequestPending = false;
+      renderVoiceStatus(result);
+      if (result.enabled) {
+        voiceError.classList.remove('visible');
+        voiceError.textContent = '';
+      }
+    } catch (error) {
+      if (voiceSessionVersion !== requestVersion) return;
+      voiceRequestPending = false;
+      voiceEnabled = false;
+      renderVoiceStatus({ enabled: false, state: 'ERROR', error: error.message || 'Voice service is unavailable.' });
+      voiceState.dataset.state = 'ERROR';
+      voiceStateLabel.textContent = 'Voice error — retry available';
+    }
+  }
+  if (voiceButton) voiceButton.addEventListener('click', toggleVoiceSession);
+  let voiceStatusInFlight = false;
+  let voiceSessionVersion = 0;
+  async function refreshVoiceStatus() {
+    if (voiceStatusInFlight) return;
+    voiceStatusInFlight = true;
+    const version = voiceSessionVersion;
+    try {
+      const response = await fetch('/api/voice/status', { cache: 'no-store' });
+      const status = response.ok ? await response.json() : null;
+      if (status && version === voiceSessionVersion) renderVoiceStatus(status);
+    } catch (_) { /* Backend reconnect is already surfaced by the app WebSocket. */ }
+    finally { voiceStatusInFlight = false; }
+  }
+  refreshVoiceStatus();
+  voicePollTimer = window.setInterval(refreshVoiceStatus, 850);
+  window.addEventListener('beforeunload', function () {
+    if (voicePollTimer) window.clearInterval(voicePollTimer);
+    if (voiceEnabled) {
+      try { navigator.sendBeacon('/api/voice/session', new Blob([JSON.stringify({ enabled: false })], { type: 'application/json' })); } catch (_) {}
+    }
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && voiceEnabled && !voiceRequestPending) toggleVoiceSession();
+  });
 
   function addMessage(text, type) {
     const msg = document.createElement('div');
@@ -2834,7 +3035,13 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
         try {
           removeTypingIndicator();
           const data = JSON.parse(event.data);
-          if (data.type === 'show_system_monitor') {
+          if (data.type === 'voice_transcript') {
+            const turn = data.data || {};
+            if (turn.id && turn.id > lastVoiceTurnId) {
+              lastVoiceTurnId = turn.id;
+              if (turn.transcript) addMessage(turn.transcript, 'user');
+            }
+          } else if (data.type === 'show_system_monitor') {
             startSystemMonitor();
             if (data.data) {
               updateSystemMonitorUI(data.data);
@@ -2881,6 +3088,9 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
             if (typeof data.data === 'string' && data.data.toLowerCase().includes('system monitor')) {
               startSystemMonitor();
             }
+          } else if (data.type === 'voice_session_stopped') {
+            voiceEnabled = false;
+            refreshVoiceStatus();
           }
         } catch (e) {
           console.error('WebSocket message error:', e);

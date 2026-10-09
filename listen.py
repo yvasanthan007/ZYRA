@@ -593,7 +593,10 @@ def listen(
 
     _session_counter += 1
     _listening = True
-    clear_stop()
+    # A desktop stop can interrupt an active capture. Only auto-clear stale
+    # cancellation when a new explicit capture starts while the app is enabled.
+    if not _stop_requested.is_set():
+        clear_stop()
     try:
         print("🎤 Listening...")
         captured = _capture_utterance(timeout, should_continue, barge_in)
@@ -624,7 +627,6 @@ def listen(
         return ""
     finally:
         _listening = False
-        clear_stop()
         _listen_lock.release()
 
 
