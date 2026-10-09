@@ -1307,7 +1307,8 @@ canvas {
   color: #ffdd99;
 }
 
-/* Approved dark navy/cyan dashboard finish; retain the original hologram palette and layout. */
+/* Dark navy / blue-cyan finish; the theme and original dashboard geometry stay intact. */
+canvas { filter: hue-rotate(140deg) saturate(1.05); }
 #dashboard-overlay { justify-content: space-between; }
 #top-bar { padding: 16px 28px; align-items: flex-start; }
 .top-title { color: #c9f4ff; text-shadow: 0 0 18px rgba(45,190,255,.45); }
@@ -1316,7 +1317,7 @@ canvas {
 .top-btn { background: rgba(5,18,38,.64); border-color: rgba(63,190,255,.32); color: #9ce7ff; }
 .top-btn:hover, .top-btn.active { background: rgba(20,126,190,.22); border-color: rgba(77,208,255,.7); color: #e7fbff; box-shadow: 0 0 22px rgba(0,174,255,.2); }
 .btn-dot { background: #42cfff; box-shadow: 0 0 9px #23aaff; }
-.system-monitor-card, .nmap-scanner-card, .url-analyzer-card { border-color: rgba(57,181,255,.34); box-shadow: 0 12px 36px rgba(0,0,0,.65), 0 0 30px rgba(0,142,255,.13); }
+.system-monitor-card, .nmap-scanner-card, .url-analyzer-card, .dns-lookup-card { border-color: rgba(57,181,255,.34); box-shadow: 0 12px 36px rgba(0,0,0,.65), 0 0 30px rgba(0,142,255,.13); }
 #bottom-controls { padding: 12px 28px 16px; background: linear-gradient(0deg, rgba(3,9,20,.88), rgba(3,9,20,.52) 65%, transparent); }
 #chat-container { max-width: 700px; gap: 8px; padding: 10px 12px; border: 1px solid rgba(64,190,255,.34); border-radius: 16px; background: rgba(5,16,34,.68); backdrop-filter: blur(16px); box-shadow: 0 0 26px rgba(0,150,255,.1), inset 0 0 22px rgba(31,134,203,.04); }
 #chat-messages { max-height: min(14vh, 112px); min-height: 0; background: transparent; border: 0; padding: 2px 4px; scrollbar-color: rgba(52,174,255,.4) transparent; }
@@ -1325,6 +1326,7 @@ canvas {
 .msg.user { background: rgba(21,118,188,.19); border-color: rgba(59,182,255,.29); color: #c4efff; }
 .msg.zyra { background: rgba(24,96,145,.15); border-color: rgba(67,179,238,.18); color: #d5f4ff; }
 .msg.zyra .zyra-label { color: #65d9ff; }
+.msg.typing .typing-dots i { background:#46caff; }
 #chat-input-row { gap: 9px; }
 #chat-input { min-width: 0; padding: 10px 16px; background: rgba(3,11,25,.82); border-color: rgba(75,183,240,.34); color: #e2f8ff; }
 #chat-input:focus { border-color: rgba(67,201,255,.75); box-shadow: 0 0 18px rgba(0,165,255,.13); }
@@ -1334,13 +1336,13 @@ canvas {
 #zyra-settings-btn { border-color: rgba(63,190,255,.4); background: rgba(4,16,34,.86); color: #9ce7ff; box-shadow: 0 0 18px rgba(0,159,255,.2); }
 #zyra-settings-btn:hover { border-color: rgba(88,211,255,.8); box-shadow: 0 0 26px rgba(0,174,255,.38); }
 #zyra-settings-panel { border-color: rgba(57,181,255,.34); }
-.voice-control-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 8px 6px 0; border-top:1px solid rgba(76,179,231,.13); }
-.voice-state { display:flex; align-items:center; gap:10px; min-width:0; color:rgba(190,227,245,.67); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+.voice-control-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 0; border:0; }
+.voice-state { display:flex; align-items:center; gap:8px; min-width:0; color:rgba(190,227,245,.67); font-size:10px; letter-spacing:.07em; text-transform:uppercase; }
 .voice-state-dot { width:7px;height:7px;flex:none;border-radius:50%;background:#587386;box-shadow:0 0 0 4px rgba(88,115,134,.1); }
 .voice-state[data-state="LISTENING"] .voice-state-dot { background:#42d9ff;box-shadow:0 0 12px #42d9ff;animation:voiceDot 1.2s infinite; }
-.voice-state[data-state="PROCESSING"] .voice-state-dot { background:#b991ff;box-shadow:0 0 12px #a477ff;animation:voiceDot .7s infinite; }
-.voice-state[data-state="SPEAKING"] .voice-state-dot { background:#5bffcb;box-shadow:0 0 12px #38efba;animation:voiceDot .55s infinite; }
-.voice-state[data-state="ERROR"] .voice-state-dot { background:#ff7084;box-shadow:0 0 12px #ff4967; }
+.voice-state[data-state="PROCESSING"] .voice-state-dot { background:#42cfff;box-shadow:0 0 12px #23aaff;animation:voiceDot .7s infinite; }
+.voice-state[data-state="SPEAKING"] .voice-state-dot { background:#7ceaff;box-shadow:0 0 12px #38cfff;animation:voiceDot .55s infinite; }
+.voice-state[data-state="ERROR"] .voice-state-dot { background:#6fb9ff;box-shadow:0 0 12px #4b9cff; }
 @keyframes voiceDot { 50% { opacity:.45; transform:scale(.78); } }
 .voice-wave { display:flex; align-items:center; gap:3px; height:18px; margin-left:2px; }
 .voice-wave i { width:2px;height:5px;border-radius:2px;background:#4bcaff;opacity:.55; }
@@ -1348,13 +1350,25 @@ canvas {
 .voice-active .voice-wave i:nth-child(2n) { animation-delay:-.22s; }
 .voice-active .voice-wave i:nth-child(3n) { animation-delay:-.45s; }
 @keyframes wave { to { height:16px;opacity:1; } }
-#voice-toggle { min-height:36px;padding:0 16px;border:1px solid rgba(66,195,255,.56);border-radius:20px;background:linear-gradient(110deg,rgba(15,120,191,.33),rgba(14,77,140,.38));color:#c8f4ff;font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;white-space:nowrap;box-shadow:0 0 16px rgba(0,154,255,.16);transition:all .2s ease; }
+#voice-toggle { min-height:40px;padding:0 15px;border:1px solid rgba(66,195,255,.56);border-radius:22px;background:linear-gradient(110deg,rgba(15,120,191,.33),rgba(14,77,140,.38));color:#c8f4ff;font-size:12px;font-weight:700;letter-spacing:.02em;cursor:pointer;white-space:nowrap;box-shadow:0 0 16px rgba(0,154,255,.16);transition:all .2s ease; }
 #voice-toggle.active { border-color:rgba(66,217,255,.75);background:rgba(18,153,214,.24); }
-#voice-state[data-state="PROCESSING"] .voice-state-dot { background:#42cfff;box-shadow:0 0 12px #23aaff;animation:voiceDot .7s infinite; }
-#voice-state[data-state="SPEAKING"] .voice-state-dot { background:#7ceaff;box-shadow:0 0 12px #38cfff;animation:voiceDot .55s infinite; }
-#voice-state[data-state="ERROR"] .voice-state-dot { background:#ff7084;box-shadow:0 0 12px #ff4967; }
 #voice-toggle:hover { background:rgba(18,153,214,.45);border-color:#69ddff;box-shadow:0 0 22px rgba(0,181,255,.3);transform:translateY(-1px); }
+#voice-toggle:not(.voice-running) { min-height:36px; padding:0 14px; }
 #voice-toggle[disabled] { opacity:.6;cursor:wait; }
+#voice-control-bar[hidden] { display:none !important; }
+#voice-control-bar:not([hidden]) { display:flex; }
+#voice-control-bar { flex-wrap:wrap; }
+body.zyra-light #voice-control-bar[hidden] { display:none !important; }
+#voice-error { display:none; width:100%; color:#9ddcff; font-size:11px; padding:0 7px; }
+#voice-error.visible { display:block; } #voice-error.visible:not(:empty) { flex-basis:100%; }
+#voice-state[data-state="ERROR"] .voice-state-dot { background:#6fb9ff;box-shadow:0 0 12px #4b9cff; }
+#voice-control-bar:not([hidden]) + #chat-input-row { margin-top:2px; }
+#voice-control-bar:not([hidden]) + #chat-input-row #chat-input { padding:10px 16px; }
+#voice-control-bar:not([hidden]) + #chat-input-row #voice-toggle.active { min-height:36px; }
+.zs-header { border-bottom-color:rgba(77,190,255,.18);background:linear-gradient(90deg,rgba(20,126,190,.1),transparent); }
+.zs-title, .zs-section-title { color:#8cddff; }
+.zs-subtitle { color:rgba(119,202,255,.65); }
+.zs-close { border-color:rgba(77,190,255,.25);color:#c9efff; }
 .orb-hud-label { position:fixed; top:46%; z-index:3; pointer-events:none; font-size:9px; letter-spacing:.2em; color:rgba(166,222,245,.45); }
 .orb-hud-label b { display:block; margin:7px 0 5px; color:rgba(91,211,255,.8); font-size:11px; font-weight:600; letter-spacing:.16em; }
 .orb-hud-label small { font-size:8px; letter-spacing:.16em; color:rgba(133,180,206,.3); }
@@ -1362,8 +1376,6 @@ canvas {
 .hud-mark { display:inline-block; width:5px;height:5px;margin-right:7px;border-radius:50%;background:#45caff;box-shadow:0 0 9px #29aaff;vertical-align:1px; }
 #voice-state[data-state="LISTENING"] ~ .voice-wave { opacity:1; }
 @media(max-width:768px) { .orb-hud-label { top:43%;font-size:7px; }.hud-left { left:3%; }.hud-right { right:3%; } }
-#voice-error { display:none; width:100%; color:#ff9dab; font-size:11px; padding: 0 7px; }
-#voice-error.visible { display:block; }
 @media (max-width: 768px) {
   #top-bar { padding: 12px 16px; }
   .top-brand { flex-wrap:wrap; }
@@ -1373,7 +1385,9 @@ canvas {
   #bottom-controls { padding: 12px 12px 14px; }
   #chat-container { padding:8px 9px; gap:6px; }
   #chat-messages { max-height: 14vh; min-height:0; }
+  #voice-control-bar:not([hidden]) { position:relative; }
   #voice-error { position:absolute; bottom:100%; left:0; background:rgba(5,16,34,.94); padding:8px; border-radius:8px; }
+  .voice-control-bar { position:relative; }
   .voice-state { font-size:10px; }
   #voice-toggle { padding:0 12px; }
   #zyra-settings-btn { left:10px; bottom:10px; width:40px;height:40px; }
@@ -1389,6 +1403,7 @@ canvas {
   #chat-send { flex-basis:40px; width:40px;height:40px; }
   .voice-state { gap:7px; letter-spacing:.03em; }
   .voice-wave { display:none; }
+  #voice-control-bar:not([hidden]) + #chat-input-row #chat-input { padding:9px 12px; }
 }
 @media (max-height: 700px) {
   #top-bar { padding-top:12px; }
@@ -1405,69 +1420,70 @@ canvas {
 #zyra-settings-btn {
   position: fixed; left: 18px; bottom: 18px; z-index: 9000;
   width: 46px; height: 46px; border-radius: 50%;
-  border: 1px solid rgba(255,136,68,0.35);
-  background: rgba(8,8,18,0.72); color: #ffcc88;
+  border: 1px solid rgba(63,190,255,.4);
+  background: rgba(4,16,34,.86); color: #9ce7ff;
   font-size: 20px; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   backdrop-filter: blur(10px);
-  box-shadow: 0 0 18px rgba(255,136,68,0.18);
+  box-shadow: 0 0 18px rgba(0,159,255,.2);
   transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s, background .35s;
   pointer-events: auto;
 }
 #zyra-settings-btn:hover {
   transform: translateY(-2px) rotate(40deg);
-  border-color: rgba(255,136,68,0.65);
-  box-shadow: 0 0 26px rgba(255,136,68,0.4);
+  border-color: rgba(88,211,255,.8);
+  box-shadow: 0 0 26px rgba(0,174,255,.38);
 }
-#zyra-settings-btn:focus-visible { outline: 2px solid rgba(255,136,68,0.6); outline-offset: 2px; }
+#zyra-settings-btn:focus-visible { outline: 2px solid rgba(63,190,255,.6); outline-offset: 2px; }
 
 #zyra-settings-overlay {
   position: fixed; inset: 0; z-index: 9100;
-  background: radial-gradient(ellipse at center, rgba(8,8,18,0.35) 0%, rgba(8,8,18,0.62) 100%);
+  background: radial-gradient(ellipse at center, rgba(5,16,34,.35) 0%, rgba(3,9,20,.72) 100%);
   backdrop-filter: blur(3px);
   display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none;
-  transition: opacity .3s ease;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .3s ease, visibility 0s linear .3s;
 }
-#zyra-settings-overlay.visible { opacity: 1; pointer-events: auto; }
+#zyra-settings-overlay.visible { transition: opacity .3s ease, visibility 0s linear 0s; }
+#zyra-settings-overlay.visible { opacity: 1; visibility: visible; pointer-events: auto; }
 
 #zyra-settings-panel {
   width: min(680px, 94vw); max-height: 88vh; overflow-y: auto;
-  background: linear-gradient(180deg, rgba(12,12,24,0.97) 0%, rgba(8,8,18,0.97) 100%);
-  border: 1px solid rgba(255,136,68,0.28); border-radius: 18px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 50px rgba(255,136,68,0.12);
-  color: #ffcc88; font-family: 'Consolas','Courier New',monospace;
+  background: linear-gradient(180deg, rgba(7,24,47,.98) 0%, rgba(3,12,27,.98) 100%);
+  border: 1px solid rgba(57,181,255,.34); border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 50px rgba(0,142,255,.16);
+  color: #c9efff; font-family: 'Consolas','Courier New',monospace;
   transform: translateY(16px) scale(.97); transition: transform .32s cubic-bezier(.2,.8,.2,1);
-  scrollbar-width: thin; scrollbar-color: rgba(255,136,68,0.4) transparent;
+  scrollbar-width: thin; scrollbar-color: rgba(52,174,255,.4) transparent;
 }
 #zyra-settings-overlay.visible #zyra-settings-panel { transform: translateY(0) scale(1); }
 #zyra-settings-panel::-webkit-scrollbar { width: 6px; }
-#zyra-settings-panel::-webkit-scrollbar-thumb { background: rgba(255,136,68,0.35); border-radius: 3px; }
+#zyra-settings-panel::-webkit-scrollbar-thumb { background: rgba(52,174,255,.4); border-radius: 3px; }
 
 .zs-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 22px 14px; border-bottom: 1px solid rgba(255,136,68,0.18);
-  background: linear-gradient(90deg, rgba(255,136,68,0.07), transparent);
+  padding: 18px 22px 14px; border-bottom: 1px solid rgba(77,190,255,.18);
+  background: linear-gradient(90deg, rgba(20,126,190,.1), transparent);
 }
-.zs-title { font-size: 15px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #ffaa66; }
-.zs-subtitle { font-size: 10px; letter-spacing: 1.5px; color: rgba(255,170,85,0.55); margin-top: 2px; }
+.zs-title { font-size: 15px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #8cddff; }
+.zs-subtitle { font-size: 10px; letter-spacing: 1.5px; color: rgba(119,202,255,.65); margin-top: 2px; }
 .zs-close {
   width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
-  border: 1px solid rgba(255,136,68,0.25); background: transparent; color: #ffcc88;
+  border: 1px solid rgba(77,190,255,.25); background: transparent; color: #c9efff;
   font-size: 14px; transition: background .25s, border-color .25s;
 }
-.zs-close:hover { background: rgba(255,68,68,0.18); border-color: rgba(255,68,68,0.5); }
+.zs-close:hover { background: rgba(20,126,190,.18); border-color: rgba(88,211,255,.6); }
 .zs-body { padding: 8px 22px 22px; }
 
-.zs-section { padding: 14px 0; border-bottom: 1px solid rgba(255,136,68,0.12); }
+.zs-section { padding: 14px 0; border-bottom: 1px solid rgba(77,190,255,.12); }
 .zs-section:last-child { border-bottom: none; }
 .zs-section-title {
   font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-  color: #ffaa66; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  color: #8cddff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
 }
 .zs-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 7px 0; }
-.zs-label { font-size: 12.5px; color: rgba(255,204,136,0.92); }
-.zs-label small { display: block; font-size: 10px; color: rgba(255,170,85,0.5); margin-top: 2px; }
+.zs-label { font-size: 12.5px; color: rgba(201,239,255,.92); }
+.zs-label small { display: block; font-size: 10px; color: rgba(119,202,255,.6); margin-top: 2px; }
 .zs-control { display: flex; align-items: center; gap: 10px; }
 
 .zs-select, .zs-input {
@@ -1538,12 +1554,10 @@ canvas {
 .zs-swatch:hover { transform: scale(1.12); }
 .zs-swatch.active { border-color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
 
-/* Accent color is driven by a CSS variable; existing rules are untouched. */
-:root { --zyra-accent: #ff8800; --zyra-accent-soft: rgba(255,136,68,0.25); --zyra-accent-text: #ffcc88; }
+/* Accent color is driven by a CSS variable. */
+:root { --zyra-accent: #32bfff; --zyra-accent-soft: rgba(50,191,255,.25); --zyra-accent-text: #9ce7ff; }
 
-/* Light theme presentation matched to the supplied ZYRA reference: cool black
-   surroundings with deep navy glass panels and electric blue controls. The
-   Three.js canvas and neural-core animation are intentionally untouched. */
+/* Legacy alternative palette (unused; the dashboard theme is fixed to navy/cyan). */
 body.zyra-light { background: #03070d !important; color: #f4f9ff;
   /* Light-theme text palette: light blue + white only */
   --lt-ink: #bfe0ff;
@@ -2219,21 +2233,21 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
       </div>
     </div>
  </div>
-  <!-- Bottom conversation and continuous voice controls -->
+  <!-- Bottom conversation and compact continuous voice controls -->
   <div id="bottom-controls">
     <div id="chat-container">
       <div id="chat-messages" aria-live="polite"></div>
-      <div id="chat-input-row">
-        <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off" aria-label="Message ZYRA">
-        <button id="voice-toggle" type="button" aria-pressed="false">🎙 Start Voice</button>
-        <button id="chat-send" title="Send message" aria-label="Send message">➤</button>
-      </div>
-      <div class="voice-control-bar">
+      <div class="voice-control-bar" id="voice-control-bar" hidden>
         <div id="voice-state" class="voice-state" data-state="IDLE" role="status" aria-live="polite">
           <span class="voice-state-dot"></span><span id="voice-state-label">Voice ready</span>
           <span class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
         </div>
         <div id="voice-error" role="alert"></div>
+      </div>
+      <div id="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Message ZYRA..." autocomplete="off" aria-label="Message ZYRA">
+        <button id="voice-toggle" type="button" aria-pressed="false">🎙 Start Voice</button>
+        <button id="chat-send" title="Send message" aria-label="Send message">➤</button>
       </div>
     </div>
   </div>
@@ -2260,16 +2274,16 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
             <span class="zs-label">Interface theme<small>Animations stay enabled</small></span>
             <div class="zs-control">
               <select id="zs-theme" class="zs-select">
-                <option value="dark">Dark — Black &amp; Orange</option>
-                <option value="light">Light — Blue &amp; White</option>
+                <option value="dark">Dark — Navy &amp; Cyan</option>
               </select>
             </div>
           </div>
           <div class="zs-row">
-            <span class="zs-label">Color scheme<small>Light theme accent palette</small></span>
+            <span class="zs-label">Color scheme<small>Blue-cyan dashboard palette</small></span>
             <div class="zs-control">
               <select id="zs-color-scheme" class="zs-select">
-                <option value="black-blue">Black &amp; Blue</option>              </select>
+                <option value="black-blue">Navy &amp; Cyan</option>
+              </select>
             </div>
           </div>
         </div>
@@ -2683,22 +2697,22 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   mainGroup.add(innerGlow);
 
   // ===== LIGHTING =====
-  const ambientLight = new THREE.AmbientLight(0xff6633, 0.15);
+  const ambientLight = new THREE.AmbientLight(0x3399ff, 0.15);
   scene.add(ambientLight);
-  const pointLight = new THREE.PointLight(0xff8833, 0.6, 12);
+  const pointLight = new THREE.PointLight(0x3399ff, 0.6, 12);
   pointLight.position.set(0, 0, 4);
   scene.add(pointLight);
 
   // ===== THEME-DRIVEN NEURAL CORE PALETTE =====
-  // Dark theme keeps the original orange/amber palette; light theme uses blue/cyan.
+  // The dark navy dashboard uses the reference screenshot's blue/cyan hologram.
   const NEURAL_THEMES = {
     dark: {
-      stars: 0xff8844, wash: 0x441100,
-      innerCore: 0xff8800, center: 0xffcc44, halo: 0xff6600, outerHalo: 0xff4400,
-      mainWire: 0xff8800, midWire: 0xffaa33, innerMesh1: 0xff9933, innerMesh2: 0xffbb44,
-      orbits: [0xff8800, 0xffaa33, 0xff7700, 0xff9933, 0xffbb44],
-      orbitParticles: 0xffaa44, scatterParticles: 0xff9933,
-      ambient: 0xff6633, point: 0xff8833
+      stars: 0x3fa8ff, wash: 0x001a44,
+      innerCore: 0x1677ff, center: 0x0a3a8c, halo: 0x00c2ff, outerHalo: 0x1677ff,
+      mainWire: 0x00d0ff, midWire: 0x2ea8ff, innerMesh1: 0x36c9ff, innerMesh2: 0x5fd8ff,
+      orbits: [0x1677ff, 0x2e9bff, 0x0f6fe0, 0x39b1ff, 0x5cc8ff],
+      orbitParticles: 0x33bbff, scatterParticles: 0x1e90ff,
+      ambient: 0x3399ff, point: 0x3399ff
     },
     light: {
       stars: 0x3fa8ff, wash: 0x001a44,
@@ -2839,6 +2853,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   const voiceError = document.getElementById('voice-error');
   let voiceEnabled = false;
   let voiceRequestPending = false;
+  let voiceSessionVersion = 0;
   let voicePollTimer = null;
   let lastVoiceTurnId = 0;
 
@@ -2850,11 +2865,16 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     const labels = { IDLE: 'Voice ready', LISTENING: 'Listening...', PROCESSING: 'Thinking...', SPEAKING: 'Speaking...', ERROR: 'Voice error — retry available', STOPPING: 'Stopping voice...' };
     voiceState.dataset.state = state;
     voiceState.classList.toggle('voice-active', voiceEnabled);
+    const voiceControlBar = document.getElementById('voice-control-bar');
+    if (voiceControlBar) voiceControlBar.hidden = !voiceEnabled && state !== 'ERROR';
     voiceStateLabel.textContent = labels[state] || 'Voice ready';
     const hudVoiceStatus = document.getElementById('hud-voice-status');
     if (hudVoiceStatus) hudVoiceStatus.textContent = state === 'IDLE' ? 'STANDBY' : state;
     voiceButton.setAttribute('aria-pressed', voiceEnabled ? 'true' : 'false');
+      const isVoiceActive = voiceEnabled || voiceRequestPending;
     voiceButton.textContent = voiceRequestPending ? (voiceEnabled ? 'Stopping...' : 'Starting...') : (voiceEnabled ? '■ Stop Voice' : '🎙 Start Voice');
+    voiceButton.classList.toggle('voice-running', isVoiceActive);
+    voiceButton.classList.toggle('active', isVoiceActive);
     voiceButton.classList.toggle('active', voiceEnabled);
     voiceButton.disabled = voiceRequestPending;
     if (status.error) {
@@ -2923,7 +2943,6 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   }
   if (voiceButton) voiceButton.addEventListener('click', toggleVoiceSession);
   let voiceStatusInFlight = false;
-  let voiceSessionVersion = 0;
   async function refreshVoiceStatus() {
     if (voiceStatusInFlight) return;
     voiceStatusInFlight = true;
@@ -4790,7 +4809,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   // ===================================================================
   var ZS_KEY = 'zyra_settings_v1';
   var ZS_DEFAULTS = {
-    theme: 'dark', colorScheme: 'black-blue', fontSize: '100', accent: '#ff8800',
+    theme: 'dark', colorScheme: 'black-blue', fontSize: '100', accent: '#32bfff',
     voiceEnabled: true, voiceVolume: 80, wakeWord: 'Hey ZYRA',
     saveHistory: true, sidebarOpen: true, sidebarCollapsed: false  };
   var zs = JSON.parse(JSON.stringify(ZS_DEFAULTS));
@@ -4805,7 +4824,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   }
 
   // Accent presets + active swatch rendering
-  var ZS_ACCENTS = ['#ff8800', '#ff5544', '#22cc88', '#3aa0ff', '#b266ff', '#ffcc33'];
+  var ZS_ACCENTS = ['#32bfff', '#3aa0ff', '#22cc88', '#b266ff'];
   var zsAccentBox = document.getElementById('zs-accent-swatches');
   if (zsAccentBox) {
     ZS_ACCENTS.forEach(function(c){
@@ -4821,7 +4840,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     });
   }
   function zsApplyAccent() {
-    var hex = String(zs.accent || '#ff8800');
+    var hex = String(zs.accent || '#32bfff');
     var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
     var root = document.documentElement.style;
     root.setProperty('--zyra-accent', hex);
@@ -4829,10 +4848,12 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     root.setProperty('--zyra-accent-text', hex);
   }
   function zsApplyTheme() {
-    var light = zs.theme === 'light';
-    document.body.classList.toggle('zyra-light', light);
-    // Drive the neural core palette (orange dark / blue light).
-    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(light); } catch (e) {} }  }
+    // Keep the original dark navy / blue-cyan dashboard palette.
+    document.body.classList.remove('zyra-light');
+    if (zsThemeSel) zsThemeSel.value = 'dark';
+    zs.theme = 'dark';
+    if (window.zyraSetNeuralTheme) { try { window.zyraSetNeuralTheme(false); } catch (e) {} }
+  }
   function zsApplyFontSize() { document.body.style.zoom = (parseInt(zs.fontSize,10) / 100).toString(); }
 
   function zsApplyAll() { zsApplyTheme(); zsApplyFontSize(); zsApplyAccent(); zsRenderSwatches(); }
@@ -4861,8 +4882,8 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   var zsVoiceVolVal = document.getElementById('zs-voice-volume-val');
   var zsWake = document.getElementById('zs-wakeword');
   if (zsThemeSel) {
-    zsThemeSel.addEventListener('change', function(){ zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); });
-    zsThemeSel.addEventListener('input', function(){ zs.theme = zsThemeSel.value; zsApplyTheme(); zsSave(); });
+    zsThemeSel.addEventListener('change', function(){ zs.theme = 'dark'; zsApplyTheme(); zsSave(); });
+    zsThemeSel.addEventListener('input', function(){ zs.theme = 'dark'; zsApplyTheme(); zsSave(); });
   }
   function zsColorSchemeChanged() { zs.colorScheme = zsColorSchemeSel.value; zsApplyTheme(); zsSave(); }
   if (zsColorSchemeSel) {
@@ -4870,11 +4891,10 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     zsColorSchemeSel.addEventListener('input', zsColorSchemeChanged);
   }
   // Keep programmatic selector changes in sync as well as normal user changes.
-  // This also supports automation and restores the core palette immediately.
-  setInterval(function(){
-    if (zsThemeSel && zsThemeSel.value !== zs.theme) zsThemeSel.value = zs.theme;
-    if (zsColorSchemeSel && zsColorSchemeSel.value !== (zs.colorScheme || 'black-blue')) zsColorSchemeSel.value = zs.colorScheme || 'black-blue';
-  }, 100);  if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
+  // The dark navy / blue-cyan appearance is fixed to match the dashboard reference.
+  if (zsThemeSel) zsThemeSel.value = 'dark';
+  if (zsColorSchemeSel) zsColorSchemeSel.value = 'black-blue';
+  if (zsFontSel) zsFontSel.addEventListener('change', function(){ zs.fontSize = zsFontSel.value; zsApplyFontSize(); zsSave(); });
   if (zsVoiceToggle) zsVoiceToggle.addEventListener('click', function(){ zs.voiceEnabled = !zs.voiceEnabled; zsApplyVoiceToggle(); zsSave(); });
   function zsApplyVoiceToggle() { if (!zsVoiceToggle) return; zsVoiceToggle.classList.toggle('on', zs.voiceEnabled); zsVoiceToggle.setAttribute('aria-checked', zs.voiceEnabled ? 'true' : 'false'); }
   if (zsVoiceVol) zsVoiceVol.addEventListener('input', function(){ zs.voiceVolume = parseInt(zsVoiceVol.value,10); if (zsVoiceVolVal) zsVoiceVolVal.textContent = zs.voiceVolume + '%'; zsSave(); });
