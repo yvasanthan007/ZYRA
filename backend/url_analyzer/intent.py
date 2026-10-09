@@ -53,6 +53,11 @@ def is_url_analysis_intent(text: str) -> bool:
     True when the message should activate the URL Analyzer.
 
     Rules (strongest first):
+      - A standalone, well-formed http(s) URL triggers analysis automatically
+        ("https://example.com:8443/login") — consistent with the module
+        docstring ("...or a bare URL, which triggers an analysis
+        automatically"). The URL must still pass validator.validate_url()
+        downstream (SSRF/scheme/host checks are never bypassed here).
       - A URL is present AND any analysis trigger/verb appears:
         "Analyze https://example.com", "Check https://example.com"
       - A URL is present AND a safety-verdict word appears — this catches
@@ -71,12 +76,43 @@ def is_url_analysis_intent(text: str) -> bool:
     has_noun = any(k in t for k in _URL_NOUNS)
     has_safety_word = any(k in t for k in _SAFETY_QUESTION_WORDS)
 
+    # Standalone http(s) URL (the whole message, modulo whitespace/trailing
+    # punctuation) is an explicit analysis request — extraction and intent
+    # must agree so a pasted URL is never silently ignored.
+    if _is_standalone_web_url(t):
+        return True
+
     if has_url and (has_trigger or has_safety_word or has_noun):
         return True
     # No URL in the text, but a clear link-safety phrase → ask for the URL.
     if not has_url and has_trigger and has_noun:
         return True
     return False
+
+
+def _is_standalone_web_url(text: str) -> bool:
+    """True when the message is just one http(s)/www URL (plus punctuation).
+
+    Bare domains without a scheme ("example.com") are deliberately NOT
+    auto-intent: they are too easily confused with ordinary prose mentioning
+    a site. Only an explicit, well-formed web URL opts into auto-analysis.
+    Dangerous schemes (javascript:, data:, ...) never qualify.
+    """
+    t = (text or "").strip().strip("\"'()[]{}<>").rstrip(".,!?;:'\"")
+    if not t:
+        return False
+    lowered = t.lower()
+    if not (lowered.startswith("http://") or lowered.startswith("https://")
+            or lowered.startswith("www.")):
+        return False
+    url = extract_url(t)
+    if not url:
+        return False
+    # The URL must span the whole message (same span modulo the stripped
+    # punctuation above) — a URL buried in a longer sentence still needs a
+    # verb/noun/safety word to become intent.
+    remainder = t.replace(url, "", 1).strip(" \t\"'()[]{}<>.,!?;:'\"")
+    return not remainder
 
 
 def extract_target_url(text: str):

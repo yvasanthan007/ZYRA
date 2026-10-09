@@ -1966,9 +1966,9 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
       <div class="url-section" id="url-result-section" style="display: none;">
         <div class="url-section-title">Analysis Result</div>
-        <div class="url-score-wrap">
-          <div class="url-score" id="url-score">--</div>
-          <div class="url-score-label" id="url-risk-label">RISK</div>
+        <div class="url-score-wrap" title="Safety score 0-100: higher = safer = lower risk (75-100 LOW, 50-74 MEDIUM, 25-49 HIGH, 0-24 CRITICAL). Distinct from the ML phishing probability, where higher = more danger.">
+          <div class="url-score" id="url-score" aria-label="Safety score">--</div>
+          <div class="url-score-label" id="url-risk-label">SAFETY RISK</div>
           <div class="url-score-class" id="url-class-label">&mdash;</div>
         </div>
         <div class="url-detail-row" style="margin-top: 6px;">
@@ -3846,13 +3846,15 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 
     const score = r.score;
     if (urlScoreEl) {
-      urlScoreEl.textContent = score + ' / 100';
+      // Safety score: higher = safer. Green >= 75 (LOW risk), amber 50-74
+      // (MEDIUM), deeper amber 25-49 (HIGH), red < 25 (CRITICAL).
+      urlScoreEl.textContent = 'Safety ' + score + ' / 100';
       urlScoreEl.classList.remove('safe', 'suspicious', 'danger');
-      if (score >= 70) urlScoreEl.classList.add('safe');
-      else if (score >= 40) urlScoreEl.classList.add('suspicious');
+      if (score >= 75) urlScoreEl.classList.add('safe');
+      else if (score >= 50) urlScoreEl.classList.add('suspicious');
       else urlScoreEl.classList.add('danger');
     }
-    if (urlRiskLabel) urlRiskLabel.textContent = 'RISK: ' + (r.risk_level_label || r.risk_level || '—');
+    if (urlRiskLabel) urlRiskLabel.textContent = 'SAFETY RISK: ' + (r.risk_level_label || r.risk_level || '—');
     if (urlClassLabel) urlClassLabel.textContent = r.classification_summary || r.classification_label || '—';
 
     if (urlResultSection) urlResultSection.style.display = 'block';
@@ -4065,10 +4067,10 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
         urlHistoryEl.innerHTML = data.data.map(function (h) {
           const cls = (h.classification === 'MALICIOUS') ? 'danger'
                     : (h.classification === 'SUSPICIOUS') ? 'suspicious' : 'safe';
-          const scoreColor = (h.score >= 70) ? '#00ff88' : (h.score >= 40 ? '#ffaa00' : '#ff3333');
+          const scoreColor = (h.score >= 75) ? '#00ff88' : (h.score >= 50 ? '#ffaa00' : '#ff3333');
           return '<div class="url-history-item" data-scan-id="' + escapeHtml(h.scan_id) + '">'
             + '<span class="url-history-domain">' + escapeHtml(h.domain || h.url || '—') + '</span>'
-            + '<span class="url-history-meta">Score: <span style="color:' + scoreColor + ';font-weight:700">' + h.score + '</span> &middot; ' + escapeHtml(h.classification_label || h.classification || '') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
+            + '<span class="url-history-meta">Safety: <span style="color:' + scoreColor + ';font-weight:700">' + h.score + '</span> &middot; ' + escapeHtml(h.classification_label || h.classification || '') + ' &middot; ' + escapeHtml(h.timestamp_display || '') + '</span>'
             + '</div>';
         }).join('');
         // Click to reopen

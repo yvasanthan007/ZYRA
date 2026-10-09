@@ -125,6 +125,13 @@ def _verdict(prob):
 
 
 def _risk_band(prob):
+    """ML phishing-probability band (higher probability = MORE danger).
+
+    This is intentionally the INVERSE of the fused safety score in
+    backend/url_analyzer/risk_scorer.py (higher safety score = safer =
+    lower risk). Consumers must not confuse the two: a high ML probability
+    means likely phishing; a high fused safety score means likely safe.
+    """
     if prob >= 0.90:
         return "CRITICAL"
     if prob >= 0.75:
@@ -142,11 +149,15 @@ def analyze_url(url: str) -> dict:
         {
           "available": True,
           "url", "algorithm", "model_version",
-          "probability": 0.0..1.0   — phishing probability
-          "percent":    0..100
+          "probability": 0.0..1.0   — phishing probability (higher = more danger)
+          "percent":    0..100      — same probability as a percentage
           "verdict":    PHISHING | LIKELY_PHISHING | SUSPICIOUS |
-                        UNSURE | SAFE
-          "risk_band":  CRITICAL | HIGH | MEDIUM | LOW
+                        UNSURE | SAFE   (lexical-model verdict, NOT a confirmed
+                        threat-intel verdict; short URLs with unknown
+                        destinations stay uncertain downstream)
+          "risk_band":  CRITICAL | HIGH | MEDIUM | LOW  — ML probability band
+                        (higher = more danger; INVERSE of the fused safety
+                        score in risk_scorer.py where higher = safer)
           "confidence": max(p, 1-p)
           "top_signals": [{feature, value, importance, description}, ...]
           "metrics":    hold-out metrics from training

@@ -4,7 +4,9 @@ backend/url_analyzer/risk_scorer.py — Transparent risk scoring
 Converts the collected findings + context into:
 
     score           — safety score 0..100 (higher = safer)
-    risk_level      — CRITICAL | HIGH | MEDIUM | LOW_MEDIUM | LOW
+    risk_level      — safety risk CRITICAL | HIGH | MEDIUM | LOW
+                      (higher safety score = lower risk; inverse of the
+                      ML phishing-probability band where higher = more danger)
     classification  — MALICIOUS | SUSPICIOUS | LIKELY_SAFE | UNKNOWN
     reasoning       — exact per-finding deductions and caps, so the UI can
                       always show WHY the score was calculated
@@ -17,10 +19,13 @@ Determine".
 
 RISK_LEVEL_LABELS = {
     "LOW": "LOW",
-    "LOW_MEDIUM": "LOW-MEDIUM",
     "MEDIUM": "MEDIUM",
     "HIGH": "HIGH",
     "CRITICAL": "CRITICAL",
+    # Unknown/legacy safety-risk values (never produced by _risk_level, but
+    # tolerated for backward compatibility with stored scan history).
+    "LOW_MEDIUM": "LOW-MEDIUM",
+    "UNKNOWN": "UNKNOWN",
 }
 
 CLASSIFICATION_LABELS = {
@@ -44,16 +49,33 @@ CAP_NO_DOMAIN_INFO = 95
 BASE_SCORE = 100
 
 
-def _risk_level(score: int) -> str:
-    # Mandated mapping: higher score = safer = lower risk.
-    # 0-24 = LOW, 25-49 = MEDIUM, 50-74 = HIGH, 75-100 = CRITICAL
-    if score < 25:
-        return "LOW"
-    if score < 50:
-        return "MEDIUM"
-    if score < 75:
+def _risk_level(score) -> str:
+    """Map a fused safety score (0..100, higher = safer) to a safety risk level.
+
+    Safety-score semantics (higher score = safer = lower risk):
+
+        0-24   -> CRITICAL
+        25-49  -> HIGH
+        50-74  -> MEDIUM
+        75-100 -> LOW
+
+    This is intentionally the inverse of the ML phishing-probability band in
+    ``backend/ml_phishing/predictor.py`` (higher probability = more danger).
+    Scores are clamped by the caller before classification; out-of-range
+    inputs are clamped here defensively.
+    """
+    try:
+        level = int(score)
+    except (TypeError, ValueError):
+        return "UNKNOWN"
+    level = max(0, min(100, level))
+    if level < 25:
+        return "CRITICAL"
+    if level < 50:
         return "HIGH"
-    return "CRITICAL"
+    if level < 75:
+        return "MEDIUM"
+    return "LOW"
 
 
 def score_scan(findings: list, domain_info: dict = None,
@@ -170,12 +192,37 @@ def score_scan(findings: list, domain_info: dict = None,
             "Classification raised to SUSPICIOUS by the ML phishing classifier."
         )
 
+    # ── Shortener + low-ML + no-reputation uncertainty guard ──
+    # A URL shortener masks the destination. When the lexical model reports a
+    # low phishing probability AND reputation data is unavailable, the fused
+    # result must NOT present the URL as verified safe: the destination was
+    # never observed. Use the existing UNKNOWN mechanism (never invent threat
+    # intelligence, never label it confirmed malicious). The raw ML
+    # probability is preserved untouched in ml_analysis / ml_phishing.
+    has_shortener_finding = any(
+        (f.get("id") == "url_shortener") for f in (findings or []))
+    if (has_shortener_finding and ml_available and ml_prob < 0.55
+            and not reputation_available
+            and classification == "LIKELY_SAFE"):
+        classification = "UNKNOWN"
+        reasoning.append(
+            "Classification set to UNKNOWN: the URL uses a shortener that "
+            "masks the destination, the lexical model reported a low "
+            "phishing probability, and reputation data is unavailable — "
+            "safety cannot be verified without resolving the destination."
+        )
+
     score = max(0, min(100, int(score)))
     risk = _risk_level(score)
     return {
         "score": score,
         "risk_level": risk,
         "risk_level_label": RISK_LEVEL_LABELS.get(risk, risk),
+        # Explicit safety semantics for API consumers: the fused score is a
+        # SAFETY score (higher = safer), distinct from the ML phishing
+        # probability (higher = more likely phishing).
+        "score_semantics": "safety: higher score = safer = lower risk",
+        "safety_risk_level": risk,
         "classification": classification,
         "classification_label": CLASSIFICATION_LABELS[classification],
         "classification_summary": CLASSIFICATION_SUMMARY[classification],

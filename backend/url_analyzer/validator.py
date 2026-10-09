@@ -16,6 +16,7 @@ package so every network module shares one safety policy.
 """
 
 import ipaddress
+import re
 import socket
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse, urlunparse
@@ -171,6 +172,19 @@ def validate_url(raw_url: str) -> dict:
         return result
 
     candidate = normalize_url(raw)
+
+    # Dangerous-scheme pre-check on the RAW input (before urlparse): inputs
+    # like "javascript:alert(1)" contain no "://", so normalize_url() would
+    # otherwise prepend "https://" and the subsequent parsed.port access
+    # raises ValueError, misreporting the error as BAD_PORT instead of
+    # DANGEROUS_PROTOCOL. The raw scheme prefix is authoritative here.
+    raw_scheme_match = re.match(r"^([a-zA-Z][a-zA-Z0-9+.-]*):", raw)
+    if raw_scheme_match:
+        raw_scheme = raw_scheme_match.group(1).lower()
+        if raw_scheme in DANGEROUS_SCHEMES:
+            result["error"] = f"Dangerous protocol blocked: '{raw_scheme}:'"
+            result["error_code"] = "DANGEROUS_PROTOCOL"
+            return result
 
     try:
         parsed = urlparse(candidate)
