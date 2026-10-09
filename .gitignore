@@ -1,36 +1,34 @@
+# Generated build files and dependencies
+.build/
+build/
+dist/
+
 # Python
-venv/
 __pycache__/
-*.pyc
-.pytest_cache/
+*.py[cod]
+.venv/
+venv/
 
-# Environment
-.env
+# Generated Electron builds
 
-# Runtime logs & pid files
-*.log
-*_pid.txt
-
-# Data
-database/*.db
-memory/data.json
-zyra_voice.mp3
-
-# Node
-node_modules/
-
-# Electron
-desktop-ui/node_modules/
-desktop/node_modules/
-
-# Desktop build output
 desktop-dist/
-
-# Build
 dist/
 build/
+release/
 
-# IDE / local tooling
-.vscode/
-.idea/
-.postqode/
+# Bundled Python dependencies
+
+.build/
+python/Lib/site-packages/
+
+# Python cache and virtual environments
+
+**pycache**/
+*.py[cod]
+.venv/
+venv/
+
+# Local configuration and logs
+
+.env
+*.log

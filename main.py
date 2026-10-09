@@ -65,6 +65,20 @@ from system_monitor import (
 )
 from nmap_handler import handle_nmap_intent, is_nmap_intent
 
+# ── ChatGPT-style voice session (state machine + turn manager) ──
+from voice_session import (
+    VoiceSessionState,
+    session,
+    get_state,
+    get_state_name,
+    is_listening,
+    is_idle,
+    is_error,
+    is_active,
+    get_last_transcript,
+    get_last_response,
+)
+
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8080
@@ -830,7 +844,12 @@ _turn_counter = 0
 
 
 def start_voice_turn() -> int:
-    """Open a new voice turn, cancelling the previous answer completely."""
+    """Open a new voice turn, cancelling the previous answer completely.
+
+    Returns the new turn number. The caller is responsible for setting the
+    voice session state (see answer_voice_stream) and for updating the
+    voice state machine during the turn.
+    """
     global _turn_counter
 
     with _turn_lock:
@@ -839,6 +858,11 @@ def start_voice_turn() -> int:
 
     cancel_current_request()
     stop_speaking(clear_queue=True)
+
+    # Make this turn the only current one in the session state machine.
+    with session()._lock:
+        session().turn = turn
+        session().session_id = begin_request_session()
 
     return turn
 
@@ -854,24 +878,36 @@ def answer_voice_stream(command: str, turn: int) -> None:
     Runs in its own thread so the main loop can immediately go back to
     listening (which is what makes barge-in possible). Only the newest turn may
     speak: any older turn stops silently.
+
+    The voice session state machine is driven by this call:
+      PROCESSING -> SPEAKING -> LISTENING (on finish) / ERROR (on failure).
     """
-    session_id = begin_request_session()
+    # Make this turn current in the session state machine before generating.
+    with session()._lock:
+        session().turn = turn
+        session().session_id = begin_request_session()
+
+    session().last_start_time = time.monotonic()
+    session().state = VoiceSessionState.PROCESSING
+    session().next_state = VoiceSessionState.SPEAKING
 
     print("🧠 ZYRA thinking...")
 
     try:
         for sentence in ask_ai_stream(
             command,
-            session_id=session_id,
+            session_id=session().session_id,
         ):
             if (
                 not _turn_is_current(turn)
-                or not is_current_session(session_id)
+                or not is_current_session(session().session_id)
             ):
                 print(
                     "⏹️  Reply cancelled — a newer request took over."
                 )
 
+                # A newer request interrupted this answer.
+                session().state = VoiceSessionState.IDLE
                 return
 
             speak_async(sentence)
@@ -879,11 +915,26 @@ def answer_voice_stream(command: str, turn: int) -> None:
         # Let the queued sentences finish; barge-in can interrupt this wait.
         wait_until_done(timeout=300)
 
+        # The answer is fully spoken; hand back control to the main loop
+        # (continuous LISTENING) so the user can keep talking.
+        session().state = VoiceSessionState.IDLE
+        session().session_id = None
+
     except Exception as exc:
         print(
             f"⚠️  Voice answer failed: {type(exc).__name__}: {exc}"
         )
+        session().has_error(f"Voice answer failed: {exc}")
 
+        # Return to LISTENING so the user can try again.
+        session().state = VoiceSessionState.IDLE
+        session().session_id = None
+
+    finally:
+        # Safety net: always leave the session in a sane state.
+        if session().state is VoiceSessionState.PROCESSING:
+            session().state = VoiceSessionState.IDLE
+            session().session_id = None
 
 # ========== Main Entry Point ==========
 
