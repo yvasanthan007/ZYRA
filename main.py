@@ -70,6 +70,95 @@ from nmap_handler import handle_nmap_intent, is_nmap_intent
 # ========== Configuration ==========
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8080
+
+# Normalize a spoken command for routing: strip filler words, normalize
+# "link"/"url", and collapse repeated characters. Returns (normalized,
+# has_standalone_url).
+# Works for both voice (floored) and written commands during testing.
+_URL_WORDS = {"link", "url", "website", "site", "page", "domain", "address"}
+
+
+def _normalize_voice_command(command: str) -> tuple[str, bool]:
+    """Normalize a voice command for reliable routing.
+
+    Returns (normalized_command, has_standalone_url). The normalized command
+    has filler words and URLs removed so the routing `in` checks match
+    reliably. The boolean flags whether the original text contained a URL
+    that could be analyzed standalone.
+    """
+    import re
+
+    text = (command or "").lower().strip()
+    if not text:
+        return "", False
+
+    # Extract a standalone URL quickly for easy detection.
+    has_url = bool(re.search(r"https?://|www\.", text))
+
+    # Remove URLs entirely so "analyze link https://evil.com" becomes
+    # "analyze link" and doesn't confuse the routing.
+    cleaned = re.sub(r"https?://\S+", " ", text)
+    cleaned = re.sub(r"www\.\S+", " ", cleaned)
+
+    # Remove standalone URL words ("link", "url", "website", ...) so
+    # "analyze link" becomes "analyze".
+    cleaned_words = []
+    for word in cleaned.split():
+        word = word.strip(".,!?;:'\"()[]")
+        if word and word not in _URL_WORDS:
+            cleaned_words.append(word)
+    cleaned = " ".join(cleaned_words)
+
+    # Remove common filler / discourse markers.
+    fillers = {
+        "please",
+        "could",
+        "can",
+        "you",
+        "would",
+        "kind",
+        "maybe",
+        "i",
+        "im",
+        "want",
+        "need",
+        "let",
+        "just",
+        "tell",
+        "show",
+        "see",
+        "know",
+    }
+    cleaned_words = [w for w in cleaned.split() if w not in fillers]
+    cleaned = " ".join(cleaned_words)
+
+    # Collapse repeated characters (e.g. "anaylze" kept, "soooo" -> "so")
+    cleaned = re.sub(r"(.)\1{2,}", r"\1\1", cleaned)
+
+    # Normalize common misspellings heard by STT.
+    corrections = {
+        "anaylze": "analyze",
+        "analyse": "analyze",
+        "analyse": "analyze",
+        "chk": "check",
+        "chek": "check",
+        "scnan": "scan",
+        "scna": "scan",
+        "anlyze": "analyze",
+        "staht": "state",
+        "computr": "computer",
+        "micrsoft": "microsoft",
+        "vitrual": "virtual",
+        "virustotal": "virustotal",
+        "zara": "zyra",
+        "zz": "z",
+    }
+    words = cleaned.split()
+    words = [corrections.get(w, w) for w in words]
+    cleaned = " ".join(words)
+
+    return cleaned, has_url
+
 DASHBOARD_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 
 # Global state for clean shutdown
@@ -729,15 +818,50 @@ if __name__ == "__main__":
                         speak(answer)
 
                 elif is_dns_intent(command):
-                    # ZYRA DNS Lookup — real backend DNS queries streamed live
+                    # ZYRA DNS Lookup - real backend DNS queries streamed live
                     # to the dashboard panel with the spoken result delivered
                     # when the lookup completes.
                     handle_dns_analysis_voice(command)
 
                 elif is_url_analysis_intent(command):
-                    # ZYRA URL Analyzer — real backend scan streamed live to the
+                    # ZYRA URL Analyzer - real backend scan streamed live to the
                     # dashboard panel (opens the URL Analyzer on the right) with
                     # the spoken result delivered when the analysis completes.
+                    # Normalize the spoken command first: "analyze link" without
+                    # a URL should still activate the URL Analyzer, and the URL
+                    # (when spoken) is extracted for the backend scan.
+                    # Extract the URL from the ORIGINAL command first (the
+                    # normalized text has URLs stripped out by design), then
+                    # normalize for the routing fallback checks.
+                    target_url = extract_target_url(command)
+                    normalized, has_url = _normalize_voice_command(command)
+                    if target_url:
+                        # A URL was present in the normalized text -> run it.
+                        launch = start_url_scan(target_url, source="voice")
+                        if not launch.get("success"):
+                            reason = launch.get("error") or "Please try again."
+                            print(f"   ⚠️  URL scan could not start: {reason}")
+                            speak(f"I couldn't start the URL analysis. {reason}")
+                            break
+                        _broadcast_url_analyzer(target_url)
+                        speak(f"Running a security analysis on {target_url}. Please wait.")
+                        threading.Thread(
+                            target=_url_voice_completion_watcher,
+                            args=(launch["scan_id"],),
+                            daemon=True,
+                        ).start()
+                        break
+                    # No URL in the normalized text -> fall back to the original
+                    # intent so legacy behavior (screen/clipboard capture) is kept.
+                    # We re-route the original command here.
+                    if not has_url:
+                        # The user said "analyze link" with no URL -> still open
+                        # the panel and let the backend/UI handle the capture.
+                        print("   🔗 No URL in the command - falling back to screen/clipboard link analysis.")
+                        result = handle_analyze_link_intent(command)
+                        if result and result.get("success") and result.get("checks"):
+                            print(f"   🔗 URL: {result.get('url')} | Score: {result.get('score')} | Verdict: {result.get('verdict')}")
+                        break
                     handle_url_analysis_voice(command)
 
                 elif is_link_analysis_intent(command):
@@ -747,7 +871,7 @@ if __name__ == "__main__":
                     result = handle_analyze_link_intent(command)
 
                     # Print detailed report to console
-                    if result.get('success') and result.get('checks'):
+                    if result.get("success") and result.get("checks"):
                         print(f"\n🔗 URL: {result['url']}")
                         print(f"📈 Risk Score: {result['score']}")
                         print(f"⚖️  Verdict: {result['verdict']}")

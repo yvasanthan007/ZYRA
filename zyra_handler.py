@@ -174,10 +174,27 @@ def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:
     else:
         print("   \u2705 VirusTotal: Clean")
     
-    # Step 5: Speak the result directly to user
+    # Step 4: Build enhanced speech text that includes ML accuracy
+    speech_text = result.get("speech_text", "")
+    ml_analysis = result.get("ml_phishing") or {}
+    vt_result = result.get("virustotal") or {}
+    ml_accuracy = ml_analysis.get("probability")
+    vt_status = vt_result.get("status", "unknown")
+    vt_detectors = vt_result.get("detectors")
+
+    if ml_accuracy is not None and ml_accuracy > 0:
+        ml_pct = int(round(ml_accuracy * 100))
+        speech_text += f" Machine learning accuracy: {ml_pct} percent phishing probability."
+    if vt_status != "unknown":
+        if vt_detectors:
+            speech_text += f" VirusTotal flagged {vt_detectors} security engines."
+        else:
+            speech_text += " VirusTotal did not flag this URL."
+
+    # Step 5: Speak the enhanced result
     print(f"\n🗣️  Step 4: Speaking verdict...")
-    print(f"   Speech text: {result['speech_text']}")
-    speak(result['speech_text'])
+    print(f"   Speech text: {speech_text}")
+    speak(speech_text)
     
     # Step 6: Print detailed analysis to console
     print("\n" + "=" * 60)
