@@ -698,8 +698,53 @@ electron_1.ipcMain.handle('command:execute', async (_event, command) => {
 });
 // Toggle voice listening. ZYRA's real voice loop lives in the backend process;
 // this keeps the React UI's control surface working as before.
+//
+// Lifecycle contract (shared with VoiceControl + bridge_server.py):
+//   Idle -> Listening -> Recognizing -> Processing -> Response displayed -> Idle
+// `enabled=false` NEVER starts a capture: it returns {listening:false}
+// immediately (idempotent, safe to call twice). The legacy bridge capture is
+// synchronous and blocking, so an in-flight capture cannot be cancelled
+// mid-listen by flipping the toggle — the stop call is serialized behind it
+// and the UI must treat the promise as the single source of truth.
+//
+// NOTE: /api/voice accepts transcribed TEXT only (it cannot capture audio),
+// so microphone capture always goes through the legacy bridge. The
+// FastAPI backend is still the command-routing authority: the bridge
+// forwards every transcript to backend/server.py process_voice_command(),
+// the same function /api/voice and /ws 'voice' use.
+let voiceInFlight = null;
 electron_1.ipcMain.handle('voice:toggle', async (_event, enabled) => {
-    return (await bridgeCommand('voice_toggle', enabled));
+    if (!enabled) {
+        // Stand down: never open the microphone on a stop request.
+        // If a capture is in flight it runs to its timeout on the bridge side;
+        // serialize behind it instead of opening a second session.
+        if (voiceInFlight) {
+            try {
+                await voiceInFlight;
+            }
+            catch {
+                /* the racing capture already reported its own error */
+            }
+        }
+        try {
+            await bridgeCommand('voice_stop', null);
+        }
+        catch {
+            /* best-effort: absence of a stop ack must not fail the UI */
+        }
+        return { transcript: '', response: '', listening: false };
+    }
+    if (voiceInFlight) {
+        throw new Error('Voice capture already in progress. Wait for it to finish.');
+    }
+    const pending = bridgeCommand('voice_toggle', true);
+    voiceInFlight = pending;
+    try {
+        return await pending;
+    }
+    finally {
+        voiceInFlight = null;
+    }
 });
 // Get voice status.
 electron_1.ipcMain.handle('voice:status', async () => {
@@ -835,7 +880,34 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PythonBridge = void 0;
 const child_process_1 = __webpack_require__(/*! child_process */ "child_process");
+const fs = __importStar(__webpack_require__(/*! fs */ "fs"));
 const path = __importStar(__webpack_require__(/*! path */ "path"));
+/**
+ * Resolve the Python interpreter the same way the FastAPI backend launcher
+ * does (desktop-ui/src/main/zyra-paths.ts resolvePython): explicit
+ * ZYRA_PYTHON override first, then <root>/.venv, then <root>/venv, then
+ * PATH. Never blindly uses a system `python` when the project environment
+ * exists.
+ */
+function resolveBridgePython(root) {
+    const override = process.env.ZYRA_PYTHON;
+    if (override && override.trim().length > 0)
+        return override.trim();
+    const isWindows = process.platform === 'win32';
+    const candidates = isWindows
+        ? [path.join(root, '.venv', 'Scripts', 'python.exe'), path.join(root, 'venv', 'Scripts', 'python.exe')]
+        : [path.join(root, '.venv', 'bin', 'python'), path.join(root, 'venv', 'bin', 'python')];
+    for (const file of candidates) {
+        try {
+            if (fs.existsSync(file))
+                return file;
+        }
+        catch {
+            /* ignore and continue */
+        }
+    }
+    return isWindows ? 'python' : 'python3';
+}
 class PythonBridge {
     constructor() {
         this.process = null;
@@ -845,10 +917,13 @@ class PythonBridge {
     }
     start() {
         // __dirname is dist/main/ ; bridge_server.py is at desktop-ui/bridge_server.py
-        const scriptPath = path.join(__dirname, '../../bridge_server.py');
-        this.process = (0, child_process_1.spawn)('python', [scriptPath], {
+        // Project root is two levels up (dist/main -> desktop-ui -> root).
+        const root = path.join(__dirname, '..', '..');
+        const scriptPath = path.join(root, 'bridge_server.py');
+        const python = resolveBridgePython(root);
+        this.process = (0, child_process_1.spawn)(python, [scriptPath], {
             stdio: ['pipe', 'pipe', 'pipe'],
-            cwd: path.join(__dirname, '../..'),
+            cwd: root,
         });
         this.process.stdout?.on('data', (data) => {
             this.buffer += data.toString();

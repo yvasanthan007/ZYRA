@@ -7,7 +7,7 @@ interface CommandItem {
 interface ZyraAPI {
   aiChat: (message: string) => Promise<string>;
   executeCommand: (command: string) => Promise<string>;
-  toggleVoice: (enabled: boolean) => Promise<string>;
+  toggleVoice: (enabled: boolean) => Promise<{ transcript: string; response: string }>;
   getVoiceStatus: () => Promise<{ listening: boolean }>;
   remember: (key: string, value: string) => Promise<string>;
   recall: (key: string) => Promise<string | null>;

@@ -10,8 +10,11 @@ contextBridge.exposeInMainWorld('zyraAPI', {
   executeCommand: (command: string): Promise<string> =>
     ipcRenderer.invoke('command:execute', command),
 
-  // Voice Control
-  toggleVoice: (enabled: boolean): Promise<string> =>
+  // Voice Control — returns the recognized transcript + assistant reply.
+  // Contract: resolves { transcript: string; response: string } on success
+  // (empty transcript + helper reply when nothing was heard); rejects with
+  // an Error carrying the failure reason (STT unavailable / mic / backend).
+  toggleVoice: (enabled: boolean): Promise<{ transcript: string; response: string }> =>
     ipcRenderer.invoke('voice:toggle', enabled),
 
   getVoiceStatus: (): Promise<{ listening: boolean }> =>

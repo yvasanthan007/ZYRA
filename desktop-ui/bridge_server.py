@@ -46,9 +46,25 @@ from backend.server import process_voice_command, voice_endpoint
 # Cache so repeated voice toggles re-use a single Recognizer + Microphone.
 _voice_recognizer = None
 _voice_microphone = None
+# True while a voice_toggle capture is running on this bridge process; used
+# to serialize overlapping start requests instead of opening the microphone
+# twice concurrently.
+_voice_capture_active = False
 
-VOICE_LISTEN_TIMEOUT = 8.0   # seconds before we stop listening for silence
-VOICE_PHRASE_TIMEOUT = 0.75  # seconds of silence to end an utterance
+
+def _voice_seconds(name, default):
+    """Read a voice timeout from the environment (honours .env config)."""
+    try:
+        return max(0.5, float(os.environ.get(name, default)))
+    except (TypeError, ValueError):
+        return float(default)
+
+
+VOICE_LISTEN_TIMEOUT = _voice_seconds("ZYRA_VOICE_TIMEOUT_SECONDS", 8.0)
+# Seconds of silence that end one utterance (was previously defined but the
+# capture below hardcoded the listen timeout instead — now actually used).
+VOICE_PHRASE_TIMEOUT = _voice_seconds("ZYRA_VOICE_PHRASE_TIMEOUT", 4.0)
+VOICE_MODE = (os.environ.get("ZYRA_VOICE_MODE", "google") or "google").strip().lower()
 
 COMMAND_MAP = {
     "open_chrome": open_chrome,
@@ -153,7 +169,29 @@ def handle_message(msg):
         #   backend/server.py process_voice_command() -> { response, action }
         # This keeps the message-routing path consistent with the WebSocket
         # /ws 'voice' type and the /api/voice endpoint rather than creating a
-        # second voice architecture.
+        # second voice architecture. NOTE: /api/voice accepts transcribed
+        # TEXT only — microphone capture lives here in the bridge.
+        #
+        # Lifecycle: Idle -> Listening -> Recognizing -> Processing ->
+        # Response displayed -> Idle. The capture is synchronous and blocking,
+        # so an in-flight listen CANNOT be cancelled mid-call by flipping the
+        # UI toggle — Electron serializes stop requests behind it (see
+        # desktop-ui/src/main/main.ts voice:toggle). Overlapping start
+        # requests are rejected here instead of opening the mic twice.
+        # `data=false` (stop when idle) never opens the microphone.
+        if isinstance(data, bool) and not data:
+            return {
+                "success": True,
+                "data": {"transcript": "", "response": "", "listening": False},
+            }
+
+        global _voice_capture_active
+        if _voice_capture_active:
+            return {
+                "success": False,
+                "error": "Voice capture already in progress. Wait for it to finish.",
+            }
+        _voice_capture_active = True
 
         # Use the cached Recognizer/Microphone, creating them on first use.
         global _voice_recognizer, _voice_microphone
@@ -165,18 +203,30 @@ def handle_message(msg):
         try:
             # Capture a short audio segment (the UI drives the toggle; the
             # bridge captures until silence or the timeout).
+            # phrase_time_limit uses the configured utterance setting — NOT
+            # the 8 s listen timeout that was previously hardcoded here.
             with _voice_microphone as source:
                 _voice_recognizer.adjust_for_ambient_noise(source, duration=0.3)
                 audio = _voice_recognizer.listen(
                     source,
                     timeout=VOICE_LISTEN_TIMEOUT,
-                    phrase_time_limit=VOICE_LISTEN_TIMEOUT,
+                    phrase_time_limit=VOICE_PHRASE_TIMEOUT,
                 )
 
-            # Run speech-to-text. Google STT is the default; if it is
-            # unavailable, surface the failure explicitly instead of
-            # silently dropping the utterance.
+            # Run speech-to-text. Google STT is the default (ZYRA_VOICE_MODE
+            # is honoured by listen.py's CLI loop; this bridge documents that
+            # no offline engine is bundled, so offline mode is not claimed
+            # here). Failures surface explicitly instead of silently
+            # dropping the utterance.
             text = _voice_recognizer.recognize_google(audio).strip()
+        except sr.WaitTimeoutError:
+            return {
+                "success": True,
+                "data": {
+                    "transcript": "",
+                    "response": "No speech detected before the timeout. Please try again.",
+                },
+            }
         except sr.UnknownValueError:
             # No speech detected — surface an explicit, non-fatal result.
             return {
@@ -203,6 +253,8 @@ def handle_message(msg):
                     "response": f"Voice capture error: {exc}",
                 },
             }
+        finally:
+            _voice_capture_active = False
 
         if not text:
             return {
@@ -239,6 +291,11 @@ def handle_message(msg):
                 "response": "(Zyra has nothing to say for this command.)",
             },
         }
+
+    elif msg_type == "voice_stop":
+        # Idempotent stand-down: never opens the microphone. Reports whether
+        # a capture is still running so the UI can show honest state.
+        return {"success": True, "data": {"listening": bool(_voice_capture_active)}}
 
     elif msg_type == "voice_status":
         return {"success": True, "data": {"listening": False}}

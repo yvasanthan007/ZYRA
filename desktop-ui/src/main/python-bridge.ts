@@ -1,5 +1,30 @@
 import { spawn, ChildProcess } from 'child_process';
+import * as fs from 'fs';
 import * as path from 'path';
+
+/**
+ * Resolve the Python interpreter the same way the FastAPI backend launcher
+ * does (desktop-ui/src/main/zyra-paths.ts resolvePython): explicit
+ * ZYRA_PYTHON override first, then <root>/.venv, then <root>/venv, then
+ * PATH. Never blindly uses a system `python` when the project environment
+ * exists.
+ */
+function resolveBridgePython(root: string): string {
+  const override = process.env.ZYRA_PYTHON;
+  if (override && override.trim().length > 0) return override.trim();
+  const isWindows = process.platform === 'win32';
+  const candidates = isWindows
+    ? [path.join(root, '.venv', 'Scripts', 'python.exe'), path.join(root, 'venv', 'Scripts', 'python.exe')]
+    : [path.join(root, '.venv', 'bin', 'python'), path.join(root, 'venv', 'bin', 'python')];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) return file;
+    } catch {
+      /* ignore and continue */
+    }
+  }
+  return isWindows ? 'python' : 'python3';
+}
 
 interface Command {
   type: string;
@@ -20,11 +45,14 @@ export class PythonBridge {
 
   start(): void {
     // __dirname is dist/main/ ; bridge_server.py is at desktop-ui/bridge_server.py
-    const scriptPath = path.join(__dirname, '../../bridge_server.py');
-    
-    this.process = spawn('python', [scriptPath], {
+    // Project root is two levels up (dist/main -> desktop-ui -> root).
+    const root = path.join(__dirname, '..', '..');
+    const scriptPath = path.join(root, 'bridge_server.py');
+    const python = resolveBridgePython(root);
+
+    this.process = spawn(python, [scriptPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: path.join(__dirname, '../..'),
+      cwd: root,
     });
 
     this.process.stdout?.on('data', (data: Buffer) => {

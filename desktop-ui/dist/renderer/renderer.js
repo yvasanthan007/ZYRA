@@ -36258,23 +36258,107 @@ exports["default"] = SystemMonitor;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const isVoicePayload = (value) => {
+    if (typeof value !== 'object' || value === null)
+        return false;
+    const record = value;
+    return (typeof record.transcript === 'string' ||
+        typeof record.response === 'string' ||
+        typeof record.listening === 'boolean');
+};
 const VoiceControl = ({ setStatus }) => {
     const [isListening, setIsListening] = (0, react_1.useState)(false);
+    const [isBusy, setIsBusy] = (0, react_1.useState)(false);
     const [transcript, setTranscript] = (0, react_1.useState)('');
     const [response, setResponse] = (0, react_1.useState)('');
+    const [error, setError] = (0, react_1.useState)('');
+    // Guards against double-clicks / overlapping microphone requests. The
+    // legacy bridge capture is synchronous and blocking, so a second click
+    // while one capture is in flight must be ignored rather than queued.
+    const requestInFlight = (0, react_1.useRef)(false);
     const toggleListening = async () => {
+        if (requestInFlight.current)
+            return;
         const newState = !isListening;
-        setIsListening(newState);
-        setStatus(newState ? 'Listening...' : 'Voice disabled');
+        // Stop never starts a capture: clear the listening affordance
+        // immediately and tell the backend to stand down.
+        if (!newState) {
+            requestInFlight.current = true;
+            setIsBusy(true);
+            setIsListening(false);
+            setStatus('Voice disabled');
+            try {
+                await window.zyraAPI.toggleVoice(false);
+            }
+            catch {
+                // Best-effort: the capture (if any) already finished or failed.
+            }
+            finally {
+                requestInFlight.current = false;
+                setIsBusy(false);
+            }
+            return;
+        }
+        requestInFlight.current = true;
+        setIsBusy(true);
+        setError('');
+        // Idle -> Listening: show the affordance before the blocking call.
+        setIsListening(true);
+        setStatus('Listening... speak clearly into your microphone');
         try {
-            await window.zyraAPI.toggleVoice(newState);
+            // Listening -> Recognizing -> Processing happens inside the bridge
+            // (microphone capture + STT + backend routing). This promise resolves
+            // with { transcript, response } or rejects with the failure reason.
+            const raw = await window.zyraAPI.toggleVoice(true);
+            const payload = isVoicePayload(raw) ? raw : {};
+            const heard = (payload.transcript || '').trim();
+            const reply = (payload.response || '').trim();
+            if (!heard) {
+                // Response displayed (honest empty-transcript path) -> Idle.
+                setTranscript('');
+                setResponse(reply || "I didn't catch that. Please speak louder or try again.");
+                setError('');
+                setStatus('No speech recognized');
+            }
+            else {
+                // Response displayed -> Idle.
+                setTranscript(heard);
+                setResponse(reply || '(Zyra has nothing to say for this command.)');
+                setError('');
+                setStatus('Ready');
+            }
         }
         catch (err) {
-            setStatus('Voice control error');
+            // Failure paths return to a usable state with an honest message.
+            // Never display a successful recognition when no transcript arrived.
+            const message = err instanceof Error ? err.message : 'Voice control error';
+            setTranscript('');
+            setResponse('');
+            if (/STT unavailable|speech service|network/i.test(message)) {
+                setError(`Speech recognition unavailable: ${message}`);
+                setStatus('Voice recognition unavailable');
+            }
+            else if (/permission|denied|no .*microphone|not found|Voice capture error/i.test(message)) {
+                setError(`Microphone error: ${message}`);
+                setStatus('Microphone error');
+            }
+            else if (/didn't catch|no speech/i.test(message)) {
+                setError(message);
+                setStatus('No speech recognized');
+            }
+            else {
+                setError(message);
+                setStatus('Voice control error');
+            }
+        }
+        finally {
+            // Never remain stuck in Listening after resolve/reject/timeout.
             setIsListening(false);
+            setIsBusy(false);
+            requestInFlight.current = false;
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "voice-control", children: [(0, jsx_runtime_1.jsxs)("div", { className: "voice-status-card", children: [(0, jsx_runtime_1.jsxs)("div", { className: `voice-indicator ${isListening ? 'active' : 'inactive'}`, children: [(0, jsx_runtime_1.jsx)("span", { className: "mic-icon", children: isListening ? '🎙️' : '🎤' }), (0, jsx_runtime_1.jsx)("h2", { children: isListening ? 'Listening' : 'Voice Off' })] }), (0, jsx_runtime_1.jsx)("button", { className: `voice-toggle-button ${isListening ? 'active' : ''}`, onClick: toggleListening, children: isListening ? 'Stop Listening' : 'Start Listening' }), isListening && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Speak clearly into your microphone" }))] }), (transcript || response) && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [transcript && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "You said:" }), (0, jsx_runtime_1.jsx)("p", { children: transcript })] })), response && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "ZYRA:" }), (0, jsx_runtime_1.jsx)("p", { children: response })] }))] })), (0, jsx_runtime_1.jsxs)("div", { className: "voice-info", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Voice Commands" }), (0, jsx_runtime_1.jsxs)("ul", { children: [(0, jsx_runtime_1.jsx)("li", { children: "\"Open Chrome\" - Launch Google Chrome" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Open VS Code\" - Launch Visual Studio Code" }), (0, jsx_runtime_1.jsx)("li", { children: "\"What is the time?\" - Get current time" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Search Google for [query]\" - Search the web" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Shutdown\" - Shutdown the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Volume up\" / \"Volume down\" - Adjust volume" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Screenshot\" - Take a screenshot" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Lock\" - Lock the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Exit\" - Close ZYRA" })] })] })] }));
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "voice-control", children: [(0, jsx_runtime_1.jsxs)("div", { className: "voice-status-card", children: [(0, jsx_runtime_1.jsxs)("div", { className: `voice-indicator ${isListening ? 'active' : 'inactive'}`, children: [(0, jsx_runtime_1.jsx)("span", { className: "mic-icon", children: isListening ? '🎙️' : '🎤' }), (0, jsx_runtime_1.jsx)("h2", { children: isListening ? 'Listening' : 'Voice Off' })] }), (0, jsx_runtime_1.jsx)("button", { className: `voice-toggle-button ${isListening ? 'active' : ''}`, onClick: toggleListening, disabled: isBusy, children: isBusy ? 'Working...' : isListening ? 'Stop Listening' : 'Start Listening' }), isListening && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Speak clearly into your microphone" })), error && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", role: "alert", children: error }))] }), (transcript || response) && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [transcript && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "You said:" }), (0, jsx_runtime_1.jsx)("p", { children: transcript })] })), response && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "ZYRA:" }), (0, jsx_runtime_1.jsx)("p", { children: response })] }))] })), (0, jsx_runtime_1.jsxs)("div", { className: "voice-info", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Voice Commands" }), (0, jsx_runtime_1.jsxs)("ul", { children: [(0, jsx_runtime_1.jsx)("li", { children: "\"Open Chrome\" - Launch Google Chrome" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Open VS Code\" - Launch Visual Studio Code" }), (0, jsx_runtime_1.jsx)("li", { children: "\"What is the time?\" - Get current time" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Search Google for [query]\" - Search the web" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Shutdown\" - Shutdown the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Volume up\" / \"Volume down\" - Adjust volume" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Screenshot\" - Take a screenshot" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Lock\" - Lock the PC" }), (0, jsx_runtime_1.jsx)("li", { children: "\"Exit\" - Close ZYRA" })] })] })] }));
 };
 exports["default"] = VoiceControl;
 

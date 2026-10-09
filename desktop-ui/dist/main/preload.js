@@ -60,7 +60,10 @@ electron_1.contextBridge.exposeInMainWorld('zyraAPI', {
     aiChat: (message) => electron_1.ipcRenderer.invoke('ai:chat', message),
     // System Commands
     executeCommand: (command) => electron_1.ipcRenderer.invoke('command:execute', command),
-    // Voice Control
+    // Voice Control — returns the recognized transcript + assistant reply.
+    // Contract: resolves { transcript: string; response: string } on success
+    // (empty transcript + helper reply when nothing was heard); rejects with
+    // an Error carrying the failure reason (STT unavailable / mic / backend).
     toggleVoice: (enabled) => electron_1.ipcRenderer.invoke('voice:toggle', enabled),
     getVoiceStatus: () => electron_1.ipcRenderer.invoke('voice:status'),
     // Memory

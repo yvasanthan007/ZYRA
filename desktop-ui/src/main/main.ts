@@ -286,8 +286,51 @@ ipcMain.handle('command:execute', async (_event, command: string): Promise<unkno
 
 // Toggle voice listening. ZYRA's real voice loop lives in the backend process;
 // this keeps the React UI's control surface working as before.
-ipcMain.handle('voice:toggle', async (_event, enabled: boolean): Promise<string> => {
-  return (await bridgeCommand('voice_toggle', enabled)) as string;
+//
+// Lifecycle contract (shared with VoiceControl + bridge_server.py):
+//   Idle -> Listening -> Recognizing -> Processing -> Response displayed -> Idle
+// `enabled=false` NEVER starts a capture: it returns {listening:false}
+// immediately (idempotent, safe to call twice). The legacy bridge capture is
+// synchronous and blocking, so an in-flight capture cannot be cancelled
+// mid-listen by flipping the toggle — the stop call is serialized behind it
+// and the UI must treat the promise as the single source of truth.
+//
+// NOTE: /api/voice accepts transcribed TEXT only (it cannot capture audio),
+// so microphone capture always goes through the legacy bridge. The
+// FastAPI backend is still the command-routing authority: the bridge
+// forwards every transcript to backend/server.py process_voice_command(),
+// the same function /api/voice and /ws 'voice' use.
+let voiceInFlight: Promise<unknown> | null = null;
+
+ipcMain.handle('voice:toggle', async (_event, enabled: boolean): Promise<unknown> => {
+  if (!enabled) {
+    // Stand down: never open the microphone on a stop request.
+    // If a capture is in flight it runs to its timeout on the bridge side;
+    // serialize behind it instead of opening a second session.
+    if (voiceInFlight) {
+      try {
+        await voiceInFlight;
+      } catch {
+        /* the racing capture already reported its own error */
+      }
+    }
+    try {
+      await bridgeCommand('voice_stop', null);
+    } catch {
+      /* best-effort: absence of a stop ack must not fail the UI */
+    }
+    return { transcript: '', response: '', listening: false };
+  }
+  if (voiceInFlight) {
+    throw new Error('Voice capture already in progress. Wait for it to finish.');
+  }
+  const pending = bridgeCommand('voice_toggle', true);
+  voiceInFlight = pending;
+  try {
+    return await pending;
+  } finally {
+    voiceInFlight = null;
+  }
 });
 
 
