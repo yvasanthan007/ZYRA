@@ -1,6 +1,7 @@
 {
   "name": "zyra-desktop-ui",
   "version": "1.0.0",
+  "private": true,
   "description": "Desktop UI for ZYRA AI Assistant",
   "main": "dist/main/main.js",
   "author": "Vasanthan Y",

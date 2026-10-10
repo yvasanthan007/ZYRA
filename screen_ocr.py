@@ -181,6 +181,83 @@ def extract_text_from_image(image):
     """
     Run OCR on a PIL Image and return all detected text.
 
+    Uses the bounded worker wrapper so a capture can never block the event
+    loop or hold the microphone open. Returns '' on OCR failure and logs a
+    single diagnostic so the voice path can surface the reason to the user.
+    """
+    reader = _get_ocr_reader()
+    if reader is None:
+        return ""
+
+    # Downscale large screenshots — OCR cost scales with pixel count and URLs
+    # stay legible, so this keeps the capture fast on high-res displays.
+    try:
+        width, height = image.size
+        if width > MAX_OCR_WIDTH:
+            scale = MAX_OCR_WIDTH / float(width)
+            image = image.resize((int(width * scale), int(height * scale)))
+    except Exception:
+        pass
+
+    started = time.monotonic()
+    # Save image to a temporary bytes buffer for EasyOCR
+    with io.BytesIO() as buf:
+        image.save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+    text = _readtext_bounded(reader, png_bytes, timeout=OCR_TIMEOUT_SECONDS)
+    elapsed = time.monotonic() - started
+    if text is None:
+        print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
+    elif isinstance(text, list) and not text:
+        print(f"   📭 OCR returned no text (elapsed {elapsed:.1f}s).")
+    return " ".join(text) if isinstance(text, list) else str(text or "")
+    started = time.monotonic()
+    text = _readtext_bounded(reader, image, timeout=OCR_TIMEOUT_SECONDS)
+    elapsed = time.monotonic() - started
+    if text is None:
+        print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
+    elif isinstance(text, list) and not text:
+        print(f"   📭 OCR returned no text (elapsed {elapsed:.1f}s).")
+    return " ".join(text) if isinstance(text, list) else str(text or "")
+
+
+# ──────────────────────────────────────────────
+# 3. URL Extraction from Text
+# ──────────────────────────────────────────────
+def extract_text_from_image(image):
+    """
+    Run OCR on a PIL Image and return all detected text.
+
+    Uses the bounded worker wrapper so a capture can never block the event
+    loop or hold the microphone open. Returns '' on OCR failure and logs a
+    single diagnostic so the voice path can surface the reason to the user.
+    """
+    reader = _get_ocr_reader()
+    if reader is None:
+        return ""
+
+    # Downscale large screenshots — OCR cost scales with pixel count and URLs
+    # stay legible, so this keeps the capture fast on high-res displays.
+    try:
+        width, height = image.size
+        if width > MAX_OCR_WIDTH:
+            scale = MAX_OCR_WIDTH / float(width)
+            image = image.resize((int(width * scale), int(height * scale)))
+    except Exception:
+        pass
+
+    started = time.monotonic()
+    text = _readtext_bounded(reader, image, timeout=OCR_TIMEOUT_SECONDS)
+    elapsed = time.monotonic() - started
+    if text is None:
+        print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
+    elif isinstance(text, list) and not text:
+        print(f"   📭 OCR returned no text (elapsed {elapsed:.1f}s).")
+    return " ".join(text) if isinstance(text, list) else str(text or "")
+def extract_text_from_image(image):
+    """
+    Run OCR on a PIL Image and return all detected text.
+
     Args:
         image: PIL.Image object to analyze.
 

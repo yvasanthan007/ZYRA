@@ -36333,6 +36333,17 @@ const VoiceControl = ({ setStatus }) => {
     // legacy bridge capture is synchronous and blocking, so a second click
     // while one capture is in flight must be ignored rather than queued.
     const requestInFlight = (0, react_1.useRef)(false);
+    // Use the OS/Electron speech voices for spoken responses. This avoids
+    // blocking the Python bridge or event loop and works independently of scans.
+    (0, react_1.useEffect)(() => {
+        if (!response || !('speechSynthesis' in window))
+            return undefined;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(response);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+        return () => window.speechSynthesis.cancel();
+    }, [response]);
     const toggleListening = async () => {
         if (requestInFlight.current)
             return;
@@ -36370,6 +36381,13 @@ const VoiceControl = ({ setStatus }) => {
             const payload = isVoicePayload(raw) ? raw : {};
             const heard = (payload.transcript || '').trim();
             const reply = (payload.response || '').trim();
+            if (payload.error) {
+                setTranscript(heard);
+                setResponse('');
+                setError(`${payload.error}${reply ? ` ${reply}` : ''}`);
+                setStatus('Voice control error');
+                return;
+            }
             if (!heard) {
                 // Response displayed (honest empty-transcript path) -> Idle.
                 setTranscript('');

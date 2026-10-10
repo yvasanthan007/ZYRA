@@ -27,6 +27,11 @@ Verdict Mapping:
 import os
 import re
 import socket
+import os
+import re
+import socket
+import threading
+from urllib.parse import urlparse
 from urllib.parse import urlparse
 
 import requests
@@ -75,6 +80,28 @@ def _ml_contribution(ml_analysis):
 # ──────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────
+# OCR tuning (keeps screen capture responsive)
+#
+# Wider screenshots are scaled down before OCR — cost scales with pixel count
+# and URLs stay legible, so this cuts the capture time on high-res displays.
+MAX_OCR_WIDTH = 1000
+
+# Soft cap for a single OCR pass — the capture never blocks forever. Generous
+# enough to finish on a CPU-only machine (a full-screen EasyOCR pass is slow).
+# This is the PITCH-BOUND for natural-language voice requests: a spoken
+# "analyse this link" must never hold the microphone longer than a few
+# seconds while the screen is being searched.
+OCR_TIMEOUT_SECONDS = 45
+
+# Voice/Selection-first gating. When a URL is provided directly or the user
+# clicks/selection is available we never run OCR at all.
+_PREFER_DIRECT_URL = bool(os.environ.get("ZYRA_ANALYZE_PREFER_DIRECT", "1").strip().lower() in ("1", "true", "yes", "on"))
+
+# Silence the single-flight guard so repeated "analyse this link" requests do
+# not queue OCR on top of OCR and starve the microphone. The OCR + clipboard
+# fallbacks are each stateles; only one capture runs at a time.
+_ocr_in_flight = False
+_ocr_lock = threading.Lock()
 
 # VirusTotal API key — set VIRUSTOTAL_API_KEY in the environment or a
 # project-root .env file to enable API-based threat scanning.
@@ -226,7 +253,7 @@ def _check_typosquatting(hostname):
 
 def analyze_url(url: str) -> dict:
     """
-    Run the 8-check heuristic security analysis pipeline on a URL.
+    Run the heuristic checks and local ML assessment for one explicit URL.
 
     Args:
         url: The URL string to analyze.
@@ -239,22 +266,43 @@ def analyze_url(url: str) -> dict:
             - speech_text: exact string for Zyra to speak/display
             - checks: list of dicts with individual check results
     """
+    url = (url or "").strip()
     if not url:
         return {
             "url": url,
             "score": 0,
-            "verdict": "Safe",
-            "speech_text": "I couldn't find any URL on your screen or in your clipboard.",
-            "checks": []
+            "verdict": "Unable to Determine",
+            "speech_text": "I couldn't find a URL to analyze.",
+            "checks": [],
+            "ml_phishing": {"available": False, "note": "Empty URL."},
         }
 
-    # Normalize URL
-    if not url.startswith(("http://", "https://")):
+    # Keep malformed and dangerous schemes visible to the checks rather than
+    # silently rewriting them into apparently valid HTTPS URLs.
+    if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", url):
         url = f"https://{url}"
 
-    parsed = urlparse(url)
-    hostname = parsed.hostname or ""
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname or ""
+        _ = parsed.port  # raises on malformed/non-numeric ports
+    except ValueError:
+        return {
+            "url": url, "score": 5, "verdict": "Dangerous",
+            "speech_text": "This URL is malformed. Do not open it.",
+            "checks": [{"check": "URL validation", "score": 5,
+                        "details": "Malformed URL authority or port."}],
+            "ml_phishing": {"available": False, "note": "Invalid URL syntax."},
+        }
     path = parsed.path + ("?" + parsed.query if parsed.query else "")
+    if parsed.scheme.lower() not in ("http", "https") or not hostname:
+        return {
+            "url": url, "score": 5, "verdict": "Dangerous",
+            "speech_text": "This URL uses an unsafe or invalid protocol. Do not open it.",
+            "checks": [{"check": "URL validation", "score": 5,
+                        "details": "Only HTTP and HTTPS URLs with a host can be analyzed."}],
+            "ml_phishing": {"available": False, "note": "Unsupported URL scheme or missing host."},
+        }
 
     checks = []
     total_score = 0
@@ -370,6 +418,15 @@ def analyze_url(url: str) -> dict:
         verdict = "Suspicious"
     else:
         verdict = "Safe"
+    if ml_analysis and ml_analysis.get("available"):
+        try:
+            ml_probability = float(ml_analysis.get("probability"))
+        except (TypeError, ValueError):
+            ml_probability = 1.0
+        if ml_probability >= 0.90:
+            verdict = "Dangerous"
+        elif ml_probability >= 0.75 and verdict == "Safe":
+            verdict = "Suspicious"
 
     # ── Generate exact speech text per requirements ──
     speech_text = _generate_speech_text(url, verdict, total_score, ml_analysis)
@@ -443,11 +500,13 @@ def _generate_speech_text(url: str, verdict: str, score: int, ml_analysis=None) 
             return (f"Caution. The link {spoken_url} from your screen "
                     f"appears suspicious.{ml_sentence}")
         return f"Caution. The link on your screen appears suspicious.{ml_sentence}"
+    elif verdict == "Unable to Determine":
+        return "I couldn't safely classify this link. Do not open it until you verify the destination."
     else:  # Dangerous
         if spoken_url:
-            return (f"Warning! The link {spoken_url} from your screen "
+            return (f"Warning! The link {spoken_url} "
                     f"appears unsafe.{ml_sentence}")
-        return f"Warning! The link on your screen appears unsafe.{ml_sentence}"
+        return f"Warning! This link appears unsafe.{ml_sentence}"
 
 
 def _check_virustotal(url: str) -> str:

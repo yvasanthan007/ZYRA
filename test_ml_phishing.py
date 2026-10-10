@@ -149,8 +149,10 @@ class TrainingSmokeTests(unittest.TestCase):
 
         best_name, best_model, results, holdout = train.train_models(
             urls, labels, n_estimators=25, seed=7, verbose=False)
-        self.assertEqual(set(results),
-                         {"RandomForestClassifier", "LogisticRegression"})
+        self.assertIn("RandomForestClassifier", results)
+        self.assertIn("LogisticRegression", results)
+        self.assertLessEqual(set(results), {
+            "RandomForestClassifier", "LogisticRegression", "XGBClassifier"})
         self.assertGreater(results[best_name]["f1"], 0.85)
         X_test, y_test = holdout
         self.assertEqual(len(X_test), len(y_test))

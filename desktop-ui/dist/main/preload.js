@@ -3,12 +3,12 @@
 /******/ 	var __webpack_modules__ = ({
 
 /***/ "electron"
-/*!***************************!*\
-  !*** external "electron" ***!
-  \***************************/
+/*!********************************!*\
+  !*** external "electron/main" ***!
+  \********************************/
 (module) {
 
-module.exports = require("electron");
+module.exports = require("electron/main");
 
 /***/ }
 

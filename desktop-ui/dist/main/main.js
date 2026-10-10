@@ -707,11 +707,8 @@ electron_1.ipcMain.handle('command:execute', async (_event, command) => {
 // mid-listen by flipping the toggle — the stop call is serialized behind it
 // and the UI must treat the promise as the single source of truth.
 //
-// NOTE: /api/voice accepts transcribed TEXT only (it cannot capture audio),
-// so microphone capture always goes through the legacy bridge. The
-// FastAPI backend is still the command-routing authority: the bridge
-// forwards every transcript to backend/server.py process_voice_command(),
-// the same function /api/voice and /ws 'voice' use.
+// Microphone capture uses a single legacy bridge request. Backend scans run in
+// their own FastAPI process, so they never share this capture lock or listener.
 let voiceInFlight = null;
 electron_1.ipcMain.handle('voice:toggle', async (_event, enabled) => {
     if (!enabled) {
@@ -1222,6 +1219,16 @@ function resolveBackendLaunch(startDir) {
 
 /***/ },
 
+/***/ "electron"
+/*!********************************!*\
+  !*** external "electron/main" ***!
+  \********************************/
+(module) {
+
+module.exports = require("electron/main");
+
+/***/ },
+
 /***/ "child_process"
 /*!********************************!*\
   !*** external "child_process" ***!
@@ -1229,16 +1236,6 @@ function resolveBackendLaunch(startDir) {
 (module) {
 
 module.exports = require("child_process");
-
-/***/ },
-
-/***/ "electron"
-/*!***************************!*\
-  !*** external "electron" ***!
-  \***************************/
-(module) {
-
-module.exports = require("electron");
 
 /***/ },
 

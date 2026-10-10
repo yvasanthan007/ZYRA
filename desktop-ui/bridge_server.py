@@ -3,7 +3,7 @@ import json
 import importlib.util
 import os
 import threading
-
+import time
 # ── Windows console safety ──────────────────────────────────────────────
 # Force UTF-8 stdout/stderr BEFORE importing ZYRA modules. Any emoji print
 # from an imported module would otherwise raise UnicodeEncodeError on a
@@ -44,9 +44,8 @@ from system_monitor import (
 import speech_recognition as sr
 from backend.server import process_voice_command, voice_endpoint
 
-# Cache so repeated voice toggles re-use a single Recognizer + Microphone.
+# Reuse the stateless speech recognizer; audio input streams are per-capture.
 _voice_recognizer = None
-_voice_microphone = None
 # True while a voice_toggle capture is running on this bridge process; used
 # to serialize overlapping start requests instead of opening the microphone
 # twice concurrently.
@@ -107,6 +106,83 @@ COMMAND_MAP = {
 }
 
 
+def _capture_voice_audio(recognizer):
+    """
+    Capture speech with sounddevice, without requiring the PyAudio backend.
+
+    Runs the stream in a dedicated thread with a hard wall-clock deadline
+    (VOICE_LISTEN_TIMEOUT + small buffer) so the microphone is ALWAYS released
+    on completion, timeout, or exception. Never leaves a capture in flight.
+    """
+    import numpy as np
+    import sounddevice as sd
+    from concurrent.futures import ThreadPoolExecutor
+    sample_rate = 16000
+    block_size = 4000  # 250 ms chunks for responsive silence detection
+    deadline = time.monotonic() + (VOICE_LISTEN_TIMEOUT + 0.5)
+
+    def _run():
+        frames = []
+        started_at = time.monotonic()
+        speech_started_at = None
+        last_voice_at = None
+        stream = None
+        try:
+            stream = sd.InputStream(
+                samplerate=sample_rate, channels=1, dtype="int16", blocksize=block_size
+            )
+            stream.start()
+            noise_levels = []
+            for _ in range(2):
+                block, overflowed = stream.read(block_size)
+                if overflowed:
+                    print("[voice] microphone input overflow during calibration")
+                noise_levels.append(float(np.sqrt(np.mean(np.square(block.astype(np.float32))))))
+            threshold = max(500.0, (sum(noise_levels) / len(noise_levels)) * 2.5)
+
+            while time.monotonic() - started_at < VOICE_LISTEN_TIMEOUT:
+                # Respect the hard deadline so a hung stream can never hold the
+                # microphone open. We still call stream.read exactly once per
+                # loop so we never busy-spin or starve the audio thread.
+                remaining = max(0.0, deadline - time.monotonic())
+                if remaining <= 0:
+                    break
+                block, overflowed = stream.read(block_size, timeout=min(0.15, remaining))
+                if overflowed:
+                    print("[voice] microphone input overflow during capture")
+                now = time.monotonic()
+                level = float(np.sqrt(np.mean(np.square(block.astype(np.float32)))))
+                if level >= threshold:
+                    if speech_started_at is None:
+                        speech_started_at = now
+                    last_voice_at = now
+                    frames.append(block.copy())
+                elif speech_started_at is not None:
+                    frames.append(block.copy())
+                    if now - last_voice_at >= min(0.8, VOICE_PHRASE_TIMEOUT / 2):
+                        break
+                if (speech_started_at is not None and
+                        now - speech_started_at >= VOICE_PHRASE_TIMEOUT):
+                    break
+            return frames
+        finally:
+            if stream is not None and stream.is_active():
+                stream.stop()
+                stream.close()
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(_run)
+        try:
+            frames = future.result(timeout=VOICE_LISTEN_TIMEOUT + 1.0)
+        except Exception as exc:
+            raise RuntimeError(f"Microphone capture failed: {type(exc).__name__}: {exc}") from exc
+
+    if not frames:
+        return None
+    pcm = np.concatenate(frames, axis=0).reshape(-1).astype(np.int16).tobytes()
+    return sr.AudioData(pcm, sample_rate, sample_width=2)
+
+
 def handle_message(msg):
     msg_type = msg.get("type", "")
     data = msg.get("data")
@@ -119,7 +195,7 @@ def handle_message(msg):
         "selected" | "entered" | "message" | "screen" | "none".
 
         Privacy: callers must only log whether a URL was received and its
-        source — never clipboard/screen contents.
+        source - never clipboard/screen contents.
         """
         from backend.link_security import extract_url as _extract
 
@@ -132,6 +208,27 @@ def handle_message(msg):
                 return found, "message"
         return None, "none"
 
+    def _call_with_timeout(func, timeout, *args, **kwargs):
+        """Run optional capture work without waiting for its worker thread."""
+        finished = threading.Event()
+        outcome = {}
+
+        def _worker():
+            try:
+                outcome["result"] = func(*args, **kwargs)
+            except Exception as exc:
+                outcome["error"] = exc
+            finally:
+                finished.set()
+
+        threading.Thread(target=_worker, daemon=True,
+                         name="ZYRA-bounded-capture").start()
+        if not finished.wait(timeout):
+            raise TimeoutError("capture timed out")
+        if "error" in outcome:
+            raise outcome["error"]
+        return outcome.get("result")
+
     if msg_type == "analyze_link":
         # Selected/entered-URL phishing analysis for the desktop UI.
         # Contract: data may be a raw URL string or
@@ -142,12 +239,14 @@ def handle_message(msg):
 
         explicit_url = None
         fallback_text = None
+        allow_capture_fallback = True
         ocr_timeout = 12.0
         if isinstance(data, str):
             explicit_url = data.strip()
         elif isinstance(data, dict):
             explicit_url = str(data.get("url") or "").strip()
             fallback_text = data.get("text")
+            allow_capture_fallback = bool(data.get("capture_fallback", False))
             try:
                 ocr_timeout = max(2.0, min(30.0, float(
                     data.get("timeout_secs", ocr_timeout))))
@@ -162,19 +261,16 @@ def handle_message(msg):
         if target:
             print(f"[analyze_link] source={source} "
                   f"has_url=True url_len={len(target)}")
-        else:
+        elif allow_capture_fallback:
             print("[analyze_link] source=none has_url=False; "
                   "falling back to screen/clipboard capture")
             try:
                 from screen_ocr import get_active_url as _capture_url
-                import concurrent.futures as _fut
-                with _fut.ThreadPoolExecutor(max_workers=1) as _pool:
-                    target = _pool.submit(_capture_url).result(
-                        timeout=ocr_timeout)
+                target = _call_with_timeout(_capture_url, ocr_timeout)
                 source = "screen" if target else "none"
                 print(f"[analyze_link] capture done source={source} "
                       f"has_url={bool(target)}")
-            except _fut.TimeoutError:
+            except TimeoutError:
                 print(f"[analyze_link] OCR capture timed out after "
                       f"{ocr_timeout}s; reporting no-URL (voice unaffected)")
                 target, source = None, "none"
@@ -295,33 +391,24 @@ def handle_message(msg):
                 "error": "Voice capture already in progress. Wait for it to finish.",
             }
         _voice_capture_active = True
-
-        # Use the cached Recognizer/Microphone, creating them on first use.
-        global _voice_recognizer, _voice_microphone
-        if _voice_recognizer is None:
-            _voice_recognizer = sr.Recognizer()
-        if _voice_microphone is None:
-            _voice_microphone = sr.Microphone()
-
+        # Use one bounded sounddevice input stream per request. Unlike
+        # sr.Microphone(), this path does not require PyAudio, which is often
+        # absent in Windows installations and packaged environments.
+        global _voice_recognizer
         try:
-            # Capture a short audio segment (the UI drives the toggle; the
-            # bridge captures until silence or the timeout).
-            # phrase_time_limit uses the configured utterance setting — NOT
-            # the 8 s listen timeout that was previously hardcoded here.
-            with _voice_microphone as source:
-                _voice_recognizer.adjust_for_ambient_noise(source, duration=0.3)
-                audio = _voice_recognizer.listen(
-                    source,
-                    timeout=VOICE_LISTEN_TIMEOUT,
-                    phrase_time_limit=VOICE_PHRASE_TIMEOUT,
-                )
-
-            # Run speech-to-text. Google STT is the default (ZYRA_VOICE_MODE
-            # is honoured by listen.py's CLI loop; this bridge documents that
-            # no offline engine is bundled, so offline mode is not claimed
-            # here). Failures surface explicitly instead of silently
-            # dropping the utterance.
-            text = _voice_recognizer.recognize_google(audio).strip()
+            if _voice_recognizer is None:
+                _voice_recognizer = sr.Recognizer()
+            audio = _capture_voice_audio(_voice_recognizer)
+            if audio is None:
+                return {
+                    "success": True,
+                    "data": {
+                        "transcript": "",
+                        "response": "No speech detected before the timeout. Please try again.",
+                    },
+                }
+            from listen import _recognize as _recognize_audio
+            text = _recognize_audio(_voice_recognizer, audio).strip()
         except sr.WaitTimeoutError:
             return {
                 "success": True,
@@ -340,20 +427,23 @@ def handle_message(msg):
                 },
             }
         except sr.RequestError as exc:
-            # STT service unavailable (e.g. no network) — fail explicitly.
+            # Keep errors in the success payload: the desktop bridge protocol
+            # rejects failures before its structured data reaches the renderer.
             return {
-                "success": False,
+                "success": True,
                 "data": {
                     "transcript": "",
                     "response": f"STT unavailable: {exc}. Check network connectivity and try again.",
+                    "error": f"STT unavailable: {exc}",
                 },
             }
         except Exception as exc:
             return {
-                "success": False,
+                "success": True,
                 "data": {
                     "transcript": "",
                     "response": f"Voice capture error: {exc}",
+                    "error": f"Voice capture error: {exc}",
                 },
             }
         finally:

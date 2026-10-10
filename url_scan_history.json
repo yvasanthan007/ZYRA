@@ -1,0 +1,522 @@
+[
+ {
+  "scan_id": "url_20261010_222324_a56dde",
+  "url": "https://fake.example/path",
+  "domain": "fake.example",
+  "score": 15,
+  "risk_level": "CRITICAL",
+  "risk_level_label": "CRITICAL",
+  "classification": "MALICIOUS",
+  "classification_label": "MALICIOUS",
+  "timestamp": "2026-10-10T22:23:24",
+  "timestamp_display": "10 Oct 2026 22:23",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261010_222324_a56dde",
+   "url": "https://fake.example/path",
+   "display_url": "https://fake.example/path",
+   "hostname": "fake.example",
+   "domain_display": "fake.example",
+   "score": 15,
+   "risk_level": "CRITICAL",
+   "risk_level_label": "CRITICAL",
+   "classification": "MALICIOUS",
+   "classification_label": "MALICIOUS",
+   "classification_summary": "Malicious Indicators Detected",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: test heuristic",
+    "-40 CRITICAL: ML classifier: 91% phishing probability",
+    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
+    "Score capped at 15: ML classifier reports very high phishing probability."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "algorithm": "XGBClassifier",
+    "probability": 0.91,
+    "percent": 91,
+    "verdict": "PHISHING",
+    "top_signals": []
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "fail",
+      "detail": "91% phishing probability"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "fake.example",
+    "registered_domain": "fake.example",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/path",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "valid": true
+   },
+   "domain": {
+    "hostname": "fake.example",
+    "registered_domain": "example",
+    "resolved": true,
+    "whois_available": true
+   },
+   "reputation": {
+    "available": true,
+    "reputation": "clean"
+   },
+   "findings": [
+    {
+     "id": "heuristic_test",
+     "severity": "HIGH",
+     "title": "test heuristic",
+     "score_impact": 22
+    },
+    {
+     "id": "ml_phishing_classifier",
+     "severity": "CRITICAL",
+     "category": "ml",
+     "title": "ML classifier: 91% phishing probability",
+     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
+     "score_impact": 40,
+     "positive": false
+    }
+   ],
+   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
+   "timestamp": "2026-10-10T22:23:24",
+   "timestamp_display": "10 Oct 2026 22:23",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261010_222114_c833cc",
+  "url": "https://fake.example/path",
+  "domain": "fake.example",
+  "score": 15,
+  "risk_level": "CRITICAL",
+  "risk_level_label": "CRITICAL",
+  "classification": "MALICIOUS",
+  "classification_label": "MALICIOUS",
+  "timestamp": "2026-10-10T22:21:14",
+  "timestamp_display": "10 Oct 2026 22:21",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261010_222114_c833cc",
+   "url": "https://fake.example/path",
+   "display_url": "https://fake.example/path",
+   "hostname": "fake.example",
+   "domain_display": "fake.example",
+   "score": 15,
+   "risk_level": "CRITICAL",
+   "risk_level_label": "CRITICAL",
+   "classification": "MALICIOUS",
+   "classification_label": "MALICIOUS",
+   "classification_summary": "Malicious Indicators Detected",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: test heuristic",
+    "-40 CRITICAL: ML classifier: 91% phishing probability",
+    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
+    "Score capped at 15: ML classifier reports very high phishing probability."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "algorithm": "XGBClassifier",
+    "probability": 0.91,
+    "percent": 91,
+    "verdict": "PHISHING",
+    "top_signals": []
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "fail",
+      "detail": "91% phishing probability"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "fake.example",
+    "registered_domain": "fake.example",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/path",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "valid": true
+   },
+   "domain": {
+    "hostname": "fake.example",
+    "registered_domain": "example",
+    "resolved": true,
+    "whois_available": true
+   },
+   "reputation": {
+    "available": true,
+    "reputation": "clean"
+   },
+   "findings": [
+    {
+     "id": "heuristic_test",
+     "severity": "HIGH",
+     "title": "test heuristic",
+     "score_impact": 22
+    },
+    {
+     "id": "ml_phishing_classifier",
+     "severity": "CRITICAL",
+     "category": "ml",
+     "title": "ML classifier: 91% phishing probability",
+     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
+     "score_impact": 40,
+     "positive": false
+    }
+   ],
+   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
+   "timestamp": "2026-10-10T22:21:14",
+   "timestamp_display": "10 Oct 2026 22:21",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261010_212948_c29dbd",
+  "url": "https://fake.example/path",
+  "domain": "fake.example",
+  "score": 15,
+  "risk_level": "CRITICAL",
+  "risk_level_label": "CRITICAL",
+  "classification": "MALICIOUS",
+  "classification_label": "MALICIOUS",
+  "timestamp": "2026-10-10T21:29:48",
+  "timestamp_display": "10 Oct 2026 21:29",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261010_212948_c29dbd",
+   "url": "https://fake.example/path",
+   "display_url": "https://fake.example/path",
+   "hostname": "fake.example",
+   "domain_display": "fake.example",
+   "score": 15,
+   "risk_level": "CRITICAL",
+   "risk_level_label": "CRITICAL",
+   "classification": "MALICIOUS",
+   "classification_label": "MALICIOUS",
+   "classification_summary": "Malicious Indicators Detected",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: test heuristic",
+    "-40 CRITICAL: ML classifier: 91% phishing probability",
+    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
+    "Score capped at 15: ML classifier reports very high phishing probability."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "algorithm": "XGBClassifier",
+    "probability": 0.91,
+    "percent": 91,
+    "verdict": "PHISHING",
+    "top_signals": []
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "fail",
+      "detail": "91% phishing probability"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "fake.example",
+    "registered_domain": "fake.example",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/path",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "valid": true
+   },
+   "domain": {
+    "hostname": "fake.example",
+    "registered_domain": "example",
+    "resolved": true,
+    "whois_available": true
+   },
+   "reputation": {
+    "available": true,
+    "reputation": "clean"
+   },
+   "findings": [
+    {
+     "id": "heuristic_test",
+     "severity": "HIGH",
+     "title": "test heuristic",
+     "score_impact": 22
+    },
+    {
+     "id": "ml_phishing_classifier",
+     "severity": "CRITICAL",
+     "category": "ml",
+     "title": "ML classifier: 91% phishing probability",
+     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
+     "score_impact": 40,
+     "positive": false
+    }
+   ],
+   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
+   "timestamp": "2026-10-10T21:29:48",
+   "timestamp_display": "10 Oct 2026 21:29",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261010_210734_a0110e",
+  "url": "https://fake.example/path",
+  "domain": "fake.example",
+  "score": 15,
+  "risk_level": "CRITICAL",
+  "risk_level_label": "CRITICAL",
+  "classification": "MALICIOUS",
+  "classification_label": "MALICIOUS",
+  "timestamp": "2026-10-10T21:07:34",
+  "timestamp_display": "10 Oct 2026 21:07",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261010_210734_a0110e",
+   "url": "https://fake.example/path",
+   "display_url": "https://fake.example/path",
+   "hostname": "fake.example",
+   "domain_display": "fake.example",
+   "score": 15,
+   "risk_level": "CRITICAL",
+   "risk_level_label": "CRITICAL",
+   "classification": "MALICIOUS",
+   "classification_label": "MALICIOUS",
+   "classification_summary": "Malicious Indicators Detected",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: test heuristic",
+    "-40 CRITICAL: ML classifier: 91% phishing probability",
+    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
+    "Score capped at 15: ML classifier reports very high phishing probability."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "algorithm": "XGBClassifier",
+    "probability": 0.91,
+    "percent": 91,
+    "verdict": "PHISHING",
+    "top_signals": []
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "fail",
+      "detail": "91% phishing probability"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "fake.example",
+    "registered_domain": "fake.example",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/path",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "valid": true
+   },
+   "domain": {
+    "hostname": "fake.example",
+    "registered_domain": "example",
+    "resolved": true,
+    "whois_available": true
+   },
+   "reputation": {
+    "available": true,
+    "reputation": "clean"
+   },
+   "findings": [
+    {
+     "id": "heuristic_test",
+     "severity": "HIGH",
+     "title": "test heuristic",
+     "score_impact": 22
+    },
+    {
+     "id": "ml_phishing_classifier",
+     "severity": "CRITICAL",
+     "category": "ml",
+     "title": "ML classifier: 91% phishing probability",
+     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
+     "score_impact": 40,
+     "positive": false
+    }
+   ],
+   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
+   "timestamp": "2026-10-10T21:07:34",
+   "timestamp_display": "10 Oct 2026 21:07",
+   "source": "panel"
+  }
+ }
+]

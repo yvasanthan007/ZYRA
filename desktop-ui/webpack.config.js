@@ -7,6 +7,17 @@ module.exports = (env) => {
   const config = {
     mode: 'development',
     devtool: 'source-map',
+    externalsPresets: { electronMain: true, electronPreload: true },
+    // Bind BOTH the source specifier ('electron') and the preset's resolved
+    // request ('electron/main') to Electron's real BUILT-IN module. Plain
+    // require('electron') resolves to node_modules/electron/index.js, which
+    // exports the executable PATH (a string), not the API.
+    externals: {
+      electron: 'commonjs2 electron/main',
+      'electron/main': 'commonjs2 electron/main',
+      'electron/common': 'commonjs2 electron',
+      'electron/renderer': 'commonjs2 electron',
+    },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
     },

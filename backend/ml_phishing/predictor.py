@@ -65,11 +65,20 @@ def _load():
             try:
                 payload = joblib.load(path)
                 model = payload.get("model") if isinstance(payload, dict) else payload
+                stored_features = (payload.get("feature_names")
+                                   if isinstance(payload, dict) else None)
                 meta_path = os.path.join(os.path.dirname(path), "model_meta.json")
                 if os.path.exists(meta_path):
                     with open(meta_path, "r", encoding="utf-8") as fh:
                         meta = json.load(fh)
-            except Exception:
+                declared_features = stored_features or (meta or {}).get("feature_names")
+                if declared_features and list(declared_features) != FEATURE_NAMES:
+                    raise ValueError("model feature order does not match the inference pipeline")
+                expected_count = getattr(model, "n_features_in_", len(FEATURE_NAMES))
+                if int(expected_count) != len(FEATURE_NAMES):
+                    raise ValueError("model feature count does not match the inference pipeline")
+            except Exception as exc:
+                print(f"[ML] model unavailable ({type(exc).__name__})")
                 model = meta = None
         _CACHE.update({"key": key, "model": model, "meta": meta})
         return model, meta
@@ -169,7 +178,18 @@ def analyze_url(url: str) -> dict:
             return model_info()  # carries available=False + reason
         feats = extract_features(raw)
         vec = [float(feats.get(name, 0)) for name in FEATURE_NAMES]
-        prob = float(model.predict_proba([vec])[0][1])
+        classes = list(getattr(model, "classes_", []))
+        phishing_indexes = [
+            index for index, label in enumerate(classes)
+            if label == 1 or str(label).strip().lower() in ("phishing", "phish", "malicious")
+        ]
+        if len(phishing_indexes) != 1:
+            return {"available": False,
+                    "note": "ML model does not expose an unambiguous phishing class."}
+        probabilities = model.predict_proba([vec])[0]
+        prob = float(probabilities[phishing_indexes[0]])
+        if not __import__("math").isfinite(prob):
+            return {"available": False, "note": "ML model returned a non-finite probability."}
         prob = min(max(prob, 0.0), 1.0)
 
         signals = []

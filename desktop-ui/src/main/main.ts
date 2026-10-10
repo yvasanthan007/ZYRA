@@ -295,11 +295,8 @@ ipcMain.handle('command:execute', async (_event, command: string): Promise<unkno
 // mid-listen by flipping the toggle — the stop call is serialized behind it
 // and the UI must treat the promise as the single source of truth.
 //
-// NOTE: /api/voice accepts transcribed TEXT only (it cannot capture audio),
-// so microphone capture always goes through the legacy bridge. The
-// FastAPI backend is still the command-routing authority: the bridge
-// forwards every transcript to backend/server.py process_voice_command(),
-// the same function /api/voice and /ws 'voice' use.
+// Microphone capture uses a single legacy bridge request. Backend scans run in
+// their own FastAPI process, so they never share this capture lock or listener.
 let voiceInFlight: Promise<unknown> | null = null;
 
 ipcMain.handle('voice:toggle', async (_event, enabled: boolean): Promise<unknown> => {

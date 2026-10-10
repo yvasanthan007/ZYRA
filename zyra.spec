@@ -115,6 +115,9 @@ hiddenimports = [
     "sklearn.model_selection",
     "sklearn.pipeline",
     "joblib",
+    # The shipped phishing_model.joblib is an XGBClassifier artifact.
+    "xgboost",
+    "xgboost.sklearn",
 
     # Image / screen capture.
     "PIL",
