@@ -9,6 +9,7 @@ interface ZyraAPI {
   executeCommand: (command: string) => Promise<string>;
   toggleVoice: (enabled: boolean) => Promise<{ transcript: string; response: string }>;
   getVoiceStatus: () => Promise<{ listening: boolean }>;
+  analyzeLink: (url: string) => Promise<unknown>;
   remember: (key: string, value: string) => Promise<string>;
   recall: (key: string) => Promise<string | null>;
   getCommands: () => Promise<CommandItem[]>;

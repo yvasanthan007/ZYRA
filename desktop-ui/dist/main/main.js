@@ -750,6 +750,21 @@ electron_1.ipcMain.handle('voice:toggle', async (_event, enabled) => {
 electron_1.ipcMain.handle('voice:status', async () => {
     return bridgeCommand('voice_status', null);
 });
+// Analyze a user-selected / manually entered URL for phishing.
+//
+// Primary path: FastAPI POST /api/analyze-link {url} — the existing
+// link_security engine (never auto-opens the URL). Fallback: the legacy
+// bridge `analyze_link` handler (explicit URL first, bounded OCR capture
+// only when no URL was passed; never blocks voice).
+electron_1.ipcMain.handle('link:analyze', async (_event, url) => {
+    const target = typeof url === 'string' ? url.trim() : '';
+    if (backendReady()) {
+        // FastAPI validates + analyzes the exact input; on failure surface the
+        // backend's own error (missing-URL vs analysis error stay distinct).
+        return backendCall('POST', '/api/analyze-link', { url: target });
+    }
+    return bridgeCommand('analyze_link', target);
+});
 // Remember something.
 electron_1.ipcMain.handle('memory:remember', async (_event, key, value) => {
     if (backendReady()) {

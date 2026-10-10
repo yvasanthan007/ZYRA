@@ -66,6 +66,10 @@ electron_1.contextBridge.exposeInMainWorld('zyraAPI', {
     // an Error carrying the failure reason (STT unavailable / mic / backend).
     toggleVoice: (enabled) => electron_1.ipcRenderer.invoke('voice:toggle', enabled),
     getVoiceStatus: () => electron_1.ipcRenderer.invoke('voice:status'),
+    // Phishing analysis for a user-selected / manually entered URL.
+    // Resolves the backend's analysis payload; rejects when no URL was
+    // passed or the scan failed. The URL is analyzed, never auto-opened.
+    analyzeLink: (url) => electron_1.ipcRenderer.invoke('link:analyze', url),
     // Memory
     remember: (key, value) => electron_1.ipcRenderer.invoke('memory:remember', key, value),
     recall: (key) => electron_1.ipcRenderer.invoke('memory:recall', key),

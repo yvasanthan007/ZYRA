@@ -6,12 +6,15 @@ Usage (from the repository root):
     python -m backend.ml_phishing.train --csv dataset.csv   # real dataset
     python -m backend.ml_phishing.train --n-estimators 500  # bigger forest
 
-Trains two candidates — RandomForest and LogisticRegression — on a stratified
-80/20 split, keeps the candidate with the better F1 on the hold-out, and
-saves the winning model plus metadata:
+Trains up to three candidates — XGBoost (when installed), RandomForest and
+LogisticRegression — on a stratified 80/20 split, keeps the candidate with the
+better F1 on the hold-out, and saves the winning model plus metadata:
 
     backend/ml_phishing/models/phishing_model.joblib
     backend/ml_phishing/models/model_meta.json
+
+XGBoost is preferred on an F1 tie; it is optional so training always works with
+scikit-learn alone.
 """
 
 import argparse
@@ -75,6 +78,22 @@ def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
         ]),
     }
 
+    # ── XGBoost candidate (preferred when installed) ──
+    # Gradient-boosted trees are the requested production classifier; the
+    # sklearn candidates remain as a guaranteed fallback so training never
+    # depends on the optional dependency.
+    try:
+        from xgboost import XGBClassifier
+        candidates["XGBClassifier"] = XGBClassifier(
+            n_estimators=n_estimators, max_depth=6, learning_rate=0.15,
+            subsample=0.9, colsample_bytree=0.9, eval_metric="logloss",
+            n_jobs=-1, random_state=seed, tree_method="hist",
+        )
+    except Exception as exc:  # noqa: BLE001 — optional dependency
+        if verbose:
+            print(f"  (xgboost unavailable: {type(exc).__name__} — "
+                  "training sklearn candidates only)")
+
     results, fitted = {}, {}
     for name, model in candidates.items():
         model.fit(X_train, y_train)
@@ -84,9 +103,13 @@ def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
         if verbose:
             print(f"  {name}: {results[name]}")
 
-    # Prefer F1; break ties in favour of the forest (feature importances).
-    best_name = max(results,
-                    key=lambda n: (results[n]["f1"], n == "RandomForestClassifier"))
+    # Prefer F1; break ties in favour of XGBoost (production default), then
+    # the forest (feature importances).
+    _preference = {"XGBClassifier": 2, "RandomForestClassifier": 1}
+    best_name = max(
+        results,
+        key=lambda n: (results[n]["f1"], _preference.get(n, 0)),
+    )
     return best_name, fitted[best_name], results, (X_test, y_test)
 
 
@@ -142,7 +165,7 @@ def main(argv=None):
     parser.add_argument("--per-class", type=int, default=1200,
                         help="Seed-dataset size per class (default 1200).")
     parser.add_argument("--n-estimators", type=int, default=300,
-                        help="RandomForest tree count (default 300).")
+                        help="Tree count for the tree ensembles (default 300).")
     parser.add_argument("--seed", type=int, default=42,
                         help="RNG seed for split, models and seed dataset.")
     args = parser.parse_args(argv)

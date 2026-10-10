@@ -111,7 +111,110 @@ def handle_message(msg):
     msg_type = msg.get("type", "")
     data = msg.get("data")
 
-    if msg_type == "chat":
+    # ── URL resolution helper (shared by analyze_link paths) ──
+    def _resolve_link_target(explicit_url=None, text=None):
+        """Resolve which URL to analyze: explicit > text-embedded > capture.
+
+        Returns (target_url, source) where source is one of
+        "selected" | "entered" | "message" | "screen" | "none".
+
+        Privacy: callers must only log whether a URL was received and its
+        source — never clipboard/screen contents.
+        """
+        from backend.link_security import extract_url as _extract
+
+        candidate = (explicit_url or "").strip() if explicit_url else ""
+        if candidate:
+            return candidate, "selected"
+        if text and text.strip():
+            found = _extract(text)
+            if found:
+                return found, "message"
+        return None, "none"
+
+    if msg_type == "analyze_link":
+        # Selected/entered-URL phishing analysis for the desktop UI.
+        # Contract: data may be a raw URL string or
+        # {url, text?, timeout_secs?}. An explicitly provided URL is
+        # analyzed DIRECTLY — screen OCR is only a fallback when no URL
+        # was passed, and it runs bounded off-thread so the shared bridge
+        # (and any active voice session) is never blocked.
+
+        explicit_url = None
+        fallback_text = None
+        ocr_timeout = 12.0
+        if isinstance(data, str):
+            explicit_url = data.strip()
+        elif isinstance(data, dict):
+            explicit_url = str(data.get("url") or "").strip()
+            fallback_text = data.get("text")
+            try:
+                ocr_timeout = max(2.0, min(30.0, float(
+                    data.get("timeout_secs", ocr_timeout))))
+            except (TypeError, ValueError):
+                ocr_timeout = 12.0
+        else:
+            return {"success": False, "error": "Invalid analyze_link data"}
+        # Privacy-conscious diagnostic: event + URL presence only.
+        print(f"[analyze_link] event=received "
+              f"has_explicit_url={bool(explicit_url)}")
+        target, source = _resolve_link_target(explicit_url, fallback_text)
+        if target:
+            print(f"[analyze_link] source={source} "
+                  f"has_url=True url_len={len(target)}")
+        else:
+            print("[analyze_link] source=none has_url=False; "
+                  "falling back to screen/clipboard capture")
+            try:
+                from screen_ocr import get_active_url as _capture_url
+                import concurrent.futures as _fut
+                with _fut.ThreadPoolExecutor(max_workers=1) as _pool:
+                    target = _pool.submit(_capture_url).result(
+                        timeout=ocr_timeout)
+                source = "screen" if target else "none"
+                print(f"[analyze_link] capture done source={source} "
+                      f"has_url={bool(target)}")
+            except _fut.TimeoutError:
+                print(f"[analyze_link] OCR capture timed out after "
+                      f"{ocr_timeout}s; reporting no-URL (voice unaffected)")
+                target, source = None, "none"
+            except Exception as exc:
+                print(f"[analyze_link] capture error "
+                      f"({type(exc).__name__}); reporting no-URL")
+                target, source = None, "none"
+        if not target:
+            return {
+                "success": False,
+                "error": ("No URL was provided. Enter or select a URL, "
+                          "or ensure a link is visible on screen/in clipboard."),
+                "source": "none",
+            }
+        # Validate + analyze the resolved URL directly (never auto-open).
+        try:
+            import sys as _sys
+            _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            if _root not in _sys.path:
+                _sys.path.insert(0, _root)
+            from link_analysis import analyze_url as _analyze
+        except Exception as exc:
+            return {"success": False,
+                    "error": f"Analysis engine unavailable ({type(exc).__name__}).",
+                    "source": source, "url": target}
+        from backend.link_security import extract_url as _normalize_check
+        checked = _normalize_check(target) or target.strip()
+        print(f"[analyze_link] analyzing source={source} "
+              f"url_len={len(checked)}")
+        try:
+            result = _analyze(checked)
+        except Exception as exc:
+            return {"success": False,
+                    "error": f"Analysis failed ({type(exc).__name__}).",
+                    "source": source, "url": checked}
+        result["source"] = source
+        result["url"] = checked
+        return {"success": True, "data": result}
+
+    elif msg_type == "chat":
         if isinstance(data, str):
             # Route through the same backend bridge as the dashboard so link
             # security (now ML-fused), system monitor, DNS and nmap intents

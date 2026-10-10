@@ -35942,6 +35942,7 @@ const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js"
 const Sidebar_1 = __importDefault(__webpack_require__(/*! ./components/Sidebar */ "./src/renderer/components/Sidebar.tsx"));
 const ChatView_1 = __importDefault(__webpack_require__(/*! ./components/ChatView */ "./src/renderer/components/ChatView.tsx"));
 const CommandPanel_1 = __importDefault(__webpack_require__(/*! ./components/CommandPanel */ "./src/renderer/components/CommandPanel.tsx"));
+const LinkAnalyzer_1 = __importDefault(__webpack_require__(/*! ./components/LinkAnalyzer */ "./src/renderer/components/LinkAnalyzer.tsx"));
 const VoiceControl_1 = __importDefault(__webpack_require__(/*! ./components/VoiceControl */ "./src/renderer/components/VoiceControl.tsx"));
 const Settings_1 = __importDefault(__webpack_require__(/*! ./components/Settings */ "./src/renderer/components/Settings.tsx"));
 const SystemMonitor_1 = __importDefault(__webpack_require__(/*! ./components/SystemMonitor */ "./src/renderer/components/SystemMonitor.tsx"));
@@ -35954,6 +35955,8 @@ const App = () => {
                 return (0, jsx_runtime_1.jsx)(ChatView_1.default, { setStatus: setStatusMessage });
             case 'commands':
                 return (0, jsx_runtime_1.jsx)(CommandPanel_1.default, { setStatus: setStatusMessage });
+            case 'links':
+                return (0, jsx_runtime_1.jsx)(LinkAnalyzer_1.default, {});
             case 'monitor':
                 return (0, jsx_runtime_1.jsx)(SystemMonitor_1.default, { setStatus: setStatusMessage });
             case 'voice':
@@ -36094,6 +36097,59 @@ exports["default"] = CommandPanel;
 
 /***/ },
 
+/***/ "./src/renderer/components/LinkAnalyzer.tsx"
+/*!**************************************************!*\
+  !*** ./src/renderer/components/LinkAnalyzer.tsx ***!
+  \**************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+const LinkAnalyzer = () => {
+    const [url, setUrl] = (0, react_1.useState)('');
+    const [analyzedUrl, setAnalyzedUrl] = (0, react_1.useState)('');
+    const [result, setResult] = (0, react_1.useState)(null);
+    const [error, setError] = (0, react_1.useState)('');
+    const [busy, setBusy] = (0, react_1.useState)(false);
+    const handleAnalyze = async () => {
+        const target = url.trim();
+        if (!target || busy)
+            return;
+        setBusy(true);
+        setError('');
+        setResult(null);
+        // Echo the exact input being analyzed (safely escaped by React).
+        setAnalyzedUrl(target);
+        try {
+            const raw = await window.zyraAPI.analyzeLink(target);
+            // Guard: a resolved `{success:false, error}` payload (bridge-style
+            // failure) must surface as an error, not an empty result.
+            const status = raw;
+            if (status && status.success === false) {
+                setError(status.error || 'Link analysis failed');
+                return;
+            }
+            const payload = raw?.analysis
+                ?? raw?.data
+                ?? raw;
+            setResult({ ...payload, url: payload?.url ?? target });
+        }
+        catch (err) {
+            setError(err instanceof Error ? err.message : 'Link analysis failed');
+        }
+        finally {
+            setBusy(false);
+        }
+    };
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "link-analyzer", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Phishing Link Analyzer" }), (0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Paste or type a URL, then Analyze. The exact input shown below is what gets analyzed \u2014 links are never opened automatically." }), (0, jsx_runtime_1.jsxs)("div", { className: "chat-input-area", children: [(0, jsx_runtime_1.jsx)("textarea", { className: "chat-input", value: url, onChange: (e) => setUrl(e.target.value), placeholder: "https://example.com/login", rows: 2, disabled: busy, "aria-label": "URL to analyze" }), (0, jsx_runtime_1.jsx)("button", { className: "send-button", onClick: handleAnalyze, disabled: busy || !url.trim(), children: busy ? '...' : 'Analyze' })] }), analyzedUrl && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Analyzing:" }), (0, jsx_runtime_1.jsx)("p", { children: analyzedUrl })] })), error && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", role: "alert", children: error })), result && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [(0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Verdict:" }), (0, jsx_runtime_1.jsx)("p", { children: result.verdict ?? '—' })] }), (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Risk:" }), (0, jsx_runtime_1.jsx)("p", { children: result.risk_score ?? '—' })] }), result.recommendation && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Recommendation:" }), (0, jsx_runtime_1.jsx)("p", { children: result.recommendation })] }))] }))] }));
+};
+exports["default"] = LinkAnalyzer;
+
+
+/***/ },
+
 /***/ "./src/renderer/components/Settings.tsx"
 /*!**********************************************!*\
   !*** ./src/renderer/components/Settings.tsx ***!
@@ -36157,6 +36213,7 @@ const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modul
 const navItems = [
     { id: 'chat', label: 'Chat', icon: '💬' },
     { id: 'commands', label: 'Commands', icon: '⚡' },
+    { id: 'links', label: 'Links', icon: '🔗' },
     { id: 'monitor', label: 'Monitor', icon: '📊' },
     { id: 'voice', label: 'Voice', icon: '🎤' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },

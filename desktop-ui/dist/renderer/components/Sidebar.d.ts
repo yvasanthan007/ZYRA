@@ -1,5 +1,5 @@
 import React from 'react';
-type View = 'chat' | 'commands' | 'monitor' | 'voice' | 'settings';
+type View = 'chat' | 'commands' | 'links' | 'monitor' | 'voice' | 'settings';
 interface SidebarProps {
     activeView: View;
     onViewChange: (view: View) => void;

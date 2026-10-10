@@ -16,6 +16,7 @@ package so every network module shares one safety policy.
 """
 
 import ipaddress
+import re
 import socket
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse, urlunparse
@@ -168,6 +169,18 @@ def validate_url(raw_url: str) -> dict:
     if len(raw) > MAX_URL_LENGTH:
         result["error"] = "URL exceeds the maximum allowed length (2048 characters)."
         result["error_code"] = "TOO_LONG"
+        return result
+
+    # ── Dangerous-scheme pre-check on the RAW input ──
+    # normalize_url() prepends 'https://' to scheme-less input, which would
+    # turn 'javascript:alert(1)' into 'https://javascript:alert(1)' and hide
+    # the dangerous protocol behind a later BAD_PORT error. Catch the raw
+    # scheme before any normalization happens.
+    raw_scheme = re.match(r"^([A-Za-z][A-Za-z0-9+.\-]*):", raw)
+    if raw_scheme and raw_scheme.group(1).lower() in DANGEROUS_SCHEMES:
+        scheme_name = raw_scheme.group(1).lower()
+        result["error"] = f"Dangerous protocol blocked: '{scheme_name}:'"
+        result["error_code"] = "DANGEROUS_PROTOCOL"
         return result
 
     candidate = normalize_url(raw)

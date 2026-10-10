@@ -6,6 +6,11 @@ Loads the trained model lazily (thread-safe) and exposes analyze_url_ml():
 a dict with the phishing probability, a verdict, and the most influential
 features for this URL (flagged features ranked by model importance).
 
+Semantics: `probability` is the model's estimated PHISHING probability
+(0..1 — higher = MORE dangerous). This is the inverse of ZYRA's safety
+score (0..100, higher = safer) reported by backend/url_analyzer/risk_scorer.py;
+never display the two side by side without their own labels.
+
 Degradation contract (matches ZYRA's backend style — never raises):
   - scikit-learn / joblib missing or model file missing → {"available": False}
   - ZYRA_ML_DISABLE=1                                   → disabled at runtime

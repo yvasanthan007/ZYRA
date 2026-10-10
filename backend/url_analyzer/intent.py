@@ -53,6 +53,8 @@ def is_url_analysis_intent(text: str) -> bool:
     True when the message should activate the URL Analyzer.
 
     Rules (strongest first):
+      - The message IS a standalone URL (pasted on its own) — implicit
+        "analyze this URL": "https://example.com:8443/login"
       - A URL is present AND any analysis trigger/verb appears:
         "Analyze https://example.com", "Check https://example.com"
       - A URL is present AND a safety-verdict word appears — this catches
@@ -67,6 +69,21 @@ def is_url_analysis_intent(text: str) -> bool:
     t = text.lower().strip()
 
     has_url = extract_url(t) is not None or bool(_BARE_URL_RE.search(t))
+
+    # Standalone URL: everything in the message is (just) the URL — an
+    # implicit request to analyze it, with no verb/noun required.
+    if has_url:
+        bare = t.strip().rstrip(".,!?;:'\"()[]{}<>")
+        m = _BARE_URL_RE.search(bare)
+        if m and bare == m.group(0):
+            return True
+        found = extract_url(bare)
+        if found and found in bare:
+            remainder = (bare[:bare.index(found)]
+                         + bare[bare.index(found) + len(found):])
+            if not remainder.strip(".,!?;:'\"()[]{}<>"):
+                return True
+
     has_trigger = any(k in t for k in _ANALYSIS_TRIGGERS)
     has_noun = any(k in t for k in _URL_NOUNS)
     has_safety_word = any(k in t for k in _SAFETY_QUESTION_WORDS)

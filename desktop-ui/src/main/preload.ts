@@ -20,6 +20,12 @@ contextBridge.exposeInMainWorld('zyraAPI', {
   getVoiceStatus: (): Promise<{ listening: boolean }> =>
     ipcRenderer.invoke('voice:status'),
 
+  // Phishing analysis for a user-selected / manually entered URL.
+  // Resolves the backend's analysis payload; rejects when no URL was
+  // passed or the scan failed. The URL is analyzed, never auto-opened.
+  analyzeLink: (url: string): Promise<unknown> =>
+    ipcRenderer.invoke('link:analyze', url),
+
   // Memory
   remember: (key: string, value: string): Promise<string> =>
     ipcRenderer.invoke('memory:remember', key, value),
