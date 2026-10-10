@@ -2,6 +2,7 @@ import sys
 import json
 import importlib.util
 import os
+import threading
 
 # ── Windows console safety ──────────────────────────────────────────────
 # Force UTF-8 stdout/stderr BEFORE importing ZYRA modules. Any emoji print
@@ -50,8 +51,7 @@ _voice_microphone = None
 # to serialize overlapping start requests instead of opening the microphone
 # twice concurrently.
 _voice_capture_active = False
-
-
+_voice_capture_lock = threading.Lock()
 def _voice_seconds(name, default):
     """Read a voice timeout from the environment (honours .env config)."""
     try:
@@ -289,7 +289,7 @@ def handle_message(msg):
             }
 
         global _voice_capture_active
-        if _voice_capture_active:
+        if not _voice_capture_lock.acquire(blocking=False):
             return {
                 "success": False,
                 "error": "Voice capture already in progress. Wait for it to finish.",
@@ -358,7 +358,7 @@ def handle_message(msg):
             }
         finally:
             _voice_capture_active = False
-
+            _voice_capture_lock.release()
         if not text:
             return {
                 "success": True,
