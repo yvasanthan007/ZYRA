@@ -47,7 +47,7 @@ from commands.open_app import (
 )
 from commands.close_app import close_app
 from memory import remember, recall
-from backend.server import start_server_thread, broadcast_system_monitor_trigger
+from backend.server import start_server_thread, broadcast_system_monitor_trigger, start_url_scan
 from zyra_handler import handle_analyze_link_intent, is_link_analysis_intent
 from backend.url_analyzer import (
     extract_target_url,
@@ -418,10 +418,16 @@ def _url_voice_completion_watcher(scan_id: str):
                 return
             if status == "ERROR":
                 reason = state.get("error") or "Please try again."
-                speak(f"The URL analysis failed. {reason}")
+                try:
+                    speak(f"The URL analysis failed. {reason}")
+                except Exception as e:
+                    print(f"[URL WATCHER] speak failed: {e}")
                 return
         time.sleep(1.0)
-    speak("The URL analysis could not be completed within the allowed time.")
+    try:
+        speak("The URL analysis could not be completed within the allowed time.")
+    except Exception as e:
+        print(f"[URL WATCHER] speak failed: {e}")
 
 
 def handle_url_analysis_voice(command: str):
@@ -509,10 +515,16 @@ def _dns_voice_completion_watcher(lookup_id: str):
                 return
             if status == "ERROR":
                 reason = state.get("error") or "Please try again."
-                speak(f"The DNS lookup failed. {reason}")
+                try:
+                    speak(f"The DNS lookup failed. {reason}")
+                except Exception as e:
+                    print(f"[DNS WATCHER] speak failed: {e}")
                 return
         time.sleep(1.0)
-    speak("The DNS lookup could not be completed within the allowed time.")
+    try:
+        speak("The DNS lookup could not be completed within the allowed time.")
+    except Exception as e:
+        print(f"[DNS WATCHER] speak failed: {e}")
 
 
 def handle_dns_analysis_voice(command: str):
@@ -553,6 +565,44 @@ def handle_dns_analysis_voice(command: str):
 # ========== Main Entry Point ==========
 
 if __name__ == "__main__":
+    # ── Process-wide safety net ──────────────────────────────────────────
+    # Nothing — not an analysis failure, not a stray sys.exit() in a helper,
+    # not an uncaught exception in a daemon thread — may silently terminate
+    # ZYRA. These hooks catch anything that escapes a normal except block and
+    # log it loudly instead of letting the process die. The voice loop below
+    # additionally has its own per-iteration guards, so this is defence in
+    # depth for code paths that run outside that loop.
+    def _zyra_excepthook(exc_type, exc, tb):
+        try:
+            print(f"[ZYRA][safety] uncaught {exc_type.__name__}: {exc!r} "
+                  f"— process stays alive")
+        except Exception:
+            pass
+    sys.excepthook = _zyra_excepthook
+
+    def _zyra_thread_excepthook(args):
+        try:
+            print(f"[ZYRA][safety] uncaught error in thread "
+                  f"{getattr(args, 'thread', None) and args.thread.name}: "
+                  f"{args.exc_type.__name__}: {args.exc_value!r} — process stays alive")
+        except Exception:
+            pass
+    threading.excepthook = _zyra_thread_excepthook
+
+    # Heartbeat: proves the main process is still running between and after
+    # analyses. Prints once a minute so logs show ZYRA never exited.
+    def _heartbeat():
+        ticks = 0
+        while True:
+            time.sleep(60)
+            ticks += 1
+            try:
+                print(f"[ZYRA][heartbeat] main process alive ({ticks} min) — "
+                      f"voice loop + server running")
+            except Exception:
+                pass
+    threading.Thread(target=_heartbeat, daemon=True, name="ZYRA-heartbeat").start()
+
     # Register signal handlers for clean shutdown
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -564,8 +614,12 @@ if __name__ == "__main__":
     ╚══════════════════════════════════════╝
     """)
 
-    # Register Microsoft Edge as the preferred browser
-    register_edge_browser()
+    # Register Microsoft Edge as the preferred browser.
+    # Best-effort: a failure (or a stray sys.exit) here must never stop ZYRA.
+    try:
+        register_edge_browser()
+    except BaseException as _e:  # noqa: BLE001
+        print(f"[ZYRA] Browser registration skipped ({_e!r}) - continuing.")
 
     # When ZYRA is launched by the Electron desktop shell (ZYRA_NO_EDGE=1) the
     # dashboard is hosted inside the Electron window, so the external Microsoft
@@ -580,22 +634,34 @@ if __name__ == "__main__":
     else:
         embed_in_electron = _no_edge_env.strip().lower() in ("1", "true", "yes", "on")
 
-    # Start the backend server in background thread (non-blocking)
-    server_thread = start_backend_server()
+    # Start the backend server in background thread (non-blocking).
+    # Guarded so a startup failure never aborts the voice assistant.
+    try:
+        server_thread = start_backend_server()
+    except BaseException as _e:  # noqa: BLE001
+        print(f"[ZYRA] Backend server thread failed to start ({_e!r}) - voice loop continues.")
+        server_thread = None
 
     # Wait for the server to be fully initialized and listening
     # This polls the /api/health endpoint with retries
-    server_ready = wait_for_server(DASHBOARD_URL, max_retries=8, retry_interval=1.0)
+    try:
+        server_ready = wait_for_server(DASHBOARD_URL, max_retries=8, retry_interval=1.0)
+    except BaseException as _e:  # noqa: BLE001
+        print(f"[ZYRA] Server readiness check skipped ({_e!r}) - continuing.")
+        server_ready = False
 
-    if embed_in_electron:
-        # Electron already owns the dashboard window; open no external browser.
-        print("   🖥️  Desktop mode: dashboard is embedded in Electron (no Edge window).")
-    elif server_ready:
-        # Open the dashboard in Microsoft Edge
-        open_dashboard_in_edge(DASHBOARD_URL)
-    else:
-        print("\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway...")
-        open_dashboard_in_edge(DASHBOARD_URL)
+    try:
+        if embed_in_electron:
+            # Electron already owns the dashboard window; open no external browser.
+            print("   🖥️  Desktop mode: dashboard is embedded in Electron (no Edge window).")
+        elif server_ready:
+            # Open the dashboard in Microsoft Edge
+            open_dashboard_in_edge(DASHBOARD_URL)
+        else:
+            print("\n⚠️  Server may not be fully ready. Attempting to open dashboard anyway...")
+            open_dashboard_in_edge(DASHBOARD_URL)
+    except BaseException as _e:  # noqa: BLE001
+        print(f"[ZYRA] Dashboard open skipped ({_e!r}) - continuing.")
 
     print("\n✨ ZYRA is now running!")
     print("   🎤 Voice commands: Speak into your microphone")
@@ -608,10 +674,15 @@ if __name__ == "__main__":
     try:
         from brain import warm_up_async
         warm_up_async()
-    except Exception:
+    except BaseException:
         pass
 
-    speak("Hello, I am Zyra. How can I help you today?")
+    try:
+        speak("Hello, I am Zyra. How can I help you today?")
+    except BaseException as _e:  # noqa: BLE001 - TTS must never abort the loop
+        print(f"[ZYRA] Greeting skipped ({_e!r}) - continuing.")
+
+    print("[ZYRA] Startup complete - entering resilient voice loop.")
 
     try:
         while running:
@@ -835,47 +906,79 @@ if __name__ == "__main__":
                     # normalize for the routing fallback checks.
                     target_url = extract_target_url(command)
                     normalized, has_url = _normalize_voice_command(command)
-                    if target_url:
-                        # A URL was present in the normalized text -> run it.
-                        launch = start_url_scan(target_url, source="voice")
-                        if not launch.get("success"):
-                            reason = launch.get("error") or "Please try again."
-                            print(f"   ⚠️  URL scan could not start: {reason}")
-                            speak(f"I couldn't start the URL analysis. {reason}")
-                            break
-                        _broadcast_url_analyzer(target_url)
-                        speak(f"Running a security analysis on {target_url}. Please wait.")
-                        threading.Thread(
-                            target=_url_voice_completion_watcher,
-                            args=(launch["scan_id"],),
-                            daemon=True,
-                        ).start()
-                        break
-                    # No URL in the normalized text -> fall back to the original
-                    # intent so legacy behavior (screen/clipboard capture) is kept.
-                    # We re-route the original command here.
-                    if not has_url:
-                        # The user said "analyze link" with no URL -> still open
-                        # the panel and let the backend/UI handle the capture.
-                        print("   🔗 No URL in the command - falling back to screen/clipboard link analysis.")
-                        result = handle_analyze_link_intent(command)
-                        if result and result.get("success") and result.get("checks"):
-                            print(f"   🔗 URL: {result.get('url')} | Score: {result.get('score')} | Verdict: {result.get('verdict')}")
-                        break
-                    handle_url_analysis_voice(command)
+                    # CRITICAL: this branch must NEVER break out of the voice
+                    # loop. Analysis is asynchronous (background worker threads +
+                    # a completion-watcher thread that speaks the result), so
+                    # the loop always continues. Any failure is logged and
+                    # spoken, but the process stays alive.
+                    try:
+                        if target_url:
+                            # A URL was present in the normalized text -> run it.
+                            print("[ZYRA] ANALYSIS START (spoken URL scan)")
+                            launch = start_url_scan(target_url, source="voice")
+                            if not launch.get("success"):
+                                reason = launch.get("error") or "Please try again."
+                                print(f"   ⚠️  URL scan could not start: {reason}")
+                                speak(f"I couldn't start the URL analysis. {reason}")
+                                continue
+                            _broadcast_url_analyzer(target_url)
+                            speak(f"Running a security analysis on {target_url}. Please wait.")
+                            threading.Thread(
+                                target=_url_voice_completion_watcher,
+                                args=(launch["scan_id"],),
+                                daemon=True,
+                            ).start()
+                            print("[ZYRA] ANALYSIS DISPATCHED - main loop continues (process stays alive)")
+                            continue
+                        # No URL in the normalized text -> fall back to the original
+                        # intent so legacy behavior (screen/clipboard capture) is kept.
+                        # We re-route the original command here.
+                        if not has_url:
+                            # The user said "analyze link" with no URL -> still open
+                            # the panel and let the backend/UI handle the capture.
+                            print("   🔗 No URL in the command - falling back to screen/clipboard link analysis.")
+                            print("[ZYRA] ANALYSIS START (screen/clipboard link scan)")
+                            result = handle_analyze_link_intent(command)
+                            if result and result.get("success") and result.get("checks"):
+                                print(f"   🔗 URL: {result.get('url')} | Score: {result.get('score')} | Verdict: {result.get('verdict')}")
+                            print("[ZYRA] ANALYSIS COMPLETE - MAIN PROCESS STILL ALIVE")
+                            continue
+                        handle_url_analysis_voice(command)
+                    except SystemExit as e:
+                        # A helper calling sys.exit() must never kill ZYRA.
+                        print(f"[ZYRA] Suppressed SystemExit({e.code}) in URL analysis - process stays alive")
+                    except BaseException as e:
+                        print(f"[ZYRA] URL analysis error ({type(e).__name__}) (process stays alive): {e!r}")
+                        try:
+                            speak("Sorry, the link analysis failed, but I'm still running.")
+                        except BaseException:
+                            pass
 
                 elif is_link_analysis_intent(command):
                     # Use the new real-time screen capture link analysis
                     # Captures screen OCR + clipboard, runs 8-check heuristic,
-                    # and speaks the exact verdict directly to user
-                    result = handle_analyze_link_intent(command)
+                    # and speaks the exact verdict directly to user.
+                    # Never break/exit here: analysis failures must keep the loop alive.
+                    try:
+                        print("[ZYRA] ANALYSIS START (screen/clipboard link intent)")
+                        result = handle_analyze_link_intent(command)
 
-                    # Print detailed report to console
-                    if result.get("success") and result.get("checks"):
-                        print(f"\n🔗 URL: {result['url']}")
-                        print(f"📈 Risk Score: {result['score']}")
-                        print(f"⚖️  Verdict: {result['verdict']}")
-                        print(f"🗣️  Speech: {result['speech_text']}")
+                        # Print detailed report to console (score + severity)
+                        if result and result.get("success") and result.get("checks"):
+                            print(f"\n🔗 URL: {result['url']}")
+                            print(f"📈 Risk Score: {result['score']}")
+                            print(f"⚖️  Verdict: {result['verdict']}")
+                            print(f"🎚️  Severity: {result.get('severity', 'Unknown')}")
+                            print(f"🗣️  Speech: {result['speech_text']}")
+                        print("[ZYRA] ANALYSIS COMPLETE - MAIN PROCESS STILL ALIVE")
+                    except SystemExit as e:
+                        print(f"[ZYRA] Suppressed SystemExit({e.code}) in link analysis - process stays alive")
+                    except BaseException as e:
+                        print(f"[ZYRA] Link analysis error ({type(e).__name__}) (process stays alive): {e!r}")
+                        try:
+                            speak("Sorry, the link analysis failed, but I'm still running.")
+                        except BaseException:
+                            pass
 
                 elif is_nmap_intent(command):
                     # Network scanning with Nmap
@@ -896,10 +999,23 @@ if __name__ == "__main__":
                 speak("Shutting down. Goodbye.")
                 break
 
+            except SystemExit as e:
+                # A nested helper calling sys.exit() must never terminate ZYRA.
+                print(f"[ZYRA] Suppressed SystemExit({e.code}) in main loop - process stays alive")
+
             except Exception as e:
-                print("Error:", e)
-                speak("Sorry, something went wrong.")
+                print(f"[ZYRA] Command error (process stays alive): {e!r}")
+                try:
+                    speak("Sorry, something went wrong.")
+                except BaseException:
+                    pass
+
+            except BaseException as e:  # noqa: BLE001 - absolute last line of defence
+                # Catches any exotic BaseException subclass not handled above so
+                # the voice loop can NEVER be terminated by a command/analysis.
+                print(f"[ZYRA] Suppressed {type(e).__name__} in main loop - process stays alive")
 
     finally:
         # Always run cleanup when the main loop exits
+        print("[ZYRA] Voice loop ended - running cleanup (intentional shutdown).")
         cleanup()

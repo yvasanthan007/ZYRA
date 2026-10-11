@@ -43,7 +43,7 @@ from backend.zyra_bridge import (
     process_message,
     speak_text,
 )
-from brain import stream_ai, warm_up_async
+from brain import stream_ai, warm_up_async, check_ollama, get_model
 from backend.link_security import (
     analyze_url_security,
     format_security_report,
@@ -908,6 +908,25 @@ async def health_check():
     }
 
 
+@app.get("/api/ai/status")
+async def ai_status():
+    """Report live Ollama connectivity so the UI/user can verify chat will work.
+
+    Runs the (blocking) Ollama probe in a worker thread so it never stalls the
+    event loop. `available: true` means Zyra can answer; when false, `message`
+    is the clear, actionable fallback (start Ollama / pull a model).
+    """
+    status = await asyncio.to_thread(check_ollama)
+    return {
+        "success": True,
+        "available": status.get("available", False),
+        "model": get_model(),
+        "models": status.get("models", []),
+        "reachable": status.get("reachable", False),
+        "message": status.get("message", ""),
+    }
+
+
 @app.post("/api/chat")
 async def chat_endpoint(data: Dict[str, Any]):
     """
@@ -1716,6 +1735,63 @@ async def _stream_ai_to(websocket: WebSocket, question: str) -> Dict[str, Any]:
     return {"success": True, "data": text, "streamed": True}
 
 
+def _spawn_link_capture(question: str, websocket: WebSocket = None) -> None:
+    """
+    Capture the on-screen/clipboard link and analyze it in a background thread.
+
+    OCR (EasyOCR) is slow and can fail hard, so it never runs on the event
+    loop. The report is pushed back to the requesting dashboard client over the
+    WebSocket when ready. This function is fully guarded: no capture/analysis
+    failure (including SystemExit or a native error surfaced as a Python
+    exception) can escape the worker thread and kill the server. If the
+    analysis cannot complete, an explanatory message is sent instead.
+    """
+    def _worker():
+        try:
+            try:
+                from screen_ocr import get_active_url
+                url = get_active_url()
+            except BaseException as exc:  # noqa: BLE001 - OCR must never kill server
+                print(f"[ZYRA][link-capture] capture error (suppressed): {exc!r}")
+                url = None
+
+            if not url:
+                report = ("I couldn't find a link on your screen or in your "
+                          "clipboard. Copy the link or show it on screen, then "
+                          "ask me to analyze it again.")
+            else:
+                try:
+                    report = format_security_report(analyze_url_security(url))
+                except BaseException as exc:  # noqa: BLE001
+                    print(f"[ZYRA][link-capture] analysis error (suppressed): {exc!r}")
+                    report = (f"I found {url} but could not finish the security "
+                              f"analysis. Please try again.")
+
+            if websocket is not None:
+                _send_personal_sync(
+                    {"type": "response", "success": True, "data": report},
+                    websocket,
+                )
+            print("[ZYRA][link-capture] finished — server thread still alive.")
+        except BaseException as exc:  # noqa: BLE001 - absolute last line of defence
+            print(f"[ZYRA][link-capture] unexpected worker error (suppressed): {exc!r}")
+
+    threading.Thread(
+        target=_worker, daemon=True, name="ZYRA-link-capture"
+    ).start()
+
+
+def _send_personal_sync(message: Dict[str, Any], websocket: WebSocket) -> None:
+    """Thread-safe helper: send a personal WebSocket message from a worker thread."""
+    global _server_loop
+    if _server_loop and _server_loop.is_running():
+        try:
+            asyncio.run_coroutine_threadsafe(
+                manager.send_personal(message, websocket), _server_loop)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[ZYRA][link-capture] failed to send report: {exc!r}")
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """
@@ -1784,7 +1860,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             },
                             websocket,
                         )
-                        _spawn_link_capture(routed.get("question", ""))
+                        _spawn_link_capture(routed.get("question", ""), websocket)
                         streamed = True
                         result = {"success": True, "data": None}
                     else:
@@ -2019,12 +2095,55 @@ def run_server(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = F
     print(f"📋 API docs: http://{host}:{port}/docs")
     print(f"🔍 Health check: http://{host}:{port}/api/health\n")
 
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        log_level="info",
-    )
+    # The server thread must survive transient failures (e.g. port briefly in
+    # use, an internal uvicorn error). Retry a few times before giving up;
+    # even if it eventually gives up, the voice loop in main.py stays alive
+    # because this thread is a daemon and never calls sys.exit().
+    #
+    # CRITICAL: uvicorn.run() calls sys.exit() on several fatal startup paths
+    # (port already bound, bad config, signal during boot). SystemExit derives
+    # from BaseException, NOT Exception, so the generic handler below would
+    # never catch it — it would propagate out of this thread, kill the daemon
+    # ZYRA-Server thread, and silently disconnect the dashboard/WebSocket.
+    # That was the "process disconnects after a link analysis" bug. We catch
+    # SystemExit explicitly (and BaseException as a last resort) so the server
+    # thread can never be terminated by a startup/analysis-side failure.
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        try:
+            print(f"[ZYRA][server] starting uvicorn (attempt {attempt}/{max_attempts})")
+            uvicorn.run(
+                app,
+                host=host,
+                port=port,
+                log_level="info",
+            )
+            print("[ZYRA][server] uvicorn stopped cleanly (programmatic shutdown).")
+            return  # clean shutdown requested (e.g. via programmatic stop)
+        except KeyboardInterrupt:
+            print("[ZYRA][server] KeyboardInterrupt — shutting server thread down.")
+            return
+        except SystemExit as e:
+            # A sys.exit() from uvicorn must never kill the whole ZYRA process.
+            print(f"[ZYRA][server] suppressed SystemExit({e.code}) on attempt "
+                  f"{attempt}/{max_attempts} — server thread stays alive, will retry.")
+            if attempt < max_attempts:
+                wait = 3 * attempt
+                print(f"[ZYRA][server] restarting backend server in {wait}s...")
+                time.sleep(wait)
+            else:
+                print("[ZYRA][server] could not start after "
+                      f"{max_attempts} attempts. Voice assistant keeps running.")
+        except BaseException as e:  # noqa: BLE001 — nothing may kill this thread
+            print(f"[ZYRA][server] backend server error (attempt {attempt}/{max_attempts}): {e!r}")
+            if attempt < max_attempts:
+                wait = 3 * attempt
+                print(f"[ZYRA][server] restarting backend server in {wait}s...")
+                time.sleep(wait)
+            else:
+                print("[ZYRA][server] could not be started after "
+                      f"{max_attempts} attempts. Voice assistant keeps running.")
+    print("[ZYRA][server] server thread exiting its retry loop (voice loop unaffected).")
 
 
 def start_server_thread(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = False):

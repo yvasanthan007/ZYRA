@@ -98,7 +98,7 @@ def is_link_analysis_intent(text: str) -> bool:
 # Main Handler Function
 # ──────────────────────────────────────────────
 
-def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:
+def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
     """
     Main entry point for link analysis intent handling.
     
@@ -221,6 +221,69 @@ def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:
         "checks": result['checks'],
         "success": True,
         "virustotal_override": vt_override
+    }
+
+
+def _severity_from_result(result: dict) -> str:
+    """Derive a simple severity label from an analysis result.
+
+    Uses the verdict when present, otherwise maps the numeric score. Used so
+    callers (voice loop, dashboard) always get a severity alongside the score.
+    """
+    verdict = str(result.get("verdict") or "").lower()
+    if verdict in ("safe", "suspicious", "dangerous", "not found", "error"):
+        return verdict.capitalize()
+    try:
+        score = int(result.get("score") or 0)
+    except (TypeError, ValueError):
+        return "Unknown"
+    if score >= 5:
+        return "Dangerous"
+    if score >= 2:
+        return "Suspicious"
+    return "Safe"
+
+
+def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:
+    """
+    Crash-safe public entry point for link analysis.
+
+    Delegates to :func:`_handle_analyze_link_intent_impl`, but guarantees the
+    voice loop can never be killed by an analysis failure: exceptions and
+    ``SystemExit`` raised anywhere in the pipeline (OCR, heuristic analysis,
+    VirusTotal, TTS) are caught here, a fallback result is returned, and a
+    short spoken notice is attempted.
+
+    Always returns a dict containing at least ``score`` and ``severity`` so
+    downstream callers never have to guess the risk level.
+    """
+    print("[ZYRA][link] ANALYSIS START - main process remains alive")
+    try:
+        result = _handle_analyze_link_intent_impl(user_text)
+        if isinstance(result, dict):
+            result.setdefault("severity", _severity_from_result(result))
+        print(f"[ZYRA][link] ANALYSIS FINISHED - verdict={result.get('verdict')} "
+              f"score={result.get('score')} severity={result.get('severity')} "
+              f"- main process remains alive")
+        return result
+    except SystemExit as e:
+        print(f"[ZYRA][link] ANALYSIS raised SystemExit({e.code}) - suppressed, process stays alive")
+        speech_text = "Sorry, the link analysis was interrupted. Please try again."
+    except BaseException as e:  # noqa: BLE001 - absolute last line of defence
+        print(f"[ZYRA][link] ANALYSIS error ({type(e).__name__}: {e!r}) - suppressed, process stays alive")
+        speech_text = "Sorry, the link analysis failed. Please try again."
+    try:
+        speak(speech_text)
+    except BaseException:
+        pass
+    return {
+        "url": None,
+        "score": 0,
+        "severity": "Error",
+        "verdict": "Error",
+        "speech_text": speech_text,
+        "checks": [],
+        "success": False
     }
 
 

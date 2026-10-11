@@ -142,7 +142,6 @@ class MissionRegressionTests(unittest.TestCase):
 
     # ── Bug 1: voice + URL analysis ──────────────────────────────
 
-    def test_bug1_url_reaches_analyzer_through_ocr_clipboard_chain(self):
     def test_risk_score_semantics_are_explicit_and_probability_is_not_inverted(self):
         low = score_scan([], domain_info={"resolved": True, "whois_available": True},
                          ssl_info={"checked": True}, reputation={"available": True, "reputation": "clean"},

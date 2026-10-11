@@ -20,9 +20,23 @@ import io
 import os
 import threading
 import time
+import sys
 from urllib.parse import urlparse
 
 from PIL import Image
+
+# ── Windows console safety ──────────────────────────────────────────────
+# Force UTF-8 output before any emoji status print below (📸 🔍 ⏱️ 📭 ✅ 🔗 …).
+# On a cp1252 console a plain print() of these glyphs raises
+# UnicodeEncodeError, which can abort the calling thread (and, in the voice
+# path, the whole process). Matches the guard used in main.py / speak.py.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 
 # ──────────────────────────────────────────────
 # URL Regex Pattern
@@ -46,10 +60,17 @@ URL_REGEX = re.compile(
 
 # Wider screenshots are scaled down before OCR — cost scales with pixel count
 # and URLs stay legible, so this cuts the capture time on high-res displays.
-MAX_OCR_WIDTH = 1000
+# NOTE: keep this high enough that small address-bar/link text stays legible.
+# EasyOCR misreads (and drops the '.' in) URLs once the text is downscaled too
+# far — a 1000px cap turned "example.com/signin" into "example com/signin" and
+# "paypa1-secure-login.xyz" into garbage, so screen links were never found.
+# 1600px keeps dense URL text readable while still bounding the cost.
+MAX_OCR_WIDTH = 1600
 # Hard cap for a single OCR pass — the capture never blocks forever. Generous
-# enough to finish on a CPU-only machine (a full-screen EasyOCR pass is slow).
-OCR_TIMEOUT_SECONDS = 45
+# enough to finish on a CPU-only machine (a full-screen EasyOCR pass is slow:
+# a warm reader does ~1600px in well under 15s, but a cold model + big screen
+# can take longer, and abandoning it mid-inference just yields no URL).
+OCR_TIMEOUT_SECONDS = int(os.environ.get("ZYRA_OCR_TIMEOUT_SECONDS", "90"))
 
 # Plausible top-level domains for BARE domains. Screen/clipboard text has no
 # scheme, so a loose match would otherwise pick up code identifiers such as
@@ -111,15 +132,27 @@ def capture_screen(monitor_index=1):
 
 # Lazy-loaded EasyOCR reader (initialized once)
 _ocr_reader = None
+# Guards one-time reader construction so two concurrent captures can never
+# build (and race on) two EasyOCR readers at once.
+_ocr_reader_lock = threading.Lock()
+# Serializes every reader.readtext() call. EasyOCR/torch is NOT thread-safe:
+# two overlapping readtext() calls on the shared reader corrupt native state
+# and can segfault the whole process. This lock is the crash guard.
+_ocr_infer_lock = threading.Lock()
 
 
 import zyra_paths
 
 
 def _get_ocr_reader():
-    """Get or initialize the EasyOCR reader singleton."""
+    """Get or initialize the EasyOCR reader singleton (thread-safe)."""
     global _ocr_reader
-    if _ocr_reader is None:
+    if _ocr_reader is not None:
+        return _ocr_reader
+    with _ocr_reader_lock:
+        # Double-checked: another thread may have built it while we waited.
+        if _ocr_reader is not None:
+            return _ocr_reader
         try:
             import easyocr
             print("   🔍 Initializing EasyOCR (first load may take a moment)...")
@@ -158,19 +191,31 @@ def _readtext_bounded(reader, image_bytes, timeout=OCR_TIMEOUT_SECONDS):
     """
     Run EasyOCR in a worker thread and return a list of strings, or None if the
     OCR pass exceeded the timeout (so a capture can never hang forever).
+
+    The actual readtext() runs under _ocr_infer_lock so only one inference is
+    ever in flight on the shared, non-thread-safe reader — this is what keeps a
+    timed-out (abandoned) worker from overlapping the next capture and
+    segfaulting the process. The lock is acquired *inside* the worker so the
+    timeout still bounds the caller; a capture that times out simply returns
+    None and releases its claim as soon as the in-flight inference finishes.
     """
     box = {}
 
     def _run():
-        try:
-            box["result"] = reader.readtext(image_bytes, detail=0, paragraph=True)
-        except Exception as exc:  # noqa: BLE001
-            box["error"] = exc
+        # Serialize native inference; the timeout below still bounds the caller.
+        with _ocr_infer_lock:
+            try:
+                box["result"] = reader.readtext(image_bytes, detail=0, paragraph=True)
+            except Exception as exc:  # noqa: BLE001
+                box["error"] = exc
 
     worker = threading.Thread(target=_run, daemon=True)
     worker.start()
     worker.join(timeout)
     if worker.is_alive():
+        # Timed out. The worker keeps the infer lock only until its readtext
+        # returns, then releases it — so the next capture waits for the current
+        # inference instead of starting a second, crashing one.
         return None
     if "error" in box:
         raise box["error"]
@@ -200,108 +245,147 @@ def extract_text_from_image(image):
         pass
 
     started = time.monotonic()
-    # Save image to a temporary bytes buffer for EasyOCR
-    with io.BytesIO() as buf:
-        image.save(buf, format="PNG")
-        png_bytes = buf.getvalue()
-    text = _readtext_bounded(reader, png_bytes, timeout=OCR_TIMEOUT_SECONDS)
-    elapsed = time.monotonic() - started
-    if text is None:
-        print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
-    elif isinstance(text, list) and not text:
-        print(f"   📭 OCR returned no text (elapsed {elapsed:.1f}s).")
-    return " ".join(text) if isinstance(text, list) else str(text or "")
-    started = time.monotonic()
-    text = _readtext_bounded(reader, image, timeout=OCR_TIMEOUT_SECONDS)
-    elapsed = time.monotonic() - started
-    if text is None:
-        print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
-    elif isinstance(text, list) and not text:
-        print(f"   📭 OCR returned no text (elapsed {elapsed:.1f}s).")
-    return " ".join(text) if isinstance(text, list) else str(text or "")
-
-
-# ──────────────────────────────────────────────
-# 3. URL Extraction from Text
-# ──────────────────────────────────────────────
-def extract_text_from_image(image):
-    """
-    Run OCR on a PIL Image and return all detected text.
-
-    Uses the bounded worker wrapper so a capture can never block the event
-    loop or hold the microphone open. Returns '' on OCR failure and logs a
-    single diagnostic so the voice path can surface the reason to the user.
-    """
-    reader = _get_ocr_reader()
-    if reader is None:
-        return ""
-
-    # Downscale large screenshots — OCR cost scales with pixel count and URLs
-    # stay legible, so this keeps the capture fast on high-res displays.
     try:
-        width, height = image.size
-        if width > MAX_OCR_WIDTH:
-            scale = MAX_OCR_WIDTH / float(width)
-            image = image.resize((int(width * scale), int(height * scale)))
-    except Exception:
-        pass
-
-    started = time.monotonic()
-    text = _readtext_bounded(reader, image, timeout=OCR_TIMEOUT_SECONDS)
-    elapsed = time.monotonic() - started
-    if text is None:
-        print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
-    elif isinstance(text, list) and not text:
-        print(f"   📭 OCR returned no text (elapsed {elapsed:.1f}s).")
-    return " ".join(text) if isinstance(text, list) else str(text or "")
-def extract_text_from_image(image):
-    """
-    Run OCR on a PIL Image and return all detected text.
-
-    Args:
-        image: PIL.Image object to analyze.
-
-    Returns:
-        str: All detected text concatenated, or empty string on failure.
-    """
-    reader = _get_ocr_reader()
-    if reader is None:
-        return ""
-
-    # Downscale large screenshots — OCR cost scales with pixel count and URLs
-    # stay legible, so this keeps the capture fast on high-res displays.
-    try:
-        width, height = image.size
-        if width > MAX_OCR_WIDTH:
-            scale = MAX_OCR_WIDTH / float(width)
-            image = image.resize((int(width * scale), int(height * scale)))
-    except Exception:
-        pass
-
-    started = time.monotonic()
-    try:
-        # Save image to a temporary bytes buffer for EasyOCR
+        # Save image to a temporary bytes buffer for EasyOCR.
         with io.BytesIO() as buf:
             image.save(buf, format="PNG")
             data = buf.getvalue()
 
-        results = _readtext_bounded(reader, data)
+        results = _readtext_bounded(reader, data, timeout=OCR_TIMEOUT_SECONDS)
+        elapsed = time.monotonic() - started
         if results is None:
-            print(f"   ⚠️  OCR timed out after {OCR_TIMEOUT_SECONDS}s.")
+            print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
             return ""
-
         # Concatenate all detected text (detail=0 -> list of strings).
         text = " ".join(str(item) for item in results)
-        print(f"   ⏱️  OCR completed in {time.monotonic() - started:.1f}s")
+        print(f"   ⏱️  OCR completed in {elapsed:.1f}s")
         return text
     except Exception as e:
-        print(f"   ⚠️  OCR extraction failed: {e}")
+        print(f"   ⚠️  OCR extraction failed: {type(e).__name__}: {e}")
         return ""
 
 
 # ──────────────────────────────────────────────
 # 3. URL Extraction from Text
 # ──────────────────────────────────────────────
+
+def _repair_ocr_url_noise(text: str) -> str:
+    """Repair the punctuation EasyOCR mangles in on-screen URLs.
+
+    Real EasyOCR output turns ``https://`` into ``https:Il`` / ``hltps:Il`` and,
+    critically, **drops the dots between host labels** (``paypal com`` instead of
+    ``paypal.com``), so a strict regex never matches a real screen link. This
+    normalizes those observed confusions so a screen link can still be recovered.
+
+    It is intentionally conservative: the dot-reinsertion only runs behind an
+    explicit ``scheme://`` or ``www`` anchor (or a bare ``host/path`` shape) and
+    only accepts a host whose final label is a whitelisted TLD — so ordinary
+    prose ("example com") and code identifiers are never turned into links.
+    """
+    # 1) Fix a mangled scheme prefix (hltps:/https:/http: followed by I/l/1///…).
+    text = re.sub(r"\b[hf]lt?t?ps?\s*[:;]?\s*[Il1/\\|]{1,}", "https://", text, flags=re.I)
+    text = re.sub(r"\bhttps?\s*[:;]?\s*[Il1/\\|]{1,}", "https://", text, flags=re.I)
+    text = re.sub(r"\bwww\.\s*[Il1/\\|]{1,}", "www.", text, flags=re.I)
+
+    # 2) Rebuild a host whose dots OCR turned into spaces, anchored on scheme://
+    #    or www. Walk tokens until the host is complete (its last label is a
+    #    known TLD) or a path delimiter is hit; rejoin labels with '.' and keep
+    #    any path/remainder intact.
+    def _rebuild(prefix: str, rest: str) -> str:
+        tokens = rest.split()
+        if not tokens:
+            return prefix + rest
+        host_labels = []
+        path = ""
+        remainder_start = len(tokens)
+        for i, tok in enumerate(tokens):
+            if any(c in tok for c in "/?#"):
+                head = re.split(r"[/?#]", tok, 1)[0]
+                if head:
+                    host_labels.append(head)
+                    path = tok[len(head):]
+                remainder_start = i + 1
+                break
+            host_labels.append(tok)
+            # Stop once the accumulated host already ends in a known TLD
+            # (so trailing prose words aren't swallowed into the host).
+            if host_labels[-1].lower().split(".")[-1] in _COMMON_TLDS:
+                remainder_start = i + 1
+                break
+        if len(host_labels) < 2:
+            return prefix + rest
+        host = ".".join(host_labels).lower().strip(".,;:!?")
+        tld = host.rsplit(".", 1)[-1]
+        if "." not in host or tld not in _COMMON_TLDS:
+            return prefix + rest  # not a plausible host — leave prose alone
+        out = prefix + host + path
+        remainder = " ".join(tokens[remainder_start:])
+        if remainder:
+            out += " " + remainder
+        return out
+
+    # scheme:// anchored  →  "https://google com/search?q=x now" -> google.com/...
+    text = re.sub(
+        r"(https?://)([^\s][a-zA-Z0-9 ./_~?=&%#-]*)",
+        lambda m: _rebuild(m.group(1), m.group(2)),
+        text,
+    )
+    # www anchored (no scheme) → "www paypal com/signin" -> "www.paypal.com/signin"
+    text = re.sub(
+        r"(?<![a-zA-Z0-9.])(www)(\s+[^\s][a-zA-Z0-9 ./_~?=&%#-]*)",
+        lambda m: _rebuild(m.group(1) + ".", m.group(2)),
+        text,
+    )
+
+    # 3) Bare "host/path" where OCR split the domain dot but kept a path slash:
+    #    "bit ly/3xM7" -> "bit.ly/3xM7". Gated on the 2nd label being a TLD AND
+    #    being followed by '/', so prose like "example com" stays untouched.
+    text = re.sub(
+        r"(?<![a-zA-Z0-9.])([a-z0-9][a-z0-9-]*)\s+([a-z]{2,24})(?=/)",
+        lambda m: f"{m.group(1)}.{m.group(2)}"
+        if m.group(2).lower() in _COMMON_TLDS else m.group(0),
+        text,
+        flags=re.I,
+    )
+    return text
+
+
+# Tolerant host finder for OCR-mangled text: label(.label)*.tld, and only when
+# the final label is a plausible TLD (so 'fastapi.testclient' / '19.99' / a
+# version '1.2.3' are never treated as links).
+_LENIENT_HOST_RE = re.compile(
+    r"(?<![a-z0-9.])([a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+    r"(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.([a-z]{2,24}))(?![a-z])",
+    re.IGNORECASE,
+)
+
+
+def _lenient_hosts(text: str):
+    """Recover plausible hosts from noisy OCR text (may be empty)."""
+    text = _repair_ocr_url_noise(text)
+    hosts, seen = [], set()
+
+    def _add(host: str):
+        host = host.lower().strip(".,;:!?)")
+        tld = host.rsplit(".", 1)[-1]
+        if host and tld in _COMMON_TLDS and host not in seen:
+            seen.add(host)
+            hosts.append(host)
+
+    # Scheme/www-anchored spans first (most reliable), then any bare host.
+    for m in re.finditer(r"(https?://[^\s]+|www\.[^\s]+)", text, re.IGNORECASE):
+        span = re.sub(r"^https?://", "", m.group(0), flags=re.IGNORECASE)
+        hm = _LENIENT_HOST_RE.search(span)
+        if hm:
+            _add(hm.group(1))
+    for m in _LENIENT_HOST_RE.finditer(text):
+        # Skip email local-parts: "user@example.com" is not a link to visit.
+        start = m.start(1)
+        if start > 0 and text[start - 1] == "@":
+            continue
+        _add(m.group(1))
+    return hosts
+
 
 def extract_urls_from_text(text):
     """
@@ -312,6 +396,11 @@ def extract_urls_from_text(text):
     plausible TLD — so code identifiers / filenames (e.g. 'fastapi.testclient',
     'torch.dataloader') are not mistaken for links.
 
+    On-screen text comes from OCR, which mangles URL punctuation (``https://``
+    becomes ``https:Il`` and a long URL is split across spaces). When the strict
+    pattern finds nothing, a tolerant recovery pass rebuilds a plausible host
+    from the noisy text so a screen link is still detected.
+
     Args:
         text: The text to search for URLs.
 
@@ -321,7 +410,10 @@ def extract_urls_from_text(text):
     if not text:
         return []
 
-    matches = URL_REGEX.findall(text)
+    # OCR mangles URL punctuation and drops dots between host labels, so repair
+    # that noise first — then the strict pattern can match real screen links.
+    repaired = _repair_ocr_url_noise(text)
+    matches = URL_REGEX.findall(repaired)
     prioritized = []   # http(s):// or www. links
     bare = []          # scheme-less domain.tld links
     seen = set()
@@ -353,7 +445,12 @@ def extract_urls_from_text(text):
         seen.add(url)
         bucket.append(normalized)
 
-    return prioritized + bare
+    results = prioritized + bare
+    if results:
+        return results
+
+    # Strict pass found nothing — common for OCR text. Recover tolerantly.
+    return [f"https://{host}" for host in _lenient_hosts(text)]
 
 
 # ──────────────────────────────────────────────
@@ -422,42 +519,168 @@ def get_active_url():
     Returns:
         str: The extracted URL string, or None if no URL found.
     """
-    # Fast path: the clipboard is a single URL -> no OCR needed.
-    url = _clipboard_exact_url()
-    if url:
-        print(f"   ✅ URL found in clipboard (fast path): {url}")
-        return url
+    print("[ZYRA][ocr] get_active_url START - resolving on-screen/clipboard link")
+    try:
+        # Fast path: the clipboard is a single URL -> no OCR needed.
+        url = _clipboard_exact_url()
+        if url:
+            print(f"   ✅ URL found in clipboard (fast path): {url}")
+            return url
 
-    # Step 1: capture the on-screen URL via OCR (bounded).
-    print("\n📸 Capturing screen for URL detection...")
-    image = capture_screen()
-    if image is not None:
-        print(f"   ✅ Screen captured ({image.size[0]}x{image.size[1]}px)")
+        # Step 1: capture the on-screen URL via OCR. Run the capture+OCR in an
+        # isolated child process so a native EasyOCR/torch/mss crash can never
+        # down the server (see _capture_url_isolated). The child timeout is the OCR
+        # budget plus a margin for cold model load + process startup.
+        print("\n📸 Capturing screen for URL detection...")
+        screen_url = _capture_url_isolated(timeout=OCR_TIMEOUT_SECONDS + 60)
+        if screen_url:
+            print(f"   🔗 URL found on screen: {screen_url}")
+            return screen_url
+        print("   ℹ️  No on-screen URL (capture produced nothing).")
 
-        text = extract_text_from_image(image)
-        if text:
-            print(f"   📝 OCR detected text ({len(text)} chars)")
-            urls = extract_urls_from_text(text)
-            if urls:
-                url = urls[0]
-                print(f"   🔗 URL found on screen: {url}")
-                if len(urls) > 1:
-                    print(f"   ℹ️  Found {len(urls)} URLs total, using first one.")
-                return url
+        # Step 3: fall back to any URL inside clipboard text.
+        print("   📋 Checking clipboard for URL...")
+        url = get_url_from_clipboard()
+        if url:
+            print(f"   ✅ URL found in clipboard: {url}")
+            return url
+
+        print("   ❌ No URL found on screen or in clipboard.")
+        return None
+    except BaseException as exc:  # noqa: BLE001 - a capture must never kill the caller
+        print(f"[ZYRA][ocr] get_active_url error ({type(exc).__name__}: {exc}) - "
+              f"returning no URL. Process stays alive.")
+        return None
+    finally:
+        print("[ZYRA][ocr] get_active_url END - caller continues running")
+
+
+# ──────────────────────────────────────────────
+# 5b. Isolated screen-capture worker (crash containment)
+# ──────────────────────────────────────────────
+# EasyOCR/torch/mss are native libraries that can SEGFAULT the whole Python
+# process — an uncatchable crash that takes the FastAPI server (a daemon thread
+# of main.py) down with it, which is exactly the "process exits after a screen
+# analysis" bug. Python try/except cannot stop a native crash, so the ONLY
+# reliable containment is to run the capture+OCR in a child process: if the
+# native stack dies there, only the short-lived child is lost and the server
+# keeps running. The child prints the resulting URL (or empty) as its last
+# stdout line; a nonzero exit / timeout is treated as "no URL found".
+
+def _ocr_capture_worker() -> int:
+    """Child-process entry: capture the screen, OCR it, print the URL.
+
+    Invoked as ``python screen_ocr.py --ocr-capture``. Prints exactly one line
+    to stdout: the extracted URL, or an empty line if none was found. All human
+    diagnostics go to stderr so stdout stays machine-readable. Exits 0 on a
+    normal (even if empty) result; a native crash would abort before the print.
+    """
+    import json
+
+    def _log(msg: str) -> None:
+        try:
+            print(msg, file=sys.stderr, flush=True)
+        except Exception:
+            pass
+
+    try:
+        url = None
+        image = capture_screen()
+        if image is not None:
+            _log(f"[ocr-worker] screen captured {image.size[0]}x{image.size[1]}px")
+            text = extract_text_from_image(image)
+            if text:
+                _log(f"[ocr-worker] text: {text[:200]!r}")
+                urls = extract_urls_from_text(text)
+                if urls:
+                    url = urls[0]
+                    _log(f"[ocr-worker] url: {url}")
+            else:
+                _log("[ocr-worker] no text from OCR")
         else:
-            print("   ❌ No text detected on screen.")
-    else:
-        print("   ❌ Screen capture failed.")
+            _log("[ocr-worker] screen capture failed")
+        # Machine-readable result on stdout (single line).
+        sys.stdout.write(json.dumps({"url": url}) + "\n")
+        sys.stdout.flush()
+        return 0
+    except Exception as exc:  # never let the child traceback confuse the parent
+        _log(f"[ocr-worker] error: {type(exc).__name__}: {exc}")
+        try:
+            sys.stdout.write(json.dumps({"url": None}) + "\n")
+            sys.stdout.flush()
+        except Exception:
+            pass
+        return 0
 
-    # Step 3: fall back to any URL inside clipboard text.
-    print("   📋 Checking clipboard for URL...")
-    url = get_url_from_clipboard()
-    if url:
-        print(f"   ✅ URL found in clipboard: {url}")
-        return url
 
-    print("   ❌ No URL found on screen or in clipboard.")
-    return None
+def _capture_url_isolated(timeout: float):
+    """Capture + OCR the screen in a child process; return a URL or None.
+
+    Contains any native EasyOCR/torch/mss crash to the child so the calling
+    (server) process survives. Returns None on no-URL, timeout, or child crash.
+    """
+    import subprocess
+
+    # In a PyInstaller-frozen build there is no standalone screen_ocr.py to hand
+    # to a child interpreter (sys.executable is the app exe, not python). There
+    # we can't isolate this way, so run in-process — behaviour matches the
+    # pre-isolation code path. Normal dev/venv runs take the isolated branch.
+    # The in-process OCR inference is still bounded by _readtext_bounded's
+    # timeout + infer lock, and we catch BaseException here so a SystemExit or
+    # other escape from the native stack cannot take down the caller.
+    if getattr(sys, "frozen", False) or not os.path.isfile(os.path.abspath(__file__)):
+        try:
+            image = capture_screen()
+            if image is None:
+                return None
+            text = extract_text_from_image(image)
+            urls = extract_urls_from_text(text) if text else []
+            return urls[0] if urls else None
+        except BaseException as exc:  # noqa: BLE001 - must never kill the caller
+            print(f"   ⚠️  Screen OCR failed ({type(exc).__name__}: {exc}); "
+                  f"returning no URL. Process stays alive.")
+            return None
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, os.path.abspath(__file__), "--ocr-capture"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        print(f"   ⏱️  Screen OCR subprocess timed out after {timeout:.0f}s.")
+        return None
+    except Exception as exc:  # spawn failure, etc.
+        print(f"   ⚠️  Screen OCR subprocess could not run: {exc}")
+        return None
+
+    # Surface the child's diagnostics (stderr) so operators can see what happened.
+    for line in (proc.stderr or "").splitlines():
+        if line.strip():
+            print(f"   {line.strip()}")
+
+    if proc.returncode != 0:
+        # A native crash lands here (negative/high exit code) — contained.
+        print(f"   ⚠️  Screen OCR subprocess exited abnormally "
+              f"(code {proc.returncode}); treating as no URL. Server stays up.")
+        return None
+
+    # Last non-empty stdout line is the JSON result.
+    url = None
+    for line in reversed((proc.stdout or "").splitlines()):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            import json
+            url = (json.loads(line) or {}).get("url")
+        except Exception:
+            url = line or None
+        break
+    return url or None
 
 
 # Alias for backward compatibility
@@ -469,6 +692,11 @@ get_url_smart = get_active_url
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
+    # Child-process mode: run one isolated screen capture + OCR and exit.
+    # Launched by _capture_url_isolated() so a native crash stays contained.
+    if "--ocr-capture" in sys.argv:
+        raise SystemExit(_ocr_capture_worker())
+
     print("=" * 50)
     print("  Zyra Screen OCR — Standalone Test")
     print("=" * 50)

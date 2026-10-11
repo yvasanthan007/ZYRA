@@ -101,6 +101,21 @@ AI_MEMORY_ENABLED = os.environ.get("ZYRA_AI_MEMORY", "1").strip() not in ("0", "
 # slow; a warm model answers in seconds).
 AI_KEEP_ALIVE = os.environ.get("ZYRA_AI_KEEP_ALIVE", "30m").strip() or "30m"
 
+# Clear, actionable fallback shown the moment Ollama is unreachable or has no
+# chat model installed — instead of blocking for the whole reply budget or
+# returning an opaque error. Used by ask_ai(), stream_ai() and the AI status
+# endpoint.
+OLLAMA_OFFLINE_MESSAGE = (
+    "Ollama is not running. Please start Ollama and pull a model "
+    "(for example: `ollama pull phi3`), then try again."
+)
+
+# Cached positive result of the connectivity probe; None = not yet confirmed.
+# Once Ollama is confirmed reachable we skip the probe on the hot path so a
+# normal chat turn pays no extra latency; a negative result is never cached so
+# Zyra starts answering again as soon as Ollama comes back.
+_ollama_ready: Optional[bool] = None
+
 _MAX_ATTEMPTS = 2
 _RETRY_DELAY_SECONDS = 0.5
 # The one-time model load at warm-up is allowed to take longer than a reply
@@ -128,10 +143,13 @@ _PREFERRED_MODELS = [
     "tinyllama",
 ]
 
-try:
-    _ai_client = ollama.Client(timeout=AI_TIMEOUT_SECONDS)
-except TypeError:  # very old ollama clients that don't accept `timeout`
-    _ai_client = None
+# The shared Ollama client. Left as None on purpose: _get_client() lazily
+# builds it via _make_client() the first time it is needed, so the client
+# honours ZYRA_OLLAMA_HOST and the configured timeout. Building it eagerly
+# here (ollama.Client(timeout=...)) would ignore ZYRA_OLLAMA_HOST — the host
+# override only applied when this was None, which never happened on modern
+# clients — so every caller silently talked to the default Ollama.
+_ai_client = None
 
 
 # ──────────────────────────────────────────────
@@ -180,9 +198,14 @@ def _base_system_prompt() -> str:
     re-prefill of the whole conversation (seconds lost on CPU).
     """
     return (
-        "You are Zyra, a helpful, intelligent, friendly AI assistant. "
-        "Answer in 1-2 short sentences (under 40 words) and get straight to "
-        "the point; only write more when the user explicitly asks for detail. "
+        "You are Zyra, a capable, loyal desktop AI assistant in the spirit of "
+        "JARVIS — confident, warm, and concise. You run locally on this machine "
+        "and can open apps, run security and network scans, read the system, and "
+        "remember things about your user. "
+        "Answer in 1-2 short sentences (under 40 words) and lead with the direct "
+        "answer; only write more when the user explicitly asks for detail. "
+        "Speak naturally as a helpful partner, never invent results, and when you "
+        "genuinely do not know, say so plainly. "
         + SECURITY_ANALYST_PERSONA
         + " "
         + NMAP_PERSONA
@@ -309,6 +332,93 @@ def available_models() -> List[str]:
     return models
 
 
+def check_ollama() -> Dict[str, Any]:
+    """Probe Ollama and report its live status (best effort, never raises).
+
+    Returns a small dict the bridge/status endpoint can hand straight to a
+    caller:
+
+        {
+          "reachable": bool,      # the Ollama server answered the probe
+          "can_enumerate": bool,  # we could actually list installed models
+          "models": [str, ...],   # installed chat models (may be empty)
+          "model": str,           # the model Zyra is configured to use
+          "available": bool,      # reachable AND has a usable model
+          "message": str,         # actionable status text
+        }
+    """
+    status: Dict[str, Any] = {
+        "reachable": False,
+        "can_enumerate": False,
+        "models": [],
+        "model": get_model(),
+        "available": False,
+        "message": OLLAMA_OFFLINE_MESSAGE,
+    }
+    try:
+        sender = _get_client() or ollama
+        info = sender.list()
+    except AttributeError:
+        # A minimal client/test double without list() — we cannot enumerate, so
+        # don't claim Ollama is down; assume the chat path itself will work.
+        status["reachable"] = True
+        status["can_enumerate"] = False
+        status["available"] = True
+        status["message"] = f"Ready (model: {status['model']})."
+        return status
+    except Exception as exc:  # noqa: BLE001 - connection refused / DNS / etc.
+        status["reachable"] = False
+        status["available"] = False
+        status["message"] = OLLAMA_OFFLINE_MESSAGE
+        print(f"brain: Ollama connectivity check failed: {exc}")
+        return status
+
+    models: List[str] = []
+    for entry in info.get("models", []):
+        name = entry.get("name") or entry.get("model") or ""
+        if name and name not in models:
+            models.append(name)
+
+    status["reachable"] = True
+    status["can_enumerate"] = True
+    status["models"] = models
+    if models:
+        status["available"] = True
+        status["message"] = f"Ready (model: {status['model']})."
+    else:
+        status["available"] = False
+        status["message"] = OLLAMA_OFFLINE_MESSAGE
+    return status
+
+
+def _ollama_available() -> bool:
+    """Fast, cached gate: is Ollama reachable with a usable model?
+
+    Only a positive result is cached, so a healthy Ollama adds zero probe
+    latency to normal chat turns. A negative or unknown result is never cached,
+    so Zyra starts answering again the instant Ollama (or a newly pulled model)
+    becomes available. A client that cannot enumerate models is treated as
+    available so the real chat call decides (this also keeps lightweight test
+    doubles on the working path).
+    """
+    global _ollama_ready
+    if _ollama_ready is True:
+        return True
+    _ollama_ready = bool(check_ollama().get("available", False))
+    return _ollama_ready
+
+
+def _note_ollama_failure() -> None:
+    """Invalidate the cached 'available' flag after a chat failure.
+
+    Called from the error paths of ask_ai()/stream_ai() so that if Ollama went
+    away mid-session the very next request re-probes and can report the offline
+    fallback immediately instead of blocking on another doomed chat call.
+    """
+    global _ollama_ready
+    _ollama_ready = None
+
+
 def _select_model() -> str:
     """Pick the model to use from this run.
 
@@ -432,10 +542,7 @@ def _friendly_ollama_error(exc: BaseException) -> str:
     text = str(exc) or "unknown Ollama error"
     lowered = text.lower()
     if "connection" in lowered or "connect" in lowered or "refused" in lowered:
-        return (
-            "I'm having trouble connecting to the AI model. "
-            "Please make sure Ollama is running (ollama serve) and try again."
-        )
+        return OLLAMA_OFFLINE_MESSAGE
     if "load" in lowered or "unavailable" in lowered:
         return "The AI model is still loading. Give me a moment and try again."
     return (
@@ -527,6 +634,15 @@ def ask_ai(question) -> str:
         return "Please say something!"
 
     question = str(question).strip()
+
+    # Fast, honest preflight: if Ollama is down or has no model, return the
+    # clear fallback immediately instead of blocking for the whole reply budget
+    # and coming back with an opaque error. The check is cached-positive, so a
+    # healthy Ollama pays no per-turn cost.
+    if not _ollama_available():
+        print("brain: Ollama unavailable — returning offline fallback")
+        return OLLAMA_OFFLINE_MESSAGE
+
     system_text = _build_system_prompt(_memory_digest())
 
     with _conversation_lock:
@@ -543,12 +659,15 @@ def ask_ai(question) -> str:
         print(f"brain: Ollama error: {exc}")
         with _conversation_lock:
             _prune_locked()
+        _note_ollama_failure()
         return _friendly_ollama_error(exc)
     except Exception as exc:
         elapsed = time.monotonic() - started
         print(f"brain: AI error after {elapsed:.1f}s: {exc}")
         with _conversation_lock:
             _prune_locked()
+        # Ollama may have gone away mid-session — re-probe next turn.
+        _note_ollama_failure()
         # A timeout means the backend hung for the whole reply budget — say so
         # instead of leaving the user staring at a typing indicator.
         return _friendly_failure(exc)
@@ -587,6 +706,14 @@ def stream_ai(question):
         return
 
     question = str(question).strip()
+
+    # Same fast preflight as ask_ai(): surface the clear offline fallback at once
+    # instead of streaming an opaque error after a long wait.
+    if not _ollama_available():
+        print("brain: Ollama unavailable — streaming offline fallback")
+        yield OLLAMA_OFFLINE_MESSAGE
+        return
+
     with _conversation_lock:
         _refresh_system_locked(_build_system_prompt(_memory_digest()))
         conversation.append({"role": "user", "content": question})
@@ -618,12 +745,14 @@ def stream_ai(question):
                 yield piece
     except ollama.ResponseError as exc:
         print(f"brain: Ollama stream error: {exc}")
+        _note_ollama_failure()
         if not pieces:
             yield _friendly_ollama_error(exc)
             return
     except Exception as exc:  # noqa: BLE001 - report instead of raising mid-stream
         elapsed = time.monotonic() - started
         print(f"brain: AI stream error after {elapsed:.1f}s: {exc}")
+        _note_ollama_failure()
         if not pieces:
             yield _friendly_failure(exc)
             return
@@ -718,6 +847,7 @@ __all__ = [
     "ask_ai",
     "stream_ai",
     "available_models",
+    "check_ollama",
     "clear_conversation",
     "get_conversation",
     "get_model",
@@ -730,6 +860,7 @@ __all__ = [
     "AI_RESPONSE_BUDGET_SECONDS",
     "AI_NUM_PREDICT",
     "AI_NUM_CTX",
+    "OLLAMA_OFFLINE_MESSAGE",
 ]
 
 
@@ -740,6 +871,7 @@ __all__ = [
 if __name__ == "__main__":
     print(f"brain: active model = {get_model()}")
     print(f"brain: installed models = {available_models()}")
+    print(f"brain: ollama status = {check_ollama()}")
     print(f"brain: memory digest = {_memory_digest()!r}")
     print("brain: ask_ai('Say hi in one short sentence.') ->")
     print(ask_ai("Say hi in one short sentence."))
