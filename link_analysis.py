@@ -288,8 +288,9 @@ def analyze_url(url: str) -> dict:
         _ = parsed.port  # raises on malformed/non-numeric ports
     except ValueError:
         return {
-            "url": url, "score": 5, "verdict": "Dangerous",
-            "speech_text": "This URL is malformed. Do not open it.",
+            "url": url, "score": 100, "severity": "Critical", "verdict": "Dangerous",
+            "available": True,
+            "speech_text": "Risk score 100 out of 100. Severity: Critical. This URL is malformed. Do not open it.",
             "checks": [{"check": "URL validation", "score": 5,
                         "details": "Malformed URL authority or port."}],
             "ml_phishing": {"available": False, "note": "Invalid URL syntax."},
@@ -297,8 +298,9 @@ def analyze_url(url: str) -> dict:
     path = parsed.path + ("?" + parsed.query if parsed.query else "")
     if parsed.scheme.lower() not in ("http", "https") or not hostname:
         return {
-            "url": url, "score": 5, "verdict": "Dangerous",
-            "speech_text": "This URL uses an unsafe or invalid protocol. Do not open it.",
+            "url": url, "score": 100, "severity": "Critical", "verdict": "Dangerous",
+            "available": True,
+            "speech_text": "Risk score 100 out of 100. Severity: Critical. This URL uses an unsafe or invalid protocol. Do not open it.",
             "checks": [{"check": "URL validation", "score": 5,
                         "details": "Only HTTP and HTTPS URLs with a host can be analyzed."}],
             "ml_phishing": {"available": False, "note": "Unsupported URL scheme or missing host."},
@@ -396,6 +398,13 @@ def analyze_url(url: str) -> dict:
             "details": f"Impersonates {brand_name} (expected {original_domain})"
         })
 
+    if not checks:
+        checks.append({
+            "check": "URL structure",
+            "score": 0,
+            "details": "No obvious phishing indicators were found by the local heuristic checks."
+        })
+
     # ── Check 9: ML phishing classifier (local, offline advisory layer) ──
     # Tiers mirror the deep URL Analyzer: >=0.90 forces Dangerous, >=0.75
     # raises a clean URL to Suspicious; the ML layer never lowers a score.
@@ -412,9 +421,12 @@ def analyze_url(url: str) -> dict:
             total_score = max(total_score, 5)
 
     # ── Determine verdict based on score ──
-    if total_score >= 5:
+    # Bound the public risk score to 0-100. The existing checks are points-based;
+    # this scale keeps the actual signals while giving callers a predictable UI.
+    total_score = max(0, min(100, total_score * 10))
+    if total_score >= 75:
         verdict = "Dangerous"
-    elif total_score >= 2:
+    elif total_score >= 25:
         verdict = "Suspicious"
     else:
         verdict = "Safe"
@@ -425,8 +437,10 @@ def analyze_url(url: str) -> dict:
             ml_probability = 1.0
         if ml_probability >= 0.90:
             verdict = "Dangerous"
+            total_score = max(total_score, 75)
         elif ml_probability >= 0.75 and verdict == "Safe":
             verdict = "Suspicious"
+            total_score = max(total_score, 50)
 
     # ── Generate exact speech text per requirements ──
     speech_text = _generate_speech_text(url, verdict, total_score, ml_analysis)
@@ -436,6 +450,7 @@ def analyze_url(url: str) -> dict:
         vt_verdict = _check_virustotal(url)
         if vt_verdict == "malicious":
             verdict = "Dangerous"
+            total_score = max(total_score, 90)
             speech_text = f"Warning! VirusTotal flagged {url} as malicious."
             checks.append({
                 "check": "VirusTotal",
@@ -443,7 +458,7 @@ def analyze_url(url: str) -> dict:
                 "details": "Flagged as malicious by VirusTotal security vendors"
             })
         elif vt_verdict == "suspicious":
-            total_score += 2
+            total_score = min(100, max(total_score, 50))
             if verdict == "Safe":
                 verdict = "Suspicious"
                 speech_text = _generate_speech_text(url, verdict, total_score, ml_analysis)
@@ -453,9 +468,21 @@ def analyze_url(url: str) -> dict:
                 "details": "Flagged as suspicious by VirusTotal security vendors"
             })
 
+    severity = (
+        "Critical" if total_score >= 90 else
+        "High" if total_score >= 70 else
+        "Medium" if total_score >= 30 else "Low"
+    )
+    speech_text = (
+        f"Risk score {total_score} out of 100. Severity: {severity}. "
+        + speech_text
+    )
+
     return {
         "url": url,
         "score": total_score,
+        "severity": severity,
+        "available": True,
         "verdict": verdict,
         "speech_text": speech_text,
         "checks": checks,

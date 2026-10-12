@@ -73,6 +73,7 @@ SECURITY_ANALYST_PERSONA = (
 
 TRIGGER_PHRASES = (
     "analyse the link", "analyze the link",
+    "analyse the link on the screen", "analyze the link on the screen",
     "analyse this link", "analyze this link",
     "analyse the url", "analyze the url",
     "analyse this url", "analyze this url",

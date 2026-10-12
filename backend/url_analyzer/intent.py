@@ -28,6 +28,9 @@ _ANALYSIS_TRIGGERS = [
     "is it legit", "is this legit", "is it secure", "is this secure",
     "is it trustworthy", "is this trustworthy", "any threats",
     "phishing", "threats", "dangerous", "reputation",
+    "analyze this link", "analyse this link", "analyze the link",
+    "analyse the link", "analyze the link on the screen",
+    "analyse the link on the screen", "link on the screen",
 ]
 
 # Target nouns that identify WHAT should be analyzed

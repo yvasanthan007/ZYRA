@@ -19,7 +19,7 @@ Improvements over the legacy brain:
       ZYRA_AI_MEMORY (0 disables memory injection),
       ZYRA_AI_RESPONSE_BUDGET_SECONDS (hard reply deadline), ZYRA_AI_KEEP_ALIVE
   • Generous, realistic response window — every reply is given
-    AI_RESPONSE_BUDGET_SECONDS (default 120s) to arrive. The budget is a
+    AI_RESPONSE_BUDGET_SECONDS (default 180s) to arrive. The budget is a
     safety net against a hung backend, not a 10s cut-off: CPU-only inference
     needs ~10s for a one-line phi3 answer and 30s+ for an 8B model such as
     llama3, so a reply is never abandoned while the model is still producing
@@ -28,12 +28,12 @@ Improvements over the legacy brain:
     pays a cold-load penalty. Lower the budget (e.g.
     ZYRA_AI_RESPONSE_BUDGET_SECONDS=20) to fail fast instead of waiting.
   • Fast by design on CPU-only machines — the persona, remembered facts and
-    history form a stable prompt prefix so Ollama can reuse its KV cache (the
-    volatile clock moved to the latest user turn: measured prefill 7.8s →
-    0.2s), answers are length-capped (ZYRA_AI_NUM_PREDICT, default 60) and the
+  history form a stable prompt prefix so Ollama can reuse its KV cache (the
+  volatile clock moved to the latest user turn: measured prefill 7.8s →
+  0.2s), responses use a moderate token budget (ZYRA_AI_NUM_PREDICT, default 320),
     history is short (ZYRA_AI_MAX_HISTORY, default 6).
   • Token streaming — stream_ai() yields text as the model produces it, so a
-    UI can show the first words in ~1-2s instead of waiting for the reply.
+    UI can render the first words immediately instead of waiting for the reply.
   • Long-term memory integration — remembered facts (memory.py) are injected
     into the system prompt every turn, so Zyra answers from what she knows about
     the user instead of hallucinating. Recall works directly from the store.
@@ -53,24 +53,24 @@ import time
 from typing import Any, Dict, List, Optional
 
 import ollama
-
-
+# Load .env when this module is imported directly by the API/desktop bridge.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=False)
+except Exception:
+    pass
 # ──────────────────────────────────────────────
 # Configuration (env-tunable)
 # ──────────────────────────────────────────────
 
-# Hard wall-clock budget for one AI reply — a safety net against a hung or
-# unresponsive Ollama backend, NOT a 10s cut-off. CPU-only inference needs
-# ~10s for a one-line phi3 answer and 30s+ for an 8B model such as llama3, so
-# the default is generous (120s): a reply is never abandoned while the model
-# is still generating. Tighten it (e.g. ZYRA_AI_RESPONSE_BUDGET_SECONDS=20)
-# to fail fast instead of waiting.
+# Keep the bounded Ollama request timeout long enough for a cold model load but
+# do not confuse it with response speed; generation size is controlled below.
 try:
     AI_RESPONSE_BUDGET_SECONDS = max(
-        1.0, float(os.environ.get("ZYRA_AI_RESPONSE_BUDGET_SECONDS", "120") or 120)
+        1.0, float(os.environ.get("ZYRA_AI_RESPONSE_BUDGET_SECONDS", "180") or 180)
     )
 except ValueError:  # unparsable override → keep the generous default
-    AI_RESPONSE_BUDGET_SECONDS = 120.0
+    AI_RESPONSE_BUDGET_SECONDS = 180.0
 
 # HTTP timeout for the Ollama call itself. Defaults to the reply budget; an
 # explicit ZYRA_AI_TIMEOUT_SECONDS is honoured but can never exceed the budget,
@@ -87,14 +87,22 @@ AI_TIMEOUT_SECONDS = max(1.0, min(_timeout_value, AI_RESPONSE_BUDGET_SECONDS))
 # keeps the prompt small while preserving the immediate context.
 MAX_HISTORY = int(os.environ.get("ZYRA_AI_MAX_HISTORY", "6"))
 AI_TEMPERATURE = float(os.environ.get("ZYRA_AI_TEMPERATURE", "0.4"))
-# Bounded generation: decode runs at ~4-10 tok/s on CPU, so 120 tokens could
-# cost 15-30s on its own. 60 tokens keeps chat/voice answers to a few seconds
-# (the persona also asks for 1-2 short sentences). Raise for longer replies.
-AI_NUM_PREDICT = int(os.environ.get("ZYRA_AI_NUM_PREDICT", "60"))
-# Context window: a ZYRA prompt is a few hundred tokens, so 2048 is plenty and
-# the smaller KV cache keeps per-token attention cheap on CPU.
-AI_NUM_CTX = int(os.environ.get("ZYRA_AI_NUM_CTX", "2048"))
-AI_MAX_RESPONSE_CHARS = int(os.environ.get("ZYRA_AI_MAX_RESPONSE_CHARS", "3000"))
+# Use a moderate token budget for a timely, complete everyday response. Users
+# can tune ZYRA_AI_NUM_PREDICT higher for code or detailed reports.
+try:
+    AI_NUM_PREDICT = max(128, int(os.environ.get("ZYRA_AI_NUM_PREDICT", "320")))
+except ValueError:
+    AI_NUM_PREDICT = 320
+# Keep context moderate to reduce CPU inference latency while retaining enough
+# room for the active chat and the user's recent turns.
+try:
+    AI_NUM_CTX = max(1024, int(os.environ.get("ZYRA_AI_NUM_CTX", "1536")))
+except ValueError:
+    AI_NUM_CTX = 1536
+try:
+    AI_MAX_RESPONSE_CHARS = max(1000, int(os.environ.get("ZYRA_AI_MAX_RESPONSE_CHARS", "12000")))
+except ValueError:
+    AI_MAX_RESPONSE_CHARS = 12000
 AI_MEMORY_ENABLED = os.environ.get("ZYRA_AI_MEMORY", "1").strip() not in ("0", "false", "False")
 # Keep the model resident in Ollama memory so replies never pay a cold-load
 # penalty (Ollama's default unload after ~5 idle minutes makes the next reply
@@ -115,9 +123,18 @@ OLLAMA_OFFLINE_MESSAGE = (
 # normal chat turn pays no extra latency; a negative result is never cached so
 # Zyra starts answering again as soon as Ollama comes back.
 _ollama_ready: Optional[bool] = None
+_ai_client_lock = threading.Lock()
+_model_lock = threading.RLock()
 
 _MAX_ATTEMPTS = 2
 _RETRY_DELAY_SECONDS = 0.5
+AI_NUM_PREDICT = min(AI_NUM_PREDICT, 384)
+AI_NUM_CTX = min(AI_NUM_CTX, 1536)
+# Ollama can serve concurrent HTTP requests, but the machine's model/runtime may
+# have limited capacity; do not serialize independent chat, voice and web turns.
+_conversation_lock = threading.RLock()
+_ollama_locks_guard = threading.Lock()
+_ollama_model_locks: Dict[str, threading.Lock] = {}
 # The one-time model load at warm-up is allowed to take longer than a reply
 # budget — its whole purpose is to absorb that cost outside the user window.
 _WARMUP_TIMEOUT_SECONDS = max(120.0, AI_RESPONSE_BUDGET_SECONDS)
@@ -187,9 +204,6 @@ except Exception:  # pragma: no cover - memory module absent in odd environments
 # Conversation state (thread-safe)
 # ──────────────────────────────────────────────
 
-_conversation_lock = threading.RLock()
-
-
 def _base_system_prompt() -> str:
     """Stable persona block.
 
@@ -202,8 +216,11 @@ def _base_system_prompt() -> str:
         "JARVIS — confident, warm, and concise. You run locally on this machine "
         "and can open apps, run security and network scans, read the system, and "
         "remember things about your user. "
-        "Answer in 1-2 short sentences (under 40 words) and lead with the direct "
-        "answer; only write more when the user explicitly asks for detail. "
+        "Give a clear, direct answer in a few well-organized sentences. For "
+        "multi-part or technical questions, use short headings or numbered steps "
+        "and cover the key points without unnecessary repetition. Finish complete "
+        "sentences; be concise for simple questions and detailed when asked. "
+        "Usually answer in about 3-6 sentences unless the user asks for extensive detail. "
         "Speak naturally as a helpful partner, never invent results, and when you "
         "genuinely do not know, say so plainly. "
         + SECURITY_ANALYST_PERSONA
@@ -308,7 +325,9 @@ def _get_client():
     construction fell back to None (old client or host override)."""
     global _ai_client
     if _ai_client is None:
-        _ai_client = _make_client()
+        with _ai_client_lock:
+            if _ai_client is None:
+                _ai_client = _make_client()
     return _ai_client
 
 
@@ -325,10 +344,14 @@ def available_models() -> List[str]:
     except Exception:
         return []
     models = []
-    for entry in info.get("models", []):
-        name = entry.get("name") or entry.get("model") or ""
+    entries = info.get("models", []) if isinstance(info, dict) else getattr(info, "models", [])
+    for entry in entries or []:
+        if isinstance(entry, dict):
+            name = entry.get("name") or entry.get("model") or ""
+        else:
+            name = getattr(entry, "name", None) or getattr(entry, "model", None) or ""
         if name and name not in models:
-            models.append(name)
+            models.append(str(name))
     return models
 
 
@@ -374,20 +397,39 @@ def check_ollama() -> Dict[str, Any]:
         return status
 
     models: List[str] = []
-    for entry in info.get("models", []):
-        name = entry.get("name") or entry.get("model") or ""
+    entries = info.get("models", []) if isinstance(info, dict) else getattr(info, "models", [])
+    for entry in entries or []:
+        if isinstance(entry, dict):
+            name = entry.get("name") or entry.get("model") or ""
+        else:
+            name = getattr(entry, "name", None) or getattr(entry, "model", None) or ""
         if name and name not in models:
-            models.append(name)
+            models.append(str(name))
 
     status["reachable"] = True
     status["can_enumerate"] = True
     status["models"] = models
-    if models:
+    requested = os.environ.get("ZYRA_OLLAMA_MODEL", "").strip()
+    selected = get_model()
+    selected_installed = any(
+        name == selected or _basename(name) == _basename(selected)
+        for name in models
+    )
+    if models and (selected_installed or not requested):
         status["available"] = True
-        status["message"] = f"Ready (model: {status['model']})."
+        status["message"] = f"Ready (model: {selected})."
+    elif models:
+        status["available"] = True  # chat call will return the actionable 404
+        status["message"] = (
+            f"Ollama is connected but '{selected}' is not installed. "
+            f"Run `ollama pull {selected}` or configure ZYRA_OLLAMA_MODEL."
+        )
     else:
         status["available"] = False
-        status["message"] = OLLAMA_OFFLINE_MESSAGE
+        status["message"] = (
+            "Ollama is running but has no models installed. "
+            "Run `ollama pull phi3` or install a chat model."
+        )
     return status
 
 
@@ -433,6 +475,8 @@ def _select_model() -> str:
     requested = os.environ.get("ZYRA_OLLAMA_MODEL", "").strip()
     installed = available_models()
     if not installed:
+        # Keep an explicit configuration intact when Ollama is temporarily
+        # offline; for the default, use the quality-first preferred model.
         return requested or _PREFERRED_MODELS[0]
     if requested:
         requested_base = _basename(requested)
@@ -456,11 +500,13 @@ def get_model() -> str:
 
 def set_model(name: str) -> str:
     """Override the model used by future calls. Returns the active model."""
-    global _ACTIVE_MODEL
+    global _ACTIVE_MODEL, _ollama_ready
     requested = str(name or "").strip()
     if requested:
-        _ACTIVE_MODEL = requested
-        print(f"brain: model set to '{_ACTIVE_MODEL}'")
+        with _model_lock:
+            _ACTIVE_MODEL = requested
+            _ollama_ready = None
+            print(f"brain: model set to '{_ACTIVE_MODEL}'")
     return _ACTIVE_MODEL
 
 
@@ -505,7 +551,12 @@ def _sanitize_answer(text: Any) -> str:
     text = "".join(ch for ch in text if ord(ch) >= 32 or ch in "\n\t")
     text = text.strip()
     if len(text) > AI_MAX_RESPONSE_CHARS:
-        text = text[:AI_MAX_RESPONSE_CHARS].rstrip() + "…"
+        # Prefer a sentence boundary over returning a reply that ends mid-word.
+        clipped = text[:AI_MAX_RESPONSE_CHARS]
+        boundary = max(clipped.rfind(". "), clipped.rfind("? "), clipped.rfind("! "))
+        if boundary >= int(AI_MAX_RESPONSE_CHARS * 0.75):
+            clipped = clipped[:boundary + 1]
+        text = clipped.rstrip() + "…"
     return text
 
 
@@ -515,10 +566,27 @@ def _raw_content(response: Any) -> str:
     History stores this verbatim so the next request replays a byte-identical
     prompt and Ollama can reuse its KV cache (see _payload_snapshot).
     """
-    try:
-        content = response["message"]["content"]
-    except (KeyError, TypeError, AttributeError):
+    # Support both Ollama's non-streaming response and individual streamed
+    # chunks (which can be dicts or typed response objects).
+    if isinstance(response, dict):
+        # A complete chat response may already carry its full text under
+        # message.content (with no stream metadata).
+        message = response.get("message") or {}
+        if isinstance(message, dict):
+            content = message.get("content", "")
+        else:
+            content = getattr(message, "content", "")
+        if content:
+            return content if isinstance(content, str) else str(content)
+        # Empty message content identifies the Ollama stream terminal chunk.
+        # Stream chunks use done/done_reason metadata; aggregate them to return
+        # the complete response while retaining concurrency support.
+        if not any(key in response for key in ("done", "done_reason", "total_duration")):
+            return ""
         return ""
+    else:
+        message = getattr(response, "message", None)
+        content = getattr(message, "content", "") if message is not None else ""
     return content if isinstance(content, str) else str(content or "")
 
 
@@ -569,6 +637,13 @@ def _friendly_failure(exc: BaseException) -> str:
 # Core chat runner (retry + backoff)
 # ──────────────────────────────────────────────
 
+def _model_request_lock(model: str) -> threading.Lock:
+    """Return the per-model lock used only for conversation updates."""
+    key = str(model or _ACTIVE_MODEL)
+    with _ollama_locks_guard:
+        return _ollama_model_locks.setdefault(key, threading.Lock())
+
+
 def _run_chat(messages: List[Dict[str, str]]) -> Any:
     """Invoke Ollama within the hard reply budget.
 
@@ -583,6 +658,7 @@ def _run_chat(messages: List[Dict[str, str]]) -> Any:
         "model": _ACTIVE_MODEL,
         "messages": messages,
         "keep_alive": AI_KEEP_ALIVE,
+        "stream": True,
         "options": {
             "temperature": AI_TEMPERATURE,
             "num_predict": AI_NUM_PREDICT,
@@ -593,7 +669,13 @@ def _run_chat(messages: List[Dict[str, str]]) -> Any:
     last_exc: Optional[BaseException] = None
     for attempt in range(_MAX_ATTEMPTS):
         try:
-            return sender.chat(**chat_kwargs)
+            with _model_request_lock(_ACTIVE_MODEL):
+                stream_pieces: List[str] = []
+                for chunk in sender.chat(**chat_kwargs):
+                    piece = _raw_content(chunk)
+                    if piece:
+                        stream_pieces.append(piece)
+                return {"message": {"content": "".join(stream_pieces)}}
         except ollama.ResponseError as exc:
             status = getattr(exc, "status_code", None)
             # 429/500/503 are transient (rate limit / model still loading);
@@ -627,7 +709,7 @@ def ask_ai(question) -> str:
     automatically injected into the system prompt for context.
 
     The call blocks for as long as the model needs, bounded by
-    AI_RESPONSE_BUDGET_SECONDS (default 120s) — async callers must therefore
+    AI_RESPONSE_BUDGET_SECONDS; async callers must therefore
     run it in a worker thread so the event loop stays responsive.
     """
     if not question or not str(question).strip():
@@ -694,9 +776,8 @@ def stream_ai(question):
 
     Same thread-safe conversation state, prompt-cache hygiene and error
     handling as ask_ai(), but chunks of text are yielded as Ollama produces
-    them so a UI can show the first words in ~1-2s instead of waiting for the
-    full reply. The complete, sanitized answer is appended to the conversation
-    when the stream finishes.
+    them so a UI can render the first words as soon as available. The complete,
+    sanitized answer is appended to the conversation when the stream finishes.
 
     Yields:
         str: successive pieces of the answer (empty pieces are skipped).
@@ -735,7 +816,9 @@ def stream_ai(question):
 
     pieces: List[str] = []
     try:
-        for chunk in sender.chat(**chat_kwargs):
+        done_reason = None
+        response_stream = sender.chat(**chat_kwargs)
+        for chunk in response_stream:
             try:
                 piece = (chunk.get("message") or {}).get("content") or ""
             except (AttributeError, TypeError):
@@ -743,6 +826,10 @@ def stream_ai(question):
             if piece:
                 pieces.append(piece)
                 yield piece
+            if isinstance(chunk, dict) and chunk.get("done"):
+                done_reason = chunk.get("done_reason")
+                if done_reason == "length":
+                    print("brain: streamed answer reached its token limit")
     except ollama.ResponseError as exc:
         print(f"brain: Ollama stream error: {exc}")
         _note_ollama_failure()
@@ -766,17 +853,16 @@ def stream_ai(question):
         f"brain: streamed reply in {time.monotonic() - started:.2f}s "
         f"({len(answer)} chars, model={get_model()})"
     )
+    if done_reason == "length":
+        print("brain: response reached token limit; increase ZYRA_AI_NUM_PREDICT")
     with _conversation_lock:
         # Byte-exact history keeps the prompt prefix cacheable next turn.
         conversation.append({"role": "assistant", "content": raw_answer or answer})
         _prune_locked()
 
-def _warmup_client():
-    """A dedicated client with a generous timeout for the one-time model load.
 
-    The budgeted client would abort a cold model load after 10s; warm-up
-    exists precisely to pay that cost up front, off the user's clock.
-    """
+def _warmup_client():
+    """Build an Ollama client with a generous cold-start timeout."""
     host = os.environ.get("ZYRA_OLLAMA_HOST", "").strip() or None
     client_kwargs: Dict[str, Any] = {"timeout": _WARMUP_TIMEOUT_SECONDS}
     if host:
@@ -796,14 +882,14 @@ def warm_up_model() -> bool:
     1. Loading the weights themselves.
     2. Prefilling the (stable) system prompt into the KV cache. Ollama reuses
        the longest common prompt prefix between requests, so sending the real
-       system prompt here means the user's first message only has to prefill
+       system prompt here means the user\'s first message only has to prefill
        their own few tokens instead of the whole prompt.
 
     Both use the same options as a real reply so Ollama sizes the KV cache at
     AI_NUM_CTX (warming up without them loads it at its 4096 default, and the
     first real request then reallocates it down inside the user's message).
 
-    Best effort and never raises — safe to call from a background thread at
+    Best effort and never raises; safe to call from a background thread at
     server startup. Returns True when the model is loaded and resident
     (keep_alive keeps it that way between requests).
     """

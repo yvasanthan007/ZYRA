@@ -8,7 +8,11 @@ recognizer = sr.Recognizer()
 # Improve recognition in noisy environments
 recognizer.energy_threshold = 300
 recognizer.dynamic_energy_threshold = True
-recognizer.pause_threshold = 0.8
+recognizer.dynamic_energy_adjustment_damping = 0.15
+recognizer.dynamic_energy_ratio = 1.4
+recognizer.pause_threshold = 0.65
+recognizer.non_speaking_duration = 0.4
+recognizer.phrase_threshold = 0.15
 
 
 class _StderrExplicitPopen(subprocess.Popen):
@@ -174,13 +178,18 @@ def listen():
     if mode == "google":
         try:
             with sr.Microphone() as source:
-                recognizer.adjust_for_ambient_noise(source, duration=0.2)
+                # Sample room noise long enough for dynamic calibration without
+                # discarding quiet speech; slightly longer phrase budget helps
+                # distinguish complete commands from clipped transcripts.
+                recognizer.adjust_for_ambient_noise(source, duration=0.6)
                 audio = recognizer.listen(
                     source,
                     timeout=ZYRA_VOICE_TIMEOUT_SECONDS,
-                    phrase_time_limit=10,
+                    phrase_time_limit=12,
                 )
-                command = _recognize(recognizer, audio)
+                command = " ".join(str(_recognize(recognizer, audio)).split()).strip()
+                if command:
+                    print(f"[ZYRA][voice] recognized: {command}")
                 return command
         except (sr.WaitTimeoutError, sr.UnknownValueError):
             print("No speech detected.")

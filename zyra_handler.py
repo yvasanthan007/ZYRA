@@ -48,6 +48,8 @@ def _url_from_text(user_text: Optional[str]) -> Optional[str]:
 LINK_ANALYSIS_TRIGGERS = [
     "analyse the link",
     "analyze the link",
+    "analyse the link on the screen",
+    "analyze the link on the screen",
     "analyse this link",
     "analyze this link",
     "analyse the url",
@@ -70,27 +72,28 @@ LINK_ANALYSIS_TRIGGERS = [
 def is_link_analysis_intent(text: str) -> bool:
     """
     Check if the user's text matches a link analysis trigger phrase.
-    
+
     Args:
         text: User's voice command or text input
-        
+
     Returns:
         bool: True if this is a link analysis request
     """
     if not text:
         return False
-    
-    text_lower = text.lower().strip()
-    
+    # Normalize punctuation and repeated whitespace from speech transcripts so
+    # common variants such as "analyze the link on the screen" route reliably.
+    text_lower = " ".join(str(text).lower().replace("’", "'").split()).strip()
+
     # Check for trigger phrases
     for trigger in LINK_ANALYSIS_TRIGGERS:
         if trigger in text_lower:
             return True
-    
+
     # Also trigger if text contains a URL directly
     if "http://" in text_lower or "https://" in text_lower or "www." in text_lower:
         return True
-    
+
     return False
 
 
@@ -101,7 +104,7 @@ def is_link_analysis_intent(text: str) -> bool:
 def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
     """
     Main entry point for link analysis intent handling.
-    
+
     This function:
     1. Extracts the URL from the command text when the user says it, and
        otherwise falls back to screen OCR / clipboard capture
@@ -109,10 +112,10 @@ def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
     3. Optionally checks VirusTotal (if API key configured)
     4. Speaks the exact verdict directly to the user
     5. Returns structured result
-    
+
     Args:
         user_text: Optional user command text (source of the URL when spoken)
-        
+
     Returns:
         dict: Complete analysis result containing:
             - url: The analyzed URL (or None if not found)
@@ -125,7 +128,7 @@ def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
     print("\n" + "=" * 60)
     print("🔗 ZYRA LINK ANALYSIS — REAL-TIME SCREEN SCAN")
     print("=" * 60)
-    
+
     # Step 1: Prefer the URL spoken in the command; it is instant and exact.
     url = _url_from_text(user_text)
     if url:
@@ -134,13 +137,13 @@ def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
         # No URL in the command — capture it from screen OCR or clipboard.
         print("\n📸 Step 1: Capturing screen for URL detection...")
         url = get_active_url()
-    
+
     # Step 2: Handle no URL found case
     if not url:
         speech_text = "I couldn't find any URL on your screen or in your clipboard."
         print(f"\n❌ {speech_text}")
         speak(speech_text)
-        
+
         return {
             "url": None,
             "score": 0,
@@ -149,13 +152,13 @@ def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
             "checks": [],
             "success": False
         }
-    
+
     print(f"\n✅ URL detected: {url}")
-    
+
     # Step 3: Run heuristic analysis
     print("\n🔍 Step 2: Running security analysis...")
     result = analyze_url(url)
-    
+
     # Step 4: VirusTotal is already merged into the analysis above when an
     # API key is configured (see link_analysis.analyze_url). Derive the
     # override flag from the returned checks instead of scanning twice.
@@ -173,7 +176,7 @@ def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
         print("   \u26a0\ufe0f  VirusTotal: SUSPICIOUS")
     else:
         print("   \u2705 VirusTotal: Clean")
-    
+
     # Step 4: Build enhanced speech text that includes ML accuracy
     speech_text = result.get("speech_text", "")
     ml_analysis = result.get("ml_phishing") or {}
@@ -195,7 +198,7 @@ def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
     print(f"\n🗣️  Step 4: Speaking verdict...")
     print(f"   Speech text: {speech_text}")
     speak(speech_text)
-    
+
     # Step 6: Print detailed analysis to console
     print("\n" + "=" * 60)
     print("📊 DETAILED ANALYSIS REPORT")
@@ -203,21 +206,35 @@ def _handle_analyze_link_intent_impl(user_text: Optional[str] = None) -> dict:
     print(f"\n🔗 URL: {result['url']}")
     print(f"📈 Risk Score: {result['score']}")
     print(f"⚖️  Verdict: {result['verdict']}")
-    
+
     if result['checks']:
         print(f"\n🔍 Checks Triggered ({len(result['checks'])}):")
         for i, check in enumerate(result['checks'], 1):
             print(f"   {i}. {check['check']} (+{check['score']} points)")
             print(f"      → {check['details']}")
-    
+
     print("\n" + "=" * 60)
-    
+
+    # The analysis engine returns the normalized 0-100 score; clamp defensively
+    # and keep speech/UI severity consistent with that score.
+    risk_score = max(0, min(100, int(result.get("score") or 0)))
+    severity = (
+        "Critical" if risk_score >= 90 else
+        "High" if risk_score >= 70 else
+        "Medium" if risk_score >= 30 else "Low"
+    )
+    speech_text = (
+        f"Risk score {risk_score} out of 100. Severity: {severity}. "
+        + str(speech_text or "Analysis complete.")
+    )
+
     # Return structured result
     return {
         "url": result['url'],
-        "score": result['score'],
+        "score": risk_score,
+ "severity": severity,
         "verdict": result['verdict'],
-        "speech_text": result['speech_text'],
+        "speech_text": speech_text,
         "checks": result['checks'],
         "success": True,
         "virustotal_override": vt_override
@@ -230,18 +247,19 @@ def _severity_from_result(result: dict) -> str:
     Uses the verdict when present, otherwise maps the numeric score. Used so
     callers (voice loop, dashboard) always get a severity alongside the score.
     """
-    verdict = str(result.get("verdict") or "").lower()
-    if verdict in ("safe", "suspicious", "dangerous", "not found", "error"):
-        return verdict.capitalize()
     try:
-        score = int(result.get("score") or 0)
+        score = max(0, min(100, int(result.get("score") or 0)))
     except (TypeError, ValueError):
-        return "Unknown"
-    if score >= 5:
-        return "Dangerous"
-    if score >= 2:
-        return "Suspicious"
-    return "Safe"
+        score = 0
+    # Report consistent numeric severity bands even when the legacy heuristic
+    # verdict uses labels such as "Suspicious" or "Dangerous".
+    if score >= 90:
+        return "Critical"
+    if score >= 70:
+        return "High"
+    if score >= 30:
+        return "Medium"
+    return "Low"
 
 
 def handle_analyze_link_intent(user_text: Optional[str] = None) -> dict:

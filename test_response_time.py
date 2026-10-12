@@ -44,8 +44,13 @@ class ResponseTimeBudgetTests(unittest.TestCase):
         # longer clamped down to 10s.
         self.assertLessEqual(brain.AI_TIMEOUT_SECONDS, brain.AI_RESPONSE_BUDGET_SECONDS)
         self.assertGreater(brain.AI_TIMEOUT_SECONDS, 10.0)
-        # Generation is still capped so answers finish quickly once warm.
-        self.assertLessEqual(brain.AI_NUM_PREDICT, 150)
+        # Generation has room for complete answers rather than stopping after
+        # a short fixed token budget.
+        self.assertGreaterEqual(brain.AI_NUM_PREDICT, 256)
+        self.assertLessEqual(brain.AI_NUM_PREDICT, 512)
+        # Raise this budget when users have long-running local CPU inference.
+        self.assertGreaterEqual(brain.AI_RESPONSE_BUDGET_SECONDS, 120.0)
+        self.assertGreaterEqual(brain.AI_MAX_RESPONSE_CHARS, 6000)
 
     def test_slow_reply_within_budget_is_returned_not_aborted(self):
         # A slow-but-progressing CPU reply inside the budget must come back as
