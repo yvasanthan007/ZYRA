@@ -193,7 +193,21 @@ body {
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 0.9rem;
-  line-height: 1.5;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.message-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.message-text p {
+  margin: 0;
+}
+
+.message-text p + p {
+  margin-top: 0.75em;
 }
 
 .message.assistant .message-content {

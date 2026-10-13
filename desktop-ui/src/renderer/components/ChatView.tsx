@@ -61,7 +61,15 @@ const ChatView: React.FC<ChatViewProps> = ({ setStatus }) => {
               {msg.role === 'assistant' ? '🤖' : '👤'}
             </div>
             <div className="message-content">
-              <p>{msg.content}</p>
+              {msg.role === 'assistant' ? (
+                <div className="message-text">
+                  {msg.content.split(/\n{2,}/).map((paragraph, paragraphIndex) => (
+                    <p key={paragraphIndex}>{paragraph}</p>
+                  ))}
+                </div>
+              ) : (
+                <p className="message-text">{msg.content}</p>
+              )}
             </div>
           </div>
         ))}
