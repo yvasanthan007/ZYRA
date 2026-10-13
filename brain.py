@@ -87,12 +87,12 @@ AI_TIMEOUT_SECONDS = max(1.0, min(_timeout_value, AI_RESPONSE_BUDGET_SECONDS))
 # keeps the prompt small while preserving the immediate context.
 MAX_HISTORY = int(os.environ.get("ZYRA_AI_MAX_HISTORY", "6"))
 AI_TEMPERATURE = float(os.environ.get("ZYRA_AI_TEMPERATURE", "0.4"))
-# Use a moderate token budget for a timely, complete everyday response. Users
-# can tune ZYRA_AI_NUM_PREDICT higher for code or detailed reports.
+# Reserve enough generation tokens for detailed answers (such as recipes), while
+# still allowing a smaller budget to be configured for low-resource machines.
 try:
-    AI_NUM_PREDICT = max(128, int(os.environ.get("ZYRA_AI_NUM_PREDICT", "320")))
+    AI_NUM_PREDICT = max(128, int(os.environ.get("ZYRA_AI_NUM_PREDICT", "512")))
 except ValueError:
-    AI_NUM_PREDICT = 320
+    AI_NUM_PREDICT = 512
 # Keep context moderate to reduce CPU inference latency while retaining enough
 # room for the active chat and the user's recent turns.
 try:
@@ -128,7 +128,7 @@ _model_lock = threading.RLock()
 
 _MAX_ATTEMPTS = 2
 _RETRY_DELAY_SECONDS = 0.5
-AI_NUM_PREDICT = min(AI_NUM_PREDICT, 384)
+AI_NUM_PREDICT = min(AI_NUM_PREDICT, 640)
 AI_NUM_CTX = min(AI_NUM_CTX, 1536)
 # Ollama can serve concurrent HTTP requests, but the machine's model/runtime may
 # have limited capacity; do not serialize independent chat, voice and web turns.
@@ -220,6 +220,10 @@ def _base_system_prompt() -> str:
         "multi-part or technical questions, use short headings or numbered steps "
         "and cover the key points without unnecessary repetition. Finish complete "
         "sentences; be concise for simple questions and detailed when asked. "
+        "Use paragraph breaks, headings, or numbered steps to make answers easy to scan. "
+        "For recipes and making/cooking instructions, include the full ingredient list "
+        "with quantities and complete step-by-step directions, plus cooking time and "
+        "temperature when relevant; do not omit steps just to be brief. "
         "Usually answer in about 3-6 sentences unless the user asks for extensive detail. "
         "Speak naturally as a helpful partner, never invent results, and when you "
         "genuinely do not know, say so plainly. "
@@ -671,10 +675,17 @@ def _run_chat(messages: List[Dict[str, str]]) -> Any:
         try:
             with _model_request_lock(_ACTIVE_MODEL):
                 stream_pieces: List[str] = []
+                done_reason = None
                 for chunk in sender.chat(**chat_kwargs):
                     piece = _raw_content(chunk)
                     if piece:
                         stream_pieces.append(piece)
+                    if isinstance(chunk, dict) and chunk.get("done"):
+                        done_reason = chunk.get("done_reason")
+                    elif getattr(chunk, "done", False):
+                        done_reason = getattr(chunk, "done_reason", None)
+                if done_reason == "length":
+                    print("brain: complete reply limited by num_predict")
                 return {"message": {"content": "".join(stream_pieces)}}
         except ollama.ResponseError as exc:
             status = getattr(exc, "status_code", None)

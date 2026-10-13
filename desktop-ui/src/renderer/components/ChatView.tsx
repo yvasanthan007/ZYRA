@@ -63,9 +63,14 @@ const ChatView: React.FC<ChatViewProps> = ({ setStatus }) => {
             <div className="message-content">
               {msg.role === 'assistant' ? (
                 <div className="message-text">
-                  {msg.content.split(/\n{2,}/).map((paragraph, paragraphIndex) => (
-                    <p key={paragraphIndex}>{paragraph}</p>
-                  ))}
+                  {msg.content
+                    .replace(/\r\n?/g, '\n')
+                    .split(/\n{2,}|(?<=[.!?])\s+(?=[A-Z0-9•-])/)
+                    .map((paragraph, paragraphIndex) => paragraph.trim())
+                    .filter(Boolean)
+                    .map((paragraph, paragraphIndex) => (
+                      <p key={paragraphIndex}>{paragraph}</p>
+                    ))}
                 </div>
               ) : (
                 <p className="message-text">{msg.content}</p>

@@ -39,7 +39,30 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(response);
     utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
+    const speechLang = utterance.lang;
+    // Browsers may stop long utterances mid-answer; resume in chunks without
+    // dropping any of the response text.
+    const chunks: string[] = [];
+    for (let start = 0; start < response.length;) {
+      let end = Math.min(start + 180, response.length);
+      if (end < response.length) {
+        const boundary = response.lastIndexOf(' ', end);
+        if (boundary > start + 90) end = boundary + 1;
+      }
+      const chunk = response.slice(start, end).trim();
+      if (chunk) chunks.push(chunk);
+      start = end;
+    }
+    let chunkIndex = 0;
+    const speakNextChunk = () => {
+      if (chunkIndex >= chunks.length) return;
+      const chunk = chunks[chunkIndex++];
+      const nextUtterance = new SpeechSynthesisUtterance(chunk);
+      nextUtterance.lang = speechLang;
+      nextUtterance.onend = speakNextChunk;
+      window.speechSynthesis.speak(nextUtterance);
+    };
+    speakNextChunk();
     return () => window.speechSynthesis.cancel();
   }, [response]);
 
@@ -160,7 +183,16 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
           {response && (
             <div className="transcript-item">
               <span className="transcript-label">ZYRA:</span>
-              <p>{response}</p>
+              <div className="voice-response-text">
+                {response
+                  .replace(/\r\n?/g, '\n')
+                  .split(/\n{2,}|(?<=[.!?])\s+(?=[A-Z0-9•-])/)
+                  .map((paragraph) => paragraph.trim())
+                  .filter(Boolean)
+                  .map((paragraph, paragraphIndex) => (
+                    <p key={paragraphIndex}>{paragraph}</p>
+                  ))}
+              </div>
             </div>
           )}
         </div>

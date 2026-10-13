@@ -458,6 +458,20 @@ body {
   line-height: 1.4;
 }
 
+.voice-response-text {
+  overflow-wrap: anywhere;
+}
+
+.voice-response-text p {
+  margin: 6px 0 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.voice-response-text p + p {
+  margin-top: 10px;
+}
+
 .voice-info {
   width: 100%;
   max-width: 400px;
