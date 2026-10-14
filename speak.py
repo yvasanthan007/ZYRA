@@ -4,7 +4,6 @@ import re
 import sys
 import tempfile
 import subprocess
-
 import edge_tts
 import pygame
 
@@ -33,10 +32,7 @@ pygame.mixer.init()
 
 def _get_voice_for_text(text: str) -> str:
     """Select the best Edge TTS voice based on script detection in text."""
-    if re.search(r"[\u0900-\u097F]", text):  # Devanagari / Hindi script
-        return "hi-IN-SwaraNeural"
-    if re.search(r"[\u0B80-\u0BFF]", text):  # Tamil script
-        return "ta-IN-PallaviNeural"
+    # Keep the original en-US-AriaNeural voice consistent across all speech.
     return VOICE
 
 
@@ -177,8 +173,10 @@ def speak(text):
     except Exception as e:
         print(f"TTS Error: {e}")
 
-    # If Edge TTS fails (e.g. offline/network failure), use SAPI fallback
-    if not spoke:
-        if not _sapi_fallback(text):
-            print("TTS unavailable: configured voice could not speak aloud.")
+    # Keep the Edge voice as the default, but fall back to the Windows voice
+    # when synthesis/playback fails so the user still hears Zyra.
+    if not spoke and _sapi_fallback(text):
+        print("TTS: using the Windows voice because Edge TTS was unavailable.")
+    elif not spoke:
+        print("TTS unavailable: both Edge TTS and Windows speech failed.")
 
