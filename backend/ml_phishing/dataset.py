@@ -226,8 +226,18 @@ def _legit_url(rng):
     """Build one realistic legitimate URL (popular site, normal path)."""
     domain, paths = rng.choice(_LEGIT_SITES)
     scheme = "https" if rng.random() > 0.03 else "http"
-    # Occasional legitimate marketing-shortener use (random aliases only)
-    if rng.random() < 0.04:
+    # Benign sign-in/account paths keep the model from treating those words as
+    # phishing by themselves; domain ownership and combined patterns matter.
+    if rng.random() < 0.06:
+        domain, paths = rng.choice([
+            ("accounts.google.com", ["/signin", "/ServiceLogin"]),
+            ("login.microsoftonline.com", ["/common/oauth2/authorize"]),
+            ("www.paypal.com", ["/signin", "/myaccount/summary"]),
+            ("appleid.apple.com", ["/sign-in", "/account/manage"]),
+            ("amazon.com", ["/ap/signin", "/gp/css/homepage.html"]),
+        ])
+    # Legitimate marketing-shortener use is only a small minority.
+    if rng.random() < 0.02:
         sh = rng.choice(["bit.ly", "tinyurl.com", "ow.ly", "is.gd"])
         return f"{scheme}://{sh}/{_random_token(rng, rng.choice([6, 7, 8]))}"
     sub = rng.choice(_LEGIT_SUBDOMAINS)

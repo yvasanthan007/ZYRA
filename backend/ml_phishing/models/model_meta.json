@@ -29,84 +29,85 @@
     "credential_keywords",
     "urgency_keywords",
     "brand_misplaced",
-    "has_hex_blob"
+    "has_hex_blob",
+    "brand_typosquat"
   ],
   "feature_importances": [
     [
       "num_hyphens_host",
-      0.4360097050666809
+      0.41062068939208984
     ],
     [
       "suspicious_tld",
-      0.28786298632621765
+      0.25539088249206543
     ],
     [
       "num_digits_host",
-      0.12962840497493744
+      0.11602360010147095
     ],
     [
-      "num_special_chars",
-      0.038318514823913574
-    ],
-    [
-      "urgency_keywords",
-      0.02863159589469433
-    ],
-    [
-      "is_shortener",
-      0.024313313886523247
-    ],
-    [
-      "num_percent_encoded",
-      0.017935937270522118
+      "brand_typosquat",
+      0.11153540760278702
     ],
     [
       "digit_ratio_host",
-      0.012638537213206291
+      0.03716852515935898
     ],
     [
-      "is_https",
-      0.011759309098124504
+      "is_shortener",
+      0.037009842693805695
+    ],
+    [
+      "num_special_chars",
+      0.018219808116555214
     ],
     [
       "num_dots_host",
-      0.003275101538747549
+      0.0033840888645499945
+    ],
+    [
+      "is_https",
+      0.0030095786787569523
     ],
     [
       "hostname_length",
-      0.0026734129060059786
-    ],
-    [
-      "max_label_length",
-      0.0025841041933745146
-    ],
-    [
-      "path_length",
-      0.0011188832577317953
+      0.0017704354831948876
     ],
     [
       "url_length",
-      0.0010191655019298196
+      0.00170171819627285
     ],
     [
-      "query_length",
-      0.0008601850131526589
+      "max_label_length",
+      0.0015414359513670206
     ],
     [
       "domain_entropy",
-      0.0006465597543865442
+      0.0007305794861167669
     ],
     [
       "credential_keywords",
-      0.0005936297820881009
+      0.0006293243495747447
+    ],
+    [
+      "query_length",
+      0.0004367597575765103
+    ],
+    [
+      "path_length",
+      0.000359966914402321
+    ],
+    [
+      "num_percent_encoded",
+      0.00033451642957516015
     ],
     [
       "path_depth",
-      9.044320177054033e-05
+      8.790134597802535e-05
     ],
     [
       "num_query_params",
-      4.01814395445399e-05
+      4.49003346147947e-05
     ],
     [
       "num_subdomains",
@@ -137,6 +138,10 @@
       0.0
     ],
     [
+      "urgency_keywords",
+      0.0
+    ],
+    [
       "brand_misplaced",
       0.0
     ],
@@ -147,14 +152,6 @@
   ],
   "metrics": {
     "RandomForestClassifier": {
-      "accuracy": 0.9979,
-      "precision": 1.0,
-      "recall": 0.9958,
-      "f1": 0.9979,
-      "roc_auc": 0.9973,
-      "test_size": 480
-    },
-    "LogisticRegression": {
       "accuracy": 0.9958,
       "precision": 1.0,
       "recall": 0.9917,
@@ -162,12 +159,20 @@
       "roc_auc": 0.9999,
       "test_size": 480
     },
-    "XGBClassifier": {
+    "LogisticRegression": {
       "accuracy": 0.9979,
       "precision": 1.0,
       "recall": 0.9958,
       "f1": 0.9979,
-      "roc_auc": 0.9998,
+      "roc_auc": 1.0,
+      "test_size": 480
+    },
+    "XGBClassifier": {
+      "accuracy": 0.9958,
+      "precision": 1.0,
+      "recall": 0.9917,
+      "f1": 0.9958,
+      "roc_auc": 0.9999,
       "test_size": 480
     }
   },
@@ -177,7 +182,7 @@
     "phishing": 1200,
     "legitimate": 1200
   },
-  "trained_at": "2026-10-09 22:09:38",
+  "trained_at": "2026-10-14 10:46:24",
   "sklearn_version": "1.9.1",
   "python": "3.13.5"
 }

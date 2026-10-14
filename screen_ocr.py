@@ -90,9 +90,34 @@ _COMMON_TLDS = {
 }
 
 
+def _is_plausible_tld(label: str) -> bool:
+    # Accept known TLDs plus syntactically valid newer/country-code TLDs.
+    label = (label or "").lower()
+    return label in _COMMON_TLDS or bool(re.fullmatch(r"[a-z]{2,63}", label))
+
+
 # ──────────────────────────────────────────────
 # 1. Screen Capture
 # ──────────────────────────────────────────────
+
+def capture_screens():
+    # Capture physical monitors separately rather than shrinking the virtual desktop.
+    try:
+        import mss
+    except ImportError:
+        print("   ⚠️  mss not installed. Cannot capture screen.")
+        return []
+
+    images = []
+    try:
+        with mss.mss() as sct:
+            # Avoid shrinking multi-monitor screenshots until URL text is tiny.
+            for monitor in sct.monitors[1:]:
+                shot = sct.grab(monitor)
+                images.append(Image.frombytes("RGB", shot.size, shot.rgb))
+    except Exception as exc:
+        print(f"   ⚠️  Multi-monitor screen capture failed: {exc}")
+    return images
 
 def capture_screen(monitor_index=1):
     """
@@ -256,13 +281,39 @@ def extract_text_from_image(image):
         if results is None:
             print(f"   ⏱️  OCR timed out after {elapsed:.1f}s (bounded).")
             return ""
-        # Concatenate all detected text (detail=0 -> list of strings).
-        text = " ".join(str(item) for item in results)
+        # EasyOCR returns strings in detail=0 mode. Preserve line boundaries so
+        # URL repair does not accidentally join neighboring UI labels.
+        text = "\n".join(str(item) for item in results)
         print(f"   ⏱️  OCR completed in {elapsed:.1f}s")
         return text
     except Exception as e:
         print(f"   ⚠️  OCR extraction failed: {type(e).__name__}: {e}")
         return ""
+
+
+def extract_urls_from_image(image):
+    # Check browser chrome before page content: it identifies the active page,
+    # unlike URLs mentioned in advertisements or page text.
+    if image is None:
+        return []
+    width, height = image.size
+    # Browser address bars sit in the top strip; searching a large 32% crop
+    # first can pick an advert/article URL above the fold instead of the page
+    # currently open. Prefer the address-bar band, then broaden as fallback for
+    # kiosk/fullscreen windows whose chrome is hidden.
+    address_height = max(1, min(height, int(height * 0.18)))
+    address_text = extract_text_from_image(
+        image.crop((0, 0, width, address_height)))
+    address_urls = extract_urls_from_text(address_text) if address_text else []
+    if address_urls:
+        return address_urls
+    top_height = max(address_height, min(height, int(height * 0.32)))
+    top_text = extract_text_from_image(image.crop((0, 0, width, top_height)))
+    top_urls = extract_urls_from_text(top_text) if top_text else []
+    if top_urls:
+        return top_urls
+    full_text = extract_text_from_image(image)
+    return extract_urls_from_text(full_text) if full_text else []
 
 
 # ──────────────────────────────────────────────
@@ -282,6 +333,11 @@ def _repair_ocr_url_noise(text: str) -> str:
     only accepts a host whose final label is a whitelisted TLD — so ordinary
     prose ("example com") and code identifiers are never turned into links.
     """
+    # OCR often inserts spaces around punctuation, especially dots and slashes
+    # in the address bar (e.g. "https:// secure-login . xyz / verify").
+    text = re.sub(r"(?<=\w)\s*\.\s*(?=\w)", ".", text)
+    text = re.sub(r"(?<=\w)\s*/\s*(?=\w)", "/", text)
+
     # 1) Fix a mangled scheme prefix (hltps:/https:/http: followed by I/l/1///…).
     text = re.sub(r"\b[hf]lt?t?ps?\s*[:;]?\s*[Il1/\\|]{1,}", "https://", text, flags=re.I)
     text = re.sub(r"\bhttps?\s*[:;]?\s*[Il1/\\|]{1,}", "https://", text, flags=re.I)
@@ -309,14 +365,14 @@ def _repair_ocr_url_noise(text: str) -> str:
             host_labels.append(tok)
             # Stop once the accumulated host already ends in a known TLD
             # (so trailing prose words aren't swallowed into the host).
-            if host_labels[-1].lower().split(".")[-1] in _COMMON_TLDS:
+            if _is_plausible_tld(host_labels[-1].lower().split(".")[-1]):
                 remainder_start = i + 1
                 break
         if len(host_labels) < 2:
             return prefix + rest
         host = ".".join(host_labels).lower().strip(".,;:!?")
         tld = host.rsplit(".", 1)[-1]
-        if "." not in host or tld not in _COMMON_TLDS:
+        if "." not in host or not _is_plausible_tld(tld):
             return prefix + rest  # not a plausible host — leave prose alone
         out = prefix + host + path
         remainder = " ".join(tokens[remainder_start:])
@@ -365,19 +421,20 @@ def _lenient_hosts(text: str):
     text = _repair_ocr_url_noise(text)
     hosts, seen = [], set()
 
-    def _add(host: str):
+    def _add(host: str, anchored=False):
         host = host.lower().strip(".,;:!?)")
         tld = host.rsplit(".", 1)[-1]
-        if host and tld in _COMMON_TLDS and host not in seen:
+        plausible = _is_plausible_tld(tld) if anchored else tld in _COMMON_TLDS
+        if host and plausible and host not in seen:
             seen.add(host)
             hosts.append(host)
 
-    # Scheme/www-anchored spans first (most reliable), then any bare host.
+    # Scheme/www-anchored spans first (most reliable), then known bare hosts.
     for m in re.finditer(r"(https?://[^\s]+|www\.[^\s]+)", text, re.IGNORECASE):
         span = re.sub(r"^https?://", "", m.group(0), flags=re.IGNORECASE)
         hm = _LENIENT_HOST_RE.search(span)
         if hm:
-            _add(hm.group(1))
+            _add(hm.group(1), anchored=True)
     for m in _LENIENT_HOST_RE.finditer(text):
         # Skip email local-parts: "user@example.com" is not a link to visit.
         start = m.start(1)
@@ -510,8 +567,8 @@ def get_active_url():
     Resolve the link the user is looking at.
 
     Order of resolution:
-      1. Clipboard holding exactly one URL  → instant (fast path)
-      2. On-screen URL via OCR (downscaled + bounded)
+      1. On-screen URL via OCR (the screen target wins over stale clipboard data)
+      2. Clipboard holding exactly one URL  → fast path when OCR finds nothing
       3. Any URL inside clipboard text      → fallback
 
     This is the main entry point for Zyra's link analysis feature.
@@ -521,16 +578,11 @@ def get_active_url():
     """
     print("[ZYRA][ocr] get_active_url START - resolving on-screen/clipboard link")
     try:
-        # Fast path: the clipboard is a single URL -> no OCR needed.
-        url = _clipboard_exact_url()
-        if url:
-            print(f"   ✅ URL found in clipboard (fast path): {url}")
-            return url
-
-        # Step 1: capture the on-screen URL via OCR. Run the capture+OCR in an
-        # isolated child process so a native EasyOCR/torch/mss crash can never
-        # down the server (see _capture_url_isolated). The child timeout is the OCR
-        # budget plus a margin for cold model load + process startup.
+        # Prefer the URL visible on screen. A stale copied URL must not override
+        # the link the user explicitly asks Zyra to inspect.
+        # Capture + OCR runs in an isolated child process so a native
+        # EasyOCR/torch/mss crash cannot take down the caller or backend server.
+        # The child timeout includes a margin for cold model load + startup.
         print("\n📸 Capturing screen for URL detection...")
         screen_url = _capture_url_isolated(timeout=OCR_TIMEOUT_SECONDS + 60)
         if screen_url:
@@ -538,7 +590,11 @@ def get_active_url():
             return screen_url
         print("   ℹ️  No on-screen URL (capture produced nothing).")
 
-        # Step 3: fall back to any URL inside clipboard text.
+        # Fall back to a clipboard URL only after the screen has been checked.
+        url = _clipboard_exact_url()
+        if url:
+            print(f"   ✅ URL found in clipboard (fallback): {url}")
+            return url
         print("   📋 Checking clipboard for URL...")
         url = get_url_from_clipboard()
         if url:
@@ -585,18 +641,23 @@ def _ocr_capture_worker() -> int:
 
     try:
         url = None
-        image = capture_screen()
-        if image is not None:
-            _log(f"[ocr-worker] screen captured {image.size[0]}x{image.size[1]}px")
-            text = extract_text_from_image(image)
-            if text:
-                _log(f"[ocr-worker] text: {text[:200]!r}")
-                urls = extract_urls_from_text(text)
+        images = capture_screens()
+        if not images:
+            image = capture_screen()
+            images = [image] if image is not None else []
+        if images:
+            _log(f"[ocr-worker] captured {len(images)} physical monitor(s)")
+            # Prefer browser chrome/address bars over URLs found in page text.
+            for monitor_index, image in enumerate(images, start=1):
+                _log(f"[ocr-worker] scanning monitor {monitor_index} "
+                     f"({image.size[0]}x{image.size[1]}px)")
+                urls = extract_urls_from_image(image)
                 if urls:
                     url = urls[0]
-                    _log(f"[ocr-worker] url: {url}")
-            else:
-                _log("[ocr-worker] no text from OCR")
+                    _log(f"[ocr-worker] URL found on monitor {monitor_index}")
+                    break
+            if not url:
+                _log("[ocr-worker] no URL detected on any monitor")
         else:
             _log("[ocr-worker] screen capture failed")
         # Machine-readable result on stdout (single line).
@@ -630,12 +691,15 @@ def _capture_url_isolated(timeout: float):
     # other escape from the native stack cannot take down the caller.
     if getattr(sys, "frozen", False) or not os.path.isfile(os.path.abspath(__file__)):
         try:
-            image = capture_screen()
-            if image is None:
-                return None
-            text = extract_text_from_image(image)
-            urls = extract_urls_from_text(text) if text else []
-            return urls[0] if urls else None
+            images = capture_screens()
+            if not images:
+                image = capture_screen()
+                images = [image] if image is not None else []
+            for image in images:
+                urls = extract_urls_from_image(image)
+                if urls:
+                    return urls[0]
+            return None
         except BaseException as exc:  # noqa: BLE001 - must never kill the caller
             print(f"   ⚠️  Screen OCR failed ({type(exc).__name__}: {exc}); "
                   f"returning no URL. Process stays alive.")

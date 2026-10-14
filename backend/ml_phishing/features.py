@@ -63,6 +63,7 @@ FEATURE_NAMES = [
     "urgency_keywords",
     "brand_misplaced",
     "has_hex_blob",
+    "brand_typosquat",
 ]
 
 FEATURE_DESCRIPTIONS = {
@@ -94,6 +95,7 @@ FEATURE_DESCRIPTIONS = {
     "urgency_keywords": "Urgency/manipulation keywords (urgent, claim, ...)",
     "brand_misplaced": "Known brand in subdomain/path of another domain",
     "has_hex_blob": "Long hex blob (token-like) in path/query",
+    "brand_typosquat": "Registered domain resembles a protected brand",
 }
 
 _SCHEME_DEFAULT_PORTS = {"http": 80, "https": 443}
@@ -151,6 +153,31 @@ def _brand_misplaced(host: str, path: str, reg: str) -> bool:
             return True
     return False
 
+def _brand_typosquat(host: str, reg: str) -> bool:
+    # Detect close/confusable registered-domain labels that imitate brands.
+    label = (reg.split(".", 1)[0] if reg else "").lower().replace("-", "")
+    if not label:
+        return False
+    normalized = label.translate(str.maketrans({
+        "0": "o", "1": "l", "3": "e", "4": "a", "5": "s",
+        "7": "t", "8": "b",
+    }))
+    for brand in IMPERSONATION_TARGETS:
+        if label == brand:
+            return False
+        if normalized == brand:
+            return True
+        if abs(len(label) - len(brand)) <= 1:
+            previous = list(range(len(brand) + 1))
+            for i, char in enumerate(label, 1):
+                current = [i]
+                for j, expected in enumerate(brand, 1):
+                    current.append(min(previous[j] + 1, current[j - 1] + 1,
+                                       previous[j - 1] + (char != expected)))
+                previous = current
+            if previous[-1] <= (2 if len(brand) >= 8 else 1):
+                return True
+    return False
 
 def _normalize(url: str):
     """urlparse with scheme assumption for bare hosts (no exception escapes)."""
@@ -237,6 +264,7 @@ def extract_features(url: str) -> dict:
         "urgency_keywords": min(urgency_hits, 6),
         "brand_misplaced": int(_brand_misplaced(host, path, reg)) if host else 0,
         "has_hex_blob": int(bool(re.search(r"[0-9a-f]{16,}", path + query))),
+        "brand_typosquat": int(_brand_typosquat(host, reg)) if host else 0,
     }
 
 
