@@ -103,13 +103,16 @@ def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
         if verbose:
             print(f"  {name}: {results[name]}")
 
-    # Prefer F1; break ties in favour of XGBoost (production default), then
-    # the forest (feature importances).
-    _preference = {"XGBClassifier": 2, "RandomForestClassifier": 1}
-    best_name = max(
-        results,
-        key=lambda n: (results[n]["f1"], _preference.get(n, 0)),
+    # XGBoost is the production classifier whenever its dependency is present.
+    # Keep sklearn candidates evaluated for benchmark/fallback visibility, but
+    # do not let a tiny hold-out F1 difference silently switch the deployed ML.
+    best_name = (
+        "XGBClassifier" if "XGBClassifier" in fitted else
+        max(results, key=lambda n: results[n]["f1"])
     )
+    if verbose:
+        print(f"  selected by policy: {best_name}")
+
     return best_name, fitted[best_name], results, (X_test, y_test)
 
 

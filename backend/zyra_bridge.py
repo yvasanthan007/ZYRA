@@ -45,6 +45,19 @@ from backend.link_security import (
     extract_url,
 )
 
+
+def _zyra_identity_answer(message: str):
+    # Return the canonical full form when the user asks what ZYRA means.
+    text = (message or "").strip().lower()
+    if not text or not any(alias in text for alias in ("zyra", "z y r a")):
+        return None
+    asks_meaning = any(term in text for term in (
+        "full form", "full name", "stand for", "stands for", "abbreviation",
+        "acronym", "meaning of", "what does", "expand",
+    ))
+    if asks_meaning:
+        return "ZYRA stands for Zero-latency Yielding Response Assistant."
+    return None
 # ── DNS Lookup Module (real DNS intelligence via dnspython) ──
 from backend.dns_lookup import (
     build_chat_ack as dns_build_chat_ack,
@@ -147,7 +160,17 @@ def _link_capture_report(message: str):
     Returns:
         (report_text or None, url or None)
     """
-    url = extract_url(message)
+    # A screen-analysis request should inspect the current screen first; a URL
+    # in the command text may be unrelated context. Explicit standalone URLs are
+    # still handled directly by the analyzer intent path.
+    lowered = (message or "").lower()
+    screen_request = any(phrase in lowered for phrase in (
+        "on the screen", "on screen", "visible on screen", "current page",
+        "this page", "page i'm on", "selected link", "selected url",
+    ))
+    # A URL typed/pasted into the actual request is an explicit target unless
+    # the user specifically asks for the visible/selected screen link.
+    url = None if screen_request else extract_url(message)
     if not url:
         try:
             from screen_ocr import get_active_url
@@ -176,6 +199,9 @@ def process_chat(message: str) -> str:
     if not message or not message.strip():
         return "Please say something!"
 
+    identity_answer = _zyra_identity_answer(message)
+    if identity_answer:
+        return identity_answer
     # ── Backend-only link security analysis ──
     # When the user provides a link — or asks to analyze the one they are
     # looking at — return the structured security report (now with the local
@@ -230,6 +256,9 @@ def process_chat_stream(message: str) -> Dict[str, Any]:
         return {"kind": "static", "success": True, "data": "Please say something!"}
 
     text = str(message).strip()
+    identity_answer = _zyra_identity_answer(text)
+    if identity_answer:
+        return {"kind": "static", "success": True, "data": identity_answer}
 
     # Same order as process_chat so behaviour can never diverge.
     if is_link_analysis_request(text):
