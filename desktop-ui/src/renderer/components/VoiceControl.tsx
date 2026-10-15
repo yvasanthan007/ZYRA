@@ -21,6 +21,39 @@ const isVoicePayload = (value: unknown): value is VoicePayload => {
   );
 };
 
+// ZYRA speaks with a female voice (matching the backend's en-US-AriaNeural
+// Edge voice). The OS/Chromium default is often a male voice (e.g. Microsoft
+// David), so a female voice is picked explicitly whenever one is installed.
+const FEMALE_VOICE_HINTS = [
+  'zira', 'aria', 'jenny', 'samantha', 'susan', 'hazel', 'maria', 'linda',
+  'mary', 'salli', 'joanna', 'neerja', 'priya', 'female', 'eva', 'allison',
+  'sara', 'karen', 'moira', 'tessa', 'fiona', 'veena', 'rishi',
+];
+
+const isEnUs = (voice: SpeechSynthesisVoice): boolean => {
+  const tag = (voice.lang || '').replace('_', '-').toLowerCase();
+  return tag === 'en-us' || tag === 'en';
+};
+
+const isFemaleName = (voice: SpeechSynthesisVoice): boolean => {
+  const name = (voice.name || '').toLowerCase();
+  return FEMALE_VOICE_HINTS.some((hint) => name.includes(hint));
+};
+
+// Prefer an installed en-US female voice; then any female voice; then an
+// en-US voice. Returns null so callers can keep the browser default when
+// no suitable voice is installed.
+const pickFemaleVoice = (voices: SpeechSynthesisVoice[]):
+  SpeechSynthesisVoice | null => {
+  if (!voices.length) return null;
+  return (
+    voices.find((v) => isEnUs(v) && isFemaleName(v)) ||
+    voices.find((v) => isFemaleName(v)) ||
+    voices.find((v) => isEnUs(v)) ||
+    null
+  );
+};
+
 const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
   const [isListening, setIsListening] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -37,9 +70,9 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
   useEffect(() => {
     if (!response || !('speechSynthesis' in window)) return undefined;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(response);
-    utterance.lang = 'en-US';
-    const speechLang = utterance.lang;
+    // The voice list often loads asynchronously (empty on the first call);
+    // re-read it on `voiceschanged` so the female voice is actually applied.
+    const speechLang = 'en-US';
     // Browsers may stop long utterances mid-answer; resume in chunks without
     // dropping any of the response text.
     const chunks: string[] = [];
@@ -54,16 +87,51 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
       start = end;
     }
     let chunkIndex = 0;
+    let stopped = false;
     const speakNextChunk = () => {
-      if (chunkIndex >= chunks.length) return;
+      if (stopped || chunkIndex >= chunks.length) return;
       const chunk = chunks[chunkIndex++];
       const nextUtterance = new SpeechSynthesisUtterance(chunk);
       nextUtterance.lang = speechLang;
+      const female = pickFemaleVoice(window.speechSynthesis.getVoices());
+      if (female) nextUtterance.voice = female;
       nextUtterance.onend = speakNextChunk;
+      nextUtterance.onerror = speakNextChunk;
       window.speechSynthesis.speak(nextUtterance);
     };
+    // Voices may still be loading when the response first arrives; wait for
+    // them (once) so the female voice is selected rather than the default.
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      let started = false;
+      const startOnce = () => {
+        if (started || stopped) return;
+        started = true;
+        window.clearTimeout(timer);
+        speakNextChunk();
+      };
+      const onVoicesChanged = () => {
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+        startOnce();
+      };
+      window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+      // Safety net: never leave the response silent if voices never load.
+      const timer = window.setTimeout(() => {
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+        startOnce();
+      }, 1000);
+      return () => {
+        stopped = true;
+        window.clearTimeout(timer);
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+        window.speechSynthesis.cancel();
+      };
+    }
     speakNextChunk();
-    return () => window.speechSynthesis.cancel();
+    return () => {
+      stopped = true;
+      window.speechSynthesis.cancel();
+    };
   }, [response]);
 
   const toggleListening = async () => {

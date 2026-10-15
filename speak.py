@@ -16,7 +16,7 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
-VOICE = "en-US-AriaNeural"   # Natural Female Voice
+VOICE = os.environ.get("ZYRA_TTS_VOICE", "en-US-JennyNeural").strip() or "en-US-JennyNeural"  # Previous configured female voice
 
 # Edge TTS retry settings. Microsoft's free Edge TTS endpoint intermittently
 # returns no audio (NoAudioReceived) under load/throttling, so we retry with
@@ -81,10 +81,33 @@ def sanitize_tts_text(text):
 
 
 def _sapi_fallback(text):
-    """Offline Windows SAPI voice, used when Edge TTS is unavailable or fails."""
+    """Offline Windows SAPI voice, used when Edge TTS is unavailable or fails.
+
+    The SAPI default token is typically a male voice (Microsoft David), which
+    would break ZYRA's consistent female voice whenever Edge TTS is offline.
+    Select an explicitly female installed voice first (preferring Zira, the
+    Windows counterpart of the Edge en-US Aria voice) and only fall back to
+    the system default when no female voice is installed.
+    """
     try:
         safe = text.replace("'", "''").replace('"', '""')
-        ps = f"(New-Object -ComObject SAPI.SpVoice).Speak('{safe}')"
+        ps = (
+            "$v = New-Object -ComObject SAPI.SpVoice; "
+            "$pick = $null; "
+            "$tokens = $v.GetVoices(); "
+            "foreach ($t in $tokens) { "
+            "  if ($t.GetDescription() -match 'Zira') { $pick = $t; break } "
+            "}; "
+            "if (-not $pick) { "
+            "  foreach ($t in $tokens) { "
+            "    $g = ''; "
+            "    try { $g = [string]$t.GetAttribute('Gender') } catch { $g = '' }; "
+            "    if ($g -eq 'Female') { $pick = $t; break } "
+            "  } "
+            "}; "
+            "if ($pick) { $v.Voice = $pick }; "
+            f"[void]$v.Speak('{safe}')"
+        )
         proc = subprocess.run(
             ["powershell", "-NoProfile", "-Command", ps],
             capture_output=True,
