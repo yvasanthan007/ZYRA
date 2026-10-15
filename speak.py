@@ -15,8 +15,11 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
-VOICE = os.environ.get("ZYRA_TTS_VOICE", "en-US-JennyNeural").strip() or "en-US-JennyNeural"  # Previous configured female voice
-
+# Centralized female voice configuration, used by every spoken response.
+# en-US-JennyNeural is Microsoft's English (United States) female Edge voice.
+# Edge TTS applies its standard rate and pitch; no prosody overrides are set.
+DEFAULT_VOICE = "en-US-JennyNeural"
+VOICE = DEFAULT_VOICE
 # Edge TTS retry settings. Microsoft's free Edge TTS endpoint intermittently
 # returns no audio (NoAudioReceived) under load/throttling, so we retry with
 # backoff and fall back to an offline Windows TTS voice if it keeps failing.
@@ -31,8 +34,7 @@ pygame.mixer.init()
 
 
 def _get_voice_for_text(text: str) -> str:
-    """Select the best Edge TTS voice based on script detection in text."""
-    # Keep the original en-US-AriaNeural voice consistent across all speech.
+    # One configured voice is used for every spoken response.
     return VOICE
 
 
@@ -79,29 +81,14 @@ def sanitize_tts_text(text):
 def _sapi_fallback(text):
     """Offline Windows SAPI voice, used when Edge TTS is unavailable or fails.
 
-    The SAPI default token is typically a male voice (Microsoft David), which
-    would break ZYRA's consistent female voice whenever Edge TTS is offline.
-    Select an explicitly female installed voice first (preferring Zira, the
-    Windows counterpart of the Edge en-US Aria voice) and only fall back to
-    the system default when no female voice is installed.
+    The local fallback cannot match a specific Edge neural identity. Use it
+    only when Edge TTS has failed; normal speech always uses the configured
+    Edge voice above.
     """
     try:
         safe = text.replace("'", "''").replace('"', '""')
         ps = (
             "$v = New-Object -ComObject SAPI.SpVoice; "
-            "$pick = $null; "
-            "$tokens = $v.GetVoices(); "
-            "foreach ($t in $tokens) { "
-            "  if ($t.GetDescription() -match 'Zira') { $pick = $t; break } "
-            "}; "
-            "if (-not $pick) { "
-            "  foreach ($t in $tokens) { "
-            "    $g = ''; "
-            "    try { $g = [string]$t.GetAttribute('Gender') } catch { $g = '' }; "
-            "    if ($g -eq 'Female') { $pick = $t; break } "
-            "  } "
-            "}; "
-            "if ($pick) { $v.Voice = $pick }; "
             f"[void]$v.Speak('{safe}')"
         )
         proc = subprocess.run(
