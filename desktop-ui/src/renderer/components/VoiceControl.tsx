@@ -21,12 +21,13 @@ const isVoicePayload = (value: unknown): value is VoicePayload => {
   );
 };
 
-// ZYRA speaks with a female voice. The backend Edge TTS chain is
-// en-US-JennyNeural first, then en-US-AriaNeural, en-US-AvaNeural and
-// en-US-EmmaNeural as fallbacks; the local OS voice is picked in that same
-// preference order so the desktop UI sounds like the backend. The
-// OS/Chromium default is often a male voice (e.g. Microsoft David), so a
-// female voice is picked explicitly whenever one is installed.
+// ZYRA speaks with the backend's Edge neural voice (en-US-JennyNeural first,
+// then en-US-AriaNeural, en-US-AvaNeural, en-US-EmmaNeural as fallbacks),
+// requested through POST /api/speak. Only when the backend is unreachable
+// does the UI fall back to a local OS/Chromium speechSynthesis voice, and
+// that substitution is reported in the status line. The OS/Chromium default
+// is often a male voice (e.g. Microsoft David), so a female voice is picked
+// explicitly whenever one is installed.
 // Ordered name hints mirroring speak.py's DEFAULT_VOICE / FALLBACK_VOICES.
 const PREFERRED_VOICE_HINTS = ['jenny', 'aria', 'ava', 'emma'];
 
@@ -78,72 +79,95 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
   // while one capture is in flight must be ignored rather than queued.
   const requestInFlight = useRef(false);
 
-  // Use the OS/Electron speech voices for spoken responses. This avoids
-  // blocking the Python bridge or event loop and works independently of scans.
+  // Speak responses with Zyra's configured Edge neural voice (en-US-JennyNeural)
+  // by asking the backend TTS pipeline to speak (POST /api/speak). The browser's
+  // speechSynthesis voices are local OS voices (e.g. Microsoft Zira/David) and
+  // cannot be a cloud neural voice, so they are used only when the backend is
+  // unreachable — and the substitution is reported in the status line, never
+  // silent. The backend call returns immediately (speech runs in its own
+  // thread), so the UI is never blocked.
   useEffect(() => {
-    if (!response || !('speechSynthesis' in window)) return undefined;
-    window.speechSynthesis.cancel();
-    // The voice list often loads asynchronously (empty on the first call);
-    // re-read it on `voiceschanged` so the female voice is actually applied.
-    const speechLang = 'en-US';
-    // Browsers may stop long utterances mid-answer; resume in chunks without
-    // dropping any of the response text.
-    const chunks: string[] = [];
-    for (let start = 0; start < response.length;) {
-      let end = Math.min(start + 180, response.length);
-      if (end < response.length) {
-        const boundary = response.lastIndexOf(' ', end);
-        if (boundary > start + 90) end = boundary + 1;
-      }
-      const chunk = response.slice(start, end).trim();
-      if (chunk) chunks.push(chunk);
-      start = end;
-    }
-    let chunkIndex = 0;
+    if (!response) return undefined;
     let stopped = false;
-    const speakNextChunk = () => {
-      if (stopped || chunkIndex >= chunks.length) return;
-      const chunk = chunks[chunkIndex++];
-      const nextUtterance = new SpeechSynthesisUtterance(chunk);
-      nextUtterance.lang = speechLang;
-      const female = pickFemaleVoice(window.speechSynthesis.getVoices());
-      if (female) nextUtterance.voice = female;
-      nextUtterance.onend = speakNextChunk;
-      nextUtterance.onerror = speakNextChunk;
-      window.speechSynthesis.speak(nextUtterance);
+
+    // Chunked local playback (fallback only): Chromium stops long utterances
+    // mid-answer, so resume in chunks without dropping any response text.
+    const speakViaLocalVoice = () => {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const speechLang = 'en-US';
+      const chunks: string[] = [];
+      for (let start = 0; start < response.length;) {
+        let end = Math.min(start + 180, response.length);
+        if (end < response.length) {
+          const boundary = response.lastIndexOf(' ', end);
+          if (boundary > start + 90) end = boundary + 1;
+        }
+        const chunk = response.slice(start, end).trim();
+        if (chunk) chunks.push(chunk);
+        start = end;
+      }
+      let chunkIndex = 0;
+      const speakNextChunk = () => {
+        if (stopped || chunkIndex >= chunks.length) return;
+        const chunk = chunks[chunkIndex++];
+        const nextUtterance = new SpeechSynthesisUtterance(chunk);
+        nextUtterance.lang = speechLang;
+        const female = pickFemaleVoice(window.speechSynthesis.getVoices());
+        if (female) nextUtterance.voice = female;
+        nextUtterance.onend = speakNextChunk;
+        nextUtterance.onerror = speakNextChunk;
+        window.speechSynthesis.speak(nextUtterance);
+      };
+      // Voices may still be loading when the response first arrives; wait for
+      // them (once) so the female voice is selected rather than the default.
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        let started = false;
+        const startOnce = () => {
+          if (started || stopped) return;
+          started = true;
+          window.clearTimeout(timer);
+          speakNextChunk();
+        };
+        const onVoicesChanged = () => {
+          window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+          startOnce();
+        };
+        window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+        // Safety net: never leave the response silent if voices never load.
+        const timer = window.setTimeout(() => {
+          window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+          startOnce();
+        }, 1000);
+        return;
+      }
+      speakNextChunk();
     };
-    // Voices may still be loading when the response first arrives; wait for
-    // them (once) so the female voice is selected rather than the default.
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length === 0) {
-      let started = false;
-      const startOnce = () => {
-        if (started || stopped) return;
-        started = true;
-        window.clearTimeout(timer);
-        speakNextChunk();
-      };
-      const onVoicesChanged = () => {
-        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
-        startOnce();
-      };
-      window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
-      // Safety net: never leave the response silent if voices never load.
-      const timer = window.setTimeout(() => {
-        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
-        startOnce();
-      }, 1000);
-      return () => {
-        stopped = true;
-        window.clearTimeout(timer);
-        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
-        window.speechSynthesis.cancel();
-      };
-    }
-    speakNextChunk();
+
+    const speakViaBackend = async () => {
+      try {
+        const request = window.zyraAPI.requestBackend;
+        if (!request) throw new Error('backend TTS bridge is unavailable');
+        const reply = (await request('POST', '/api/speak', { text: response })) as
+          { success?: boolean; error?: string } | null;
+        if (stopped) return;
+        if (!reply || reply.success === false) {
+          throw new Error(reply?.error || 'backend rejected the speak request');
+        }
+        // Backend accepted the text and is speaking it with JennyNeural.
+      } catch (err) {
+        if (stopped) return;
+        const reason = err instanceof Error ? err.message : String(err);
+        setStatus(`Backend voice (JennyNeural) unavailable — using local voice. ${reason}`);
+        speakViaLocalVoice();
+      }
+    };
+
+    void speakViaBackend();
     return () => {
       stopped = true;
-      window.speechSynthesis.cancel();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     };
   }, [response]);
 

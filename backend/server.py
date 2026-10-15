@@ -42,6 +42,7 @@ from backend.zyra_bridge import (
     process_voice_command,
     process_message,
     speak_text,
+    stop_speaking,
 )
 from brain import stream_ai, warm_up_async, check_ollama, get_model
 from backend.link_security import (
@@ -1039,6 +1040,10 @@ async def speak_endpoint(data: Dict[str, Any]):
     """
     Make Zyra speak text through TTS
 
+    Single-in-flight policy: at most one utterance synthesizes/plays at a
+    time (enforced by the lock in speak.py). A request that arrives while
+    another is speaking queues behind it instead of overlapping audio.
+
     Request body:
     {
         "text": "Hello, I am Zyra"
@@ -1058,8 +1063,39 @@ async def speak_endpoint(data: Dict[str, Any]):
         )
 
     try:
+        # speak_text hands the utterance to a worker thread; the lock inside
+        # speak() guarantees only one playback runs, and the event loop is
+        # never blocked waiting for synthesis or playback to finish.
         speak_text(text)
         return {"success": True, "data": "Speaking"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+
+
+@app.post("/api/speak/stop")
+async def speak_stop_endpoint():
+    """
+    Stop any in-flight TTS synthesis or playback.
+
+    Unlike the dashboard's local speechSynthesis.cancel() (which only stops
+    the browser's fallback voice), this stops the backend's actual audio:
+    it halts pygame playback, aborts remaining Edge TTS synthesis and
+    releases the single-in-flight lock.
+
+    Response:
+    {
+        "success": true,
+        "data": "Stopped",
+        "stopped_playback": true
+    }
+    """
+    try:
+        stopped_playback = stop_speaking()
+        return {"success": True, "data": "Stopped",
+                "stopped_playback": bool(stopped_playback)}
     except Exception as e:
         return JSONResponse(
             status_code=500,

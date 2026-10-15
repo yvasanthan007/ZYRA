@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from brain import ask_ai
-from speak import speak
+from speak import speak, stop_speaking
 from memory import remember, recall
 from commands.open_app import (
     open_chrome, open_vscode, open_notepad, open_calculator,
