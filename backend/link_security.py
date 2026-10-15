@@ -86,10 +86,10 @@ TRIGGER_PHRASES = (
 
 _URL_RE = re.compile(
     r"(https?://[^\s<>\"'\)]+|www\.[^\s<>\"'\)]+|"
-    r"[a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)*\.(?:"
-    r"com|net|org|io|co|in|uk|us|de|dev|app|ai|me|info|biz|online|site|store|"
-    r"live|tv|cc|pw|xyz|top|tk|ml|ga|cf|gq|click|link|win|bid|loan|work|date|ly"
-    r")(?:/[^\s<>\"'\)]*)?)",
+    # Accept any syntactically plausible DNS TLD, including newer and country
+    # code TLDs, rather than silently missing links outside a short allowlist.
+    r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])*)*"
+    r"\.[a-z]{2,63}(?:/[^\s<>\"'\)]*)?)",
     re.IGNORECASE,
 )
 
@@ -282,8 +282,12 @@ def _check_typosquatting(hostname):
         max_dist = 2 if len(brand_key) >= 8 else 1
         raw_dist = _levenshtein(sld, brand_key)
         norm_dist = _levenshtein(normalized, brand_key)
-        # norm_dist == 0 with a different raw label = pure look-alike spoof
-        if 1 <= raw_dist <= max_dist or (normalized != sld and norm_dist <= max_dist):
+        # Also normalize separator removal so pay-pal and paypa1 are caught.
+        compact = normalized.replace("-", "")
+        compact_dist = _levenshtein(compact, brand_key)
+        if (1 <= raw_dist <= max_dist
+                or (normalized != sld and norm_dist <= max_dist)
+                or (compact != sld and compact_dist <= max_dist)):
             return brand_name, brand_key
     return None, None
 

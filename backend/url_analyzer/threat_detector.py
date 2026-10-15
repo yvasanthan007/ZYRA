@@ -126,12 +126,17 @@ def _check_typosquatting(host, reg_domain):
     name = reg_domain.split(".")[0]
     if not name or len(name) < 4:
         return None
+    normalized_name = (name.replace("0", "o").replace("1", "l")
+                       .replace("3", "e").replace("4", "a")
+                       .replace("5", "s").replace("7", "t")
+                       .replace("8", "b").replace("-", ""))
     for brand in IMPERSONATION_TARGETS:
         if brand == name:
             continue
         ratio = SequenceMatcher(None, brand, name).ratio()
-        digit_swap = name.replace("1", "l").replace("0", "o").replace("5", "s")
-        if ratio >= 0.85 or digit_swap == brand or (brand in name and brand != name):
+        normalized_ratio = SequenceMatcher(None, brand, normalized_name).ratio()
+        digit_swap = normalized_name == brand
+        if ratio >= 0.85 or normalized_ratio >= 0.85 or digit_swap or (brand in name and brand != name):
             if brand in name and (name.startswith(brand) or name.endswith(brand)) and ratio < 0.5:
                 continue
             return _make_finding(

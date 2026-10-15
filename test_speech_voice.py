@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """Regression tests for TTS voice consistency and audible fallback.
 
 ZYRA's voice must stay female on every path:
@@ -38,6 +39,16 @@ class SpeechVoiceTests(unittest.TestCase):
         command = " ".join(str(part) for part in run.call_args[0][0])
         self.assertIn("Zira", command)
         self.assertIn("Female", command)
+=======
+"Regression tests for TTS voice consistency and audible fallback."""
+import unittest
+from unittest.mock import patch
+import speak
+class SpeechVoiceTests(unittest.TestCase):
+    def test_voice_is_consistent_for_english_hindi_and_tamil_text(self):
+        for text in ("Hello", "नमस्ते", "வணக்கம்"):
+            self.assertEqual(speak._get_voice_for_text(text), speak.VOICE)
+>>>>>>> 715a3dab4f0f579906d88f9e1afabe99b832d8a8
 
     def test_sapi_fallback_is_available_when_edge_fails(self):
         with patch.object(speak, "_speak_async", return_value=False), \
@@ -45,6 +56,9 @@ class SpeechVoiceTests(unittest.TestCase):
             speak.speak("Test audio")
         fallback.assert_called_once_with("Test audio")
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 715a3dab4f0f579906d88f9e1afabe99b832d8a8
 if __name__ == "__main__":
     unittest.main(verbosity=2)
