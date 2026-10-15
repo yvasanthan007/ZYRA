@@ -10,9 +10,13 @@ class SpeechVoiceTests(unittest.TestCase):
         for text in ("Hello", "नमस्ते", "வணக்கம்"):
             self.assertEqual(speak._get_voice_for_text(text), "en-US-JennyNeural")
 
-    def test_configured_voice_is_jenny_edge_voice(self):
+    def test_configured_voice_is_jenny_with_ordered_fallbacks(self):
         self.assertEqual(speak.VOICE, "en-US-JennyNeural")
         self.assertEqual(speak.DEFAULT_VOICE, "en-US-JennyNeural")
+        self.assertEqual(
+            speak.FALLBACK_VOICES,
+            ("en-US-AriaNeural", "en-US-AvaNeural", "en-US-EmmaNeural"),
+        )
 
     def test_sapi_fallback_is_only_used_if_edge_synthesis_fails(self):
         with patch.object(speak, "_speak_async", return_value=False), \

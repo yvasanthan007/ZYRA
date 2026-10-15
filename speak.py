@@ -16,9 +16,10 @@ for _stream in (sys.stdout, sys.stderr):
             pass
 
 # Centralized female voice configuration, used by every spoken response.
-# en-US-JennyNeural is Microsoft's English (United States) female Edge voice.
-# Edge TTS applies its standard rate and pitch; no prosody overrides are set.
+# JennyNeural is primary; these English (United States) female Edge voices are
+# tried in order as fallbacks before resorting to offline Windows SAPI speech.
 DEFAULT_VOICE = "en-US-JennyNeural"
+FALLBACK_VOICES = ("en-US-AriaNeural", "en-US-AvaNeural", "en-US-EmmaNeural")
 VOICE = DEFAULT_VOICE
 # Edge TTS retry settings. Microsoft's free Edge TTS endpoint intermittently
 # returns no audio (NoAudioReceived) under load/throttling, so we retry with
@@ -106,18 +107,18 @@ async def _render_audio(text, output_file):
 
     Returns True if a non-empty audio file was produced.
     """
-    voice = _get_voice_for_text(text)
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            communicate = edge_tts.Communicate(text, voice)
-            await communicate.save(output_file)
-            if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-                return True
-        except Exception:
-            pass
-        # Small backoff before retrying; also allows a cold re-connect.
-        if attempt < MAX_RETRIES:
-            await asyncio.sleep(RETRY_DELAY * attempt)
+    for voice in (_get_voice_for_text(text), *FALLBACK_VOICES):
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                communicate = edge_tts.Communicate(text, voice)
+                await communicate.save(output_file)
+                if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+                    return True
+            except Exception:
+                pass
+            # Small backoff before retrying; also allows a cold re-connect.
+            if attempt < MAX_RETRIES:
+                await asyncio.sleep(RETRY_DELAY * attempt)
     return False
 
 

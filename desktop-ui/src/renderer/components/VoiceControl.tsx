@@ -21,9 +21,15 @@ const isVoicePayload = (value: unknown): value is VoicePayload => {
   );
 };
 
-// ZYRA speaks with a female voice (matching the backend's en-US-AriaNeural
-// Edge voice). The OS/Chromium default is often a male voice (e.g. Microsoft
-// David), so a female voice is picked explicitly whenever one is installed.
+// ZYRA speaks with a female voice. The backend Edge TTS chain is
+// en-US-JennyNeural first, then en-US-AriaNeural, en-US-AvaNeural and
+// en-US-EmmaNeural as fallbacks; the local OS voice is picked in that same
+// preference order so the desktop UI sounds like the backend. The
+// OS/Chromium default is often a male voice (e.g. Microsoft David), so a
+// female voice is picked explicitly whenever one is installed.
+// Ordered name hints mirroring speak.py's DEFAULT_VOICE / FALLBACK_VOICES.
+const PREFERRED_VOICE_HINTS = ['jenny', 'aria', 'ava', 'emma'];
+
 const FEMALE_VOICE_HINTS = [
   'zira', 'aria', 'jenny', 'samantha', 'susan', 'hazel', 'maria', 'linda',
   'mary', 'salli', 'joanna', 'neerja', 'priya', 'female', 'eva', 'allison',
@@ -40,12 +46,19 @@ const isFemaleName = (voice: SpeechSynthesisVoice): boolean => {
   return FEMALE_VOICE_HINTS.some((hint) => name.includes(hint));
 };
 
-// Prefer an installed en-US female voice; then any female voice; then an
-// en-US voice. Returns null so callers can keep the browser default when
-// no suitable voice is installed.
+// Prefer the backend's preferred voice names in order (Jenny, Aria, Ava,
+// Emma); otherwise fall back to an installed en-US female voice; then any
+// female voice; then an en-US voice. Returns null so callers can keep the
+// browser default when no suitable voice is installed.
 const pickFemaleVoice = (voices: SpeechSynthesisVoice[]):
   SpeechSynthesisVoice | null => {
   if (!voices.length) return null;
+  for (const hint of PREFERRED_VOICE_HINTS) {
+    const exact = voices.find((v) => isEnUs(v) && (v.name || '').toLowerCase().includes(hint));
+    if (exact) return exact;
+    const any = voices.find((v) => (v.name || '').toLowerCase().includes(hint));
+    if (any) return any;
+  }
   return (
     voices.find((v) => isEnUs(v) && isFemaleName(v)) ||
     voices.find((v) => isFemaleName(v)) ||
