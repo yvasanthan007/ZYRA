@@ -34,3 +34,5 @@ build/
 .vscode/
 .idea/
 .postqode/
+# Generated build files
+.build/
