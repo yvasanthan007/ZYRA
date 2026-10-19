@@ -365,7 +365,9 @@ def _ml_observation(ml_analysis):
         prob = float(ml_analysis.get("probability") or 0.0)
     except (TypeError, ValueError):
         return None
-    if prob < 0.55:
+    if not 0.0 <= prob <= 1.0:
+        return None
+    if prob < 0.35:
         return None
     percent = int(round(prob * 100))
     algo = ml_analysis.get("algorithm") or "ML classifier"
@@ -384,7 +386,7 @@ def _ml_voice_sentence(ml_analysis):
         prob = float(ml_analysis.get("probability") or 0.0)
     except (TypeError, ValueError):
         return ""
-    if prob < 0.55:
+    if not 0.0 <= prob <= 1.0 or prob < 0.35:
         return ""
     percent = int(round(prob * 100))
     return f" The machine learning classifier estimates {percent} percent phishing probability."
@@ -453,6 +455,8 @@ def analyze_url_security(url):
         return {
             "url": url, "host": "", "scheme": "",
             "verdict": "SUSPICIOUS", "risk_score": "Medium", "risk_points": 3,
+            "phishing_probability": None, "risk_score_0_100": None,
+            "safety_score": None,
             "observations": [
                 "The link is not structurally valid — no readable domain could be parsed.",
                 "Malformed links are frequently used to hide the real destination.",
@@ -609,28 +613,38 @@ def analyze_url_security(url):
             domain_notes.append(f"VirusTotal backend scan clean ({detail} vendors)")
 
     # ── ML phishing classifier (local, offline advisory layer) ──
-    # Same model the deep URL Analyzer uses. Tiers mirror
-    # backend/url_analyzer/risk_scorer.py: >=0.90 forces MALICIOUS,
-    # >=0.75 raises a clean URL to SUSPICIOUS; the ML layer never
-    # makes a flagged URL look safer.
+    # Same model the deep URL Analyzer uses; keep thresholds and report scoring
+    # aligned with backend/url_analyzer/risk_scorer.py.
     ml_analysis = _ml_assessment(original_url)
     ml_prob = 0.0
     if ml_analysis and ml_analysis.get("available"):
         try:
             ml_prob = float(ml_analysis.get("probability") or 0.0)
+            if not 0.0 <= ml_prob <= 1.0:
+                raise ValueError("probability outside 0..1")
         except (TypeError, ValueError):
+            ml_analysis = {"available": False, "note": "Invalid ML probability."}
             ml_prob = 0.0
-    if ml_prob >= 0.90:
+    if ml_analysis and ml_analysis.get("available") and not 0.0 <= ml_prob <= 1.0:
+        ml_analysis = {"available": False, "note": "Invalid ML probability."}
+        ml_prob = 0.0
+    if ml_analysis and ml_analysis.get("available") and ml_prob >= 0.90:
         risk = max(risk, 8)
         ml_obs = _ml_observation(ml_analysis)
         if ml_obs:
             findings.append(ml_obs + " Treated as malicious.")
-    elif ml_prob >= 0.75:
+    elif ml_analysis and ml_analysis.get("available") and ml_prob >= 0.75:
+        risk = max(risk, 5)
+        ml_obs = _ml_observation(ml_analysis)
+        if ml_obs:
+            findings.append(ml_obs + " Treated as high risk.")
+    elif ml_analysis and ml_analysis.get("available") and ml_prob >= 0.55:
         risk = max(risk, 3)
         ml_obs = _ml_observation(ml_analysis)
         if ml_obs:
-            findings.append(ml_obs + " Classification raised to suspicious.")
-    elif ml_prob >= 0.55:
+            findings.append(ml_obs + " Treated as suspicious.")
+    elif ml_analysis and ml_analysis.get("available") and ml_prob >= 0.35:
+        risk = max(risk, 1)
         ml_obs = _ml_observation(ml_analysis)
         if ml_obs:
             findings.append(ml_obs)
@@ -684,12 +698,16 @@ def analyze_url_security(url):
         )
 
     return {
-        "url": url,
+        "url": original_url,
         "host": host_display,
         "scheme": scheme,
         "verdict": verdict,
         "risk_score": risk_score,
         "risk_points": risk,
+        "phishing_probability": ml_prob if ml_analysis and ml_analysis.get("available") else None,
+        "risk_score_0_100": round(ml_prob * 100, 1) if ml_analysis and ml_analysis.get("available") else None,
+        "safety_score": (min(round((1.0 - ml_prob) * 100), max(0, 100 - risk * 8))
+                         if ml_analysis and ml_analysis.get("available") else None),
         "observations": observations,
         "recommendation": recommendation,
         "ml_phishing": ml_analysis if isinstance(ml_analysis, dict) else {"available": False},
@@ -716,10 +734,15 @@ def format_security_report(result):
     """
     lines = [
         f"Verdict: {result['verdict']}",
-        f"Risk Score: {result['risk_score']}",
+        f"Risk Level: {result['risk_score']}",
+    ]
+    if result.get("phishing_probability") is not None:
+        lines.append(f"Phishing Probability: {float(result['phishing_probability']) * 100:.1f}%")
+        lines.append(f"Safety Score: {result.get('safety_score')} / 100 (higher = safer)")
+    lines.extend([
         "",
         "Key Observations:",
-    ]
+    ])
     lines.extend(f"• {obs}" for obs in result["observations"])
     lines.extend([
         "",

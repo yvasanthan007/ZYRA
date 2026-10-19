@@ -162,10 +162,10 @@ def score_scan(findings: list, domain_info: dict = None,
             "Score capped at 18: threat intelligence reported malicious activity."
         )
 
-    # ── ML phishing classifier: probabilistic floor / cap ──
-    # Tiers match predictor.py _VERDICT_TIERS: >=0.90 forces MALICIOUS with a
-    # hard score cap; >=0.75 raises a clean/unknown URL to SUSPICIOUS; lower
-    # probabilities only add a reasoning line (advisory).
+    # ── ML phishing classifier: probability drives classification ──
+    # Calibrated policy: >=90% is malicious; >=75% is high-risk malicious;
+    # >=55% is suspicious; lower probabilities remain advisory unless other
+    # independent indicators raise the risk.
     ml_available = bool(ml_analysis and ml_analysis.get("available"))
     ml_prob = 0.0
     if ml_available:
@@ -191,11 +191,7 @@ def score_scan(findings: list, domain_info: dict = None,
                 "probability."
             )
     elif ml_available and ml_prob >= 0.75:
-        if classification != "MALICIOUS":
-            classification = "SUSPICIOUS"
-            reasoning.append(
-                "Classification raised to SUSPICIOUS by the ML phishing classifier."
-            )
+        classification = "MALICIOUS"
         if score > 35:
             score = 35
             reasoning.append(
@@ -203,11 +199,7 @@ def score_scan(findings: list, domain_info: dict = None,
                 "probability."
             )
     elif ml_available and ml_prob >= 0.55:
-        if classification in ("LIKELY_SAFE", "UNKNOWN"):
-            classification = "SUSPICIOUS"
-            reasoning.append(
-                "Classification raised to SUSPICIOUS by the ML phishing classifier."
-            )
+        classification = "SUSPICIOUS"
         if score > 60:
             score = 60
             reasoning.append(
@@ -224,6 +216,16 @@ def score_scan(findings: list, domain_info: dict = None,
         if score > 60:
             score = 60
             reasoning.append("Safety score capped at 60: model flagged this URL for review.")
+
+    # Classification is ultimately aligned with the final fused safety score,
+    # but preserve UNKNOWN when no verification was possible.
+    if classification != "UNKNOWN":
+        if score < 25:
+            classification = "MALICIOUS"
+        elif score < 50 and classification != "MALICIOUS":
+            classification = "SUSPICIOUS"
+        elif score >= 50 and classification == "MALICIOUS" and not rep_malicious and not has_critical:
+            classification = "SUSPICIOUS"
 
     # ── Reliability guard: masked destination with no corroboration ──
     # A URL-shortener finding means the real destination is hidden behind a
@@ -246,26 +248,27 @@ def score_scan(findings: list, domain_info: dict = None,
             "corroborate that the destination is safe."
         )
 
-    # When the phishing model is available, make the score a direct inverse
-    # of its probability. Findings/reputation can only make the safety score
-    # lower; they must never dilute a high phishing probability.
+    # Publish both directions explicitly. The composite safety score starts
+    # from the model's inverse probability when present; independent findings
+    # and threat-intelligence can only lower it further.
     if ml_available:
         probability_safety_score = int(round((1.0 - ml_prob) * 100))
-        if score > probability_safety_score:
-            score = probability_safety_score
+        fused_score = min(score, probability_safety_score)
+        if fused_score != score:
             reasoning.append(
-                f"Safety score aligned to phishing probability: {int(round(ml_prob * 100))}% "
-                f"phishing probability yields {score}/100 safety."
+                f"ML contribution: {int(round(ml_prob * 100))}% phishing probability "
+                f"sets a maximum safety score of {probability_safety_score}/100."
             )
-
+        score = fused_score
     score = max(0, min(100, int(score)))
     risk = _risk_level(score)
     return {
         "score": score,
         "phishing_probability": round(ml_prob, 4) if ml_available else None,
+        "risk_score": round(ml_prob * 100, 1) if ml_available else None,
         "score_semantics": (
-            "safety score 0-100 (higher = safer); when ML is available, "
-            "score is at most (1 - phishing probability) * 100"
+            "score is safety 0-100 (higher = safer); risk_score is phishing risk "
+            "0-100 (higher = more dangerous) and equals phishing_probability * 100"
         ),
         "risk_level": risk,
         "risk_level_label": RISK_LEVEL_LABELS.get(risk, risk),

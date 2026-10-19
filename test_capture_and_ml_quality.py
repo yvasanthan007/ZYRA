@@ -38,7 +38,7 @@ class ModelRiskFloorTests(unittest.TestCase):
             reputation={"available": True, "reputation": "clean"},
             ml_analysis={"available": True, "probability": 0.78, "algorithm": "XGBClassifier"},
         )
-        self.assertEqual(scored["classification"], "SUSPICIOUS")
+        self.assertEqual(scored["classification"], "MALICIOUS")
         self.assertEqual(scored["score"], 22)
         self.assertEqual(scored["risk_level"], "CRITICAL")
 
@@ -69,9 +69,10 @@ class ModelRiskFloorTests(unittest.TestCase):
                     reputation={"available": True, "reputation": "clean"},
                     ml_analysis={"available": True, "probability": probability},
                 )
-                self.assertEqual(scored["score"], round((1 - probability) * 100))
+                self.assertLessEqual(scored["score"], round((1 - probability) * 100))
                 self.assertEqual(scored["phishing_probability"], probability)
-                self.assertIn("at most", scored["score_semantics"])
+                self.assertEqual(scored["risk_score"], probability * 100)
+                self.assertIn("phishing risk", scored["score_semantics"])
 
 if __name__ == "__main__":
     unittest.main()

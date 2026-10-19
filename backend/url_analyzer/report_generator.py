@@ -41,6 +41,8 @@ def build_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
         },
         "final": {
             "safety_score": result.get("score", 0),
+            "phishing_probability": result.get("phishing_probability"),
+            "risk_score": result.get("risk_score"),
             "risk_level": result.get("risk_level_label", ""),
             "classification": result.get("classification_label", ""),
             "classification_summary": result.get("classification_summary", ""),
@@ -104,7 +106,11 @@ def report_to_text(report_data: Dict[str, Any]) -> str:
     final = report_data.get("final", {})
     L.append("FINAL RESULT")
     L.append("-" * 40)
-    L.append(f"  Safety Score:   {final.get('safety_score', 0)} / 100")
+    L.append(f"  Safety Score:   {final.get('safety_score', 0)} / 100 (higher = safer)")
+    if final.get("phishing_probability") is not None:
+        L.append(f"  Phishing Probability: {float(final['phishing_probability']) * 100:.1f}%")
+    if final.get("risk_score") is not None:
+        L.append(f"  Phishing Risk: {float(final['risk_score']):.1f} / 100 (model probability)")
     L.append(f"  Risk Level:     {final.get('risk_level', '-')}")
     L.append(f"  Classification: {final.get('classification', '-')}")
     L.append("")
