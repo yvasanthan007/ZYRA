@@ -297,11 +297,14 @@ def extract_urls_from_image(image):
     if image is None:
         return []
     width, height = image.size
+    # Browser address bars sit at the top. OCR the full-width top strip first
+    # so it can reliably identify the actual page URL before page-content links.
+    # On kiosk/fullscreen windows without chrome, fall back to top and full frame.
     # Browser address bars sit in the top strip; searching a large 32% crop
     # first can pick an advert/article URL above the fold instead of the page
     # currently open. Prefer the address-bar band, then broaden as fallback for
     # kiosk/fullscreen windows whose chrome is hidden.
-    address_height = max(1, min(height, int(height * 0.18)))
+    address_height = max(1, min(height, int(height * 0.24)))
     address_text = extract_text_from_image(
         image.crop((0, 0, width, address_height)))
     address_urls = extract_urls_from_text(address_text) if address_text else []
@@ -380,9 +383,11 @@ def _repair_ocr_url_noise(text: str) -> str:
             out += " " + remainder
         return out
 
-    # scheme:// anchored  →  "https://google com/search?q=x now" -> google.com/...
+    # Repair only the scheme-plus-host prefix. Do not allow the match to
+    # consume following prose or a second URL, which previously merged two
+    # visible URLs into one fabricated host/path.
     text = re.sub(
-        r"(https?://)([^\s][a-zA-Z0-9 ./_~?=&%#-]*)",
+        r"(https?://)([^\s/?#]+(?:\s+[^\s/?#]+){0,3})",
         lambda m: _rebuild(m.group(1), m.group(2)),
         text,
     )

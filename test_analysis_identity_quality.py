@@ -24,7 +24,7 @@ class ScreenUrlPriorityTests(unittest.TestCase):
                 ["https://actual-current-site.example.com/account"],
             )
         self.assertEqual(ocr.call_count, 1)
-        self.assertEqual(image.last_crop, (0, 0, 1600, 162))
+        self.assertEqual(image.last_crop, (0, 0, 1600, 216))
 
 class PhishingHeuristicTests(unittest.TestCase):
     def test_registered_domain_typosquat_is_a_feature(self):

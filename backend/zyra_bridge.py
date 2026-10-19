@@ -170,8 +170,7 @@ def _link_capture_report(message: str):
         "screen link", "link on my screen", "url on my screen",
         "website on the screen", "website on screen",
         "website on my screen", "page on screen", "page on the screen",
-        "page i am on", "page i'm on", "current page", "the current page",
-        "this page", "website on the current screen", "visible in my browser",
+        "website on the current screen", "visible in my browser",
     ))
     # A URL typed/pasted into the actual request is an explicit target unless
     # the user specifically asks for the visible/selected screen link.
