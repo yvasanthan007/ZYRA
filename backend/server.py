@@ -543,7 +543,7 @@ def _url_run_worker(scan_id: str, url: str, source: str) -> None:
 # (DNS/TLS/HTTP) already bound individual network ops, but a hung worker
 # thread must never permanently block all future scans, so this watchdog
 # forcibly clears _url_active once the deadline is exceeded.
-_URL_SCAN_MAX_LIFETIME = 90  # seconds
+_URL_SCAN_MAX_LIFETIME = 240  # seconds; allow slower DNS/TLS/reputation providers to finish
 
 
 def _url_watchdog(scan_id: str, deadline: float) -> None:
@@ -1784,24 +1784,18 @@ def _spawn_link_capture(question: str, websocket: WebSocket = None) -> None:
     """
     def _worker():
         try:
+            report = None
+            url = None
             try:
-                from screen_ocr import get_active_url
-                url = get_active_url()
+                from backend.zyra_bridge import _link_capture_report
+                report, url = _link_capture_report(question)
             except BaseException as exc:  # noqa: BLE001 - OCR must never kill server
                 print(f"[ZYRA][link-capture] capture error (suppressed): {exc!r}")
-                url = None
 
-            if not url:
+            if not url or not report:
                 report = ("I couldn't find a link on your screen or in your "
                           "clipboard. Copy the link or show it on screen, then "
                           "ask me to analyze it again.")
-            else:
-                try:
-                    report = format_security_report(analyze_url_security(url))
-                except BaseException as exc:  # noqa: BLE001
-                    print(f"[ZYRA][link-capture] analysis error (suppressed): {exc!r}")
-                    report = (f"I found {url} but could not finish the security "
-                              f"analysis. Please try again.")
 
             if websocket is not None:
                 _send_personal_sync(

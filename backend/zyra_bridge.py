@@ -166,7 +166,12 @@ def _link_capture_report(message: str):
     lowered = (message or "").lower()
     screen_request = any(phrase in lowered for phrase in (
         "on the screen", "on screen", "visible on screen", "current page",
-        "this page", "page i'm on", "selected link", "selected url",
+        "this page", "page i'm on", "page i am on", "selected link", "selected url",
+        "screen link", "link on my screen", "url on my screen",
+        "website on the screen", "website on screen",
+        "website on my screen", "page on screen", "page on the screen",
+        "page i am on", "page i'm on", "current page", "the current page",
+        "this page", "website on the current screen", "visible in my browser",
     ))
     # A URL typed/pasted into the actual request is an explicit target unless
     # the user specifically asks for the visible/selected screen link.

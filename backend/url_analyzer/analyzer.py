@@ -335,7 +335,7 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     # â”€â”€ Stage: CHECKING DNS â”€â”€
     emit("dns", "running")
     try:
-        _dns, _derr = _run_with_timeout(analyze_dns, args=(url, parts), timeout=15)
+        _dns, _derr = _run_with_timeout(analyze_dns, args=(url, parts), timeout=25)
         if _dns is not None:
             domain_info = _dns
         else:
@@ -355,7 +355,7 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     # â”€â”€ Stage: ANALYZING SSL/TLS â”€â”€
     emit("ssl", "running")
     try:
-        _ssl, _serr = _run_with_timeout(analyze_ssl, args=(url, parts), timeout=15)
+        _ssl, _serr = _run_with_timeout(analyze_ssl, args=(url, parts), timeout=25)
         if _ssl is not None:
             ssl_info = _ssl
         else:
@@ -377,7 +377,7 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
     emit("redirects", "running")
     try:
         _redir, _rerr = _run_with_timeout(
-            _probe_redirects, args=(url, parts, domain_info), timeout=20)
+            _probe_redirects, args=(url, parts, domain_info), timeout=30)
         if _redir is not None:
             redirect_info = _redir
         else:
@@ -400,7 +400,7 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
         _rep, _rerr = _run_with_timeout(
             check_reputation,
             args=(url, parts.get("hostname") or ""),
-            timeout=40,
+            timeout=60,
         )
         if _rep is not None:
             reputation = _rep

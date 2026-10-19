@@ -246,13 +246,26 @@ def score_scan(findings: list, domain_info: dict = None,
             "corroborate that the destination is safe."
         )
 
+    # When the phishing model is available, make the score a direct inverse
+    # of its probability. Findings/reputation can only make the safety score
+    # lower; they must never dilute a high phishing probability.
+    if ml_available:
+        probability_safety_score = int(round((1.0 - ml_prob) * 100))
+        if score > probability_safety_score:
+            score = probability_safety_score
+            reasoning.append(
+                f"Safety score aligned to phishing probability: {int(round(ml_prob * 100))}% "
+                f"phishing probability yields {score}/100 safety."
+            )
+
     score = max(0, min(100, int(score)))
     risk = _risk_level(score)
     return {
         "score": score,
+        "phishing_probability": round(ml_prob, 4) if ml_available else None,
         "score_semantics": (
-            "safety score 0-100 (higher = safer) — the inverse of the ML "
-            "phishing probability, where higher means more danger"
+            "safety score 0-100 (higher = safer); when ML is available, "
+            "score is at most (1 - phishing probability) * 100"
         ),
         "risk_level": risk,
         "risk_level_label": RISK_LEVEL_LABELS.get(risk, risk),

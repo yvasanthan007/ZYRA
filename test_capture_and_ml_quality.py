@@ -39,8 +39,8 @@ class ModelRiskFloorTests(unittest.TestCase):
             ml_analysis={"available": True, "probability": 0.78, "algorithm": "XGBClassifier"},
         )
         self.assertEqual(scored["classification"], "SUSPICIOUS")
-        self.assertLessEqual(scored["score"], 35)
-        self.assertEqual(scored["risk_level"], "HIGH")
+        self.assertEqual(scored["score"], 22)
+        self.assertEqual(scored["risk_level"], "CRITICAL")
 
     def test_extreme_probability_is_malicious_and_safety_score_critical(self):
         scored = score_scan([], ml_analysis={"available": True, "probability": 0.96})
@@ -59,6 +59,19 @@ class ModelRiskFloorTests(unittest.TestCase):
         scored = score_scan([], ml_analysis={"available": True, "probability": 4.2})
         self.assertEqual(scored["score"], 92)
         self.assertTrue(all("ML phishing classifier" not in item for item in scored["reasoning"]))
+
+    def test_safety_score_is_inverse_of_phishing_probability(self):
+        for probability in (0.10, 0.50, 0.80, 0.95):
+            with self.subTest(probability=probability):
+                scored = score_scan(
+                    [], domain_info={"resolved": True, "whois_available": True},
+                    ssl_info={"checked": True},
+                    reputation={"available": True, "reputation": "clean"},
+                    ml_analysis={"available": True, "probability": probability},
+                )
+                self.assertEqual(scored["score"], round((1 - probability) * 100))
+                self.assertEqual(scored["phishing_probability"], probability)
+                self.assertIn("at most", scored["score_semantics"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -31,6 +31,11 @@ _ANALYSIS_TRIGGERS = [
     "analyze this link", "analyse this link", "analyze the link",
     "analyse the link", "analyze the link on the screen",
     "analyse the link on the screen", "link on the screen",
+    "screen link", "link on my screen", "url on my screen",
+    "website on the screen", "website on screen", "current page",
+    "page i'm on", "page i am on", "visible on screen",
+    "website on my screen", "page on screen", "page on the screen",
+    "screen for phishing", "screen for threats",
 ]
 
 # Target nouns that identify WHAT should be analyzed
