@@ -38,3 +38,6 @@ desktop-dist/
 # Generated build files
 .build/
 desktop-dist/
+
+# Node.js dependencies
+node_modules/
