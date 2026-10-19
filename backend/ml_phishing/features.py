@@ -64,6 +64,10 @@ FEATURE_NAMES = [
     "brand_misplaced",
     "has_hex_blob",
     "brand_typosquat",
+    "brand_in_host",
+    "host_has_credential_terms",
+    "host_label_count",
+    "suspicious_host_pattern",
 ]
 
 FEATURE_DESCRIPTIONS = {
@@ -96,6 +100,10 @@ FEATURE_DESCRIPTIONS = {
     "brand_misplaced": "Known brand in subdomain/path of another domain",
     "has_hex_blob": "Long hex blob (token-like) in path/query",
     "brand_typosquat": "Registered domain resembles a protected brand",
+    "brand_in_host": "Protected brand appears in hostname outside its registered domain",
+    "host_has_credential_terms": "Credential-bait wording in hostname",
+    "host_label_count": "Number of hostname labels",
+    "suspicious_host_pattern": "Combined brand, credential, and suspicious-domain pattern",
 }
 
 _SCHEME_DEFAULT_PORTS = {"http": 80, "https": 443}
@@ -265,6 +273,14 @@ def extract_features(url: str) -> dict:
         "brand_misplaced": int(_brand_misplaced(host, path, reg)) if host else 0,
         "has_hex_blob": int(bool(re.search(r"[0-9a-f]{16,}", path + query))),
         "brand_typosquat": int(_brand_typosquat(host, reg)) if host else 0,
+        "brand_in_host": int(_brand_misplaced(host, "", reg)) if host else 0,
+        "host_has_credential_terms": int(any(k in host for k in CREDENTIAL_KEYWORDS)),
+        "host_label_count": len(labels),
+        "suspicious_host_pattern": int(
+            bool(host)
+            and _brand_misplaced(host, "", reg)
+            and any(k in host for k in CREDENTIAL_KEYWORDS)
+        ),
     }
 
 

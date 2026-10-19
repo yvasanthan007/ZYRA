@@ -131,10 +131,23 @@ _VERDICT_TIERS = [
 ]
 
 
-def _verdict(prob):
-    for threshold, label in _VERDICT_TIERS:
-        if prob >= threshold:
-            return label
+def _is_ip(host):
+    try:
+        import ipaddress
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        return False
+
+def _verdict(prob, decision_threshold=0.35):
+    if prob >= 0.90:
+        return "PHISHING"
+    if prob >= 0.75:
+        return "LIKELY_PHISHING"
+    if prob >= 0.55:
+        return "SUSPICIOUS"
+    if prob >= decision_threshold:
+        return "SUSPICIOUS"
     return "SAFE"
 
 
@@ -191,6 +204,50 @@ def analyze_url(url: str) -> dict:
         if not __import__("math").isfinite(prob):
             return {"available": False, "note": "ML model returned a non-finite probability."}
         prob = min(max(prob, 0.0), 1.0)
+        # Add conservative deterministic indicators to the model estimate for
+        # clear phishing structure the small lexical model can underweight.
+        from urllib.parse import urlparse
+        from backend.ml_phishing.features import registered_domain
+        from backend.url_analyzer.threat_detector import IMPERSONATION_TARGETS
+        parsed = urlparse(raw if "://" in raw else "https://" + raw)
+        host = (parsed.hostname or "").lower()
+        reg_domain = registered_domain(host)
+        reg_label = reg_domain.split(".", 1)[0]
+        normalized_label = reg_label.translate(str.maketrans({"0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b"}))
+        normalized_compact = host.replace(".", "").replace("-", "").translate(
+            str.maketrans({"0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b"}))
+        owner_domains = {
+            "google": {"google", "googleusercontent", "gmail"},
+            "paypal": {"paypal"}, "microsoft": {"microsoft", "live", "office"},
+            "apple": {"apple", "icloud"}, "amazon": {"amazon"},
+            "facebook": {"facebook", "meta"}, "instagram": {"instagram"},
+            "netflix": {"netflix"}, "linkedin": {"linkedin"},
+        }
+        legitimate_brand_owner = any(
+            reg_label == owned for brand, owned_labels in owner_domains.items()
+            for owned in owned_labels if brand in IMPERSONATION_TARGETS
+        )
+        if any(len(brand) >= 4 and brand in host and brand not in reg_domain
+               for brand in IMPERSONATION_TARGETS):
+            prob = max(prob, 0.78)
+        if _is_ip(host):
+            prob = max(prob, 0.60)
+        from difflib import SequenceMatcher
+        # Catch common one-character confusables such as g00gle.com while
+        # avoiding exact owner domains (google.com, accounts.google.com).
+        if not legitimate_brand_owner and (
+                any(normalized_label != brand and
+                    SequenceMatcher(None, normalized_label, brand).ratio() >= 0.78
+                    for brand in IMPERSONATION_TARGETS)
+                or any(brand in normalized_compact and brand not in reg_domain
+                       for brand in IMPERSONATION_TARGETS)):
+            prob = max(prob, 0.78)
+        if host in ("bit.ly", "tinyurl.com", "t.co", "ow.ly", "is.gd", "cutt.ly"):
+            # Shorteners obscure destinations, but URL text alone cannot prove
+            # the redirect is malicious. Keep this uncertain rather than claim
+            # an unsupported phishing probability.
+            prob = max(prob, 0.35)
+        threshold = float((meta or {}).get("decision_threshold", 0.35))
 
         signals = []
         for name, importance in _feature_importances(model, meta):
@@ -212,7 +269,8 @@ def analyze_url(url: str) -> dict:
             "model_version": (meta or {}).get("version"),
             "probability": round(prob, 4),
             "percent": int(round(prob * 100)),
-            "verdict": _verdict(prob),
+            "decision_threshold": threshold,
+            "verdict": _verdict(prob, threshold),
             "risk_band": _risk_band(prob),
             "confidence": round(max(prob, 1.0 - prob), 4),
             "top_signals": signals,

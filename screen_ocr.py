@@ -562,14 +562,49 @@ def _clipboard_exact_url():
     return None
 
 
+def _get_active_browser_url():
+    """Read the focused browser address bar URL, preserving clipboard contents.
+
+    This is a best-effort Windows fallback for OCR failures. It only reads a
+    selected URL from recognized browser windows; it returns None for other apps.
+    """
+    if sys.platform != "win32":
+        return None
+    try:
+        import pyautogui
+        import pyperclip
+        import win32gui
+        hwnd = win32gui.GetForegroundWindow()
+        title = (win32gui.GetWindowText(hwnd) or "").lower()
+        browser_markers = ("chrome", "edge", "firefox", "brave", "opera", "vivaldi")
+        if not any(marker in title for marker in browser_markers):
+            return None
+        previous = pyperclip.paste()
+        try:
+            pyautogui.hotkey("ctrl", "l")
+            pyautogui.hotkey("ctrl", "c")
+            time.sleep(0.15)
+            copied = (pyperclip.paste() or "").strip()
+        finally:
+            pyperclip.copy(previous or "")
+        if not copied or any(ch.isspace() for ch in copied):
+            return None
+        candidate = copied if re.match(r"^https?://", copied, re.I) else "https://" + copied
+        parsed = urlparse(candidate)
+        if parsed.hostname and "." in parsed.hostname:
+            return candidate
+    except Exception as exc:
+        print(f"   ℹ️  Active browser URL read unavailable: {type(exc).__name__}")
+    return None
+
 def get_active_url():
     """
     Resolve the link the user is looking at.
 
     Order of resolution:
-      1. On-screen URL via OCR (the screen target wins over stale clipboard data)
-      2. Clipboard holding exactly one URL  → fast path when OCR finds nothing
-      3. Any URL inside clipboard text      → fallback
+      1. On-screen URL via OCR
+      2. Active browser address bar when OCR could not resolve the page
+      3. Clipboard URL only as the final fallback
 
     This is the main entry point for Zyra's link analysis feature.
 
@@ -590,7 +625,15 @@ def get_active_url():
             return screen_url
         print("   ℹ️  No on-screen URL (capture produced nothing).")
 
-        # Fall back to a clipboard URL only after the screen has been checked.
+        # OCR can miss a small or obscured address bar. Before falling back to
+        # clipboard (which may be stale), try the active browser's current URL
+        # using its address-bar copy shortcut. This does not navigate or modify
+        # page state; clipboard is restored immediately after reading.
+        url = _get_active_browser_url()
+        if url:
+            print(f"   🔗 URL read from active browser address bar: {url}")
+            return url
+        # Fall back to a clipboard URL only after screen/browser capture failed.
         url = _clipboard_exact_url()
         if url:
             print(f"   ✅ URL found in clipboard (fallback): {url}")

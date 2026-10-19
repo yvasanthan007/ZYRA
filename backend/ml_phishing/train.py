@@ -38,13 +38,25 @@ MODEL_VERSION = "1.0.0"
 def _metrics(y_true, proba):
     from sklearn.metrics import (accuracy_score, f1_score, precision_score,
                                  recall_score, roc_auc_score)
-    pred = (proba >= 0.5).astype(int)
+    # Use a recall-oriented deployment threshold: missed phishing has higher
+    # consequence than an additional suspicious warning. Keep threshold recorded.
+    threshold = 0.35
+    pred = (proba >= threshold).astype(int)
+    try:
+        from sklearn.metrics import average_precision_score, brier_score_loss
+        pr_auc = float(average_precision_score(y_true, proba))
+        brier = float(brier_score_loss(y_true, proba))
+    except Exception:
+        pr_auc = brier = float("nan")
     return {
+        "decision_threshold": threshold,
         "accuracy": round(float(accuracy_score(y_true, pred)), 4),
         "precision": round(float(precision_score(y_true, pred, zero_division=0)), 4),
         "recall": round(float(recall_score(y_true, pred, zero_division=0)), 4),
         "f1": round(float(f1_score(y_true, pred, zero_division=0)), 4),
         "roc_auc": round(float(roc_auc_score(y_true, proba)), 4),
+        "pr_auc": round(pr_auc, 4),
+        "brier_score": round(brier, 4),
         "test_size": int(len(y_true)),
     }
 
@@ -52,18 +64,39 @@ def _metrics(y_true, proba):
 def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
     """
     Train both candidates and return (best_name, best_model, results, holdout).
-    holdout is (X_test, y_test) for optional extra evaluation.
+    holdout is (X_test, y_test) for optional extra evaluation. Built-in
+    synthetic-data results are development checks, not estimates of real-world accuracy.
     """
+    if len(urls) != len(labels) or len(set(labels)) != 2:
+        raise ValueError("Training requires equal URL/label counts and both classes (0 and 1).")
+    if any(label not in (0, 1) for label in labels):
+        raise ValueError("Labels must use 1=phishing and 0=legitimate.")
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.linear_model import LogisticRegression
-    from sklearn.model_selection import train_test_split
+    from sklearn.model_selection import GroupShuffleSplit, train_test_split
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
 
     X = [feature_vector(u) for u in urls]
     y = list(labels)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=seed)
+    # Group by registrable host where possible, so URL variants from a single
+    # domain cannot appear in both train and hold-out splits.
+    from urllib.parse import urlparse
+    from backend.ml_phishing.features import registered_domain
+    groups = []
+    for url in urls:
+        parsed = urlparse(url if "://" in url else "https://" + url)
+        groups.append(registered_domain(parsed.hostname or url))
+    try:
+        splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=seed)
+        train_idx, test_idx = next(splitter.split(X, y, groups))
+        if len(set(y[i] for i in train_idx)) < 2 or len(set(y[i] for i in test_idx)) < 2:
+            raise ValueError("group split missing a class")
+        X_train, X_test = [X[i] for i in train_idx], [X[i] for i in test_idx]
+        y_train, y_test = [y[i] for i in train_idx], [y[i] for i in test_idx]
+    except ValueError:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, stratify=y, random_state=seed)
 
     candidates = {
         "RandomForestClassifier": RandomForestClassifier(
@@ -85,9 +118,10 @@ def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
     try:
         from xgboost import XGBClassifier
         candidates["XGBClassifier"] = XGBClassifier(
-            n_estimators=n_estimators, max_depth=6, learning_rate=0.15,
-            subsample=0.9, colsample_bytree=0.9, eval_metric="logloss",
-            n_jobs=-1, random_state=seed, tree_method="hist",
+            n_estimators=n_estimators, max_depth=4, learning_rate=0.08,
+            subsample=0.85, colsample_bytree=0.85, min_child_weight=2,
+            reg_lambda=2.0, eval_metric="logloss", n_jobs=-1,
+            random_state=seed, tree_method="hist",
         )
     except Exception as exc:  # noqa: BLE001 — optional dependency
         if verbose:
@@ -103,13 +137,12 @@ def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
         if verbose:
             print(f"  {name}: {results[name]}")
 
-    # XGBoost is the production classifier whenever its dependency is present.
-    # Keep sklearn candidates evaluated for benchmark/fallback visibility, but
-    # do not let a tiny hold-out F1 difference silently switch the deployed ML.
-    best_name = (
-        "XGBClassifier" if "XGBClassifier" in fitted else
-        max(results, key=lambda n: results[n]["f1"])
-    )
+    # Prefer XGBoost for production when it meets a reasonable recall floor;
+    # otherwise deploy the best F1 model rather than silently missing phish.
+    if "XGBClassifier" in fitted and results["XGBClassifier"]["recall"] >= 0.98:
+        best_name = "XGBClassifier"
+    else:
+        best_name = max(results, key=lambda n: (results[n]["f1"], n == "XGBClassifier"))
     if verbose:
         print(f"  selected by policy: {best_name}")
 
@@ -140,12 +173,14 @@ def save_model(best_name, best_model, results, dataset_stats):
             "feature_names": FEATURE_NAMES,
             "algorithm": best_name,
             "version": MODEL_VERSION,
+            "decision_threshold": 0.35,
         },
         MODEL_PATH,
     )
     meta = {
         "version": MODEL_VERSION,
         "algorithm": best_name,
+        "decision_threshold": 0.35,
         "feature_names": FEATURE_NAMES,
         "feature_importances": _feature_importance_pairs(best_name, best_model),
         "metrics": results,

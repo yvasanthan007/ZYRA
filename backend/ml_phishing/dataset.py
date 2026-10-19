@@ -173,10 +173,15 @@ def _phish_url(rng):
     kind = rng.choices(
         ["typo_tld", "brand_subdomain", "ip_host", "shortener", "punycode",
          "at_trick", "encoded", "sub_bury", "prize", "php_random",
-         "hex_dir", "hyphen_chain"],
-        weights=[22, 18, 10, 8, 5, 6, 7, 10, 5, 5, 2, 2])[0]
+         "hex_dir", "hyphen_chain", "legit_brand_lookalike"],
+        weights=[18, 15, 8, 5, 4, 5, 6, 8, 5, 4, 1, 1, 20])[0]
 
-    if kind == "typo_tld":
+    if kind == "legit_brand_lookalike":
+        # Hard subtle cases: a brand is only a subdomain of an unrelated host.
+        common_tld = rng.choice(["com", "net", "org", "info", "co"])
+        host = f"{brand}.{rng.choice(['secure-account', 'login-portal', 'verify-center'])}.{common_tld}"
+        cred = rng.choice(["/login", "/signin", "/account/verify", "/reset-password"])
+    elif kind == "typo_tld":
         host = f"{variant}{'-' + rng.choice(_NEUTRAL_HOST_WORDS) if rng.random() < 0.4 else ''}.{tld}"
     elif kind == "brand_subdomain":
         base = f"{rng.choice(_NEUTRAL_HOST_WORDS)}-{_random_hex(rng, 4)}"
@@ -236,10 +241,17 @@ def _legit_url(rng):
             ("appleid.apple.com", ["/sign-in", "/account/manage"]),
             ("amazon.com", ["/ap/signin", "/gp/css/homepage.html"]),
         ])
-    # Legitimate marketing-shortener use is only a small minority.
-    if rng.random() < 0.02:
-        sh = rng.choice(["bit.ly", "tinyurl.com", "ow.ly", "is.gd"])
+    # Include common non-phishing URLs that the lexical model must not
+    # automatically block: shorteners, local routers, and generic login paths.
+    hard_case = rng.random()
+    if hard_case < 0.16:
+        sh = rng.choice(["bit.ly", "tinyurl.com", "ow.ly", "is.gd", "t.co"])
         return f"{scheme}://{sh}/{_random_token(rng, rng.choice([6, 7, 8]))}"
+    if hard_case < 0.24:
+        return f"http://192.168.{rng.randrange(1, 255)}.{rng.randrange(1, 255)}/admin/login.php"
+    if hard_case < 0.24:
+        domain = rng.choice(["example.com", "example.org", "neverssl.com", "localhost.localdomain"])
+        paths = ["/login", "/account/verify", "/reset-password", "/signin"]
     sub = rng.choice(_LEGIT_SUBDOMAINS)
     path = rng.choice(paths)
     q = rng.choice(_LEGIT_QUERIES)
@@ -331,7 +343,7 @@ def build_dataset(csv_path=None, per_class=1200, seed=42):
         return urls, labels, stats
     urls, labels = seed_dataset(per_class=per_class, seed=seed)
     stats = {
-        "source": "builtin-seed-dataset",
+        "source": "builtin-seed-dataset (synthetic patterns; not real-world validation)",
         "size": len(urls),
         "phishing": int(sum(labels)),
         "legitimate": int(len(labels) - sum(labels)),

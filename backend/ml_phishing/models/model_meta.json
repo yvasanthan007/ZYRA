@@ -1,6 +1,7 @@
 {
   "version": "1.0.0",
   "algorithm": "XGBClassifier",
+  "decision_threshold": 0.35,
   "feature_names": [
     "url_length",
     "hostname_length",
@@ -30,92 +31,116 @@
     "urgency_keywords",
     "brand_misplaced",
     "has_hex_blob",
-    "brand_typosquat"
+    "brand_typosquat",
+    "brand_in_host",
+    "host_has_credential_terms",
+    "host_label_count",
+    "suspicious_host_pattern"
   ],
   "feature_importances": [
     [
       "num_hyphens_host",
-      0.41062068939208984
+      0.3295815885066986
     ],
     [
       "suspicious_tld",
-      0.25539088249206543
-    ],
-    [
-      "num_digits_host",
-      0.11602360010147095
-    ],
-    [
-      "brand_typosquat",
-      0.11153540760278702
-    ],
-    [
-      "digit_ratio_host",
-      0.03716852515935898
-    ],
-    [
-      "is_shortener",
-      0.037009842693805695
-    ],
-    [
-      "num_special_chars",
-      0.018219808116555214
-    ],
-    [
-      "num_dots_host",
-      0.0033840888645499945
-    ],
-    [
-      "is_https",
-      0.0030095786787569523
-    ],
-    [
-      "hostname_length",
-      0.0017704354831948876
-    ],
-    [
-      "url_length",
-      0.00170171819627285
-    ],
-    [
-      "max_label_length",
-      0.0015414359513670206
-    ],
-    [
-      "domain_entropy",
-      0.0007305794861167669
-    ],
-    [
-      "credential_keywords",
-      0.0006293243495747447
-    ],
-    [
-      "query_length",
-      0.0004367597575765103
-    ],
-    [
-      "path_length",
-      0.000359966914402321
+      0.20777122676372528
     ],
     [
       "num_percent_encoded",
-      0.00033451642957516015
+      0.11255700886249542
     ],
     [
-      "path_depth",
-      8.790134597802535e-05
+      "credential_keywords",
+      0.06654935330152512
+    ],
+    [
+      "urgency_keywords",
+      0.05462105944752693
     ],
     [
       "num_query_params",
-      4.49003346147947e-05
+      0.04386409744620323
+    ],
+    [
+      "num_special_chars",
+      0.03879738226532936
+    ],
+    [
+      "query_length",
+      0.02648436836898327
+    ],
+    [
+      "digit_ratio_host",
+      0.02124835178256035
+    ],
+    [
+      "suspicious_host_pattern",
+      0.017326869070529938
+    ],
+    [
+      "brand_typosquat",
+      0.015176800079643726
+    ],
+    [
+      "num_digits_host",
+      0.01425670925527811
+    ],
+    [
+      "max_label_length",
+      0.010528896003961563
+    ],
+    [
+      "url_length",
+      0.0085331741720438
+    ],
+    [
+      "is_shortener",
+      0.00670351879671216
+    ],
+    [
+      "brand_misplaced",
+      0.006456960923969746
+    ],
+    [
+      "path_length",
+      0.00526650995016098
+    ],
+    [
+      "is_https",
+      0.0031041190959513187
+    ],
+    [
+      "num_dots_host",
+      0.002888493938371539
+    ],
+    [
+      "path_depth",
+      0.0019593422766774893
+    ],
+    [
+      "domain_entropy",
+      0.001885477569885552
+    ],
+    [
+      "host_has_credential_terms",
+      0.0015176930464804173
     ],
     [
       "num_subdomains",
-      0.0
+      0.001396878738887608
+    ],
+    [
+      "hostname_length",
+      0.0008459889213554561
     ],
     [
       "has_ip_host",
-      0.0
+      0.0004225713200867176
+    ],
+    [
+      "host_label_count",
+      0.00025552825536578894
     ],
     [
       "has_nonstandard_port",
@@ -138,51 +163,56 @@
       0.0
     ],
     [
-      "urgency_keywords",
-      0.0
-    ],
-    [
-      "brand_misplaced",
-      0.0
-    ],
-    [
       "has_hex_blob",
+      0.0
+    ],
+    [
+      "brand_in_host",
       0.0
     ]
   ],
   "metrics": {
     "RandomForestClassifier": {
-      "accuracy": 0.9958,
-      "precision": 1.0,
-      "recall": 0.9917,
+      "decision_threshold": 0.35,
+      "accuracy": 0.9953,
+      "precision": 0.9916,
+      "recall": 1.0,
       "f1": 0.9958,
-      "roc_auc": 0.9999,
-      "test_size": 480
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0042,
+      "test_size": 846
     },
     "LogisticRegression": {
-      "accuracy": 0.9979,
+      "decision_threshold": 0.35,
+      "accuracy": 0.9941,
       "precision": 1.0,
-      "recall": 0.9958,
-      "f1": 0.9979,
-      "roc_auc": 1.0,
-      "test_size": 480
+      "recall": 0.9894,
+      "f1": 0.9947,
+      "roc_auc": 0.9993,
+      "pr_auc": 0.9996,
+      "brier_score": 0.0059,
+      "test_size": 846
     },
     "XGBClassifier": {
-      "accuracy": 0.9958,
+      "decision_threshold": 0.35,
+      "accuracy": 0.9988,
       "precision": 1.0,
-      "recall": 0.9917,
-      "f1": 0.9958,
-      "roc_auc": 0.9999,
-      "test_size": 480
+      "recall": 0.9979,
+      "f1": 0.9989,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0012,
+      "test_size": 846
     }
   },
   "dataset": {
-    "source": "builtin-seed-dataset",
-    "size": 2400,
-    "phishing": 1200,
-    "legitimate": 1200
+    "source": "builtin-seed-dataset (synthetic patterns; not real-world validation)",
+    "size": 5000,
+    "phishing": 2500,
+    "legitimate": 2500
   },
-  "trained_at": "2026-10-14 10:46:24",
+  "trained_at": "2026-10-19 13:40:37",
   "sklearn_version": "1.9.1",
   "python": "3.13.5"
 }

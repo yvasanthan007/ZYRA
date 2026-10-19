@@ -171,9 +171,12 @@ def score_scan(findings: list, domain_info: dict = None,
     if ml_available:
         try:
             ml_prob = float(ml_analysis.get("probability") or 0.0)
+            if not 0.0 <= ml_prob <= 1.0:
+                raise ValueError("ML probability outside 0..1")
         except (TypeError, ValueError):
+            ml_available = False
             ml_prob = 0.0
-    if ml_available and ml_prob >= 0.55:
+    if ml_available and ml_prob >= 0.35:
         algo = ml_analysis.get("algorithm") or "ML classifier"
         reasoning.append(
             f"ML phishing classifier ({algo}) estimated a "
@@ -187,11 +190,40 @@ def score_scan(findings: list, domain_info: dict = None,
                 "Score capped at 15: ML classifier reports very high phishing "
                 "probability."
             )
-    elif ml_available and ml_prob >= 0.75 and classification in ("LIKELY_SAFE", "UNKNOWN"):
-        classification = "SUSPICIOUS"
-        reasoning.append(
-            "Classification raised to SUSPICIOUS by the ML phishing classifier."
-        )
+    elif ml_available and ml_prob >= 0.75:
+        if classification != "MALICIOUS":
+            classification = "SUSPICIOUS"
+            reasoning.append(
+                "Classification raised to SUSPICIOUS by the ML phishing classifier."
+            )
+        if score > 35:
+            score = 35
+            reasoning.append(
+                "Safety score capped at 35: ML classifier reports high phishing "
+                "probability."
+            )
+    elif ml_available and ml_prob >= 0.55:
+        if classification in ("LIKELY_SAFE", "UNKNOWN"):
+            classification = "SUSPICIOUS"
+            reasoning.append(
+                "Classification raised to SUSPICIOUS by the ML phishing classifier."
+            )
+        if score > 60:
+            score = 60
+            reasoning.append(
+                "Safety score capped at 60: ML classifier reports elevated "
+                "phishing probability."
+            )
+    elif ml_available and ml_analysis.get("verdict") == "SUSPICIOUS":
+        if classification in ("LIKELY_SAFE", "UNKNOWN"):
+            classification = "SUSPICIOUS"
+            reasoning.append(
+                "Classification raised to SUSPICIOUS by the model's conservative "
+                "decision threshold."
+            )
+        if score > 60:
+            score = 60
+            reasoning.append("Safety score capped at 60: model flagged this URL for review.")
 
     # ── Reliability guard: masked destination with no corroboration ──
     # A URL-shortener finding means the real destination is hidden behind a

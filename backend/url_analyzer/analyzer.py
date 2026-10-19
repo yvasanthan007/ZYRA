@@ -643,34 +643,42 @@ def _voice_summary_text(result: dict) -> str:
     score = result.get("score", 0)
     classification = result.get("classification", "UNKNOWN")
     domain = result.get("domain_display") or "the website"
+    risk = str(result.get("risk_level_label", "UNKNOWN")).lower().replace("_", " ")
+    ml = result.get("ml_phishing") or {}
+    try:
+        phishing_probability = float(ml.get("probability")) if ml.get("available") else None
+    except (TypeError, ValueError):
+        phishing_probability = None
+    # This is explicitly a safety score (higher = safer), not a phishing-risk score.
+    score_text = f"Safety score: {score} out of 100; risk level: {risk}."
+    probability_text = (
+        f" The machine learning classifier estimates a "
+        f"{int(round(phishing_probability * 100))} percent phishing probability."
+        if phishing_probability is not None else ""
+    )
 
     if classification == "MALICIOUS":
-        risk = str(result.get("risk_level_label", "HIGH")).lower().replace("_", " ")
         return (
-            f"The URL analysis is complete. The website has been classified as "
-            f"{risk} risk with a safety score of {score} out of 100. "
-            f"Malicious indicators were detected. Do not open this link or "
-            f"enter any personal information."
+            f"The URL analysis is complete. {domain} is classified as malicious. "
+            f"{score_text} Malicious indicators were detected. Do not open this "
+            f"link or enter personal information.{probability_text}"
         )
     if classification == "SUSPICIOUS":
-        risk = str(result.get("risk_level_label", "MEDIUM")).lower().replace("_", " ")
         return (
-            f"The URL analysis is complete. {domain} has been classified as "
-            f"suspicious with a safety score of {score} out of 100 and "
-            f"{risk} risk. Please review the detailed findings before "
-            f"opening it."
+            f"The URL analysis is complete. {domain} is classified as suspicious. "
+            f"{score_text} Avoid entering sensitive information until you verify "
+            f"the destination.{probability_text}"
         )
     if classification == "UNKNOWN":
         return (
-            f"The URL analysis is complete, but there is insufficient "
-            f"information to confidently classify this website. The safety "
-            f"score is {score} out of 100. Proceed with caution."
+            f"The URL analysis is complete, but there is insufficient information "
+            f"to confidently classify {domain}. {score_text} Proceed with caution."
+            f"{probability_text}"
         )
     return (
-        f"The URL analysis is complete. The website received a safety score "
-        f"of {score} out of 100 and no significant malicious indicators were "
-        f"detected. Always verify the destination before entering "
-        f"credentials."
+        f"The URL analysis is complete. {domain} is likely safe, with no "
+        f"significant malicious indicators detected. {score_text} Always verify "
+        f"the destination before entering credentials.{probability_text}"
     )
 
 def build_voice_summary(result: dict) -> str:
