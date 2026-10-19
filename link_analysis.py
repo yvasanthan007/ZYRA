@@ -63,7 +63,7 @@ def _ml_contribution(ml_analysis):
         prob = float(ml_analysis.get("probability") or 0.0)
     except (TypeError, ValueError):
         return 0, None
-    if prob < 0.55:
+    if not 0.0 <= prob <= 1.0 or prob < 0.35:
         return 0, None
     percent = int(round(prob * 100))
     algo = ml_analysis.get("algorithm") or "ML classifier"
@@ -71,10 +71,12 @@ def _ml_contribution(ml_analysis):
     line = (f"ML phishing classifier ({algo}) estimates {percent}% phishing "
             f"probability ({verdict}).")
     if prob >= 0.90:
-        return 5, line + " Treated as dangerous."
+        return 9, line + " Treated as critical phishing risk."
     if prob >= 0.75:
-        return 2, line + " Classification raised to suspicious."
-    return 0, line
+        return 7, line + " Treated as high phishing risk."
+    if prob >= 0.55:
+        return 5, line + " Treated as medium phishing risk."
+    return 2, line + " Treated as low but elevated phishing risk."
 
 
 # ──────────────────────────────────────────────
@@ -435,12 +437,17 @@ def analyze_url(url: str) -> dict:
             ml_probability = float(ml_analysis.get("probability"))
         except (TypeError, ValueError):
             ml_probability = 1.0
-        if ml_probability >= 0.90:
+        if not 0.0 <= ml_probability <= 1.0:
+            ml_probability = 0.0
+        # Risk score is a probability-derived 0-100 danger score. Heuristics and
+        # reputation can raise it, but cannot hide a model phishing signal.
+        total_score = max(total_score, int(round(ml_probability * 100)))
+        if ml_probability >= 0.75:
             verdict = "Dangerous"
-            total_score = max(total_score, 75)
-        elif ml_probability >= 0.75 and verdict == "Safe":
+        elif ml_probability >= 0.55:
             verdict = "Suspicious"
-            total_score = max(total_score, 50)
+        elif ml_probability >= 0.35 and verdict == "Safe":
+            verdict = "Suspicious"
 
     # ── Generate exact speech text per requirements ──
     speech_text = _generate_speech_text(url, verdict, total_score, ml_analysis)

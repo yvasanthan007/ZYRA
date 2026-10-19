@@ -591,9 +591,14 @@ def _build_result(scan_id, url, parts, domain_info, ssl_info, redirect_info,
         "score": scored["score"],
         "phishing_probability": scored.get("phishing_probability"),
         "risk_score": scored.get("risk_score"),
+        "phishing_risk_level": scored.get("phishing_risk_level"),
         "score_semantics": scored.get("score_semantics"),
-        "risk_level": scored["risk_level"],
-        "risk_level_label": scored["risk_level_label"],
+        "risk_level": (scored.get("phishing_risk_level")
+                       if scored.get("phishing_risk_level") not in (None, "UNKNOWN")
+                       else scored["risk_level"]),
+        "risk_level_label": (scored.get("phishing_risk_level")
+                             if scored.get("phishing_risk_level") not in (None, "UNKNOWN")
+                             else scored["risk_level_label"]),
         "classification": scored["classification"],
         "classification_label": scored["classification_label"],
         "classification_summary": scored["classification_summary"],
@@ -648,7 +653,7 @@ def _voice_summary_text(result: dict) -> str:
     score = result.get("score", 0)
     classification = result.get("classification", "UNKNOWN")
     domain = result.get("domain_display") or "the website"
-    risk = str(result.get("risk_level_label", "UNKNOWN")).lower().replace("_", " ")
+    risk = str(result.get("phishing_risk_level") or result.get("risk_level_label", "UNKNOWN")).lower().replace("_", " ")
     ml = result.get("ml_phishing") or {}
     try:
         phishing_probability = float(ml.get("probability")) if ml.get("available") else None
@@ -698,7 +703,7 @@ def build_voice_summary(result: dict) -> str:
             prob = float(ml.get("probability") or 0.0)
         except (TypeError, ValueError):
             prob = 0.0
-        if prob >= 0.55:
+        if 0.35 <= prob <= 1.0:
             text += (
                 f" The machine learning classifier also estimates a "
                 f"{int(round(prob * 100))} percent phishing probability."

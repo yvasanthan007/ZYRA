@@ -44,6 +44,7 @@ def build_report_data(result: Dict[str, Any]) -> Dict[str, Any]:
             "phishing_probability": result.get("phishing_probability"),
             "risk_score": result.get("risk_score"),
             "risk_level": result.get("risk_level_label", ""),
+            "phishing_risk_level": result.get("phishing_risk_level", "UNKNOWN"),
             "classification": result.get("classification_label", ""),
             "classification_summary": result.get("classification_summary", ""),
         },
@@ -111,7 +112,10 @@ def report_to_text(report_data: Dict[str, Any]) -> str:
         L.append(f"  Phishing Probability: {float(final['phishing_probability']) * 100:.1f}%")
     if final.get("risk_score") is not None:
         L.append(f"  Phishing Risk: {float(final['risk_score']):.1f} / 100 (model probability)")
-    L.append(f"  Risk Level:     {final.get('risk_level', '-')}")
+    risk_level = final.get("phishing_risk_level")
+    if not risk_level or risk_level == "UNKNOWN":
+        risk_level = final.get("risk_level", "-")
+    L.append(f"  Phishing Risk Level: {risk_level}")
     L.append(f"  Classification: {final.get('classification', '-')}")
     L.append("")
 

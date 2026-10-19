@@ -1,5 +1,233 @@
 [
  {
+  "scan_id": "url_20261019_161610_7e3fac",
+  "url": "https://test-alert-bank.com",
+  "domain": "test-alert-bank.com",
+  "score": 12,
+  "risk_level": "HIGH",
+  "risk_level_label": "HIGH",
+  "classification": "MALICIOUS",
+  "classification_label": "MALICIOUS",
+  "timestamp": "2026-10-19T16:16:10",
+  "timestamp_display": "19 Oct 2026 16:16",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261019_161610_7e3fac",
+   "url": "https://test-alert-bank.com",
+   "display_url": "https://test-alert-bank.com",
+   "hostname": "test-alert-bank.com",
+   "domain_display": "test-alert-bank.com",
+   "score": 12,
+   "phishing_probability": 0.8751,
+   "risk_score": 87.5,
+   "phishing_risk_level": "HIGH",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "HIGH",
+   "risk_level_label": "HIGH",
+   "classification": "MALICIOUS",
+   "classification_label": "MALICIOUS",
+   "classification_summary": "Malicious Indicators Detected",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-3 LOW: Urgency / manipulation keywords",
+    "-22 HIGH: ML classifier: 88% phishing probability",
+    "ML phishing classifier (XGBClassifier) estimated a 88% phishing probability from URL structure.",
+    "Safety score capped at 35: ML classifier reports high phishing probability.",
+    "ML contribution: 88% phishing probability sets a maximum safety score of 12/100."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://test-alert-bank.com",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.8751,
+    "percent": 88,
+    "decision_threshold": 0.35,
+    "verdict": "LIKELY_PHISHING",
+    "risk_band": "HIGH",
+    "confidence": 0.8751,
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 2,
+      "importance": 0.3296,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "urgency_keywords",
+      "value": 1,
+      "importance": 0.0546,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     }
+    ],
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9953,
+      "precision": 0.9916,
+      "recall": 1.0,
+      "f1": 0.9958,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0042,
+      "test_size": 846
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9941,
+      "precision": 1.0,
+      "recall": 0.9894,
+      "f1": 0.9947,
+      "roc_auc": 0.9993,
+      "pr_auc": 0.9996,
+      "brier_score": 0.0059,
+      "test_size": 846
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9988,
+      "precision": 1.0,
+      "recall": 0.9979,
+      "f1": 0.9989,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0012,
+      "test_size": 846
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": "Domain could not be resolved."
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "fail",
+      "detail": "88% phishing probability"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "test-alert-bank.com",
+    "registered_domain": "test-alert-bank.com",
+    "subdomain_count": 0,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "unreachable",
+    "https_enabled": true,
+    "valid": false,
+    "issuer": null,
+    "subject": null,
+    "expires": null,
+    "expires_in_days": null,
+    "not_before": null,
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": null,
+    "cipher": null,
+    "san": [],
+    "error": "Domain could not be resolved."
+   },
+   "domain": {
+    "hostname": "test-alert-bank.com",
+    "registered_domain": "test-alert-bank.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": false,
+    "ips": [],
+    "ip_address": null,
+    "dns_error": "Domain could not be resolved.",
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": false,
+    "provider": null,
+    "reputation": "Unknown",
+    "malware": "Unknown",
+    "phishing": "Unknown",
+    "engines": null,
+    "note": "Reputation data unavailable — VirusTotal rejected the API key (invalid or unauthorised)."
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "Domain could not be resolved.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "urgency_keywords",
+     "severity": "LOW",
+     "category": "intent",
+     "title": "Urgency / manipulation keywords",
+     "detail": "URL contains pressure keywords: alert - typical of social-engineering pages.",
+     "score_impact": 3,
+     "positive": false
+    },
+    {
+     "id": "ml_phishing_classifier",
+     "severity": "HIGH",
+     "category": "ml",
+     "title": "ML classifier: 88% phishing probability",
+     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 88% phishing probability. Most influential features: num_hyphens_host, urgency_keywords.",
+     "score_impact": 22,
+     "positive": false
+    }
+   ],
+   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
+   "timestamp": "2026-10-19T16:16:10",
+   "timestamp_display": "19 Oct 2026 16:16",
+   "source": "panel"
+  }
+ },
+ {
   "scan_id": "url_20261019_135717_8c5583",
   "url": "https://fake.example/path",
   "domain": "fake.example",

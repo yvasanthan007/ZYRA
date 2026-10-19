@@ -697,12 +697,19 @@ def analyze_url_security(url):
             "source of this link."
         )
 
+    phishing_risk_level = (
+        "CRITICAL" if ml_analysis and ml_analysis.get("available") and ml_prob >= 0.90 else
+        "HIGH" if ml_analysis and ml_analysis.get("available") and ml_prob >= 0.75 else
+        "MEDIUM" if ml_analysis and ml_analysis.get("available") and ml_prob >= 0.55 else
+        "LOW" if ml_analysis and ml_analysis.get("available") else "UNKNOWN"
+    )
     return {
         "url": original_url,
         "host": host_display,
         "scheme": scheme,
         "verdict": verdict,
         "risk_score": risk_score,
+        "phishing_risk_level": phishing_risk_level,
         "risk_points": risk,
         "phishing_probability": ml_prob if ml_analysis and ml_analysis.get("available") else None,
         "risk_score_0_100": round(ml_prob * 100, 1) if ml_analysis and ml_analysis.get("available") else None,
@@ -734,7 +741,7 @@ def format_security_report(result):
     """
     lines = [
         f"Verdict: {result['verdict']}",
-        f"Risk Level: {result['risk_score']}",
+        f"Risk Level: {result.get('phishing_risk_level') or result['risk_score']}",
     ]
     if result.get("phishing_probability") is not None:
         lines.append(f"Phishing Probability: {float(result['phishing_probability']) * 100:.1f}%")

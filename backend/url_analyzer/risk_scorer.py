@@ -262,10 +262,19 @@ def score_scan(findings: list, domain_info: dict = None,
         score = fused_score
     score = max(0, min(100, int(score)))
     risk = _risk_level(score)
+    # Preserve a model-based probability risk band separately from the
+    # composite safety-score risk level. UI callers can display explicit data.
+    phishing_risk_level = (
+        "CRITICAL" if ml_prob >= 0.90 else
+        "HIGH" if ml_prob >= 0.75 else
+        "MEDIUM" if ml_prob >= 0.55 else
+        "LOW" if ml_available else "UNKNOWN"
+    )
     return {
         "score": score,
         "phishing_probability": round(ml_prob, 4) if ml_available else None,
         "risk_score": round(ml_prob * 100, 1) if ml_available else None,
+        "phishing_risk_level": phishing_risk_level,
         "score_semantics": (
             "score is safety 0-100 (higher = safer); risk_score is phishing risk "
             "0-100 (higher = more dangerous) and equals phishing_probability * 100"
