@@ -48,15 +48,28 @@ Backward-compatible API: ask_ai(question: str) -> response_text (str).
 import datetime
 import os
 import re
+import sys
 import threading
 import time
 from typing import Any, Dict, List, Optional
-
 import ollama
-# Load .env when this module is imported directly by the API/desktop bridge.
+# Load config before constructing the Ollama client. Development reads the
+# repository .env; frozen builds may read a user-maintained config without
+# attempting to write into the installation directory.
 try:
     from dotenv import load_dotenv
-    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=False)
+    import zyra_paths
+    _env_candidates = []
+    if zyra_paths.is_frozen():
+        _env_candidates.extend([
+            os.path.join(zyra_paths.data_dir(), ".env"),
+            os.path.join(os.path.dirname(os.path.abspath(sys.executable)), ".env"),
+        ])
+    else:
+        _env_candidates.append(os.path.join(os.path.dirname(__file__), ".env"))
+    for _env_path in _env_candidates:
+        if os.path.isfile(_env_path):
+            load_dotenv(_env_path, override=False)
 except Exception:
     pass
 # ──────────────────────────────────────────────
@@ -114,9 +127,17 @@ AI_KEEP_ALIVE = os.environ.get("ZYRA_AI_KEEP_ALIVE", "30m").strip() or "30m"
 # returning an opaque error. Used by ask_ai(), stream_ai() and the AI status
 # endpoint.
 OLLAMA_OFFLINE_MESSAGE = (
-    "Ollama is not running. Please start Ollama and pull a model "
-    "(for example: `ollama pull phi3`), then try again."
+    "Ollama is not reachable at the configured address. Start the Ollama "
+    "application/service and retry; ZYRA will not download or change models."
 )
+# Keep connection preflight short; generation still uses the separate bounded
+# reply budget below. This avoids a long initial UI/voice stall if service is down.
+try:
+    OLLAMA_CONNECT_TIMEOUT_SECONDS = max(
+        1.0, min(10.0, float(os.environ.get("ZYRA_OLLAMA_CONNECT_TIMEOUT_SECONDS", "3")))
+    )
+except ValueError:
+    OLLAMA_CONNECT_TIMEOUT_SECONDS = 3.0
 
 # Cached positive result of the connectivity probe; None = not yet confirmed.
 # Once Ollama is confirmed reachable we skip the probe on the hot path so a
@@ -160,12 +181,8 @@ _PREFERRED_MODELS = [
     "tinyllama",
 ]
 
-# The shared Ollama client. Left as None on purpose: _get_client() lazily
-# builds it via _make_client() the first time it is needed, so the client
-# honours ZYRA_OLLAMA_HOST and the configured timeout. Building it eagerly
-# here (ollama.Client(timeout=...)) would ignore ZYRA_OLLAMA_HOST — the host
-# override only applied when this was None, which never happened on modern
-# clients — so every caller silently talked to the default Ollama.
+# The shared Ollama client is built lazily so it honours the effective host and
+# bounded request timeout in both source and frozen builds.
 _ai_client = None
 
 
@@ -311,18 +328,19 @@ def _payload_snapshot() -> List[Dict[str, str]]:
 
 # ──────────────────────────────────────────────
 # Ollama client & model management
-# ──────────────────────────────────────────────
+# ──────────────────────────────
+
+def _ollama_host() -> str:
+    return os.environ.get("ZYRA_OLLAMA_HOST", "").strip() or "http://127.0.0.1:11434"
+
 
 def _make_client():
-    """Build an ollama client honouring the configured host + timeout."""
-    host = os.environ.get("ZYRA_OLLAMA_HOST", "").strip() or None
-    client_kwargs: Dict[str, Any] = {"timeout": AI_TIMEOUT_SECONDS}
-    if host:
-        client_kwargs["host"] = host
+    """Build an ollama client honoring configured host + bounded request timeout."""
+    host = _ollama_host()
     try:
-        return ollama.Client(**client_kwargs)
+        return ollama.Client(host=host, timeout=AI_TIMEOUT_SECONDS)
     except TypeError:  # pragma: no cover - ancient client without `timeout`
-        return ollama.Client() if not host else None
+        return ollama.Client(host=host)
 
 
 def _get_client():
@@ -379,7 +397,8 @@ def check_ollama() -> Dict[str, Any]:
         "reachable": False,
         "can_enumerate": False,
         "models": [],
-        "model": get_model(),
+        "model": os.environ.get("ZYRA_OLLAMA_MODEL", "").strip() or get_model(),
+        "base_url": _ollama_host(),
         "available": False,
         "message": OLLAMA_OFFLINE_MESSAGE,
     }
@@ -394,11 +413,26 @@ def check_ollama() -> Dict[str, Any]:
         status["available"] = True
         status["message"] = f"Ready (model: {status['model']})."
         return status
-    except Exception as exc:  # noqa: BLE001 - connection refused / DNS / etc.
+    except Exception as exc:  # noqa: BLE001 - distinguish offline vs timeout/config
+        text = str(exc) or type(exc).__name__
+        lower = text.lower()
         status["reachable"] = False
         status["available"] = False
-        status["message"] = OLLAMA_OFFLINE_MESSAGE
-        print(f"brain: Ollama connectivity check failed: {exc}")
+        if any(token in lower for token in ("timed out", "timeout", "deadline")):
+            status["message"] = (
+                f"Ollama at {status['base_url']} did not answer within "
+                f"{OLLAMA_CONNECT_TIMEOUT_SECONDS:g}s. Check the service and URL."
+            )
+        elif any(token in lower for token in ("invalid url", "unsupported protocol", "no host", "urlerror")):
+            status["message"] = f"Invalid ZYRA_OLLAMA_HOST configuration ({status['base_url']}): {text}"
+        elif "refused" in lower or "failed to establish a new connection" in lower:
+            status["message"] = (
+                f"Connection refused at {status['base_url']}. Ollama appears installed but stopped; "
+                "start the Ollama app/service, then retry."
+            )
+        else:
+            status["message"] = f"Could not reach Ollama at {status['base_url']}: {text}"
+        print(f"brain: Ollama connectivity check failed: {status['message']}")
         return status
 
     models: List[str] = []
@@ -415,25 +449,28 @@ def check_ollama() -> Dict[str, Any]:
     status["can_enumerate"] = True
     status["models"] = models
     requested = os.environ.get("ZYRA_OLLAMA_MODEL", "").strip()
-    selected = get_model()
+    selected = os.environ.get("ZYRA_OLLAMA_MODEL", "").strip() or get_model()
     selected_installed = any(
         name == selected or _basename(name) == _basename(selected)
         for name in models
     )
-    if models and (selected_installed or not requested):
+    if models and selected_installed:
+        status["available"] = True
+        status["message"] = f"Ready (model: {selected})."
+    elif models and not requested:
         status["available"] = True
         status["message"] = f"Ready (model: {selected})."
     elif models:
-        status["available"] = True  # chat call will return the actionable 404
+        status["available"] = False
         status["message"] = (
-            f"Ollama is connected but '{selected}' is not installed. "
-            f"Run `ollama pull {selected}` or configure ZYRA_OLLAMA_MODEL."
+            f"Ollama is connected, but the configured model '{selected}' is not installed. "
+            f"Run `ollama list` to inspect installed models, then install it yourself if desired."
         )
     else:
         status["available"] = False
         status["message"] = (
-            "Ollama is running but has no models installed. "
-            "Run `ollama pull phi3` or install a chat model."
+            "Ollama is reachable but has no models installed. Install a model manually; "
+            "ZYRA will not download or change models."
         )
     return status
 
@@ -742,8 +779,9 @@ def ask_ai(question) -> str:
     # and coming back with an opaque error. The check is cached-positive, so a
     # healthy Ollama pays no per-turn cost.
     if not _ollama_available():
-        print("brain: Ollama unavailable — returning offline fallback")
-        return OLLAMA_OFFLINE_MESSAGE
+        status = check_ollama()
+        print("brain: Ollama unavailable — returning status fallback")
+        return status.get("message") or OLLAMA_OFFLINE_MESSAGE
 
     system_text = _build_system_prompt(_memory_digest())
 
@@ -811,8 +849,9 @@ def stream_ai(question):
     # Same fast preflight as ask_ai(): surface the clear offline fallback at once
     # instead of streaming an opaque error after a long wait.
     if not _ollama_available():
-        print("brain: Ollama unavailable — streaming offline fallback")
-        yield OLLAMA_OFFLINE_MESSAGE
+        status = check_ollama()
+        print("brain: Ollama unavailable — streaming status fallback")
+        yield status.get("message") or OLLAMA_OFFLINE_MESSAGE
         return
 
     with _conversation_lock:
@@ -883,14 +922,11 @@ def stream_ai(question):
 
 def _warmup_client():
     """Build an Ollama client with a generous cold-start timeout."""
-    host = os.environ.get("ZYRA_OLLAMA_HOST", "").strip() or None
-    client_kwargs: Dict[str, Any] = {"timeout": _WARMUP_TIMEOUT_SECONDS}
-    if host:
-        client_kwargs["host"] = host
+    host = _ollama_host()
     try:
-        return ollama.Client(**client_kwargs)
+        return ollama.Client(host=host, timeout=_WARMUP_TIMEOUT_SECONDS)
     except TypeError:  # pragma: no cover - ancient client without `timeout`
-        return None
+        return ollama.Client(host=host)
 
 
 def warm_up_model() -> bool:

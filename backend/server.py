@@ -921,9 +921,10 @@ async def ai_status():
     return {
         "success": True,
         "available": status.get("available", False),
-        "model": get_model(),
+        "model": status.get("model", get_model()),
         "models": status.get("models", []),
         "reachable": status.get("reachable", False),
+        "base_url": status.get("base_url", ""),
         "message": status.get("message", ""),
     }
 
