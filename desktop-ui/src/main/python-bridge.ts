@@ -40,7 +40,7 @@ interface CommandResponse {
 export class PythonBridge {
   private process: ChildProcess | null = null;
   private requestId = 0;
-  private pendingRequests: Map<number, { resolve: (value: unknown) => void; reject: (reason: unknown) => void }> = new Map();
+  private pendingRequests: Map<number, { resolve: (value: unknown) => void; reject: (reason: unknown) => void; timer: NodeJS.Timeout }> = new Map();
   private buffer = '';
 
   start(): void {
@@ -69,6 +69,7 @@ export class PythonBridge {
       this.process = null;
       // Reject all pending requests
       for (const [, pending] of this.pendingRequests) {
+        clearTimeout(pending.timer);
         pending.reject(new Error('Python process exited'));
       }
       this.pendingRequests.clear();
@@ -94,10 +95,24 @@ export class PythonBridge {
       }
 
       const id = ++this.requestId;
-      this.pendingRequests.set(id, { resolve, reject });
+      const timeoutMs = command.type === 'voice_toggle' ? 45000 : 30000;
+      const timer = setTimeout(() => {
+        if (!this.pendingRequests.has(id)) return;
+        this.pendingRequests.delete(id);
+        console.error(`[ZYRA][${new Date().toISOString()}] bridge request timeout id=${id} type=${command.type} after=${timeoutMs}ms`);
+        reject(new Error(`Python bridge request timed out (${command.type})`));
+      }, timeoutMs);
+      this.pendingRequests.set(id, { resolve, reject, timer });
 
       const message = JSON.stringify({ id, ...command }) + '\n';
-      this.process.stdin.write(message);
+      this.process.stdin.write(message, (error?: Error | null) => {
+        if (!error) return;
+        const pending = this.pendingRequests.get(id);
+        if (!pending) return;
+        clearTimeout(pending.timer);
+        this.pendingRequests.delete(id);
+        reject(error);
+      });
     });
   }
 
@@ -113,12 +128,15 @@ export class PythonBridge {
         const response: { id: number; success: boolean; data: unknown; error?: string } = JSON.parse(line);
         const pending = this.pendingRequests.get(response.id);
         if (pending) {
+          clearTimeout(pending.timer);
           this.pendingRequests.delete(response.id);
           if (response.success) {
             pending.resolve(response.data);
           } else {
             pending.reject(new Error(response.error || 'Unknown error'));
           }
+        } else {
+          console.warn(`[ZYRA][${new Date().toISOString()}] bridge response without pending request id=${response.id}`);
         }
       } catch (e) {
         console.error('Failed to parse Python response:', line);

@@ -949,6 +949,7 @@ class PythonBridge {
             this.process = null;
             // Reject all pending requests
             for (const [, pending] of this.pendingRequests) {
+                clearTimeout(pending.timer);
                 pending.reject(new Error('Python process exited'));
             }
             this.pendingRequests.clear();
@@ -970,9 +971,26 @@ class PythonBridge {
                 return;
             }
             const id = ++this.requestId;
-            this.pendingRequests.set(id, { resolve, reject });
+            const timeoutMs = command.type === 'voice_toggle' ? 45000 : 30000;
+            const timer = setTimeout(() => {
+                if (!this.pendingRequests.has(id))
+                    return;
+                this.pendingRequests.delete(id);
+                console.error(`[ZYRA][${new Date().toISOString()}] bridge request timeout id=${id} type=${command.type} after=${timeoutMs}ms`);
+                reject(new Error(`Python bridge request timed out (${command.type})`));
+            }, timeoutMs);
+            this.pendingRequests.set(id, { resolve, reject, timer });
             const message = JSON.stringify({ id, ...command }) + '\n';
-            this.process.stdin.write(message);
+            this.process.stdin.write(message, (error) => {
+                if (!error)
+                    return;
+                const pending = this.pendingRequests.get(id);
+                if (!pending)
+                    return;
+                clearTimeout(pending.timer);
+                this.pendingRequests.delete(id);
+                reject(error);
+            });
         });
     }
     processBuffer() {
@@ -986,6 +1004,7 @@ class PythonBridge {
                 const response = JSON.parse(line);
                 const pending = this.pendingRequests.get(response.id);
                 if (pending) {
+                    clearTimeout(pending.timer);
                     this.pendingRequests.delete(response.id);
                     if (response.success) {
                         pending.resolve(response.data);
@@ -993,6 +1012,9 @@ class PythonBridge {
                     else {
                         pending.reject(new Error(response.error || 'Unknown error'));
                     }
+                }
+                else {
+                    console.warn(`[ZYRA][${new Date().toISOString()}] bridge response without pending request id=${response.id}`);
                 }
             }
             catch (e) {

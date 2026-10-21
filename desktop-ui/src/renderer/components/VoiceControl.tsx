@@ -71,6 +71,7 @@ const pickFemaleVoice = (voices: SpeechSynthesisVoice[]):
 const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
   const [isListening, setIsListening] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [voicePhase, setVoicePhase] = useState<'idle' | 'listening' | 'processing' | 'speaking'>('idle');
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
   const [error, setError] = useState('');
@@ -89,11 +90,17 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
   useEffect(() => {
     if (!response) return undefined;
     let stopped = false;
+    setVoicePhase('speaking');
+    setStatus('Speaking');
 
     // Chunked local playback (fallback only): Chromium stops long utterances
     // mid-answer, so resume in chunks without dropping any response text.
     const speakViaLocalVoice = () => {
-      if (!('speechSynthesis' in window)) return;
+      if (!('speechSynthesis' in window)) {
+        setVoicePhase('idle');
+        setStatus('Speech playback unavailable');
+        return;
+      }
       window.speechSynthesis.cancel();
       const speechLang = 'en-US';
       const chunks: string[] = [];
@@ -109,7 +116,12 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
       }
       let chunkIndex = 0;
       const speakNextChunk = () => {
-        if (stopped || chunkIndex >= chunks.length) return;
+        if (stopped) return;
+        if (chunkIndex >= chunks.length) {
+          setVoicePhase('idle');
+          setStatus('Ready');
+          return;
+        }
         const chunk = chunks[chunkIndex++];
         const nextUtterance = new SpeechSynthesisUtterance(chunk);
         nextUtterance.lang = speechLang;
@@ -156,11 +168,13 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
           throw new Error(reply?.error || 'backend rejected the speak request');
         }
         // Backend accepted the text and is speaking it with JennyNeural.
+        setStatus('Speaking');
       } catch (err) {
         if (stopped) return;
         const reason = err instanceof Error ? err.message : String(err);
         setStatus(`Backend voice (JennyNeural) unavailable — using local voice. ${reason}`);
         speakViaLocalVoice();
+        setVoicePhase('idle');
       }
     };
 
@@ -197,7 +211,14 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
     setError('');
     // Idle -> Listening: show the affordance before the blocking call.
     setIsListening(true);
+    setVoicePhase('listening');
     setStatus('Listening... speak clearly into your microphone');
+    window.setTimeout(() => {
+      if (requestInFlight.current) {
+        setVoicePhase('processing');
+        setStatus('Processing speech...');
+      }
+    }, 350);
 
     try {
       // Listening -> Recognizing -> Processing happens inside the bridge
@@ -250,6 +271,7 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
     } finally {
       // Never remain stuck in Listening after resolve/reject/timeout.
       setIsListening(false);
+      setVoicePhase('idle');
       setIsBusy(false);
       requestInFlight.current = false;
     }
@@ -260,7 +282,7 @@ const VoiceControl: React.FC<VoiceControlProps> = ({ setStatus }) => {
       <div className="voice-status-card">
         <div className={`voice-indicator ${isListening ? 'active' : 'inactive'}`}>
           <span className="mic-icon">{isListening ? '🎙️' : '🎤'}</span>
-          <h2>{isListening ? 'Listening' : 'Voice Off'}</h2>
+          <h2>{voicePhase === 'speaking' ? 'Speaking' : voicePhase === 'processing' ? 'Processing' : isListening ? 'Listening' : 'Voice Off'}</h2>
         </div>
         <button
           className={`voice-toggle-button ${isListening ? 'active' : ''}`}

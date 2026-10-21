@@ -4,6 +4,7 @@ import importlib.util
 import os
 import threading
 import time
+import logging
 # ── Windows console safety ──────────────────────────────────────────────
 # Force UTF-8 stdout/stderr BEFORE importing ZYRA modules. Any emoji print
 # from an imported module would otherwise raise UnicodeEncodeError on a
@@ -51,6 +52,16 @@ _voice_recognizer = None
 # twice concurrently.
 _voice_capture_active = False
 _voice_capture_lock = threading.Lock()
+_voice_recognizer_lock = threading.Lock()
+_voice_status = "Idle"
+_voice_log = logging.getLogger("zyra.voice")
+if not _voice_log.handlers:
+    _voice_handler = logging.StreamHandler(sys.stderr)
+    _voice_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+    _voice_log.addHandler(_voice_handler)
+    _voice_log.setLevel(logging.INFO)
+    _voice_log.propagate = False
+
 def _voice_seconds(name, default):
     """Read a voice timeout from the environment (honours .env config)."""
     try:
@@ -60,9 +71,9 @@ def _voice_seconds(name, default):
 
 
 VOICE_LISTEN_TIMEOUT = _voice_seconds("ZYRA_VOICE_TIMEOUT_SECONDS", 8.0)
-# Seconds of silence that end one utterance (was previously defined but the
-# capture below hardcoded the listen timeout instead — now actually used).
-VOICE_PHRASE_TIMEOUT = _voice_seconds("ZYRA_VOICE_PHRASE_TIMEOUT", 4.0)
+VOICE_PHRASE_TIMEOUT = _voice_seconds("ZYRA_VOICE_PHRASE_TIMEOUT", 12.0)
+VOICE_SILENCE_SECONDS = _voice_seconds("ZYRA_VOICE_SILENCE_SECONDS", 0.8)
+VOICE_MIC_DEVICE = os.environ.get("ZYRA_MIC_DEVICE", "").strip()
 VOICE_MODE = (os.environ.get("ZYRA_VOICE_MODE", "google") or "google").strip().lower()
 
 COMMAND_MAP = {
@@ -118,8 +129,9 @@ def _capture_voice_audio(recognizer):
     import sounddevice as sd
     from concurrent.futures import ThreadPoolExecutor
     sample_rate = 16000
-    block_size = 4000  # 250 ms chunks for responsive silence detection
-    deadline = time.monotonic() + (VOICE_LISTEN_TIMEOUT + 0.5)
+    block_size = 1600  # 100 ms chunks for responsive endpointing
+    device = int(VOICE_MIC_DEVICE) if VOICE_MIC_DEVICE.isdigit() else (VOICE_MIC_DEVICE or None)
+    deadline = time.monotonic() + (VOICE_LISTEN_TIMEOUT + VOICE_PHRASE_TIMEOUT + 2.0)
 
     def _run():
         frames = []
@@ -129,18 +141,21 @@ def _capture_voice_audio(recognizer):
         stream = None
         try:
             stream = sd.InputStream(
-                samplerate=sample_rate, channels=1, dtype="int16", blocksize=block_size
+                samplerate=sample_rate, channels=1, dtype="int16", blocksize=block_size,
+                device=device, latency="low"
             )
             stream.start()
             noise_levels = []
-            for _ in range(2):
+            for _ in range(3):
                 block, overflowed = stream.read(block_size)
                 if overflowed:
-                    print("[voice] microphone input overflow during calibration")
+                    _voice_log.warning("microphone overflow during ambient calibration")
                 noise_levels.append(float(np.sqrt(np.mean(np.square(block.astype(np.float32))))))
-            threshold = max(500.0, (sum(noise_levels) / len(noise_levels)) * 2.5)
+            noise_floor = sorted(noise_levels)[len(noise_levels) // 2]
+            threshold = max(180.0, min(1400.0, noise_floor * 2.2))
 
-            while time.monotonic() - started_at < VOICE_LISTEN_TIMEOUT:
+            listen_deadline = started_at + VOICE_LISTEN_TIMEOUT
+            while time.monotonic() < (listen_deadline if speech_started_at is None else min(deadline, speech_started_at + VOICE_PHRASE_TIMEOUT)):
                 # Respect the hard deadline so a hung stream can never hold the
                 # microphone open. We still call stream.read exactly once per
                 # loop so we never busy-spin or starve the audio thread.
@@ -149,7 +164,7 @@ def _capture_voice_audio(recognizer):
                     break
                 block, overflowed = stream.read(block_size, timeout=min(0.15, remaining))
                 if overflowed:
-                    print("[voice] microphone input overflow during capture")
+                    _voice_log.warning("microphone input overflow during capture")
                 now = time.monotonic()
                 level = float(np.sqrt(np.mean(np.square(block.astype(np.float32)))))
                 if level >= threshold:
@@ -159,23 +174,30 @@ def _capture_voice_audio(recognizer):
                     frames.append(block.copy())
                 elif speech_started_at is not None:
                     frames.append(block.copy())
-                    if now - last_voice_at >= min(0.8, VOICE_PHRASE_TIMEOUT / 2):
+                    if now - last_voice_at >= VOICE_SILENCE_SECONDS:
                         break
                 if (speech_started_at is not None and
                         now - speech_started_at >= VOICE_PHRASE_TIMEOUT):
                     break
             return frames
         finally:
-            if stream is not None and stream.is_active():
-                stream.stop()
-                stream.close()
+            if stream is not None:
+                try:
+                    if stream.is_active():
+                        stream.stop()
+                finally:
+                    stream.close()
 
-    with ThreadPoolExecutor(max_workers=1) as pool:
-        future = pool.submit(_run)
-        try:
-            frames = future.result(timeout=VOICE_LISTEN_TIMEOUT + 1.0)
-        except Exception as exc:
-            raise RuntimeError(f"Microphone capture failed: {type(exc).__name__}: {exc}") from exc
+    pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="zyra-mic")
+    future = pool.submit(_run)
+    try:
+        frames = future.result(timeout=VOICE_LISTEN_TIMEOUT + VOICE_PHRASE_TIMEOUT + 2.0)
+    except Exception as exc:
+        future.cancel()
+        raise RuntimeError(f"Microphone capture failed: {type(exc).__name__}: {exc}") from exc
+    finally:
+        # Do not wait for an audio driver that ignored its read timeout.
+        pool.shutdown(wait=False, cancel_futures=True)
 
     if not frames:
         return None
@@ -384,13 +406,19 @@ def handle_message(msg):
                 "data": {"transcript": "", "response": "", "listening": False},
             }
 
-        global _voice_capture_active
+        global _voice_capture_active, _voice_status
+        request_started = time.monotonic()
+        request_id = f"voice-{int(time.time() * 1000)}"
+        request_logged = False
         if not _voice_capture_lock.acquire(blocking=False):
+            _voice_log.warning("request=%s stage=mic rejected reason=capture_in_progress", request_id)
             return {
                 "success": False,
                 "error": "Voice capture already in progress. Wait for it to finish.",
             }
         _voice_capture_active = True
+        _voice_status = "Listening"
+        _voice_log.info("request=%s stage=mic status=started", request_id)
         # Use one bounded sounddevice input stream per request. Unlike
         # sr.Microphone(), this path does not require PyAudio, which is often
         # absent in Windows installations and packaged environments.
@@ -398,8 +426,12 @@ def handle_message(msg):
         try:
             if _voice_recognizer is None:
                 _voice_recognizer = sr.Recognizer()
+            capture_started = time.monotonic()
             audio = _capture_voice_audio(_voice_recognizer)
+            _voice_log.info("request=%s stage=vad_capture duration=%.3fs result=%s", request_id, time.monotonic() - capture_started, "audio" if audio is not None else "silence")
             if audio is None:
+                _voice_status = "Idle"
+                _voice_log.warning("request=%s stage=vad_capture empty_transcript total=%.3fs", request_id, time.monotonic() - request_started)
                 return {
                     "success": True,
                     "data": {
@@ -408,8 +440,14 @@ def handle_message(msg):
                     },
                 }
             from listen import _recognize as _recognize_audio
-            text = _recognize_audio(_voice_recognizer, audio).strip()
+            _voice_status = "Processing"
+            stt_started = time.monotonic()
+            with _voice_recognizer_lock:
+                text = _recognize_audio(_voice_recognizer, audio).strip()
+            _voice_log.info("request=%s stage=stt duration=%.3fs transcript_chars=%d", request_id, time.monotonic() - stt_started, len(text))
         except sr.WaitTimeoutError:
+            _voice_status = "Idle"
+            _voice_log.warning("request=%s stage=stt timeout duration=%.3fs", request_id, time.monotonic() - request_started)
             return {
                 "success": True,
                 "data": {
@@ -419,6 +457,8 @@ def handle_message(msg):
             }
         except sr.UnknownValueError:
             # No speech detected — surface an explicit, non-fatal result.
+            _voice_status = "Idle"
+            _voice_log.warning("request=%s stage=stt empty_transcript duration=%.3fs", request_id, time.monotonic() - request_started)
             return {
                 "success": True,
                 "data": {
@@ -427,6 +467,8 @@ def handle_message(msg):
                 },
             }
         except sr.RequestError as exc:
+            _voice_status = "Idle"
+            _voice_log.error("request=%s stage=stt request_error duration=%.3fs error=%s", request_id, time.monotonic() - request_started, exc)
             # Keep errors in the success payload: the desktop bridge protocol
             # rejects failures before its structured data reaches the renderer.
             return {
@@ -438,6 +480,8 @@ def handle_message(msg):
                 },
             }
         except Exception as exc:
+            _voice_status = "Error"
+            _voice_log.exception("request=%s stage=mic_or_stt exception=%s duration=%.3fs", request_id, type(exc).__name__, time.monotonic() - request_started)
             return {
                 "success": True,
                 "data": {
@@ -450,17 +494,23 @@ def handle_message(msg):
             _voice_capture_active = False
             _voice_capture_lock.release()
         if not text:
+            _voice_status = "Idle"
+            _voice_log.warning("request=%s stage=stt empty_transcript total=%.3fs", request_id, time.monotonic() - request_started)
             return {
                 "success": True,
                 "data": {"transcript": "", "response": "I didn't catch that. Please try again."},
             }
 
-        # Forward the recognized text to the existing backend voice endpoint
-        # (backend/server.py process_voice_command), which is the same
-        # function /api/voice and the WebSocket 'voice' type use.
+        # Forward recognized speech through the existing intent router.
         try:
+            _voice_status = "Processing"
+            _voice_log.info("request=%s stage=intent status=started transcript_chars=%d", request_id, len(text))
+            intent_started = time.monotonic()
             result = process_voice_command(text)
+            _voice_log.info("request=%s stage=intent_backend duration=%.3fs action=%s", request_id, time.monotonic() - intent_started, result.get("action", "unknown") if isinstance(result, dict) else "unknown")
         except Exception as exc:
+            _voice_status = "Error"
+            _voice_log.exception("request=%s stage=intent_backend exception=%s duration=%.3fs", request_id, type(exc).__name__, time.monotonic() - request_started)
             return {
                 "success": False,
                 "data": {
@@ -471,12 +521,15 @@ def handle_message(msg):
 
         transcript = text
         response = result.get("response", "") if isinstance(result, dict) else ""
+        _voice_status = "Idle"
+        _voice_log.info("request=%s stage=response_generation total=%.3fs response_chars=%d", request_id, time.monotonic() - request_started, len(response))
         if response:
             return {
                 "success": True,
                 "data": {"transcript": transcript, "response": response},
             }
 
+        _voice_log.warning("request=%s stage=response empty_response total=%.3fs", request_id, time.monotonic() - request_started)
         return {
             "success": True,
             "data": {
@@ -491,7 +544,7 @@ def handle_message(msg):
         return {"success": True, "data": {"listening": bool(_voice_capture_active)}}
 
     elif msg_type == "voice_status":
-        return {"success": True, "data": {"listening": False}}
+        return {"success": True, "data": {"listening": bool(_voice_capture_active), "status": _voice_status}}
 
     elif msg_type in ("system_metrics", "get_system_metrics", "monitor_system"):
         metrics = get_system_metrics()
@@ -510,6 +563,7 @@ def main():
         line = line.strip()
         if not line:
             continue
+        msg = None
         try:
             msg = json.loads(line)
             msg_id = msg.get("id")
@@ -517,9 +571,10 @@ def main():
             response["id"] = msg_id
             sys.stdout.write(json.dumps(response) + "\n")
             sys.stdout.flush()
-        except json.JSONDecodeError as e:
+        except Exception as e:
+            _voice_log.exception("bridge request failed type=%s", (msg.get("type") if isinstance(msg, dict) else "invalid"))
             sys.stdout.write(
-                json.dumps({"id": 0, "success": False, "error": str(e)}) + "\n"
+                json.dumps({"id": (msg.get("id", 0) if isinstance(msg, dict) else 0), "success": False, "error": str(e)}) + "\n"
             )
             sys.stdout.flush()
 

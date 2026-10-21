@@ -36401,6 +36401,7 @@ const pickFemaleVoice = (voices) => {
 const VoiceControl = ({ setStatus }) => {
     const [isListening, setIsListening] = (0, react_1.useState)(false);
     const [isBusy, setIsBusy] = (0, react_1.useState)(false);
+    const [voicePhase, setVoicePhase] = (0, react_1.useState)('idle');
     const [transcript, setTranscript] = (0, react_1.useState)('');
     const [response, setResponse] = (0, react_1.useState)('');
     const [error, setError] = (0, react_1.useState)('');
@@ -36419,11 +36420,16 @@ const VoiceControl = ({ setStatus }) => {
         if (!response)
             return undefined;
         let stopped = false;
+        setVoicePhase('speaking');
+        setStatus('Speaking');
         // Chunked local playback (fallback only): Chromium stops long utterances
         // mid-answer, so resume in chunks without dropping any response text.
         const speakViaLocalVoice = () => {
-            if (!('speechSynthesis' in window))
+            if (!('speechSynthesis' in window)) {
+                setVoicePhase('idle');
+                setStatus('Speech playback unavailable');
                 return;
+            }
             window.speechSynthesis.cancel();
             const speechLang = 'en-US';
             const chunks = [];
@@ -36441,8 +36447,13 @@ const VoiceControl = ({ setStatus }) => {
             }
             let chunkIndex = 0;
             const speakNextChunk = () => {
-                if (stopped || chunkIndex >= chunks.length)
+                if (stopped)
                     return;
+                if (chunkIndex >= chunks.length) {
+                    setVoicePhase('idle');
+                    setStatus('Ready');
+                    return;
+                }
                 const chunk = chunks[chunkIndex++];
                 const nextUtterance = new SpeechSynthesisUtterance(chunk);
                 nextUtterance.lang = speechLang;
@@ -36491,6 +36502,7 @@ const VoiceControl = ({ setStatus }) => {
                     throw new Error(reply?.error || 'backend rejected the speak request');
                 }
                 // Backend accepted the text and is speaking it with JennyNeural.
+                setStatus('Speaking');
             }
             catch (err) {
                 if (stopped)
@@ -36498,6 +36510,7 @@ const VoiceControl = ({ setStatus }) => {
                 const reason = err instanceof Error ? err.message : String(err);
                 setStatus(`Backend voice (JennyNeural) unavailable — using local voice. ${reason}`);
                 speakViaLocalVoice();
+                setVoicePhase('idle');
             }
         };
         void speakViaBackend();
@@ -36535,7 +36548,14 @@ const VoiceControl = ({ setStatus }) => {
         setError('');
         // Idle -> Listening: show the affordance before the blocking call.
         setIsListening(true);
+        setVoicePhase('listening');
         setStatus('Listening... speak clearly into your microphone');
+        window.setTimeout(() => {
+            if (requestInFlight.current) {
+                setVoicePhase('processing');
+                setStatus('Processing speech...');
+            }
+        }, 350);
         try {
             // Listening -> Recognizing -> Processing happens inside the bridge
             // (microphone capture + STT + backend routing). This promise resolves
@@ -36592,11 +36612,12 @@ const VoiceControl = ({ setStatus }) => {
         finally {
             // Never remain stuck in Listening after resolve/reject/timeout.
             setIsListening(false);
+            setVoicePhase('idle');
             setIsBusy(false);
             requestInFlight.current = false;
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "voice-control", children: [(0, jsx_runtime_1.jsxs)("div", { className: "voice-status-card", children: [(0, jsx_runtime_1.jsxs)("div", { className: `voice-indicator ${isListening ? 'active' : 'inactive'}`, children: [(0, jsx_runtime_1.jsx)("span", { className: "mic-icon", children: isListening ? '🎙️' : '🎤' }), (0, jsx_runtime_1.jsx)("h2", { children: isListening ? 'Listening' : 'Voice Off' })] }), (0, jsx_runtime_1.jsx)("button", { className: `voice-toggle-button ${isListening ? 'active' : ''}`, onClick: toggleListening, disabled: isBusy, children: isBusy ? 'Working...' : isListening ? 'Stop Listening' : 'Start Listening' }), isListening && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Speak clearly into your microphone" })), error && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", role: "alert", children: error }))] }), (transcript || response) && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [transcript && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "You said:" }), (0, jsx_runtime_1.jsx)("p", { children: transcript })] })), response && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "ZYRA:" }), (0, jsx_runtime_1.jsx)("div", { className: "voice-response-text", children: response
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "voice-control", children: [(0, jsx_runtime_1.jsxs)("div", { className: "voice-status-card", children: [(0, jsx_runtime_1.jsxs)("div", { className: `voice-indicator ${isListening ? 'active' : 'inactive'}`, children: [(0, jsx_runtime_1.jsx)("span", { className: "mic-icon", children: isListening ? '🎙️' : '🎤' }), (0, jsx_runtime_1.jsx)("h2", { children: voicePhase === 'speaking' ? 'Speaking' : voicePhase === 'processing' ? 'Processing' : isListening ? 'Listening' : 'Voice Off' })] }), (0, jsx_runtime_1.jsx)("button", { className: `voice-toggle-button ${isListening ? 'active' : ''}`, onClick: toggleListening, disabled: isBusy, children: isBusy ? 'Working...' : isListening ? 'Stop Listening' : 'Start Listening' }), isListening && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Speak clearly into your microphone" })), error && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", role: "alert", children: error }))] }), (transcript || response) && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [transcript && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "You said:" }), (0, jsx_runtime_1.jsx)("p", { children: transcript })] })), response && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "ZYRA:" }), (0, jsx_runtime_1.jsx)("div", { className: "voice-response-text", children: response
                                     .replace(/\r\n?/g, '\n')
                                     .split(/\n{2,}|(?<=[.!?])\s+(?=[A-Z0-9•-])/)
                                     .map((paragraph) => paragraph.trim())

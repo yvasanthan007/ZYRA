@@ -677,14 +677,22 @@ def _run_chat(messages: List[Dict[str, str]]) -> Any:
             with _model_request_lock(_ACTIVE_MODEL):
                 stream_pieces: List[str] = []
                 done_reason = None
-                for chunk in sender.chat(**chat_kwargs):
-                    piece = _raw_content(chunk)
-                    if piece:
-                        stream_pieces.append(piece)
-                    if isinstance(chunk, dict) and chunk.get("done"):
-                        done_reason = chunk.get("done_reason")
-                    elif getattr(chunk, "done", False):
-                        done_reason = getattr(chunk, "done_reason", None)
+                stream = sender.chat(**chat_kwargs)
+                # Ollama's stream=True endpoint returns an iterator. A mapping
+                # containing message content is a valid complete response too.
+                direct_message = (stream.get("message") or {}) if isinstance(stream, dict) else {}
+                direct_content = direct_message.get("content", "") if isinstance(direct_message, dict) else ""
+                if isinstance(direct_content, str) and direct_content:
+                    stream_pieces.append(direct_content)
+                else:
+                    for chunk in stream:
+                        piece = _raw_content(chunk)
+                        if piece:
+                            stream_pieces.append(piece)
+                        if isinstance(chunk, dict) and chunk.get("done"):
+                            done_reason = chunk.get("done_reason")
+                        elif getattr(chunk, "done", False):
+                            done_reason = getattr(chunk, "done_reason", None)
                 if done_reason == "length":
                     print("brain: complete reply limited by num_predict")
                 return {"message": {"content": "".join(stream_pieces)}}
