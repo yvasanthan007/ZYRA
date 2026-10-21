@@ -1120,7 +1120,18 @@ async def analyze_link_endpoint(data: Dict[str, Any]):
     """
     url = (data.get("url") or "").strip()
     text = (data.get("text") or "").strip()
-    target = url or (extract_url(text) if text else "")
+    if not url and text:
+        from backend.url_analyzer.intent import extract_target_urls
+        candidates = extract_target_urls(text)
+        if len(candidates) > 1:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False,
+                         "error": "Multiple URLs found. Provide one explicit URL to analyze."}
+            )
+        target = candidates[0] if candidates else ""
+    else:
+        target = url
     if not target:
         return JSONResponse(
             status_code=400,

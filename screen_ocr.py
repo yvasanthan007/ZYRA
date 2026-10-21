@@ -542,29 +542,35 @@ def get_url_from_clipboard():
 # 5. Main Function: get_active_url()
 # ──────────────────────────────────────────────
 
-def _clipboard_exact_url():
-    """
-    Return the clipboard URL only when the clipboard holds *just* a URL.
-
-    This is the fast path: copying a link is the most common way users hand
-    Zyra a URL, and it resolves instantly without any screen OCR. When the
-    clipboard contains prose (not a bare link) this returns None so the
-    on-screen link is used instead.
-    """
+def _clipboard_exact_urls():
+    # Only use an unambiguous copied URL; prose can include dotted identifiers.
     try:
         import pyperclip
         text = (pyperclip.paste() or "").strip()
     except Exception:
-        return None
+        return []
+    if not text or len(text) > 2048:
+        return []
+    urls = extract_urls_from_text(text)
+    if not urls:
+        return []
+    # Exactly one copied link is required. A multi-URL clipboard is ambiguous;
+    # don't silently choose a candidate or substitute screen content.
+    if len(urls) != 1:
+        return []
+    candidate = urls[0]
+    source_text = text
+    if candidate.startswith("https://") and not text.lower().startswith(("https://", "www.")):
+        candidate = candidate[len("https://"):]
+    if candidate.rstrip("/") != source_text.rstrip("/"):
+        return []
+    return urls
 
-    if not text or len(text) > 2048 or any(ch.isspace() for ch in text):
-        return None
 
-    candidate = text if text.startswith(("http://", "https://")) else f"https://{text}"
-    parsed = urlparse(candidate)
-    if parsed.netloc and "." in parsed.netloc:
-        return candidate
-    return None
+def _clipboard_exact_url():
+    # Return the first clipboard URL, or None.
+    urls = _clipboard_exact_urls()
+    return urls[0] if urls else None
 
 
 def _get_active_browser_url():
@@ -603,73 +609,21 @@ def _get_active_browser_url():
     return None
 
 def get_active_url():
-    """
-    Resolve the link the user is looking at.
-
-    Order of resolution:
-      1. On-screen URL via OCR
-      2. Active browser address bar when OCR could not resolve the page
-      3. Clipboard URL only as the final fallback
-
-    This is the main entry point for Zyra's link analysis feature.
-
-    Returns:
-        str: The extracted URL string, or None if no URL found.
-    """
-    print("[ZYRA][ocr] get_active_url START - resolving on-screen/clipboard link")
+    # Resolve a freshly copied URL first; otherwise inspect the current screen.
     try:
-        # Prefer the URL visible on screen. A stale copied URL must not override
-        # the link the user explicitly asks Zyra to inspect.
-        # Capture + OCR runs in an isolated child process so a native
-        # EasyOCR/torch/mss crash cannot take down the caller or backend server.
-        # The child timeout includes a margin for cold model load + startup.
-        print("\n📸 Capturing screen for URL detection...")
+        clipboard_urls = _clipboard_exact_urls()
+        if clipboard_urls:
+            return clipboard_urls[0]
         screen_url = _capture_url_isolated(timeout=OCR_TIMEOUT_SECONDS + 60)
         if screen_url:
-            print(f"   🔗 URL found on screen: {screen_url}")
             return screen_url
-        print("   ℹ️  No on-screen URL (capture produced nothing).")
-
-        # OCR can miss a small or obscured address bar. Before falling back to
-        # clipboard (which may be stale), try the active browser's current URL
-        # using its address-bar copy shortcut. This does not navigate or modify
-        # page state; clipboard is restored immediately after reading.
-        url = _get_active_browser_url()
-        if url:
-            print(f"   🔗 URL read from active browser address bar: {url}")
-            return url
-        # Fall back to a clipboard URL only after screen/browser capture failed.
-        url = _clipboard_exact_url()
-        if url:
-            print(f"   ✅ URL found in clipboard (fallback): {url}")
-            return url
-        print("   📋 Checking clipboard for URL...")
-        url = get_url_from_clipboard()
-        if url:
-            print(f"   ✅ URL found in clipboard: {url}")
-            return url
-
-        print("   ❌ No URL found on screen or in clipboard.")
+        browser_url = _get_active_browser_url()
+        if browser_url:
+            return browser_url
+        return get_url_from_clipboard()
+    except BaseException as exc:
+        print(f"Capture failed ({type(exc).__name__}: {exc}); no URL returned")
         return None
-    except BaseException as exc:  # noqa: BLE001 - a capture must never kill the caller
-        print(f"[ZYRA][ocr] get_active_url error ({type(exc).__name__}: {exc}) - "
-              f"returning no URL. Process stays alive.")
-        return None
-    finally:
-        print("[ZYRA][ocr] get_active_url END - caller continues running")
-
-
-# ──────────────────────────────────────────────
-# 5b. Isolated screen-capture worker (crash containment)
-# ──────────────────────────────────────────────
-# EasyOCR/torch/mss are native libraries that can SEGFAULT the whole Python
-# process — an uncatchable crash that takes the FastAPI server (a daemon thread
-# of main.py) down with it, which is exactly the "process exits after a screen
-# analysis" bug. Python try/except cannot stop a native crash, so the ONLY
-# reliable containment is to run the capture+OCR in a child process: if the
-# native stack dies there, only the short-lived child is lost and the server
-# keeps running. The child prints the resulting URL (or empty) as its last
-# stdout line; a nonzero exit / timeout is treated as "no URL found".
 
 def _ocr_capture_worker() -> int:
     """Child-process entry: capture the screen, OCR it, print the URL.

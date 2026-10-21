@@ -443,15 +443,29 @@ def analyze_url_security(url):
     """
     original_url = (url or "").strip()
     scheme_assumed = False
-    if original_url and not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", original_url):
+    if not original_url:
+        return {
+            "url": original_url, "host": "", "scheme": "",
+            "verdict": "UNABLE TO DETERMINE", "risk_score": "Unknown",
+            "risk_points": 0, "phishing_probability": None,
+            "risk_score_0_100": None, "safety_score": None,
+            "observations": ["No URL was provided; no safety verdict was produced."],
+            "recommendation": "Provide a URL before making a safety decision.",
+            "ml_phishing": {"available": False, "note": "Empty URL."},
+        }
+    if not re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", original_url):
         original_url = "https://" + original_url  # assume TLS when scheme omitted
         scheme_assumed = True
-
-    parsed = urlparse(original_url)
-    hostname = parsed.hostname or ""
+    try:
+        parsed = urlparse(original_url)
+        hostname = parsed.hostname or ""
+        _ = parsed.port
+    except ValueError:
+        hostname = ""
+        parsed = urlparse("")
 
     # ── Structurally invalid → cannot trust ──
-    if not parsed.netloc or not hostname:
+    if not parsed.netloc or not hostname or parsed.scheme.lower() not in ("http", "https"):
         return {
             "url": url, "host": "", "scheme": "",
             "verdict": "SUSPICIOUS", "risk_score": "Medium", "risk_points": 3,

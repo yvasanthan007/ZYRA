@@ -104,25 +104,34 @@ def is_url_analysis_intent(text: str) -> bool:
     return False
 
 
-def extract_target_url(text: str):
-    """Extract the first analyzable URL from the text, or None."""
+def extract_target_urls(text: str):
+    # Return distinct analyzable URLs in encounter order.
     if not text:
-        return None
-    url = extract_url(text)
-    if url:
-        return url
-    match = _BARE_URL_RE.search(text)
-    if match:
-        return match.group(0).rstrip(".,!?;:'\"")
-    return None
+        return []
+    from backend.link_security import _URL_RE
+    urls, seen = [], set()
+    for match in _URL_RE.finditer(text):
+        url = match.group(0).rstrip(".,;:!?)]}\"'")
+
+        # One occurrence per URL, preserving source order.
+
+        if url and url not in seen:
+            seen.add(url)
+            urls.append(url)
+    if not urls:
+        match = _BARE_URL_RE.search(text)
+        if match:
+            urls.append(match.group(0).rstrip(".,!?;:'"))
+    return urls
+
+def extract_target_url(text: str):
+    # Return the first analyzable URL, or None.
+    urls = extract_target_urls(text)
+    return urls[0] if urls else None
 
 
 def build_chat_ack(target_url) -> str:
-    """
-    Chat acknowledgement sent by ZYRA when the URL_ANALYSIS intent fires.
-    With a URL: activation notice (panel opens + scan runs).
-    Without: a short request for the URL.
-    """
+    # Return the URL Analyzer acknowledgement text.
     if target_url:
         return (
             "URL ANALYZER ACTIVATED\n"
