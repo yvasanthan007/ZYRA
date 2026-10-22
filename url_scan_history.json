@@ -1,5 +1,430 @@
 [
  {
+  "scan_id": "url_20261022_151542_eac8be",
+  "url": "https://www.amazon.com/dp/B08N5WRWNW?ref_=header_logo",
+  "domain": "amazon.com",
+  "score": 56,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "UNKNOWN",
+  "classification_label": "UNKNOWN",
+  "timestamp": "2026-10-22T15:15:42",
+  "timestamp_display": "22 Oct 2026 15:15",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261022_151542_eac8be",
+   "url": "https://www.amazon.com/dp/B08N5WRWNW?ref_=header_logo",
+   "display_url": "https://www.amazon.com/dp/B08N5WRWNW?ref_=header_logo",
+   "hostname": "www.amazon.com",
+   "domain_display": "amazon.com",
+   "score": 56,
+   "phishing_probability": 0.0026,
+   "risk_score": 0.3,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "UNKNOWN",
+   "classification_label": "UNKNOWN",
+   "classification_summary": "Unable to Determine",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Redirect to a different domain",
+    "-22 HIGH: Domain could not be resolved"
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://www.amazon.com/dp/B08N5WRWNW?ref_=header_logo",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.0026,
+    "percent": 0,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "risk_band": "LOW",
+    "confidence": 0.9974,
+    "top_signals": [
+     {
+      "feature": "num_query_params",
+      "value": 1,
+      "importance": 0.0439,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "num_special_chars",
+      "value": 3,
+      "importance": 0.0388,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "query_length",
+      "value": 16,
+      "importance": 0.0265,
+      "description": "Query-string length"
+     }
+    ],
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9953,
+      "precision": 0.9916,
+      "recall": 1.0,
+      "f1": 0.9958,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0042,
+      "test_size": 846
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9941,
+      "precision": 1.0,
+      "recall": 0.9894,
+      "f1": 0.9947,
+      "roc_auc": 0.9993,
+      "pr_auc": 0.9996,
+      "brier_score": 0.0059,
+      "test_size": 846
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9988,
+      "precision": 1.0,
+      "recall": 0.9979,
+      "f1": 0.9989,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0012,
+      "test_size": 846
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "fail",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "www.amazon.com",
+    "registered_domain": "amazon.com",
+    "subdomain_count": 1,
+    "ip_address": null,
+    "ips": [],
+    "port": 443,
+    "path": "/dp/B08N5WRWNW",
+    "query": "ref_=header_logo",
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://www.amazon.com/dp/B08N5WRWNW?ref_=header_logo"
+   },
+   "ssl": {
+    "checked": false,
+    "status": "unreachable"
+   },
+   "domain": {
+    "resolved": false,
+    "whois_available": false,
+    "registered_domain": "x"
+   },
+   "reputation": {
+    "available": false
+   },
+   "findings": [
+    {
+     "id": "cross_domain_redirect",
+     "severity": "HIGH",
+     "category": "redirect",
+     "title": "Redirect to a different domain",
+     "detail": "The URL redirects from x to amazon.com - suspicious redirect behavior.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "DNS resolution failed.",
+     "score_impact": 22,
+     "positive": false
+    }
+   ],
+   "recommendation": "Insufficient information to confidently classify this URL. The target could not be reliably reached or verified — proceed with extreme caution or avoid it entirely.",
+   "timestamp": "2026-10-22T15:15:42",
+   "timestamp_display": "22 Oct 2026 15:15",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261022_151534_4840ab",
+  "url": "http://paypa1-secure-login.verify-account-now.xyz/login.php?token=a1b2c3d4e5f60718",
+  "domain": "verify-account-now.xyz",
+  "score": 0,
+  "risk_level": "CRITICAL",
+  "risk_level_label": "CRITICAL",
+  "classification": "MALICIOUS",
+  "classification_label": "MALICIOUS",
+  "timestamp": "2026-10-22T15:15:34",
+  "timestamp_display": "22 Oct 2026 15:15",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261022_151534_4840ab",
+   "url": "http://paypa1-secure-login.verify-account-now.xyz/login.php?token=a1b2c3d4e5f60718",
+   "display_url": "http://paypa1-secure-login.verify-account-now.xyz/login.php?token=a1b2c3d4e5f...",
+   "hostname": "paypa1-secure-login.verify-account-now.xyz",
+   "domain_display": "verify-account-now.xyz",
+   "score": 0,
+   "phishing_probability": 1.0,
+   "risk_score": 100.0,
+   "phishing_risk_level": "CRITICAL",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "CRITICAL",
+   "risk_level_label": "CRITICAL",
+   "classification": "MALICIOUS",
+   "classification_label": "MALICIOUS",
+   "classification_summary": "Malicious Indicators Detected",
+   "reasoning": [
+    "Base score: 100",
+    "-22 HIGH: Domain could not be resolved",
+    "-22 HIGH: Connection is not encrypted (HTTP)",
+    "-10 MEDIUM: Credential / account-related keywords",
+    "-10 MEDIUM: High-risk top-level domain '.xyz'",
+    "-40 CRITICAL: ML classifier: 100% phishing probability",
+    "ML phishing classifier (XGBClassifier) estimated a 100% phishing probability from URL structure."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "http://paypa1-secure-login.verify-account-now.xyz/login.php?token=a1b2c3d4e5f60718",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 1.0,
+    "percent": 100,
+    "decision_threshold": 0.35,
+    "verdict": "PHISHING",
+    "risk_band": "CRITICAL",
+    "confidence": 1.0,
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 4,
+      "importance": 0.3296,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 1,
+      "importance": 0.2078,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "credential_keywords",
+      "value": 4,
+      "importance": 0.0665,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "num_query_params",
+      "value": 1,
+      "importance": 0.0439,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "num_special_chars",
+      "value": 1,
+      "importance": 0.0388,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     }
+    ],
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9953,
+      "precision": 0.9916,
+      "recall": 1.0,
+      "f1": 0.9958,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0042,
+      "test_size": 846
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9941,
+      "precision": 1.0,
+      "recall": 0.9894,
+      "f1": 0.9947,
+      "roc_auc": 0.9993,
+      "pr_auc": 0.9996,
+      "brier_score": 0.0059,
+      "test_size": 846
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9988,
+      "precision": 1.0,
+      "recall": 0.9979,
+      "f1": 0.9989,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0012,
+      "test_size": 846
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "fail",
+      "detail": "Plain HTTP"
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "fail",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "fail",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "warn",
+      "detail": "Reputation data unavailable"
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "fail",
+      "detail": "100% phishing probability"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTP",
+    "domain": "paypa1-secure-login.verify-account-now.xyz",
+    "registered_domain": "verify-account-now.xyz",
+    "subdomain_count": 1,
+    "ip_address": null,
+    "ips": [],
+    "port": 80,
+    "path": "/login.php",
+    "query": "token=a1b2c3d4e5f60718",
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": null
+   },
+   "ssl": {
+    "checked": false,
+    "status": "unreachable"
+   },
+   "domain": {
+    "resolved": false,
+    "whois_available": false,
+    "registered_domain": "x"
+   },
+   "reputation": {
+    "available": false
+   },
+   "findings": [
+    {
+     "id": "dns_failure",
+     "severity": "HIGH",
+     "category": "domain",
+     "title": "Domain could not be resolved",
+     "detail": "DNS resolution failed.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "no_https",
+     "severity": "HIGH",
+     "category": "protocol",
+     "title": "Connection is not encrypted (HTTP)",
+     "detail": "Sensitive pages contacted over plain HTTP expose anything the user submits to network observers.",
+     "score_impact": 22,
+     "positive": false
+    },
+    {
+     "id": "credential_keywords",
+     "severity": "MEDIUM",
+     "category": "intent",
+     "title": "Credential / account-related keywords",
+     "detail": "URL contains credential-related keyword(s): account, login, secure, verify. Combined with other indicators this suggests a phishing lure.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "suspicious_tld",
+     "severity": "MEDIUM",
+     "category": "domain",
+     "title": "High-risk top-level domain '.xyz'",
+     "detail": "The '.xyz' TLD is heavily abused in phishing and malware campaigns.",
+     "score_impact": 10,
+     "positive": false
+    },
+    {
+     "id": "ml_phishing_classifier",
+     "severity": "CRITICAL",
+     "category": "ml",
+     "title": "ML classifier: 100% phishing probability",
+     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 100% phishing probability. Most influential features: num_hyphens_host, suspicious_tld, credential_keywords.",
+     "score_impact": 40,
+     "positive": false
+    }
+   ],
+   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
+   "timestamp": "2026-10-22T15:15:34",
+   "timestamp_display": "22 Oct 2026 15:15",
+   "source": "panel"
+  }
+ },
+ {
   "scan_id": "url_20261021_161512_83e4b5",
   "url": "https://fake.example/path",
   "domain": "fake.example",
@@ -3106,136 +3531,6 @@
    "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
    "timestamp": "2026-10-10T21:29:48",
    "timestamp_display": "10 Oct 2026 21:29",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261010_210734_a0110e",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-10T21:07:34",
-  "timestamp_display": "10 Oct 2026 21:07",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261010_210734_a0110e",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-10T21:07:34",
-   "timestamp_display": "10 Oct 2026 21:07",
    "source": "panel"
   }
  }

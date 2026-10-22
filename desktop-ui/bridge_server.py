@@ -289,17 +289,22 @@ def handle_message(msg):
             try:
                 from screen_ocr import get_active_url as _capture_url
                 target = _call_with_timeout(_capture_url, ocr_timeout)
+                target = target.strip() if isinstance(target, str) else None
                 source = "screen" if target else "none"
                 print(f"[analyze_link] capture done source={source} "
                       f"has_url={bool(target)}")
             except TimeoutError:
                 print(f"[analyze_link] OCR capture timed out after "
                       f"{ocr_timeout}s; reporting no-URL (voice unaffected)")
-                target, source = None, "none"
+                return {"success": False,
+                        "error": "Screen/clipboard URL capture timed out.",
+                        "source": "none"}
             except Exception as exc:
                 print(f"[analyze_link] capture error "
                       f"({type(exc).__name__}); reporting no-URL")
-                target, source = None, "none"
+                return {"success": False,
+                        "error": f"Screen/clipboard URL capture failed ({type(exc).__name__}).",
+                        "source": "none"}
         if not target:
             return {
                 "success": False,

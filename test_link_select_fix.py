@@ -83,6 +83,31 @@ class AnalyzeLinkTestsLegacy(unittest.TestCase):
         self.assertFalse(res["success"])
         self.assertIn("No URL", res.get("error", ""))
 
+    def test_capture_exception_is_not_reported_as_no_url(self):
+        with patch("screen_ocr.get_active_url", side_effect=RuntimeError("capture broken")):
+            response = bridge_server.handle_message(
+                {"type": "analyze_link", "data": ""})
+        self.assertFalse(response["success"])
+        self.assertIn("capture failed", response["error"])
+
+    def test_capture_timeout_is_not_reported_as_no_url(self):
+        with patch("bridge_server._call_with_timeout",
+                   side_effect=TimeoutError("capture timed out")):
+            response = bridge_server.handle_message(
+                {"type": "analyze_link", "data": ""})
+        self.assertFalse(response["success"])
+        self.assertIn("timed out", response["error"])
+
+    def test_model_unavailable_does_not_create_safe_fallback(self):
+        from backend.ml_phishing import predictor
+        from backend.link_security import analyze_url_security
+        phishing_url = "http://paypa1-secure-login.verify-account-now.xyz/login.php?token=a1b2c3d4e5f60718"
+        with patch.object(predictor, "_load", return_value=(None, None)):
+            result = analyze_url_security(phishing_url)
+        self.assertEqual(result["url"], phishing_url)
+        self.assertEqual(result["verdict"], "PHISHING DETECTED")
+        self.assertFalse(result["ml_phishing"]["available"])
+
     def test_ocr_timeout_does_not_hang(self):
         import screen_ocr
         orig = screen_ocr.get_active_url
