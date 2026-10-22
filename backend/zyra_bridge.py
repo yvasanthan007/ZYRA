@@ -160,9 +160,13 @@ def _link_capture_report(message: str):
     Returns:
         (report_text or None, url or None)
     """
-    # A screen-analysis request should inspect the current screen first; a URL
-    # in the command text may be unrelated context. Explicit standalone URLs are
-    # still handled directly by the analyzer intent path.
+    # When multiple URLs are present, never silently choose one; the caller
+    # must provide one explicit URL. A screen-focused request intentionally
+    # resolves from the current screen, not an incidental URL in its text.
+    from backend.url_analyzer.intent import extract_target_urls
+    candidates = extract_target_urls(message or "")
+    if len(candidates) > 1:
+        return "I found multiple URLs. Please ask me to analyze one URL at a time.", None
     lowered = (message or "").lower()
     screen_request = any(phrase in lowered for phrase in (
         "on the screen", "on screen", "visible on screen", "current page",

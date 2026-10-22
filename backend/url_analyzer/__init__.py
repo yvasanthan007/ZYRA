@@ -32,6 +32,7 @@ from backend.url_analyzer.analyzer import (  # noqa: F401
 from backend.url_analyzer.intent import (  # noqa: F401
     build_chat_ack,
     extract_target_url,
+    extract_target_urls,
     is_url_analysis_intent,
 )
 from backend.url_analyzer.report_generator import (  # noqa: F401
@@ -48,6 +49,7 @@ __all__ = [
     "build_report_data",
     "build_voice_summary",
     "extract_target_url",
+    "extract_target_urls",
     "get_history",
     "get_last_scan",
     "get_scan",

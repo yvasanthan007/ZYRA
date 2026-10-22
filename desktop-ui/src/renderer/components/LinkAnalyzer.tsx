@@ -4,8 +4,11 @@ interface LinkAnalysisResult {
   url?: string;
   verdict?: string;
   risk_score?: string;
+  phishing_probability?: number | null;
+  safety_score?: number | null;
   recommendation?: string;
   source?: string;
+  observations?: string[];
 }
 
 const LinkAnalyzer: React.FC = () => {
@@ -21,7 +24,6 @@ const LinkAnalyzer: React.FC = () => {
     setBusy(true);
     setError('');
     setResult(null);
-    // Echo the exact input being analyzed (safely escaped by React).
     setAnalyzedUrl(target);
     try {
       const raw = await window.zyraAPI.analyzeLink(target);
@@ -35,7 +37,15 @@ const LinkAnalyzer: React.FC = () => {
       const payload = (raw as { analysis?: LinkAnalysisResult })?.analysis
         ?? (raw as { data?: LinkAnalysisResult })?.data
         ?? (raw as LinkAnalysisResult);
-      setResult({ ...payload, url: payload?.url ?? target });
+      if (!payload || typeof payload !== 'object' || typeof payload.verdict !== 'string') {
+        setError('Link analysis returned no valid verdict. Treat this URL as unverified.');
+        return;
+      }
+      if (payload.url && payload.url !== target && payload.url !== `https://${target}`) {
+        setError('Backend analyzed a different URL than the one entered. No result was displayed.');
+        return;
+      }
+      setResult({ ...payload, url: payload.url ?? target });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Link analysis failed');
     } finally {
@@ -87,6 +97,12 @@ const LinkAnalyzer: React.FC = () => {
             <span className="transcript-label">Risk:</span>
             <p>{result.risk_score ?? '—'}</p>
           </div>
+          {result.phishing_probability !== null && result.phishing_probability !== undefined && (
+            <div className="transcript-item">
+              <span className="transcript-label">Model phishing probability:</span>
+              <p>{(result.phishing_probability * 100).toFixed(1)}%</p>
+            </div>
+          )}
           {result.recommendation && (
             <div className="transcript-item">
               <span className="transcript-label">Recommendation:</span>
