@@ -37,3 +37,6 @@ desktop-ui/build-assets/icon.png
 .idea/
 .postqode/
 
+
+# Runtime live URL analyses (not a labeled training dataset)
+backend/ml_phishing/live_analysis.jsonl

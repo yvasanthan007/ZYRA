@@ -306,20 +306,29 @@ When configured, unknown URLs are submitted to VirusTotal and the analysis is
 polled to completion, so brand-new phishing URLs are actually scanned (instead
 of being reported as "Unknown" or silently treated as safe).
 
-### 2. ML phishing classifier (local, offline)
-Every link surface now runs the same local lexical ML model as an extra
-advisory signal — voice "analyse this link" (`link_analysis.py`), chat /
-dashboard quick-link reports (`backend/link_security.py`), and the deep
-**URL Analyzer** (`backend/url_analyzer/` via `risk_scorer.py`):
-- Train / retrain: `python -m backend.ml_phishing.train`
-- Model metadata: `GET /api/ml/phishing/model`
+### 2. XGBoost URL phishing analysis (local, offline)
+The React link dashboard submits the exact typed URL to `POST /api/ml/phishing`;
+its explicit screen-capture action gets a fresh URL from screen OCR/browser
+address-bar extraction and then submits that exact result. Legacy bridge link
+checks and voice URL analysis use the same XGBoost model. Failed capture or
+model/API requests are reported as unverified, never safe.
+
+- Train / retrain (deterministic seed corpus by default): `python -m backend.ml_phishing.train`
+- Train from a labeled `url,label` CSV: `python -m backend.ml_phishing.train --csv dataset.csv`
+- Model metadata and held-out metrics: `GET /api/ml/phishing/model`
 - Instant ML check: `POST /api/ml/phishing` `{"url": "..."}`
+- Searchable dataset: `GET /api/ml/phishing/dataset?search=&label=all&split=test&page=1&page_size=25`
 - Disable at runtime: `ZYRA_ML_DISABLE=1`
 
-Contribution tiers: probability ≥ 0.90 forces **MALICIOUS**; ≥ 0.75 raises a
-clean/unknown URL to **SUSPICIOUS**; the ML layer never makes a URL look safer.
-Voice replies append an ML sentence when flagged ("The machine learning
-classifier estimates N percent phishing probability").
+The default builtin corpus consists of generated seed patterns, **not real-world
+labeled URLs**. XGBoost probabilities are uncalibrated model outputs, not
+verified real-world risk estimates. Training uses host-grouped train/validation/
+test partitions; only train rows fit the model, validation selects it, and the
+test rows are reported once as held-out evaluation. The React link dashboard
+shows risk score, exact features, native XGBoost TreeSHAP contributions and
+global feature importance separately. Per-URL contributions explain model
+behavior; they do not prove maliciousness. Voice retains its existing spoken
+URL-analysis response path.
 
 ## Development
 

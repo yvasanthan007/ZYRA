@@ -273,7 +273,7 @@ def extract_features(url: str) -> dict:
         "brand_misplaced": int(_brand_misplaced(host, path, reg)) if host else 0,
         "has_hex_blob": int(bool(re.search(r"[0-9a-f]{16,}", path + query))),
         "brand_typosquat": int(_brand_typosquat(host, reg)) if host else 0,
-        "brand_in_host": int(_brand_misplaced(host, "", reg)) if host else 0,
+        "brand_in_host": int(_brand_misplaced(host, "", reg) or _brand_typosquat(host, reg)) if host else 0,
         "host_has_credential_terms": int(any(k in host for k in CREDENTIAL_KEYWORDS)),
         "host_label_count": len(labels),
         "suspicious_host_pattern": int(

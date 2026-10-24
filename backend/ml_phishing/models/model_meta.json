@@ -40,107 +40,103 @@
   "feature_importances": [
     [
       "num_hyphens_host",
-      0.3295815885066986
+      0.2685614228248596
     ],
     [
       "suspicious_tld",
-      0.20777122676372528
+      0.22904722392559052
+    ],
+    [
+      "brand_in_host",
+      0.13940481841564178
     ],
     [
       "num_percent_encoded",
-      0.11255700886249542
-    ],
-    [
-      "credential_keywords",
-      0.06654935330152512
-    ],
-    [
-      "urgency_keywords",
-      0.05462105944752693
+      0.06400499492883682
     ],
     [
       "num_query_params",
-      0.04386409744620323
+      0.05870126560330391
+    ],
+    [
+      "urgency_keywords",
+      0.04437730833888054
     ],
     [
       "num_special_chars",
-      0.03879738226532936
+      0.03947846218943596
     ],
     [
-      "query_length",
-      0.02648436836898327
-    ],
-    [
-      "digit_ratio_host",
-      0.02124835178256035
-    ],
-    [
-      "suspicious_host_pattern",
-      0.017326869070529938
+      "credential_keywords",
+      0.03735167905688286
     ],
     [
       "brand_typosquat",
-      0.015176800079643726
+      0.026392295956611633
     ],
     [
-      "num_digits_host",
-      0.01425670925527811
+      "query_length",
+      0.02152804657816887
     ],
     [
       "max_label_length",
-      0.010528896003961563
+      0.015776345506310463
     ],
     [
-      "url_length",
-      0.0085331741720438
+      "digit_ratio_host",
+      0.009899169206619263
     ],
     [
       "is_shortener",
-      0.00670351879671216
+      0.00817038118839264
     ],
     [
-      "brand_misplaced",
-      0.006456960923969746
+      "num_digits_host",
+      0.006825148593634367
     ],
     [
-      "path_length",
-      0.00526650995016098
-    ],
-    [
-      "is_https",
-      0.0031041190959513187
+      "url_length",
+      0.00609703129157424
     ],
     [
       "num_dots_host",
-      0.002888493938371539
+      0.005093198735266924
     ],
     [
-      "path_depth",
-      0.0019593422766774893
-    ],
-    [
-      "domain_entropy",
-      0.001885477569885552
-    ],
-    [
-      "host_has_credential_terms",
-      0.0015176930464804173
-    ],
-    [
-      "num_subdomains",
-      0.001396878738887608
-    ],
-    [
-      "hostname_length",
-      0.0008459889213554561
-    ],
-    [
-      "has_ip_host",
-      0.0004225713200867176
+      "path_length",
+      0.004861711990088224
     ],
     [
       "host_label_count",
-      0.00025552825536578894
+      0.004236825741827488
+    ],
+    [
+      "hostname_length",
+      0.003275509923696518
+    ],
+    [
+      "is_https",
+      0.0032140782568603754
+    ],
+    [
+      "domain_entropy",
+      0.00200257683172822
+    ],
+    [
+      "path_depth",
+      0.0009166262461803854
+    ],
+    [
+      "host_has_credential_terms",
+      0.0005508640315383673
+    ],
+    [
+      "num_subdomains",
+      0.00023304887872654945
+    ],
+    [
+      "has_ip_host",
+      0.0
     ],
     [
       "has_nonstandard_port",
@@ -163,56 +159,122 @@
       0.0
     ],
     [
+      "brand_misplaced",
+      0.0
+    ],
+    [
       "has_hex_blob",
       0.0
     ],
     [
-      "brand_in_host",
+      "suspicious_host_pattern",
       0.0
     ]
   ],
   "metrics": {
     "RandomForestClassifier": {
       "decision_threshold": 0.35,
-      "accuracy": 0.9953,
-      "precision": 0.9916,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
       "recall": 1.0,
-      "f1": 0.9958,
+      "f1": 0.9554,
       "roc_auc": 1.0,
       "pr_auc": 1.0,
-      "brier_score": 0.0042,
-      "test_size": 846
+      "brier_score": 0.0141,
+      "test_size": 755
     },
     "LogisticRegression": {
       "decision_threshold": 0.35,
-      "accuracy": 0.9941,
+      "accuracy": 0.996,
       "precision": 1.0,
-      "recall": 0.9894,
-      "f1": 0.9947,
-      "roc_auc": 0.9993,
-      "pr_auc": 0.9996,
-      "brier_score": 0.0059,
-      "test_size": 846
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
     },
     "XGBClassifier": {
       "decision_threshold": 0.35,
-      "accuracy": 0.9988,
+      "accuracy": 1.0,
       "precision": 1.0,
-      "recall": 0.9979,
-      "f1": 0.9989,
+      "recall": 1.0,
+      "f1": 1.0,
       "roc_auc": 1.0,
       "pr_auc": 1.0,
-      "brier_score": 0.0012,
-      "test_size": 846
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+        "decision_threshold": 0.35,
+        "precision": 0.9916,
+        "recall": 1.0,
+        "f1": 0.9958,
+        "confusion_matrix": {
+          "labels": [
+            "legitimate",
+            "phishing"
+          ],
+          "matrix": [
+            [
+              454,
+              3
+            ],
+            [
+              0,
+              356
+            ]
+          ],
+          "tn": 454,
+          "fp": 3,
+          "fn": 0,
+          "tp": 356
+        },
+        "test_size": 813
+      }
+    }
+  },
+  "evaluation": {
+    "selected_model": "XGBClassifier",
+    "dataset_version": "builtin-seed-v1-seed42-2500-per-class",
+    "split_strategy": "registrable-domain grouped train/validation/test 70/15/15",
+    "test_set_size": 813,
+    "test_metrics": {
+      "decision_threshold": 0.35,
+      "precision": 0.9916,
+      "recall": 1.0,
+      "f1": 0.9958,
+      "confusion_matrix": {
+        "labels": [
+          "legitimate",
+          "phishing"
+        ],
+        "matrix": [
+          [
+            454,
+            3
+          ],
+          [
+            0,
+            356
+          ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+      },
+      "test_size": 813
     }
   },
   "dataset": {
     "source": "builtin-seed-dataset (synthetic patterns; not real-world validation)",
+    "version": "builtin-seed-v1-seed42-2500-per-class",
+    "seed": 42,
     "size": 5000,
     "phishing": 2500,
     "legitimate": 2500
   },
-  "trained_at": "2026-10-19 13:40:37",
+  "trained_at": "2026-10-23 23:48:18",
   "sklearn_version": "1.9.1",
   "python": "3.13.5"
 }

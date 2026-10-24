@@ -18,8 +18,11 @@ Degradation contract (matches ZYRA's backend style — never raises):
 """
 
 import json
+import math
 import os
 import threading
+import time
+from urllib.parse import urlparse
 
 from backend.ml_phishing.features import (
     FEATURE_DESCRIPTIONS,
@@ -41,7 +44,16 @@ _CACHE = {"key": None, "model": None, "meta": None}
 
 def _model_path():
     override = os.environ.get("ZYRA_ML_MODEL")
-    return os.path.abspath(override) if override else _DEFAULT_MODEL_PATH
+    if override:
+        return os.path.abspath(override)
+    try:
+        import zyra_paths
+        bundled = zyra_paths.resource_path("backend", "ml_phishing", "models", "phishing_model.joblib")
+        if getattr(__import__("sys"), "frozen", False) and os.path.isfile(bundled):
+            return bundled
+    except Exception:
+        pass
+    return _DEFAULT_MODEL_PATH
 
 
 def _enabled():
@@ -53,12 +65,16 @@ def _load():
     """Lazy, thread-safe model load keyed on path + mtime."""
     path = _model_path()
     try:
-        mtime = os.path.getmtime(path) if os.path.exists(path) else None
+        stat = os.stat(path) if os.path.exists(path) else None
+        stamp = (stat.st_mtime_ns, stat.st_size) if stat else None
+        meta_path = os.path.join(os.path.dirname(path), "model_meta.json")
+        meta_stat = os.stat(meta_path) if os.path.exists(meta_path) else None
+        meta_stamp = (meta_stat.st_mtime_ns, meta_stat.st_size) if meta_stat else None
     except OSError:
-        mtime = None
-    key = (path, mtime)
+        stamp = meta_stamp = None
+    key = (path, stamp, meta_stamp)
     with _LOCK:
-        if _CACHE["key"] == key and _CACHE["model"] is not None:
+        if _CACHE["key"] == key:
             return _CACHE["model"], _CACHE["meta"]
         model = meta = None
         if joblib is not None and os.path.exists(path):
@@ -72,8 +88,12 @@ def _load():
                     with open(meta_path, "r", encoding="utf-8") as fh:
                         meta = json.load(fh)
                 declared_features = stored_features or (meta or {}).get("feature_names")
-                if declared_features and list(declared_features) != FEATURE_NAMES:
-                    raise ValueError("model feature order does not match the inference pipeline")
+                if not declared_features or list(declared_features) != FEATURE_NAMES:
+                    raise ValueError("model feature schema is missing or does not match the inference pipeline")
+                if isinstance(payload, dict) and payload.get("algorithm") != "XGBClassifier":
+                    raise ValueError("configured production model is not XGBoost")
+                if type(model).__name__ != "XGBClassifier":
+                    raise ValueError("configured production artifact is not an XGBClassifier")
                 expected_count = getattr(model, "n_features_in_", len(FEATURE_NAMES))
                 if int(expected_count) != len(FEATURE_NAMES):
                     raise ValueError("model feature count does not match the inference pipeline")
@@ -83,6 +103,13 @@ def _load():
         _CACHE.update({"key": key, "model": model, "meta": meta})
         return model, meta
 
+
+def _phishing_class_index(model):
+    # Resolve phishing class by its label, never by assumed probability order.
+    classes = list(getattr(model, "classes_", []))
+    hits = [i for i, label in enumerate(classes)
+            if label == 1 or str(label).strip().lower() in ("phishing", "phish", "malicious")]
+    return hits[0] if len(hits) == 1 else None
 
 def _feature_importances(model, meta):
     """Global importances ranked desc, as [(name, importance), ...]."""
@@ -118,7 +145,10 @@ def model_info() -> dict:
         "trained_at": (meta or {}).get("trained_at"),
         "metrics": (meta or {}).get("metrics"),
         "dataset": (meta or {}).get("dataset"),
+        "evaluation": (meta or {}).get("evaluation"),
         "n_features": len(FEATURE_NAMES),
+        "feature_names": FEATURE_NAMES,
+        "probabilities_calibrated": False,
         "sklearn_version": (meta or {}).get("sklearn_version"),
     }
 
@@ -140,13 +170,13 @@ def _is_ip(host):
         return False
 
 def _verdict(prob, decision_threshold=0.35):
+    if abs(prob - decision_threshold) < 0.05:
+        return "UNCERTAIN"
     if prob >= 0.90:
         return "PHISHING"
     if prob >= 0.75:
         return "LIKELY_PHISHING"
-    if prob >= 0.55:
-        return "SUSPICIOUS"
-    if prob >= decision_threshold:
+    if prob >= 0.55 or prob >= decision_threshold:
         return "SUSPICIOUS"
     return "SAFE"
 
@@ -162,118 +192,82 @@ def _risk_band(prob):
 
 
 def analyze_url(url: str) -> dict:
-    """
-    ML-only phishing assessment for one URL. Never raises.
-
-    Returns (when the model is available):
-        {
-          "available": True,
-          "url", "algorithm", "model_version",
-          "probability": 0.0..1.0   — phishing probability
-          "percent":    0..100
-          "verdict":    PHISHING | LIKELY_PHISHING | SUSPICIOUS |
-                        UNSURE | SAFE
-          "risk_band":  CRITICAL | HIGH | MEDIUM | LOW
-          "confidence": max(p, 1-p)
-          "top_signals": [{feature, value, importance, description}, ...]
-          "metrics":    hold-out metrics from training
-        }
-    """
+    # Return the actual XGBoost phishing class probability and explanation.
+    started = time.perf_counter()
     try:
         raw = str(url or "").strip()
         if not raw:
             return {"available": False, "note": "Empty URL."}
+        parsed = urlparse(raw if "://" in raw else "https://" + raw)
+        if parsed.scheme.lower() not in ("http", "https") or not parsed.hostname or "." not in parsed.hostname:
+            return {"available": False, "note": "Invalid URL: provide an HTTP(S) URL with a hostname."}
         if not _enabled():
             return {"available": False,
                     "note": "ML classifier disabled via ZYRA_ML_DISABLE."}
         model, meta = _load()
         if model is None:
-            return model_info()  # carries available=False + reason
+            return model_info()
         feats = extract_features(raw)
-        vec = [float(feats.get(name, 0)) for name in FEATURE_NAMES]
-        classes = list(getattr(model, "classes_", []))
-        phishing_indexes = [
-            index for index, label in enumerate(classes)
-            if label == 1 or str(label).strip().lower() in ("phishing", "phish", "malicious")
-        ]
-        if len(phishing_indexes) != 1:
+        vec = [float(feats[name]) for name in FEATURE_NAMES]
+        phishing_index = _phishing_class_index(model)
+        if phishing_index is None:
             return {"available": False,
                     "note": "ML model does not expose an unambiguous phishing class."}
         probabilities = model.predict_proba([vec])[0]
-        prob = float(probabilities[phishing_indexes[0]])
-        if not __import__("math").isfinite(prob):
+        if len(probabilities) != len(getattr(model, "classes_", [])):
+            return {"available": False, "note": "Model output class mapping is inconsistent."}
+        prob = float(probabilities[phishing_index])
+        if not math.isfinite(prob):
             return {"available": False, "note": "ML model returned a non-finite probability."}
         prob = min(max(prob, 0.0), 1.0)
-        # Add conservative deterministic indicators to the model estimate for
-        # clear phishing structure the small lexical model can underweight.
-        from urllib.parse import urlparse
-        from backend.ml_phishing.features import registered_domain
-        from backend.url_analyzer.threat_detector import IMPERSONATION_TARGETS
-        parsed = urlparse(raw if "://" in raw else "https://" + raw)
-        host = (parsed.hostname or "").lower()
-        reg_domain = registered_domain(host)
-        reg_label = reg_domain.split(".", 1)[0]
-        normalized_label = reg_label.translate(str.maketrans({"0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b"}))
-        normalized_compact = host.replace(".", "").replace("-", "").translate(
-            str.maketrans({"0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t", "8": "b"}))
-        owner_domains = {
-            "google": {"google", "googleusercontent", "gmail"},
-            "paypal": {"paypal"}, "microsoft": {"microsoft", "live", "office"},
-            "apple": {"apple", "icloud"}, "amazon": {"amazon"},
-            "facebook": {"facebook", "meta"}, "instagram": {"instagram"},
-            "netflix": {"netflix"}, "linkedin": {"linkedin"},
-        }
-        legitimate_brand_owner = any(
-            reg_label == owned for brand, owned_labels in owner_domains.items()
-            for owned in owned_labels if brand in IMPERSONATION_TARGETS
-        )
-        if any(len(brand) >= 4 and brand in host and brand not in reg_domain
-               for brand in IMPERSONATION_TARGETS):
-            prob = max(prob, 0.78)
-        if _is_ip(host):
-            prob = max(prob, 0.60)
-        from difflib import SequenceMatcher
-        # Catch common one-character confusables such as g00gle.com while
-        # avoiding exact owner domains (google.com, accounts.google.com).
-        if not legitimate_brand_owner and (
-                any(normalized_label != brand and
-                    SequenceMatcher(None, normalized_label, brand).ratio() >= 0.78
-                    for brand in IMPERSONATION_TARGETS)
-                or any(brand in normalized_compact and brand not in reg_domain
-                       for brand in IMPERSONATION_TARGETS)):
-            prob = max(prob, 0.78)
-        if host in ("bit.ly", "tinyurl.com", "t.co", "ow.ly", "is.gd", "cutt.ly"):
-            # Shorteners obscure destinations, but URL text alone cannot prove
-            # the redirect is malicious. Keep this uncertain rather than claim
-            # an unsupported phishing probability.
-            prob = max(prob, 0.35)
         threshold = float((meta or {}).get("decision_threshold", 0.35))
-
-        signals = []
-        for name, importance in _feature_importances(model, meta):
-            value = feats.get(name, 0)
-            if value and importance >= 0.02:
-                signals.append({
-                    "feature": name,
-                    "value": value,
-                    "importance": round(float(importance), 4),
-                    "description": FEATURE_DESCRIPTIONS.get(name, name),
-                })
-            if len(signals) >= 5:
-                break
-
+        raw_prediction = model.classes_[int(max(range(len(probabilities)), key=lambda i: probabilities[i]))]
+        predicted_label = ("phishing" if str(raw_prediction).strip().lower() in
+                           ("1", "phishing", "phish", "malicious") else "legitimate")
+        # This assessment is part of the actual model feature pipeline, so any
+        # deterministic suspicion adjustment is represented by those features,
+        # not a second hidden scoring/rule layer.
+        explanation = {"available": False, "method": None, "note": "Per-URL contribution explanation unavailable."}
+        try:
+            import numpy as np
+            from xgboost import DMatrix
+            contributions = model.get_booster().predict(
+                DMatrix(np.asarray([vec], dtype=float), feature_names=FEATURE_NAMES),
+                pred_contribs=True,
+            )[0]
+            base = float(contributions[-1])
+            ranked = sorted(zip(FEATURE_NAMES, contributions[:-1]), key=lambda pair: abs(float(pair[1])), reverse=True)
+            explanation = {
+                "available": True, "method": "XGBoost native TreeSHAP (margin/log-odds)",
+                "base_value": round(base, 6),
+                "contributions": [{"feature": name, "value": feats[name],
+                                    "contribution": round(float(value), 6),
+                                    "direction": "increases phishing score" if value > 0 else "decreases phishing score" if value < 0 else "no contribution",
+                                    "description": FEATURE_DESCRIPTIONS.get(name, name)}
+                                   for name, value in ranked if abs(float(value)) > 1e-8][:10],
+                "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious.",
+            }
+        except Exception as exc:
+            explanation["note"] = f"Per-URL contribution explanation unavailable ({type(exc).__name__})."
+        importances = _feature_importances(model, meta)
         return {
-            "available": True,
-            "url": raw,
+            "available": True, "url": raw,
             "algorithm": (meta or {}).get("algorithm", type(model).__name__),
             "model_version": (meta or {}).get("version"),
-            "probability": round(prob, 4),
-            "percent": int(round(prob * 100)),
+            "probability": round(prob, 6), "phishing_probability": round(prob, 6),
+            "percent": round(prob * 100, 2), "risk_score": round(prob * 100, 2),
+            "probabilities_calibrated": False,
             "decision_threshold": threshold,
-            "verdict": _verdict(prob, threshold),
+            "verdict": _verdict(prob, threshold), "prediction": predicted_label,
             "risk_band": _risk_band(prob),
-            "confidence": round(max(prob, 1.0 - prob), 4),
-            "top_signals": signals,
+            "confidence": round(max(prob, 1.0 - prob), 6),
+            "features": feats, "feature_names": FEATURE_NAMES,
+            "explanation": explanation,
+            "global_feature_importance": [{"feature": name, "importance": round(float(value), 6),
+                                           "description": FEATURE_DESCRIPTIONS.get(name, name)}
+                                          for name, value in importances],
+            "top_signals": explanation.get("contributions", []),
+            "analysis_time_ms": round((time.perf_counter() - started) * 1000, 2),
             "metrics": (meta or {}).get("metrics"),
         }
     except Exception as exc:  # noqa: BLE001 — the ML layer must never break a scan

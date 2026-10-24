@@ -25,8 +25,8 @@ from datetime import datetime
 
 import joblib
 import sklearn
-
 from backend.ml_phishing.dataset import build_dataset
+from backend.ml_phishing.evaluation import binary_metrics, split_indices
 from backend.ml_phishing.features import FEATURE_NAMES, feature_vector
 
 MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
@@ -62,41 +62,24 @@ def _metrics(y_true, proba):
 
 
 def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
-    """
-    Train both candidates and return (best_name, best_model, results, holdout).
-    holdout is (X_test, y_test) for optional extra evaluation. Built-in
-    synthetic-data results are development checks, not estimates of real-world accuracy.
-    """
+    "Train the required XGBoost model and report validation plus held-out test metrics."
     if len(urls) != len(labels) or len(set(labels)) != 2:
         raise ValueError("Training requires equal URL/label counts and both classes (0 and 1).")
     if any(label not in (0, 1) for label in labels):
         raise ValueError("Labels must use 1=phishing and 0=legitimate.")
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.linear_model import LogisticRegression
-    from sklearn.model_selection import GroupShuffleSplit, train_test_split
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
-
     X = [feature_vector(u) for u in urls]
     y = list(labels)
-    # Group by registrable host where possible, so URL variants from a single
-    # domain cannot appear in both train and hold-out splits.
-    from urllib.parse import urlparse
-    from backend.ml_phishing.features import registered_domain
-    groups = []
-    for url in urls:
-        parsed = urlparse(url if "://" in url else "https://" + url)
-        groups.append(registered_domain(parsed.hostname or url))
-    try:
-        splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=seed)
-        train_idx, test_idx = next(splitter.split(X, y, groups))
-        if len(set(y[i] for i in train_idx)) < 2 or len(set(y[i] for i in test_idx)) < 2:
-            raise ValueError("group split missing a class")
-        X_train, X_test = [X[i] for i in train_idx], [X[i] for i in test_idx]
-        y_train, y_test = [y[i] for i in train_idx], [y[i] for i in test_idx]
-    except ValueError:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, stratify=y, random_state=seed)
+    train_idx, validation_idx, test_idx = split_indices(urls, y, seed)
+    X_train = [X[i] for i in train_idx]
+    y_train = [y[i] for i in train_idx]
+    X_validation = [X[i] for i in validation_idx]
+    y_validation = [y[i] for i in validation_idx]
+    X_test = [X[i] for i in test_idx]
+    y_test = [y[i] for i in test_idx]
 
     candidates = {
         "RandomForestClassifier": RandomForestClassifier(
@@ -111,10 +94,8 @@ def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
         ]),
     }
 
-    # ── XGBoost candidate (preferred when installed) ──
-    # Gradient-boosted trees are the requested production classifier; the
-    # sklearn candidates remain as a guaranteed fallback so training never
-    # depends on the optional dependency.
+    # ── XGBoost candidate ──
+    # XGBoost is mandatory for the configured production inference engine.
     try:
         from xgboost import XGBClassifier
         candidates["XGBClassifier"] = XGBClassifier(
@@ -123,28 +104,38 @@ def train_models(urls, labels, n_estimators=300, seed=42, verbose=True):
             reg_lambda=2.0, eval_metric="logloss", n_jobs=-1,
             random_state=seed, tree_method="hist",
         )
-    except Exception as exc:  # noqa: BLE001 — optional dependency
-        if verbose:
-            print(f"  (xgboost unavailable: {type(exc).__name__} — "
-                  "training sklearn candidates only)")
+    except Exception as exc:
+        raise RuntimeError("XGBoost is required to train the production phishing model.") from exc
 
     results, fitted = {}, {}
     for name, model in candidates.items():
-        model.fit(X_train, y_train)
-        proba = model.predict_proba(X_test)[:, 1]
-        results[name] = _metrics(y_test, proba)
+        if name == "XGBClassifier":
+            model.fit(X_train, y_train, eval_set=[(X_validation, y_validation)], verbose=False)
+        else:
+            model.fit(X_train, y_train)
+        val_probabilities = model.predict_proba(X_validation)
+        phishing_index = next((i for i, label in enumerate(model.classes_)
+                               if label == 1 or str(label).strip().lower() in ("phishing", "phish", "malicious")), None)
+        if phishing_index is None:
+            raise ValueError(f"{name} does not expose a phishing class")
+        results[name] = _metrics(y_validation, val_probabilities[:, phishing_index])
         fitted[name] = model
         if verbose:
-            print(f"  {name}: {results[name]}")
+            print(f"  {name} validation: {results[name]}")
 
-    # Prefer XGBoost for production when it meets a reasonable recall floor;
-    # otherwise deploy the best F1 model rather than silently missing phish.
-    if "XGBClassifier" in fitted and results["XGBClassifier"]["recall"] >= 0.98:
-        best_name = "XGBClassifier"
-    else:
-        best_name = max(results, key=lambda n: (results[n]["f1"], n == "XGBClassifier"))
+    # Select using validation only; the independent grouped test set remains unseen.
+    if "XGBClassifier" not in fitted:
+        raise RuntimeError("XGBoost is required for ZYRA URL phishing inference.")
+    best_name = "XGBClassifier"
+    final_model = fitted[best_name]
+    test_probabilities = final_model.predict_proba(X_test)
+    phishing_index = next(i for i, label in enumerate(final_model.classes_)
+                          if label == 1 or str(label).strip().lower() in ("phishing", "phish", "malicious"))
+    test_metrics = binary_metrics(y_test, test_probabilities[:, phishing_index], threshold=0.35)
+    results[best_name] = {**results[best_name], "held_out_test": test_metrics}
     if verbose:
-        print(f"  selected by policy: {best_name}")
+        print(f"  selected using validation: {best_name}")
+        print(f"  held-out test: {test_metrics}")
 
     return best_name, fitted[best_name], results, (X_test, y_test)
 
@@ -184,6 +175,11 @@ def save_model(best_name, best_model, results, dataset_stats):
         "feature_names": FEATURE_NAMES,
         "feature_importances": _feature_importance_pairs(best_name, best_model),
         "metrics": results,
+        "evaluation": {"selected_model": best_name,
+                       "dataset_version": dataset_stats.get("version", "unspecified"),
+                       "split_strategy": "registrable-domain grouped train/validation/test 70/15/15",
+                       "test_set_size": results[best_name].get("held_out_test", {}).get("test_size"),
+                       "test_metrics": results[best_name].get("held_out_test")},
         "dataset": dataset_stats,
         "trained_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "sklearn_version": sklearn.__version__,
@@ -196,25 +192,26 @@ def save_model(best_name, best_model, results, dataset_stats):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Train ZYRA's ML phishing classifier.")
+        description="Train ZYRA's XGBoost phishing classifier.")
     parser.add_argument("--csv", default=None,
                         help="CSV dataset with url,label columns "
                              "(phishing label = 1). Default: builtin seed dataset.")
-    parser.add_argument("--per-class", type=int, default=1200,
-                        help="Seed-dataset size per class (default 1200).")
+    parser.add_argument("--per-class", type=int, default=2500,
+                        help="Seed-dataset size per class (default 2500).")
     parser.add_argument("--n-estimators", type=int, default=300,
-                        help="Tree count for the tree ensembles (default 300).")
+                        help="Number of XGBoost boosting rounds (default 300).")
     parser.add_argument("--seed", type=int, default=42,
                         help="RNG seed for split, models and seed dataset.")
     args = parser.parse_args(argv)
 
-    print("ZYRA ML phishing classifier — training")
+    print("ZYRA XGBoost phishing classifier — training")
     urls, labels, stats = build_dataset(csv_path=args.csv,
                                         per_class=args.per_class,
                                         seed=args.seed)
+    stats["version"] = stats.get("version", f"builtin-seed-v1-seed{args.seed}-{args.per_class}-per-class")
     print(f"  dataset: {stats['source']} — {stats['size']} URLs "
           f"({stats['phishing']} phishing / {stats['legitimate']} legitimate)")
-    print("  hold-out metrics (stratified 80/20):")
+    print("  validation metrics (model selection) and independent grouped test metrics:")
 
     best_name, best_model, results, _holdout = train_models(
         urls, labels, n_estimators=args.n_estimators, seed=args.seed)

@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('zyraAPI', {
   // passed or the scan failed. The URL is analyzed, never auto-opened.
   analyzeLink: (url: string): Promise<unknown> =>
     ipcRenderer.invoke('link:analyze', url),
+  captureAndAnalyzeLink: (): Promise<unknown> =>
+    ipcRenderer.invoke('link:capture-analyze'),
 
   // Memory
   remember: (key: string, value: string): Promise<string> =>

@@ -62,17 +62,17 @@ class FeatureExtractionTests(unittest.TestCase):
 
 
 class ScoreScanIntegrationTests(unittest.TestCase):
-    def test_ml_high_probability_forces_malicious(self):
+    def test_ml_very_high_probability_is_malicious_advisory(self):
         scored = score_scan([], ml_analysis={
             "available": True, "probability": 0.95,
-            "algorithm": "RandomForestClassifier"})
+            "algorithm": "XGBClassifier"})
         self.assertEqual(scored["classification"], "MALICIOUS")
         self.assertLessEqual(scored["score"], 15)
 
-    def test_ml_medium_raises_clean_url_to_suspicious(self):
+    def test_ml_high_probability_raises_risk_without_claiming_proof(self):
         scored = score_scan([], ml_analysis={
             "available": True, "probability": 0.80,
-            "algorithm": "RandomForestClassifier"})
+            "algorithm": "XGBClassifier"})
         self.assertEqual(scored["classification"], "SUSPICIOUS")
 
     def test_ml_safe_changes_nothing(self):
@@ -110,7 +110,7 @@ class PredictorTests(unittest.TestCase):
         self.assertTrue(result["available"])
         self.assertGreaterEqual(result["probability"], 0.60)
         self.assertIn(result["verdict"],
-                      ("PHISHING", "LIKELY_PHISHING", "SUSPICIOUS"))
+                      ("PHISHING", "LIKELY_PHISHING", "SUSPICIOUS", "UNCERTAIN"))
         self.assertIsInstance(result["top_signals"], list)
 
     def test_legit_site_scores_low(self):
@@ -153,9 +153,11 @@ class TrainingSmokeTests(unittest.TestCase):
         self.assertIn("LogisticRegression", results)
         self.assertLessEqual(set(results), {
             "RandomForestClassifier", "LogisticRegression", "XGBClassifier"})
+        self.assertEqual(best_name, "XGBClassifier")
         self.assertGreater(results[best_name]["f1"], 0.85)
         X_test, y_test = holdout
         self.assertEqual(len(X_test), len(y_test))
+        self.assertIn("held_out_test", results[best_name])
 
 
 class MlApiTests(unittest.TestCase):

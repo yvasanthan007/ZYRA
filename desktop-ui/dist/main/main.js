@@ -749,18 +749,19 @@ electron_1.ipcMain.handle('voice:status', async () => {
 });
 // Analyze a user-selected / manually entered URL for phishing.
 //
-// Primary path: FastAPI POST /api/analyze-link {url} — the existing
-// link_security engine (never auto-opens the URL). Fallback: the legacy
-// bridge `analyze_link` handler (explicit URL first, bounded OCR capture
-// only when no URL was passed; never blocks voice).
+// Send the explicit target to the ML endpoint. A capture is a separate explicit
+// backend request so an old captured URL can never replace a typed target.
 electron_1.ipcMain.handle('link:analyze', async (_event, url) => {
     const target = typeof url === 'string' ? url.trim() : '';
     if (backendReady()) {
-        // FastAPI validates + analyzes the exact input; on failure surface the
-        // backend's own error (missing-URL vs analysis error stay distinct).
-        return backendCall('POST', '/api/analyze-link', { url: target });
+        return backendCall('POST', '/api/ml/phishing', { url: target });
     }
     return bridgeCommand('analyze_link', target);
+});
+electron_1.ipcMain.handle('link:capture-analyze', async () => {
+    if (!backendReady())
+        throw new Error('Screen URL analysis requires the FastAPI backend; no verdict was made.');
+    return backendCall('POST', '/api/ml/phishing/capture');
 });
 // Remember something.
 electron_1.ipcMain.handle('memory:remember', async (_event, key, value) => {

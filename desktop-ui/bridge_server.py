@@ -205,6 +205,28 @@ def _capture_voice_audio(recognizer):
     return sr.AudioData(pcm, sample_rate, sample_width=2)
 
 
+def _call_with_timeout(func, timeout, *args, **kwargs):
+    # Run optional capture work without waiting for its worker thread.
+    finished = threading.Event()
+    outcome = {}
+
+    def _worker():
+        try:
+            outcome["result"] = func(*args, **kwargs)
+        except Exception as exc:
+            outcome["error"] = exc
+        finally:
+            finished.set()
+
+    threading.Thread(target=_worker, daemon=True,
+                     name="ZYRA-bounded-capture").start()
+    if not finished.wait(timeout):
+        raise TimeoutError("capture timed out")
+    if "error" in outcome:
+        raise outcome["error"]
+    return outcome.get("result")
+
+
 def handle_message(msg):
     msg_type = msg.get("type", "")
     data = msg.get("data")
@@ -229,27 +251,6 @@ def handle_message(msg):
             if found:
                 return found, "message"
         return None, "none"
-
-    def _call_with_timeout(func, timeout, *args, **kwargs):
-        """Run optional capture work without waiting for its worker thread."""
-        finished = threading.Event()
-        outcome = {}
-
-        def _worker():
-            try:
-                outcome["result"] = func(*args, **kwargs)
-            except Exception as exc:
-                outcome["error"] = exc
-            finally:
-                finished.set()
-
-        threading.Thread(target=_worker, daemon=True,
-                         name="ZYRA-bounded-capture").start()
-        if not finished.wait(timeout):
-            raise TimeoutError("capture timed out")
-        if "error" in outcome:
-            raise outcome["error"]
-        return outcome.get("result")
 
     if msg_type == "analyze_link":
         # Selected/entered-URL phishing analysis for the desktop UI.
@@ -318,17 +319,20 @@ def handle_message(msg):
             _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             if _root not in _sys.path:
                 _sys.path.insert(0, _root)
-            from link_analysis import analyze_url as _analyze
+            from backend.ml_phishing import analyze_url_ml as _analyze
         except Exception as exc:
             return {"success": False,
                     "error": f"Analysis engine unavailable ({type(exc).__name__}).",
                     "source": source, "url": target}
-        from backend.link_security import extract_url as _normalize_check
-        checked = _normalize_check(target) or target.strip()
+        checked = target.strip()
         print(f"[analyze_link] analyzing source={source} "
               f"url_len={len(checked)}")
         try:
             result = _analyze(checked)
+            if not result.get("available"):
+                return {"success": False,
+                        "error": result.get("note", "ML analysis unavailable; no verdict was made."),
+                        "source": source, "url": checked}
         except Exception as exc:
             return {"success": False,
                     "error": f"Analysis failed ({type(exc).__name__}).",

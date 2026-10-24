@@ -19,7 +19,7 @@ class RiskScoreConsistencyTests(unittest.TestCase):
                 if probability >= 0.9:
                     self.assertEqual(result["classification"], "MALICIOUS")
                 elif probability >= 0.75:
-                    self.assertEqual(result["classification"], "MALICIOUS")
+                    self.assertEqual(result["classification"], "SUSPICIOUS")
                 elif probability >= 0.55:
                     self.assertEqual(result["classification"], "SUSPICIOUS")
 

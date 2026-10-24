@@ -1522,8 +1522,41 @@ async def ml_phishing_check(data: Dict[str, Any]):
     except Exception as exc:
         return JSONResponse(status_code=500, content={
             "success": False, "error": f"ML analysis failed ({type(exc).__name__})."})
+    if not result.get("available"):
+        status = 503 if "model" in str(result.get("note", "")).lower() else 400
+        return JSONResponse(status_code=status, content={"success": False,
+            "error": result.get("note", "ML analysis unavailable; no safety verdict was made."), "data": result})
+    from backend.ml_phishing.live_history import add_live_record
+    from datetime import datetime, timezone
+    result["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+    result["model_status"] = "loaded"
+    add_live_record(url, result)
     return {"success": True, "data": result}
 
+@app.post("/api/ml/phishing/capture")
+async def ml_phishing_capture():
+    "Capture one fresh screen/browser URL and analyze exactly that target."
+    import asyncio
+    from screen_ocr import get_active_url
+    try:
+        url = await asyncio.to_thread(get_active_url)
+    except Exception as exc:
+        return JSONResponse(status_code=503, content={"success": False,
+            "error": f"Screen URL capture failed ({type(exc).__name__}); no safety verdict was made."})
+    if not url:
+        return JSONResponse(status_code=404, content={"success": False,
+            "error": "No URL was extracted from the screen or an unambiguous clipboard; no safety verdict was made."})
+    result = analyze_url_ml(url) if analyze_url_ml else {"available": False, "note": "ML backend unavailable."}
+    if not result.get("available"):
+        return JSONResponse(status_code=503, content={"success": False,
+            "error": result.get("note", "Model unavailable; no safety verdict was made."), "data": result})
+    from backend.ml_phishing.live_history import add_live_record
+    from datetime import datetime, timezone
+    result["analyzed_at"] = datetime.now(timezone.utc).isoformat()
+    result["model_status"] = "loaded"
+    result["capture_source"] = "fresh screen/browser/clipboard extraction"
+    add_live_record(url, result)
+    return {"success": True, "data": result}
 
 @app.get("/api/ml/phishing/model")
 async def ml_phishing_model_info():
@@ -1533,6 +1566,16 @@ async def ml_phishing_model_info():
             "success": False, "error": "ML phishing model unavailable."})
     return {"success": True, "data": ml_model_info()}
 
+@app.get("/api/ml/phishing/dataset")
+async def ml_phishing_dataset(search: str = "", label: str = "all", split: str = "all",
+                              page: int = 1, page_size: int = 25):
+    "Search the deterministic labeled corpus with split provenance and test predictions."
+    from backend.ml_phishing.explorer import query_dataset
+    try:
+        return {"success": True, "data": query_dataset(search, label, split, page, page_size)}
+    except Exception as exc:
+        return JSONResponse(status_code=503, content={"success": False,
+            "error": f"Dataset explorer unavailable ({type(exc).__name__})."})
 
 # ========== DNS Lookup Endpoints ==========
 

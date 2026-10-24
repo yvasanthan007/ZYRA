@@ -38,7 +38,7 @@ class ModelRiskFloorTests(unittest.TestCase):
             reputation={"available": True, "reputation": "clean"},
             ml_analysis={"available": True, "probability": 0.78, "algorithm": "XGBClassifier"},
         )
-        self.assertEqual(scored["classification"], "MALICIOUS")
+        self.assertEqual(scored["classification"], "SUSPICIOUS")
         self.assertEqual(scored["score"], 22)
         self.assertEqual(scored["risk_level"], "CRITICAL")
 

@@ -503,6 +503,20 @@ body {
   border-bottom: none;
 }
 
+/* ===== URL risk dashboard and dataset explorer ===== */
+.dataset-summary, .dataset-filters, .dataset-pagination { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.dataset-summary span { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 8px 10px; font-size: .82rem; }
+.dataset-filters input, .dataset-filters select, .dataset-filters button, .dataset-pagination button { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 8px 10px; }
+.dataset-table-wrap { max-height: 420px; overflow: auto; border: 1px solid var(--border-color); border-radius: var(--radius); }
+.dataset-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.dataset-table th, .dataset-table td { text-align: left; vertical-align: top; padding: 9px; border-bottom: 1px solid var(--border-color); }
+.dataset-table th { position: sticky; top: 0; background: var(--bg-secondary); }
+.dataset-table code { overflow-wrap: anywhere; color: var(--text-secondary); }
+.dataset-table pre, .transcript-item pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; color: var(--text-secondary); }
+.dataset-pagination { justify-content: flex-end; }
+.dataset-pagination span { margin-right: auto; color: var(--text-secondary); }
+.transcript-item li { margin: 5px 0 0 18px; line-height: 1.45; }
+
 /* ===== Settings View ===== */
 .settings-view {
   display: flex;

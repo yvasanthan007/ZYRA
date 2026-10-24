@@ -70,6 +70,7 @@ electron_1.contextBridge.exposeInMainWorld('zyraAPI', {
     // Resolves the backend's analysis payload; rejects when no URL was
     // passed or the scan failed. The URL is analyzed, never auto-opened.
     analyzeLink: (url) => electron_1.ipcRenderer.invoke('link:analyze', url),
+    captureAndAnalyzeLink: () => electron_1.ipcRenderer.invoke('link:capture-analyze'),
     // Memory
     remember: (key, value) => electron_1.ipcRenderer.invoke('memory:remember', key, value),
     recall: (key) => electron_1.ipcRenderer.invoke('memory:recall', key),

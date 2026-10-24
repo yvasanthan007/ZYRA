@@ -173,10 +173,14 @@ def _phish_url(rng):
     kind = rng.choices(
         ["typo_tld", "brand_subdomain", "ip_host", "shortener", "punycode",
          "at_trick", "encoded", "sub_bury", "prize", "php_random",
-         "hex_dir", "hyphen_chain", "legit_brand_lookalike"],
-        weights=[18, 15, 8, 5, 4, 5, 6, 8, 5, 4, 1, 1, 20])[0]
+         "hex_dir", "hyphen_chain", "legit_brand_lookalike", "brand_typosquat"],
+        weights=[16, 14, 7, 5, 4, 5, 6, 8, 5, 4, 1, 1, 19, 5])[0]
 
-    if kind == "legit_brand_lookalike":
+    if kind == "brand_typosquat":
+        # Include direct HTTP(S) observations of credential-targeted typo domains.
+        host = f"{variant}.{rng.choice([tld, 'com', 'net'])}"
+        cred = rng.choice(["/login", "/signin", "/account/verify", "/mail/u/0/"])
+    elif kind == "legit_brand_lookalike":
         # Hard subtle cases: a brand is only a subdomain of an unrelated host.
         common_tld = rng.choice(["com", "net", "org", "info", "co"])
         host = f"{brand}.{rng.choice(['secure-account', 'login-portal', 'verify-center'])}.{common_tld}"
@@ -318,11 +322,28 @@ def load_csv(path):
         label = (row[1] or "").strip().lower()
         if not url:
             continue
-        urls.append(url)
-        labels.append(1 if label in phishing_labels else 0)
+        if label in phishing_labels:
+            urls.append(url)
+            labels.append(1)
+        elif label in {"legitimate", "benign", "good", "0", "false", "no", "n", "clean"}:
+            urls.append(url)
+            labels.append(0)
+        else:
+            raise ValueError(f"Unsupported label {label!r}; provide an explicit phishing or legitimate class.")
     if not urls:
         raise ValueError(f"dataset CSV '{os.path.basename(path)}' had no usable url,label rows")
-    return urls, labels
+    seen = {}
+    dedup_urls, dedup_labels = [], []
+    for url, label in zip(urls, labels):
+        key = url.strip().lower()
+        if key in seen:
+            if seen[key] != label:
+                raise ValueError(f"Conflicting labels for duplicate URL: {url}")
+            continue
+        seen[key] = label
+        dedup_urls.append(url)
+        dedup_labels.append(label)
+    return dedup_urls, dedup_labels
 
 
 def build_dataset(csv_path=None, per_class=1200, seed=42):
@@ -336,6 +357,7 @@ def build_dataset(csv_path=None, per_class=1200, seed=42):
         urls, labels = load_csv(csv_path)
         stats = {
             "source": os.path.basename(csv_path),
+            "version": f"csv-{os.path.basename(csv_path)}",
             "size": len(urls),
             "phishing": int(sum(labels)),
             "legitimate": int(len(labels) - sum(labels)),
@@ -344,6 +366,8 @@ def build_dataset(csv_path=None, per_class=1200, seed=42):
     urls, labels = seed_dataset(per_class=per_class, seed=seed)
     stats = {
         "source": "builtin-seed-dataset (synthetic patterns; not real-world validation)",
+        "version": f"builtin-seed-v1-seed{seed}-{per_class}-per-class",
+        "seed": int(seed),
         "size": len(urls),
         "phishing": int(sum(labels)),
         "legitimate": int(len(labels) - sum(labels)),

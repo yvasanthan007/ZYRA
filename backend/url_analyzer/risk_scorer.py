@@ -191,12 +191,12 @@ def score_scan(findings: list, domain_info: dict = None,
                 "probability."
             )
     elif ml_available and ml_prob >= 0.75:
-        classification = "MALICIOUS"
+        classification = "SUSPICIOUS"
         if score > 35:
             score = 35
             reasoning.append(
                 "Safety score capped at 35: ML classifier reports high phishing "
-                "probability."
+                "probability; this is a model warning, not proof of maliciousness."
             )
     elif ml_available and ml_prob >= 0.55:
         classification = "SUSPICIOUS"
