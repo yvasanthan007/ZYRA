@@ -1535,7 +1535,7 @@ async def ml_phishing_check(data: Dict[str, Any]):
 
 @app.post("/api/ml/phishing/capture")
 async def ml_phishing_capture():
-    "Capture one fresh screen/browser URL and analyze exactly that target."
+    "Capture a fresh screen target and analyze only a unique URL candidate."
     import asyncio
     from screen_ocr import get_active_url
     try:
@@ -1545,16 +1545,19 @@ async def ml_phishing_capture():
             "error": f"Screen URL capture failed ({type(exc).__name__}); no safety verdict was made."})
     if not url:
         return JSONResponse(status_code=404, content={"success": False,
-            "error": "No URL was extracted from the screen or an unambiguous clipboard; no safety verdict was made."})
+            "error": "No URL detected; no safety verdict was made."})
     result = analyze_url_ml(url) if analyze_url_ml else {"available": False, "note": "ML backend unavailable."}
     if not result.get("available"):
         return JSONResponse(status_code=503, content={"success": False,
             "error": result.get("note", "Model unavailable; no safety verdict was made."), "data": result})
+    if result.get("url") != url:
+        return JSONResponse(status_code=502, content={"success": False,
+            "error": "Model response URL did not match the selected capture target; no result was accepted."})
     from backend.ml_phishing.live_history import add_live_record
     from datetime import datetime, timezone
     result["analyzed_at"] = datetime.now(timezone.utc).isoformat()
     result["model_status"] = "loaded"
-    result["capture_source"] = "fresh screen/browser/clipboard extraction"
+    result["capture_source"] = "fresh screen or browser address bar"
     add_live_record(url, result)
     return {"success": True, "data": result}
 

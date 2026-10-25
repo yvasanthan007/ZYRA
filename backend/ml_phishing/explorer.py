@@ -1,4 +1,5 @@
 # Dataset explorer for the exact deterministic training corpus and model.
+import math
 from urllib.parse import urlparse
 from backend.ml_phishing.dataset import build_dataset
 from backend.ml_phishing.evaluation import split_indices
@@ -29,21 +30,25 @@ def dataset_snapshot():
             evaluation = binary_metrics([labels[i] for i in test], [probabilities[i] for i in test])
     records = []
     for i, (url, label) in enumerate(zip(urls, labels)):
+        feature_values = extract_features(url)
         item = {"sample_id": f"seed-{i + 1:05d}", "url": url,
                 "label": "phishing" if label else "legitimate",
                 "label_value": int(label), "split": split_by_index[i],
-                "features": extract_features(url), "prediction": None,
+                "features": feature_values, "prediction": None,
                 "risk_score": None, "correct": None}
         if i in predictions:
             item["prediction"] = "phishing" if predictions[i] else "legitimate"
             item["risk_score"] = round(probabilities[i] * 100, 2)
             item["correct"] = predictions[i] == int(label)
         records.append(item)
-    hosts = [registered_domain(urlparse(u if "://" in u else "https://" + u).hostname or u) for u in urls]
+    missing_feature_values = sum(
+        value is None or (isinstance(value, float) and not math.isfinite(value))
+        for row in records for value in row["features"].values()
+    )
     summary = {
         "source": stats["source"], "dataset_version": stats.get("version", DATASET_VERSION),
         "record_count": len(records), "class_balance": {"legitimate": int(len(labels) - sum(labels)), "phishing": int(sum(labels))},
-        "missing_values": {"url": sum(not bool(u) for u in urls), "label": sum(l not in (0, 1) for l in labels), "features": 0},
+        "missing_values": {"url": sum(not bool(u) for u in urls), "label": sum(l not in (0, 1) for l in labels), "features": missing_feature_values},
         "duplicate_urls": len(urls) - len({u.strip().lower() for u in urls}),
         "split_counts": {name: sum(r["split"] == name for r in records) for name in ("train", "validation", "test")},
         "feature_names": FEATURE_NAMES,

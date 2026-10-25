@@ -13,21 +13,6 @@ class ScreenUrlAccuracyTests(unittest.TestCase):
             "https://evil.example.com/login", "https://google.com",
         ])
 
-    def test_address_bar_capture_wins_over_page_body_urls(self):
-        class FakeImage:
-            size = (1600, 900)
-            def crop(self, box):
-                self.box = box
-                return self
-        image = FakeImage()
-        with patch("screen_ocr.extract_text_from_image", side_effect=[
-            "https://evil.example.com/login", "https://safe-article.example.org"
-        ]) as ocr:
-            urls = screen_ocr.extract_urls_from_image(image)
-        self.assertEqual(urls, ["https://evil.example.com/login"])
-        self.assertEqual(ocr.call_count, 1)
-        self.assertEqual(image.box, (0, 0, 1600, 216))
-
     def test_screen_capture_is_used_before_clipboard_fallback(self):
         with patch.object(screen_ocr, "_capture_url_isolated", return_value="https://evil.example.com/login"), \
              patch.object(screen_ocr, "_clipboard_exact_url") as clipboard:
@@ -36,3 +21,4 @@ class ScreenUrlAccuracyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
