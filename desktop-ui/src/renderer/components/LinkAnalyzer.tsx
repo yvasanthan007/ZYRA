@@ -18,6 +18,8 @@ interface LinkAnalysisResult {
   global_feature_importance?: Array<{feature: string; importance: number; description: string}>;
   recommendation?: string;
   observations?: string[];
+  reasoning?: string[];
+  findings?: Array<{id?: string; title?: string; detail?: string; matched_keywords?: Array<{keyword: string; category: string; locations: string[]; weight: number}> }>;
 }
 interface ModelInfo {
   available?: boolean; algorithm?: string; version?: string; trained_at?: string; model_path?: string; note?: string;
@@ -150,6 +152,8 @@ const LinkAnalyzer: React.FC = () => {
           <div className="transcript-item"><span className="transcript-label">Model / status / prediction:</span><p>{result.algorithm ?? 'Unavailable'} {result.model_version ? `v${result.model_version}` : ''} · {result.prediction ?? 'unavailable'} · {result.model_status ?? (result.phishing_probability == null ? 'model status unavailable' : 'loaded')}</p></div>
           {lastAnalyzedAt && <div className="transcript-item"><span className="transcript-label">Analyzed at / duration:</span><p>{lastAnalyzedAt}{result.analysis_time_ms !== undefined ? ` · ${result.analysis_time_ms} ms` : ''}</p></div>}
           {result.explanation && <div className="transcript-item"><span className="transcript-label">Individual URL explanation:</span><p>{result.explanation.available ? result.explanation.method : result.explanation.note}</p>{result.explanation.available && <ul>{result.explanation.contributions?.map(item => <li key={item.feature}><b>{item.description}</b> = {item.value}; {item.direction} (margin contribution {item.contribution.toFixed(3)}). This is a model contribution, not proof of maliciousness.</li>)}</ul>}</div>}
+          {!!result.findings?.filter(item => item.id === 'phishing_keyword_signals').length && <div className="transcript-item"><span className="transcript-label">Matched phishing-related keywords:</span><ul>{result.findings.filter(item => item.id === 'phishing_keyword_signals').map((item, index) => <li key={`${item.id}-${index}`}>{item.detail}</li>)}</ul></div>}
+          {!!result.reasoning?.length && <div className="transcript-item"><span className="transcript-label">Risk reasoning:</span><ul>{result.reasoning.map((reason, index) => <li key={`${index}-${reason}`}>{reason}</li>)}</ul></div>}
           {result.features && <details className="transcript-item"><summary>Exact feature values passed to XGBoost ({Object.keys(result.features).length})</summary><pre>{JSON.stringify(result.features, null, 2)}</pre></details>}
           {!!result.global_feature_importance?.length && <details className="transcript-item"><summary>Global XGBoost feature importance (separate from this URL)</summary><ol>{result.global_feature_importance.slice(0, 10).map(item => <li key={item.feature}>{item.description}: {item.importance.toFixed(4)}</li>)}</ol></details>}
           <p className="voice-hint">The shipped model uses synthetic seed patterns, not independently verified real-world labels. Its probabilities are uncalibrated model scores and are not verified real-world risk estimates.</p>

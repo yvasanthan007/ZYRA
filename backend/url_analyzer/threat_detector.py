@@ -9,7 +9,9 @@ explanation and the exact score impact applied by risk_scorer.
 """
 
 from difflib import SequenceMatcher
-from urllib.parse import parse_qsl
+import os
+import re
+from urllib.parse import parse_qsl, unquote, unquote_plus
 
 SEVERITY_IMPACT = {
     "CRITICAL": 40,
@@ -53,6 +55,63 @@ URGENCY_KEYWORDS = [
     "gift", "bonus", "free", "claim",
 ]
 
+# Adjustable category weights (0 disables a group). These are independent
+# keyword evidence and intentionally do not alter XGBoost's feature vector.
+KEYWORD_CATEGORY_WEIGHTS = {
+    "credential_theft": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_CREDENTIAL", "2")),
+    "urgency_threats": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_URGENCY", "2")),
+    "financial_fraud": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_FINANCIAL", "2")),
+    "malicious_actions": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_ACTIONS", "3")),
+    "deception_delivery": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_DECEPTION", "3")),
+    "sensitive_information": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_SENSITIVE", "3")),
+}
+
+KEYWORD_GROUPS = {
+    "credential_theft": ("login", "signin", "verify", "password", "reset-password", "account-verification"),
+    "urgency_threats": ("urgent", "immediate-action", "suspended", "blocked", "account-locked", "unusual-activity"),
+    "financial_fraud": ("bank", "banking", "payment", "refund", "invoice", "transaction", "wallet", "crypto"),
+    "malicious_actions": ("malicious", "phishing", "steal", "validate", "unlock", "recover-account"),
+    "deception_delivery": ("secure-update", "confirm-identity", "claim-prize", "free-gift", "download-now", "click-here"),
+    "sensitive_information": ("OTP", "PIN", "CVV", "card-details", "social-security", "recovery-code"),
+}
+
+# Common single tokens carry no meaningful standalone signal; they count only
+# when paired with another category or with independent URL risk indicators.
+_KEYWORD_SINGLETON_NEUTRALS = {"login", "secure", "bank", "update", "verify", "password"}
+
+
+def _keyword_match_pattern(term):
+    "Build boundary-aware patterns allowing separators and simple leetspeak."
+    pieces = [re.escape(piece) for piece in term.lower().split("-")]
+    body = r"[._%\-+\s]*".join(pieces)
+    # Permit common character substitutions without broad fuzzy matching.
+    body = body.replace("i", "[i1!]").replace("o", "[o0]").replace("a", "[a@4]").replace("e", "[e3]")
+    return re.compile(r"(?<![a-z0-9])" + body + r"(?![a-z0-9])", re.IGNORECASE)
+
+
+def analyze_keyword_signals(host, path, query):
+    "Return weighted keyword evidence found separately in host/path/query."
+    raw_parts = {"hostname": host or "", "path": path or "", "query": query or ""}
+    decoded = {
+        name: unquote_plus(unquote(str(value))).lower()
+        for name, value in raw_parts.items()
+    }
+    matches = []
+    for category, terms in KEYWORD_GROUPS.items():
+        weight = max(0, KEYWORD_CATEGORY_WEIGHTS.get(category, 0))
+        if not weight:
+            continue
+        for term in terms:
+            pattern = _keyword_match_pattern(term)
+            locations = [name for name, text in decoded.items() if pattern.search(text)]
+            if locations:
+                matches.append({"keyword": term, "category": category,
+                                "locations": locations, "weight": weight})
+    active = [m for m in matches if m["keyword"].lower() not in _KEYWORD_SINGLETON_NEUTRALS]
+    categories = {m["category"] for m in active}
+    # Cap correlated keyword contribution; standalone common words stay advisory.
+    points = min(6, sum(m["weight"] for m in active[:3])) if len(categories) >= 2 else 0
+    return matches, points
 
 def _make_finding(fid, severity, category, title, detail, impact=None, positive=False):
     return {
@@ -231,6 +290,36 @@ def _check_credential_keywords(host, path, reg_domain):
         f"URL contains credential-related keyword(s): {', '.join(hits[:6])}. "
         f"Combined with other indicators this suggests a phishing lure.",
     )
+
+
+def _check_keyword_signals(host, path, query):
+    matches, points = analyze_keyword_signals(host, path, query)
+    if not matches:
+        return None
+    labels = [f"{item['keyword']} ({'/'.join(item['locations'])})" for item in matches]
+    categories = {item['category'] for item in matches
+                  if item['keyword'].lower() not in _KEYWORD_SINGLETON_NEUTRALS}
+    if points >= 5:
+        severity = "HIGH"
+        impact = min(32, points * 5)
+    elif points:
+        severity = "MEDIUM"
+        impact = min(20, points * 4)
+    else:
+        severity = "INFO"
+        impact = 0
+    finding = _make_finding(
+        "phishing_keyword_signals", severity, "intent",
+        "Contextual phishing keyword signals",
+        "Matched keyword(s): " + ", ".join(labels[:12]) +
+        (f". Correlated across {len(categories)} categories; weighted evidence "
+         f"reduces the safety score by {impact} points." if points else
+         ". Single/common terms are advisory only and do not independently classify the URL."),
+        impact=impact,
+    )
+    finding["matched_keywords"] = matches
+    finding["keyword_risk_points"] = points
+    return finding
 
 
 def _check_urgency_keywords(host, path):
@@ -421,6 +510,7 @@ def detect_threats(url, parts, domain_info=None, ssl_info=None,
         _check_shortener(host),
         _check_userinfo(url, parts),
         _check_encoding_obfuscation(path, query),
+        _check_keyword_signals(host, path, query),
         _check_credential_keywords(host, path, reg_domain),
         _check_urgency_keywords(host, path),
         _check_unusual_port(parts),
@@ -436,3 +526,4 @@ def detect_threats(url, parts, domain_info=None, ssl_info=None,
     findings = [c for c in checks if c is not None]
     findings.sort(key=lambda f: (severity_order.get(f["severity"], 9), f["id"]))
     return findings
+

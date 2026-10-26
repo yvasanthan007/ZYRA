@@ -98,6 +98,10 @@ def score_scan(findings: list, domain_info: dict = None,
 
     has_critical = False
     has_high = False
+    has_keyword_evidence = any(
+        f.get("id") == "phishing_keyword_signals" and int(f.get("score_impact") or 0) > 0
+        for f in findings or []
+    )
 
     for f in findings or []:
         impact = int(f.get("score_impact") or 0)
@@ -226,6 +230,12 @@ def score_scan(findings: list, domain_info: dict = None,
             classification = "SUSPICIOUS"
         elif score >= 50 and classification == "MALICIOUS" and not rep_malicious and not has_critical:
             classification = "SUSPICIOUS"
+        if has_keyword_evidence and classification == "LIKELY_SAFE":
+            classification = "SUSPICIOUS"
+            reasoning.append(
+                "Classification raised to SUSPICIOUS by contextual-keyword evidence; "
+                "keywords alone are not treated as proof of maliciousness."
+            )
 
     # ── Reliability guard: masked destination with no corroboration ──
     # A URL-shortener finding means the real destination is hidden behind a
@@ -325,3 +335,7 @@ def build_recommendation(classification: str, findings: list,
         "still verify the destination before entering credentials or "
         "sensitive information."
     )
+
+
+
+

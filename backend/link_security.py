@@ -47,7 +47,7 @@ Optional Backend Tool Hook (function-calling style):
 import os
 import re
 import socket
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, unquote_plus
 
 
 # ──────────────────────────────────────────────
@@ -168,6 +168,25 @@ URGENCY_KEYWORDS = (
     "verify-now", "login-now", "signin-now", "account-update", "overdue",
 )
 
+# Weighted URL intent signals; configurable category weights via environment.
+KEYWORD_WEIGHTS = {
+    "credential_theft": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_CREDENTIAL", "2")),
+    "urgency_threats": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_URGENCY", "2")),
+    "financial_fraud": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_FINANCIAL", "2")),
+    "malicious_actions": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_ACTIONS", "3")),
+    "deception_delivery": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_DECEPTION", "3")),
+    "sensitive_information": int(os.environ.get("ZYRA_KEYWORD_WEIGHT_SENSITIVE", "3")),
+}
+KEYWORD_GROUPS = {
+    "credential_theft": ("login", "signin", "verify", "password", "reset-password", "account-verification"),
+    "urgency_threats": ("urgent", "immediate-action", "suspended", "blocked", "account-locked", "unusual-activity"),
+    "financial_fraud": ("bank", "banking", "payment", "refund", "invoice", "transaction", "wallet", "crypto"),
+    "malicious_actions": ("malicious", "phishing", "steal", "validate", "unlock", "recover-account"),
+    "deception_delivery": ("secure-update", "confirm-identity", "claim-prize", "free-gift", "download-now", "click-here"),
+    "sensitive_information": ("OTP", "PIN", "CVV", "card-details", "social-security", "recovery-code"),
+}
+_KEYWORD_NEUTRALS = {"login", "secure", "bank", "update", "verify", "password"}
+
 # Sensitive-path keywords — page types that must never be plain HTTP
 SENSITIVE_KEYWORDS = (
     "login", "log-in", "signin", "sign-in", "password", "passwd", "account",
@@ -208,6 +227,29 @@ _VISUAL_MAP = (("rn", "m"), ("vv", "w"), ("cl", "d"))
 # ──────────────────────────────────────────────
 # Internal Helpers
 # ──────────────────────────────────────────────
+
+def _keyword_evidence(host, path, query):
+    "Decode URL components separately and find weighted contextual signals."
+    parts = {
+        "hostname": unquote(unquote_plus(host or "")).lower(),
+        "path": unquote(unquote_plus(path or "")).lower(),
+        "query": unquote(unquote_plus(query or "")).lower(),
+    }
+    matched = []
+    for category, terms in KEYWORD_GROUPS.items():
+        weight = max(0, KEYWORD_WEIGHTS.get(category, 0))
+        if not weight:
+            continue
+        for term in terms:
+            body = r"[._%\-+\s]*".join(re.escape(piece) for piece in term.lower().split("-"))
+            body = body.replace("i", "[i1!]").replace("o", "[o0]").replace("a", "[a@4]").replace("e", "[e3]")
+            if any(re.search(r"(?<![a-z0-9])" + body + r"(?![a-z0-9])", value, re.I) for value in parts.values()):
+                locations = [name for name, value in parts.items() if re.search(r"(?<![a-z0-9])" + body + r"(?![a-z0-9])", value, re.I)]
+                matched.append({"keyword": term, "category": category, "locations": locations, "weight": weight})
+    active = [item for item in matched if item["keyword"].lower() not in _KEYWORD_NEUTRALS]
+    categories = {item["category"] for item in active}
+    points = min(6, sum(item["weight"] for item in active[:3])) if len(categories) >= 2 else 0
+    return matched, points
 
 def _is_ip_host(hostname):
     """True when the host is a raw IPv4/IPv6 address instead of a domain."""
@@ -486,6 +528,8 @@ def analyze_url_security(url):
     path_query = (parsed.path or "") + (("?" + parsed.query) if parsed.query else "")
     lower_full = original_url.lower()
     lower_path = path_query.lower()
+    keyword_matches, keyword_points = _keyword_evidence(
+        host_display, parsed.path or "", parsed.query or "")
 
     risk = 0
     findings = []          # suspicious-pattern bullets (in severity order)
@@ -601,6 +645,19 @@ def analyze_url_security(url):
             + " — designed to pressure you into acting without thinking."
         )
 
+    # ── Contextual keyword evidence (independent from XGBoost features) ──
+    if keyword_matches:
+        matched_terms = [f"{item['keyword']} ({'/'.join(item['locations'])})"
+                         for item in keyword_matches]
+        if keyword_points:
+            risk += min(keyword_points, 6)
+        findings.append(
+            "Matched phishing-related keywords: " + ", ".join(matched_terms[:12]) +
+            (f" — weighted across categories ({keyword_points} risk points)."
+             if keyword_points else
+             " — common/single terms are advisory and do not classify the URL alone.")
+        )
+
     # ── Extra: very long path (obfuscation) ──
     if len(path_query) > 100:
         risk += 1
@@ -673,7 +730,7 @@ def analyze_url_security(url):
     elif risk >= 1:
         verdict, risk_score = "SUSPICIOUS", "Low"
     else:
-        verdict, risk_score = "SAFE", "Low"
+        verdict, risk_score = "SUSPICIOUS", "Low"
 
     # ── First bullet: domain / protocol state ──
     if scheme == "https":
@@ -699,7 +756,7 @@ def analyze_url_security(url):
 
     # ── Recommendation (1 sentence, actionable) ──
     if verdict == "SAFE":
-        recommendation = "Safe to visit — no suspicious indicators were detected."
+        recommendation = "No significant suspicious indicators were detected; still verify the destination before entering sensitive information."
     elif verdict == "SUSPICIOUS":
         recommendation = (
             "Proceed with caution — verify the sender and destination before "
