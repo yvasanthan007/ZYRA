@@ -2249,6 +2249,53 @@ def start_server_thread(host: str = "127.0.0.1", port: int = 8080, open_browser:
     return server_thread
 
 
+
+
+# ========== CyberLLM Integration (advisory only) ==========
+
+@app.post("/api/cyberllm/phishing")
+async def cyberllm_phishing_check(data: Dict[str, Any]):
+    """Return an advisory phishing assessment from the local CyberLLM API."""
+    url = str(data.get("url") or "").strip()
+
+    if not url:
+        return JSONResponse(status_code=400, content={
+            "success": False,
+            "error": "A 'url' field is required.",
+        })
+
+    try:
+        from backend.cyberllm_client import (
+            CyberLLMClientError,
+            predict_phishing,
+        )
+    except Exception:
+        return JSONResponse(status_code=503, content={
+            "success": False,
+            "error": "CyberLLM client is unavailable.",
+        })
+
+    try:
+        result = await predict_phishing(url)
+        return {
+            "success": True,
+            "provider": "CyberLLM",
+            "advisory_only": True,
+            "data": result,
+        }
+    except CyberLLMClientError as exc:
+        return JSONResponse(status_code=exc.status_code, content={
+            "success": False,
+            "provider": "CyberLLM",
+            "error": str(exc),
+        })
+    except Exception:
+        return JSONResponse(status_code=502, content={
+            "success": False,
+            "provider": "CyberLLM",
+            "error": "CyberLLM integration encountered an unexpected error.",
+        })
+
 if __name__ == "__main__":
     # When run directly, start server and open browser
     run_server(open_browser=True)

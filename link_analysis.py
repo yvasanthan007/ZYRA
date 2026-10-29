@@ -114,7 +114,8 @@ try:
 except Exception:  # pragma: no cover — .env loading is best-effort
     pass
 
-VIRUSTOTAL_API_KEY = os.environ.get("VIRUSTOTAL_API_KEY", None)
+from backend.threat_intel import get_api_key as _get_virustotal_api_key
+VIRUSTOTAL_API_KEY = _get_virustotal_api_key()
 
 
 # ──────────────────────────────────────────────
@@ -453,7 +454,7 @@ def analyze_url(url: str) -> dict:
     speech_text = _generate_speech_text(url, verdict, total_score, ml_analysis)
 
     # ── VirusTotal override (if enabled and malicious) ──
-    if VIRUSTOTAL_API_KEY:
+    if _get_virustotal_api_key():
         vt_verdict = _check_virustotal(url)
         if vt_verdict == "malicious":
             verdict = "Dangerous"
@@ -553,7 +554,7 @@ def _check_virustotal(url: str) -> str:
     Returns:
         str: "malicious", "suspicious", "safe", or "error"
     """
-    if not VIRUSTOTAL_API_KEY:
+    if not _get_virustotal_api_key():
         return "safe"
 
     try:
