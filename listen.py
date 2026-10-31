@@ -177,20 +177,39 @@ def listen():
     # --- Google STT mode (network) ---
     if mode == "google":
         try:
-            with sr.Microphone() as source:
-                # Sample room noise long enough for dynamic calibration without
-                # discarding quiet speech; slightly longer phrase budget helps
-                # distinguish complete commands from clipped transcripts.
-                recognizer.adjust_for_ambient_noise(source, duration=0.6)
-                audio = recognizer.listen(
-                    source,
-                    timeout=ZYRA_VOICE_TIMEOUT_SECONDS,
-                    phrase_time_limit=12,
+            try:
+                source = sr.Microphone()
+            except AttributeError as exc:
+                # SpeechRecognition requires optional PyAudio for Microphone.
+                if "PyAudio" not in str(exc):
+                    raise
+                source = None
+            if source is not None:
+                with source:
+                    # Sample room noise long enough for dynamic calibration without
+                    # discarding quiet speech; slightly longer phrase budget helps
+                    # distinguish complete commands from clipped transcripts.
+                    recognizer.adjust_for_ambient_noise(source, duration=0.6)
+                    audio = recognizer.listen(
+                        source,
+                        timeout=ZYRA_VOICE_TIMEOUT_SECONDS,
+                        phrase_time_limit=12,
+                    )
+            else:
+                # sounddevice is already required by the dashboard microphone
+                # capture and supplies a no-PyAudio recording fallback here.
+                import sounddevice as sd
+                import numpy as np
+                recording = sd.rec(
+                    int(12 * 16000), samplerate=16000, channels=1,
+                    dtype=np.int16, blocking=True,
                 )
-                command = " ".join(str(_recognize(recognizer, audio)).split()).strip()
-                if command:
-                    print(f"[ZYRA][voice] recognized: {command}")
-                return command
+                audio = sr.AudioData(recording.tobytes(), 16000, sample_width=2)
+
+            command = " ".join(str(_recognize(recognizer, audio)).split()).strip()
+            if command:
+                print(f"[ZYRA][voice] recognized: {command}")
+            return command
         except (sr.WaitTimeoutError, sr.UnknownValueError):
             print("No speech detected.")
             return ""
