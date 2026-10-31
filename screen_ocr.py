@@ -568,3 +568,107 @@ def extract_urls_from_text(text):
         if normalized and normalized not in urls:
             urls.append(normalized)
     return urls if urls or tokens else _base_extract_urls_from_text(value)
+
+
+# Final stable parser: keep ordinary URLs untouched; for OCR-split URLs do not
+# fabricate an authority unless the TLD token is present in known suffixes.
+def extract_urls_from_text(text):
+    if not isinstance(text, str) or not text:
+        return []
+    repaired = re.sub(r"(?i)https\s*:\s*[Il1/\\|]+", "https://", text)
+    repaired = re.sub(r"(?i)http\s*:\s*[Il1/\\|]+", "http://", repaired)
+    repaired = re.sub(r"(?<=\w)\s*\.\s*(?=\w)", ".", repaired)
+    repaired = re.sub(r"(?<=\w)\s*/\s*(?=\w)", "/", repaired)
+    suffixes = "|".join(re.escape(t) for t in sorted(_COMMON_TLDS, key=len, reverse=True))
+    # Normalize only the space directly before a recognized TLD.
+    repaired = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+)\s+({suffixes})(?=l|/|\b)", r"\1.\2", repaired)
+    repaired = re.sub(rf"(?i)(https?://[A-Za-z0-9-]+)\s+([A-Za-z0-9-]+)\s+({suffixes})(?=l|/|\b)", r"\1.\2.\3", repaired)
+    repaired = re.sub(rf"(?i)(https?://[^\s/]+\.(?:{suffixes}))l(?=[A-Za-z0-9_-]+(?:/|\b))", r"\1/", repaired)
+    candidates = re.findall(r"(?i)https?://[^\s()<>\"']+", repaired)
+    if candidates:
+        normalized = [_normalize_extracted_url(item.rstrip(".,;:!?)")) for item in candidates]
+        return list(dict.fromkeys(item for item in normalized if item))
+    return _base_extract_urls_from_text(repaired)
+
+
+# Join a split host label when the tail is visibly a recognized suffix; this
+# also handles output like "paypa1-login verify-account-now.xyz/login".
+def extract_urls_from_text(text):
+    if not isinstance(text, str) or not text:
+        return []
+    repaired = re.sub(r"(?i)https\s*:\s*[Il1/\\|]+", "https://", text)
+    repaired = re.sub(r"(?i)http\s*:\s*[Il1/\\|]+", "http://", repaired)
+    repaired = re.sub(r"(?<=\w)\s*\.\s*(?=\w)", ".", repaired)
+    repaired = re.sub(r"(?<=\w)\s*/\s*(?=\w)", "/", repaired)
+    suffixes = "|".join(re.escape(t) for t in sorted(_COMMON_TLDS, key=len, reverse=True))
+    # A two-label domain separated by OCR whitespace: first token must be a
+    # hyphenated host, the next a hyphenated subdomain, followed by a known TLD.
+    repaired = re.sub(rf"(?i)(https?://[A-Za-z0-9-]+-[A-Za-z0-9-]+)\s+([A-Za-z0-9-]+)\.({suffixes})(?=/|\b)", r"\1.\2.\3", repaired)
+    repaired = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+)\s+({suffixes})(?=/|\b)", r"\1.\2", repaired)
+    repaired = re.sub(rf"(?i)(https?://[^\s/]+\.(?:{suffixes}))l(?=[A-Za-z0-9_-]+(?:/|\b))", r"\1/", repaired)
+    tokens = re.findall(r"(?i)https?://[^\s()<>\"']+", repaired)
+    found = []
+    for token in tokens:
+        url = _normalize_extracted_url(token.rstrip(".,;:!?)"))
+        if url and url not in found:
+            found.append(url)
+    return found if tokens else _base_extract_urls_from_text(repaired)
+
+
+# OCR scheme repair should not interpret the first 'l' of the hostname as part
+# of the separator; EasyOCR often emits the literal form "https:Ilhostname".
+def extract_urls_from_text(text):
+    if not isinstance(text, str) or not text:
+        return []
+    value = text
+    value = re.sub(r"(?i)https\s*:\s*(?:[/\\|]{1,}|[Il1](?=[A-Za-z0-9-]))", "https://", value)
+    value = re.sub(r"(?i)http\s*:\s*(?:[/\\|]{1,}|[Il1](?=[A-Za-z0-9-]))", "http://", value)
+    # Correct one-character OCR errors before the hostname, only after a colon.
+    value = re.sub(r"(?i)https\s*:\s*[I1](?=[A-Za-z0-9-])", "https://", value)
+    value = re.sub(r"(?i)http\s*:\s*[I1](?=[A-Za-z0-9-])", "http://", value)
+    value = re.sub(r"(?<=\w)\s*\.\s*(?=\w)", ".", value)
+    value = re.sub(r"(?<=\w)\s*/\s*(?=\w)", "/", value)
+    suffixes = "|".join(re.escape(t) for t in sorted(_COMMON_TLDS, key=len, reverse=True))
+    value = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+(?:-[A-Za-z0-9-]+)*)\s+([A-Za-z0-9-]+)\s+({suffixes})(?=l|/|\b)", r"\1.\2.\3", value)
+    value = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+)\s+({suffixes})(?=l|/|\b)", r"\1.\2", value)
+    value = re.sub(rf"(?i)(https?://[^\s/]+\.(?:{suffixes}))l(?=[A-Za-z0-9_-]+(?:/|\b))", r"\1/", value)
+    tokens = re.findall(r"(?i)https?://[^\s()<>\"']+", value)
+    found = []
+    for token in tokens:
+        url = _normalize_extracted_url(token.rstrip(".,;:!?)"))
+        if url and url not in found:
+            found.append(url)
+    return found if tokens else _base_extract_urls_from_text(value)
+
+
+# Last OCR-specific candidate parser: address-bar URLs are high-priority, and
+# whitespace in the hostname is repaired only using the known suffix list.
+def extract_urls_from_text(text):
+    if not isinstance(text, str) or not text:
+        return []
+    value = text
+    # Repair the observed scheme form https:Ilhost as one OCR-misread pair.
+    value = re.sub(r"(?i)https\s*:\s*Il(?=[a-z0-9-])", "https://", value)
+    value = re.sub(r"(?i)http\s*:\s*Il(?=[a-z0-9-])", "http://", value)
+    value = re.sub(r"(?i)https\s*:\s*(?:[/\\|]{1,}|I(?=[a-km-z0-9-]))", "https://", value)
+    value = re.sub(r"(?i)http\s*:\s*(?:[/\\|]{1,}|I(?=[a-km-z0-9-]))", "http://", value)
+    # Trim OCR artifacts from URL endpoints and fix only whitespace around dots.
+    value = re.sub(r"(?<=\w)\s*\.\s*(?=\w)", ".", value)
+    value = re.sub(r"(?<=\w)\s*/\s*(?=\w)", "/", value)
+    suffixes = "|".join(re.escape(t) for t in sorted(_COMMON_TLDS, key=len, reverse=True))
+    # The suffix anchors reconstruction; all preceding host labels are retained.
+    value = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+)\s+({suffixes})(?=l|/|\b)", r"\1.\2", value)
+    value = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+-[A-Za-z0-9-]+)\s+([A-Za-z0-9-]+\.[A-Za-z0-9-]+)\.({suffixes})(?=/|\b)", r"\1.\2.\3", value)
+    value = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+-[A-Za-z0-9-]+)\s+([A-Za-z0-9-]+)\s+({suffixes})(?=l|/|\b)", r"\1.\2.\3", value)
+    value = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+)\s+([A-Za-z0-9-]+)\.({suffixes})(?=/|\b)", r"\1.\2.\3", value)
+    value = re.sub(rf"(?i)(https?://[A-Za-z0-9.-]+)\s+({suffixes})(?=l|/|\b)", r"\1.\2", value)
+    value = re.sub(rf"(?i)(https?://[^\s/]+\.(?:{suffixes}))l(?=[A-Za-z0-9_-]+(?:/|\b))", r"\1/", value)
+    tokens = re.findall(r"(?i)https?://[^\s()<>\"']+", value)
+    if tokens:
+        found = []
+        for token in tokens:
+            normalized = _normalize_extracted_url(token.rstrip(".,;:!?)"))
+            if normalized and normalized not in found:
+                found.append(normalized)
+        return found
+    return _base_extract_urls_from_text(value)

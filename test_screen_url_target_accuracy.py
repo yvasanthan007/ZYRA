@@ -103,3 +103,7 @@ class EasyOcrImageInputTests(unittest.TestCase):
             screen_ocr.extract_urls_from_text("https://paypa1-login verify-account-now.xyz/login"),
             ["https://paypa1-login.verify-account-now.xyz/login"],
         )
+        self.assertEqual(
+            screen_ocr.extract_urls_from_text("https://paypa1-login verify-account-now.xyz/login Google search https://google.com"),
+            ["https://paypa1-login.verify-account-now.xyz/login", "https://google.com"],
+        )
