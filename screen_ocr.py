@@ -80,8 +80,24 @@ def _get_ocr_reader():
         with _ocr_reader_lock:
             if _ocr_reader is None:
                 import easyocr
-                _ocr_reader = easyocr.Reader(["en"], gpu=False)
+                from pathlib import Path
+                # PyInstaller bundles the cached weights under easyocr/model;
+                # tell EasyOCR where they are so packaged builds can run offline.
+                bundle_root = getattr(sys, "_MEIPASS", None)
+                model_storage_directory = (
+                    str(Path(bundle_root) / "easyocr" / "model")
+                    if bundle_root else None
+                )
+                options = {"gpu": False, "verbose": False}
+                if model_storage_directory and Path(model_storage_directory).is_dir():
+                    options["model_storage_directory"] = model_storage_directory
+                _ocr_reader = easyocr.Reader(["en"], **options)
     return _ocr_reader
+
+def warm_up_ocr():
+    """Load EasyOCR once in the background during application startup."""
+    return _get_ocr_reader()
+
 
 def capture_screen(monitor_index=1):
     """Capture a monitor using MSS, returning None on failure."""
@@ -117,6 +133,20 @@ def extract_text_from_image(image):
 
 
 def extract_urls_from_image(image):
+    """Extract the displayed browser URL, preferring its address bar strip."""
+    if image is None:
+        return []
+    width, height = getattr(image, "size", (0, 0))
+    if width > 0 and height > 0:
+        # The URL in the browser chrome is the intended target; scanning page
+        # text first can accidentally select an ad, footer, or unrelated link.
+        try:
+            address_bar = image.crop((0, 0, width, min(height, max(80, int(height * 0.24)))))
+            urls = extract_urls_from_text(extract_text_from_image(address_bar))
+            if urls:
+                return urls
+        except Exception:
+            pass
     return extract_urls_from_text(extract_text_from_image(image))
 
 
@@ -171,14 +201,11 @@ def _get_active_browser_url():
 
 def get_active_url():
     """Prefer an explicit clipboard link, otherwise scan current displays."""
-    urls = _clipboard_exact_urls()
-    if urls:
-        return urls[0]
     for image in capture_screens():
         urls = extract_urls_from_image(image)
         if urls:
             return urls[0]
-    return _get_active_browser_url() or get_url_from_clipboard()
+    return _get_active_browser_url() or _clipboard_exact_url() or get_url_from_clipboard()
 
 
 def _capture_url_isolated(timeout=90):
@@ -186,3 +213,4 @@ def _capture_url_isolated(timeout=90):
     return get_active_url()
 
 get_url_smart = get_active_url
+
