@@ -36206,117 +36206,119 @@ exports["default"] = DatasetExplorer;
 (__unused_webpack_module, exports, __webpack_require__) {
 
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const jsx_runtime_1 = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
-const react_1 = __importStar(__webpack_require__(/*! react */ "./node_modules/react/index.js"));
+const react_1 = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 const DatasetExplorer_1 = __importDefault(__webpack_require__(/*! ./DatasetExplorer */ "./src/renderer/components/DatasetExplorer.tsx"));
 const LinkAnalyzer = () => {
     const [url, setUrl] = (0, react_1.useState)('');
     const [analyzedUrl, setAnalyzedUrl] = (0, react_1.useState)('');
     const [result, setResult] = (0, react_1.useState)(null);
+    const [provider, setProvider] = (0, react_1.useState)('CyberLLM');
     const [error, setError] = (0, react_1.useState)('');
     const [busy, setBusy] = (0, react_1.useState)(false);
     const [tab, setTab] = (0, react_1.useState)('analysis');
-    const [lastAnalyzedAt, setLastAnalyzedAt] = (0, react_1.useState)('');
-    const [modelInfo, setModelInfo] = (0, react_1.useState)(null);
-    react_1.default.useEffect(() => {
-        const request = window.zyraAPI.requestBackend;
+    const analyzeWithCyberLLM = async (target) => {
+        const request = window.zyraAPI?.requestBackend;
         if (!request) {
-            setModelInfo({ available: false, note: 'Backend API is unavailable.' });
-            return;
+            throw new Error('Zyra backend bridge is unavailable. Restart Zyra and try again.');
         }
-        void request('GET', '/api/ml/phishing/model').then((raw) => {
-            const response = raw;
-            if (response?.success && response.data)
-                setModelInfo(response.data);
-            else
-                setModelInfo({ available: false, note: response?.error || 'Model metadata unavailable.' });
-        }).catch((err) => setModelInfo({ available: false, note: err instanceof Error ? err.message : 'Backend unavailable.' }));
-    }, []);
+        const raw = await request('POST', '/api/cyberllm/phishing', { url: target });
+        const wrapped = raw;
+        if (!wrapped || wrapped.ok !== true) {
+            throw new Error(wrapped?.error ||
+                `Zyra backend request failed (HTTP ${wrapped?.status ?? 'unknown'}).`);
+        }
+        const response = wrapped.body;
+        if (!response || response.success !== true || !response.data) {
+            throw new Error(response?.error ||
+                'CyberLLM analysis failed. No verdict was produced.');
+        }
+        const data = response.data;
+        if (data.url !== target) {
+            throw new Error('The backend returned a different URL. The result was not displayed.');
+        }
+        if (data.prediction !== 'PHISHING' &&
+            data.prediction !== 'LEGITIMATE') {
+            throw new Error('CyberLLM returned an unrecognized prediction.');
+        }
+        if (typeof data.phishing_score !== 'number' ||
+            !Number.isFinite(data.phishing_score)) {
+            throw new Error('CyberLLM returned an invalid phishing score.');
+        }
+        setProvider(response.provider || 'CyberLLM');
+        setAnalyzedUrl(target);
+        setResult(data);
+    };
     const handleAnalyze = async (capture = false) => {
         const target = url.trim();
         if (!capture && !target) {
-            setError('Enter a URL or use Capture screen URL. No safety verdict was made.');
+            setError('Enter a URL before starting the analysis.');
             setResult(null);
             return;
         }
-        if (busy)
+        if (busy) {
             return;
+        }
         setBusy(true);
         setError('');
         setResult(null);
-        setAnalyzedUrl(capture ? 'Capturing a fresh screen URL…' : target);
+        setAnalyzedUrl(capture ? 'Capturing screen URL...' : target);
         try {
-            const raw = capture
-                ? await window.zyraAPI.captureAndAnalyzeLink?.()
-                : await window.zyraAPI.analyzeLink(target);
-            // Guard: a resolved `{success:false, error}` payload (bridge-style
-            // failure) must surface as an error, not an empty result.
-            const status = raw;
-            if (status && status.success === false) {
-                setError(status.error || 'Link analysis failed; no safety verdict was made.');
-                return;
+            let targetUrl = target;
+            if (capture) {
+                const captureFunction = window.zyraAPI?.captureAndAnalyzeLink;
+                if (!captureFunction) {
+                    throw new Error('Screen URL capture is unavailable in this Zyra build.');
+                }
+                const captured = await captureFunction();
+                if (!captured) {
+                    throw new Error('No URL was captured. Copy a URL into the input field and try again.');
+                }
+                targetUrl = String(captured).trim();
+                if (!targetUrl) {
+                    throw new Error('The captured URL is empty.');
+                }
+                setUrl(targetUrl);
+                setAnalyzedUrl(targetUrl);
             }
-            const payload = raw?.analysis
-                ?? raw?.data
-                ?? raw;
-            const analyzedTarget = capture ? payload?.url : target;
-            if (!payload || typeof payload !== 'object' || typeof payload.verdict !== 'string') {
-                setError('Link analysis returned no valid verdict. Treat this URL as unverified.');
-                return;
+            let parsedUrl;
+            try {
+                parsedUrl = new URL(targetUrl);
             }
-            if (!analyzedTarget || (payload.url && payload.url !== analyzedTarget)) {
-                setError('Backend analyzed a different URL than the one entered. No result was displayed.');
-                return;
+            catch {
+                throw new Error('Enter a valid URL, including https:// or http://.');
             }
-            setLastAnalyzedAt(payload.analyzed_at ?? new Date().toISOString());
-            setAnalyzedUrl(analyzedTarget);
-            setResult({ ...payload, url: payload.url ?? analyzedTarget });
+            if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+                throw new Error('Only HTTP and HTTPS URLs can be analyzed.');
+            }
+            await analyzeWithCyberLLM(targetUrl);
         }
         catch (err) {
-            setError(err instanceof Error ? err.message : 'Link analysis failed');
+            const message = err instanceof Error
+                ? err.message
+                : 'An unexpected error occurred during URL analysis.';
+            setError(message);
+            setResult(null);
         }
         finally {
             setBusy(false);
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "link-analyzer", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Phishing Link Analyzer" }), (0, jsx_runtime_1.jsxs)("div", { className: "dataset-filters", children: [(0, jsx_runtime_1.jsx)("button", { onClick: () => setTab('analysis'), "aria-pressed": tab === 'analysis', children: "URL risk analysis" }), (0, jsx_runtime_1.jsx)("button", { onClick: () => setTab('dataset'), "aria-pressed": tab === 'dataset', children: "Dataset explorer" })] }), tab === 'dataset' ? (0, jsx_runtime_1.jsx)(DatasetExplorer_1.default, {}) : (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("section", { className: "dataset-summary", "aria-label": "Model evaluation", children: [(0, jsx_runtime_1.jsxs)("span", { children: [(0, jsx_runtime_1.jsx)("b", { children: "Model status:" }), " ", modelInfo?.available ? `${modelInfo.algorithm} v${modelInfo.version} loaded` : modelInfo?.note ?? 'Checking model…'] }), modelInfo?.evaluation?.test_metrics && (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("span", { children: ["Dataset ", modelInfo.evaluation.dataset_version, " \u00B7 ", modelInfo.evaluation.split_strategy] }), (0, jsx_runtime_1.jsxs)("span", { children: ["Held-out test size ", modelInfo.evaluation.test_set_size] }), (0, jsx_runtime_1.jsxs)("span", { children: ["Precision ", modelInfo.evaluation.test_metrics.precision, " \u00B7 Recall ", modelInfo.evaluation.test_metrics.recall, " \u00B7 F1 ", modelInfo.evaluation.test_metrics.f1] }), (0, jsx_runtime_1.jsxs)("span", { children: ["Confusion matrix TN ", modelInfo.evaluation.test_metrics.confusion_matrix?.tn, ", FP ", modelInfo.evaluation.test_metrics.confusion_matrix?.fp, ", FN ", modelInfo.evaluation.test_metrics.confusion_matrix?.fn, ", TP ", modelInfo.evaluation.test_metrics.confusion_matrix?.tp] })] }), !modelInfo?.evaluation?.test_metrics && (0, jsx_runtime_1.jsx)("span", { children: "Held-out evaluation metrics unavailable." })] }), (0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Paste or type a URL, then Analyze. Or explicitly capture the current screen. The exact URL returned is checked below; links are never opened automatically." }), (0, jsx_runtime_1.jsxs)("div", { className: "chat-input-area", children: [(0, jsx_runtime_1.jsx)("textarea", { className: "chat-input", value: url, onChange: (e) => setUrl(e.target.value), placeholder: "https://example.com/login", rows: 2, disabled: busy, "aria-label": "URL to analyze" }), (0, jsx_runtime_1.jsx)("button", { className: "send-button", onClick: () => void handleAnalyze(false), disabled: busy, children: busy ? '...' : 'Analyze' }), (0, jsx_runtime_1.jsx)("button", { className: "send-button", onClick: () => void handleAnalyze(true), disabled: busy, children: "Capture screen URL" })] }), analyzedUrl && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Analyzing:" }), (0, jsx_runtime_1.jsx)("p", { children: analyzedUrl })] })), error && ((0, jsx_runtime_1.jsxs)("p", { className: "voice-hint", role: "alert", children: [error, " No URL is considered safe when analysis fails."] })), result && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [(0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Verdict:" }), (0, jsx_runtime_1.jsx)("p", { children: result.verdict ?? '—' })] }), (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Risk:" }), (0, jsx_runtime_1.jsx)("p", { children: result.risk_score ?? '—' })] }), result.phishing_probability !== null && result.phishing_probability !== undefined && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "XGBoost phishing probability (uncalibrated):" }), (0, jsx_runtime_1.jsxs)("p", { children: [(result.phishing_probability * 100).toFixed(2), "% \u00B7 risk score ", Number(result.risk_score ?? result.phishing_probability * 100).toFixed(1), "/100"] })] })), (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Model / status / prediction:" }), (0, jsx_runtime_1.jsxs)("p", { children: [result.algorithm ?? 'Unavailable', " ", result.model_version ? `v${result.model_version}` : '', " \u00B7 ", result.prediction ?? 'unavailable', " \u00B7 ", result.model_status ?? (result.phishing_probability == null ? 'model status unavailable' : 'loaded')] })] }), lastAnalyzedAt && (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Analyzed at / duration:" }), (0, jsx_runtime_1.jsxs)("p", { children: [lastAnalyzedAt, result.analysis_time_ms !== undefined ? ` · ${result.analysis_time_ms} ms` : ''] })] }), result.explanation && (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Individual URL explanation:" }), (0, jsx_runtime_1.jsx)("p", { children: result.explanation.available ? result.explanation.method : result.explanation.note }), result.explanation.available && (0, jsx_runtime_1.jsx)("ul", { children: result.explanation.contributions?.map(item => (0, jsx_runtime_1.jsxs)("li", { children: [(0, jsx_runtime_1.jsx)("b", { children: item.description }), " = ", item.value, "; ", item.direction, " (margin contribution ", item.contribution.toFixed(3), "). This is a model contribution, not proof of maliciousness."] }, item.feature)) })] }), result.features && (0, jsx_runtime_1.jsxs)("details", { className: "transcript-item", children: [(0, jsx_runtime_1.jsxs)("summary", { children: ["Exact feature values passed to XGBoost (", Object.keys(result.features).length, ")"] }), (0, jsx_runtime_1.jsx)("pre", { children: JSON.stringify(result.features, null, 2) })] }), !!result.global_feature_importance?.length && (0, jsx_runtime_1.jsxs)("details", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("summary", { children: "Global XGBoost feature importance (separate from this URL)" }), (0, jsx_runtime_1.jsx)("ol", { children: result.global_feature_importance.slice(0, 10).map(item => (0, jsx_runtime_1.jsxs)("li", { children: [item.description, ": ", item.importance.toFixed(4)] }, item.feature)) })] }), (0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "The shipped model uses synthetic seed patterns, not independently verified real-world labels. Its probabilities are uncalibrated model scores and are not verified real-world risk estimates." }), result.recommendation && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Recommendation:" }), (0, jsx_runtime_1.jsx)("p", { children: result.recommendation })] }))] }))] })] }));
+    return ((0, jsx_runtime_1.jsxs)("div", { className: "voice-panel", children: [(0, jsx_runtime_1.jsx)("div", { className: "voice-header", children: (0, jsx_runtime_1.jsxs)("div", { children: [(0, jsx_runtime_1.jsx)("h2", { children: "CyberLLM Link Analyzer" }), (0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Analyze URLs using your CyberLLM phishing detection service." })] }) }), (0, jsx_runtime_1.jsxs)("div", { className: "voice-tabs", children: [(0, jsx_runtime_1.jsx)("button", { type: "button", className: tab === 'analysis' ? 'active' : '', onClick: () => setTab('analysis'), children: "Link Analysis" }), (0, jsx_runtime_1.jsx)("button", { type: "button", className: tab === 'dataset' ? 'active' : '', onClick: () => setTab('dataset'), children: "Dataset Explorer" })] }), tab === 'dataset' ? ((0, jsx_runtime_1.jsx)(DatasetExplorer_1.default, {})) : ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("div", { className: "voice-input-area", children: [(0, jsx_runtime_1.jsx)("label", { htmlFor: "cyberllm-url", children: "Website URL" }), (0, jsx_runtime_1.jsx)("input", { id: "cyberllm-url", type: "url", value: url, onChange: (event) => setUrl(event.target.value), placeholder: "https://example.com", disabled: busy, onKeyDown: (event) => {
+                                    if (event.key === 'Enter' && !busy) {
+                                        void handleAnalyze(false);
+                                    }
+                                } }), (0, jsx_runtime_1.jsxs)("div", { className: "voice-actions", children: [(0, jsx_runtime_1.jsx)("button", { type: "button", onClick: () => void handleAnalyze(false), disabled: busy || !url.trim(), children: busy ? 'Analyzing...' : 'Analyze with CyberLLM' }), (0, jsx_runtime_1.jsx)("button", { type: "button", onClick: () => void handleAnalyze(true), disabled: busy, children: "Capture Screen URL" })] }), (0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "The URL is submitted to your configured Zyra backend, which forwards the analysis request to CyberLLM." })] }), analyzedUrl && ((0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "URL submitted for analysis:" }), (0, jsx_runtime_1.jsx)("p", { children: analyzedUrl })] })), error && ((0, jsx_runtime_1.jsx)("p", { className: "voice-hint", role: "alert", children: error })), result && ((0, jsx_runtime_1.jsxs)("div", { className: "voice-transcript-area", children: [(0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Analysis provider:" }), (0, jsx_runtime_1.jsx)("p", { children: provider })] }), (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "CyberLLM prediction:" }), (0, jsx_runtime_1.jsx)("p", { children: result.prediction })] }), (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Phishing score (uncalibrated):" }), (0, jsx_runtime_1.jsxs)("p", { children: [result.phishing_score, result.phishing_score >= 0 &&
+                                                result.phishing_score <= 1
+                                                ? ` (${(result.phishing_score * 100).toFixed(2)} on a 0–100 display scale)`
+                                                : ''] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Calibrated probability:" }), (0, jsx_runtime_1.jsx)("p", { children: result.score_is_calibrated_probability
+                                            ? 'Reported as calibrated by the API'
+                                            : 'No — this is an uncalibrated model score.' })] }), (0, jsx_runtime_1.jsxs)("div", { className: "transcript-item", children: [(0, jsx_runtime_1.jsx)("span", { className: "transcript-label", children: "Assessment disclaimer:" }), (0, jsx_runtime_1.jsx)("p", { children: result.disclaimer ||
+                                            'This model assessment is not a guarantee of safety. False positives and false negatives are possible.' })] }), (0, jsx_runtime_1.jsx)("p", { className: "voice-hint", children: "Security notice: A LEGITIMATE prediction does not prove that a website is safe. Verify suspicious links independently before entering credentials or sensitive information." })] }))] }))] }));
 };
 exports["default"] = LinkAnalyzer;
 

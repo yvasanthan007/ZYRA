@@ -1243,12 +1243,12 @@ function resolveBackendLaunch(startDir) {
 /***/ },
 
 /***/ "electron"
-/*!********************************!*\
-  !*** external "electron/main" ***!
-  \********************************/
+/*!***************************!*\
+  !*** external "electron" ***!
+  \***************************/
 (module) {
 
-module.exports = require("electron/main");
+module.exports = require("electron");
 
 /***/ },
 

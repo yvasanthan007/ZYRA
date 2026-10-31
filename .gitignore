@@ -44,3 +44,22 @@ backend/ml_phishing/live_analysis.jsonl
 
 .build/
 desktop-dist/
+
+# Python virtual environments
+.venv/
+.venv-audio-test/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Temporary backup files
+*.backup
+*.backup-*
+
+# Electron generated build output
+desktop-ui/dist/
+
+# Local runtime history
+url_scan_history.json
