@@ -1,30 +1,111 @@
 """
 Zyra Bridge Module
-Bridges FastAPI backend with Zyra's AI modules (brain, speak, listen, commands)
+Connects Zyra's FastAPI backend to CyberLLM, voice, memory,
+security analysis, system monitoring, DNS, Nmap and Windows commands.
+
+Normal conversational AI requests are routed through CyberLLM.
+Speech dependencies are optional so text chat can work without pygame.
 """
-import sys
+
 import os
-import json
+import sys
 import threading
 from typing import Optional, Dict, Any
 
-# Ensure parent directory is in path to import Zyra modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from brain import ask_ai
-from speak import speak, stop_speaking
-from memory import remember, recall
-from commands.open_app import (
-    open_chrome, open_vscode, open_notepad, open_calculator,
-    open_cmd, open_powershell, open_task_manager, open_control_panel,
-    open_file_explorer, open_settings, open_google, open_youtube,
-    open_github, open_chatgpt, open_gmail, open_leetcode, open_linkedin,
-    search_google, search_youtube, open_downloads, open_documents,
-    open_desktop, shutdown_pc, restart_pc, sleep_pc, lock_pc,
-    screenshot, volume_up, volume_down, mute, wifi_on, wifi_off,
-    empty_recycle_bin, current_time, current_date, play_music, open_camera,
+# ============================================================
+# PATH CONFIGURATION
+# ============================================================
+
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
 )
+
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+
+# ============================================================
+# MEMORY
+# ============================================================
+
+from memory import remember, recall
+
+
+# ============================================================
+# OPTIONAL SPEECH SUPPORT
+# ============================================================
+
+_SPEECH_AVAILABLE = False
+
+try:
+    from speak import speak, stop_speaking
+    _SPEECH_AVAILABLE = True
+
+except Exception as exc:
+    print(
+        "[Zyra/Speech] Speech module unavailable: "
+        f"{type(exc).__name__}: {exc}"
+    )
+
+    def speak(*args, **kwargs):
+        print("[Zyra/Speech] Text-to-speech is unavailable.")
+
+    def stop_speaking(*args, **kwargs):
+        return None
+
+
+# ============================================================
+# WINDOWS COMMANDS
+# ============================================================
+
+from commands.open_app import (
+    open_chrome,
+    open_vscode,
+    open_notepad,
+    open_calculator,
+    open_cmd,
+    open_powershell,
+    open_task_manager,
+    open_control_panel,
+    open_file_explorer,
+    open_settings,
+    open_google,
+    open_youtube,
+    open_github,
+    open_chatgpt,
+    open_gmail,
+    open_leetcode,
+    open_linkedin,
+    search_google,
+    search_youtube,
+    open_downloads,
+    open_documents,
+    open_desktop,
+    shutdown_pc,
+    restart_pc,
+    sleep_pc,
+    lock_pc,
+    screenshot,
+    volume_up,
+    volume_down,
+    mute,
+    wifi_on,
+    wifi_off,
+    empty_recycle_bin,
+    current_time,
+    current_date,
+    play_music,
+    open_camera,
+)
+
 from commands.close_app import close_app
+
+
+# ============================================================
+# SYSTEM MONITORING
+# ============================================================
+
 from system_monitor import (
     get_system_metrics,
     format_system_monitor_text,
@@ -35,7 +116,11 @@ from system_monitor import (
     start_system_monitor,
 )
 
-# ── Backend Security Analysis Module (backend-only, no frontend UI) ──
+
+# ============================================================
+# LINK SECURITY
+# ============================================================
+
 from backend.link_security import (
     is_link_analysis_request,
     analyze_link_request,
@@ -46,26 +131,21 @@ from backend.link_security import (
 )
 
 
-def _zyra_identity_answer(message: str):
-    # Return the canonical full form when the user asks what ZYRA means.
-    text = (message or "").strip().lower()
-    if not text or not any(alias in text for alias in ("zyra", "z y r a")):
-        return None
-    asks_meaning = any(term in text for term in (
-        "full form", "full name", "stand for", "stands for", "abbreviation",
-        "acronym", "meaning of", "what does", "expand",
-    ))
-    if asks_meaning:
-        return "ZYRA stands for Zero-latency Yielding Response Assistant."
-    return None
-# ── DNS Lookup Module (real DNS intelligence via dnspython) ──
+# ============================================================
+# DNS
+# ============================================================
+
 from backend.dns_lookup import (
     build_chat_ack as dns_build_chat_ack,
     is_dns_intent,
     extract_dns_target,
 )
 
-# ── Nmap Network Scanner Module (backend service layer) ──
+
+# ============================================================
+# NMAP
+# ============================================================
+
 from backend.nmap_service import (
     is_nmap_intent,
     resolve_operation,
@@ -76,7 +156,148 @@ from backend.nmap_service import (
     build_nmap_command,
 )
 
-# Command map for executing voice commands programmatically
+
+# ============================================================
+# CYBERLLM INTEGRATION
+# ============================================================
+
+def _get_cyberllm_response(message: str) -> str:
+    """
+    Send ordinary conversational messages to CyberLLM.
+
+    API keys remain in the backend environment and are not
+    returned to the frontend.
+    """
+
+    text = str(message or "").strip()
+
+    if not text:
+        return "Please say something!"
+
+    try:
+        from backend.cyberllm_client import generate_chat_response
+
+        result = generate_chat_response(text)
+
+        if not isinstance(result, dict):
+            print("[Zyra/CyberLLM] Invalid response type.")
+            return (
+                "CyberLLM returned an unexpected response. "
+                "Please try again."
+            )
+
+        answer = result.get("answer")
+
+        if isinstance(answer, str) and answer.strip():
+            return answer.strip()
+
+        print("[Zyra/CyberLLM] Response did not contain an answer.")
+
+        return (
+            "CyberLLM did not return a usable answer. "
+            "Please try again."
+        )
+
+    except Exception as exc:
+        # Do not return exception details or credentials to the UI.
+        print(
+            "[Zyra/CyberLLM] Request failed: "
+            f"{type(exc).__name__}: {exc}"
+        )
+
+        return (
+            "I'm unable to get a response from CyberLLM right now. "
+            "Please check that the CyberLLM API is running, "
+            "then try again."
+        )
+
+
+# ============================================================
+# GREETING AND IDENTITY
+# ============================================================
+
+def _normalize_greeting(message: str) -> str:
+    """Normalize greeting text and surrounding punctuation."""
+
+    return str(message or "").strip().lower().strip(
+        " \t\r\n!.,?;:"
+    )
+
+
+def _zyra_greeting_answer(message: str) -> Optional[str]:
+    """Return Zyra's exact greeting for known wake-phrase transcriptions."""
+
+    normalized = _normalize_greeting(message)
+
+    greetings = {
+        # Standard greetings
+        "hi zyra",
+        "hello zyra",
+        "hey zyra",
+
+        # Observed speech-recognition variations
+        "hay jara",
+        "hey jara",
+        "hi jara",
+        "hello jara",
+        "hey saira",
+        "hi saira",
+        "hello saira",
+        "hey zara",
+        "hi zara",
+        "hello zara",
+        "hey sairah",
+        "hi sairah",
+        "hey zyrah",
+        "hi zyrah",
+    }
+
+    if normalized in greetings:
+        return "Welcome, how can I help you"
+
+    return None
+
+
+
+def _zyra_identity_answer(message: str) -> Optional[str]:
+    """Return Zyra's configured full form when requested."""
+
+    text = str(message or "").strip().lower()
+
+    if not text:
+        return None
+
+    if not any(alias in text for alias in ("zyra", "z y r a")):
+        return None
+
+    asks_meaning = any(
+        term in text
+        for term in (
+            "full form",
+            "full name",
+            "stand for",
+            "stands for",
+            "abbreviation",
+            "acronym",
+            "meaning of",
+            "what does",
+            "expand",
+        )
+    )
+
+    if asks_meaning:
+        return (
+            "ZYRA stands for Zero-latency Yielding "
+            "Response Assistant."
+        )
+
+    return None
+
+
+# ============================================================
+# COMMAND MAP
+# ============================================================
+
 COMMAND_MAP = {
     "open_chrome": open_chrome,
     "open_vscode": open_vscode,
@@ -119,163 +340,233 @@ COMMAND_MAP = {
     "system_monitor": start_system_monitor,
 }
 
-# Keep track of the voice assistant thread
+
 _voice_thread: Optional[threading.Thread] = None
 _voice_running = False
 
 
-def _nmap_starting_message(text: str) -> str:
-    """
-    Build a concise chat/voice response for an Nmap scanning request.
+# ============================================================
+# NMAP RESPONSE
+# ============================================================
 
-    The scan itself is executed asynchronously by the server (which broadcasts
-    live status + results to the Nmap Scanner panel), so this just confirms
-    what Zyra is about to do. Invalid targets get an actionable message
-    instead of silently falling through to the LLM.
-    """
+def _nmap_starting_message(text: str) -> str:
+    """Validate an Nmap target and describe the requested scan."""
+
     op_key, op = resolve_operation(text)
-    target = extract_target(text) or op.get("default_target", "127.0.0.1")
+
+    target = extract_target(text) or op.get(
+        "default_target",
+        "127.0.0.1",
+    )
+
     valid, msg = validate_target(target)
+
     if not valid:
         return (
-            f"NMAP SCANNER ACTIVATED\nTarget: {target}\n"
+            "NMAP SCANNER\n"
+            f"Target: {target}\n"
             f"Operation: {op.get('label', op_key)}\n"
-            f"That target looks invalid ({msg}), so the scan was not started. "
-            "Please provide a valid IP address or domain."
+            f"Invalid target: {msg}. The scan was not started."
         )
+
     return (
-        f"Running a {op['label']} scan on {target}. I'll show the live results "
-        f"in the Nmap Scanner panel when it completes."
+        f"Running a {op['label']} scan on {target}. "
+        "Check the Nmap Scanner panel for scan results."
     )
 
 
+# ============================================================
+# LINK CAPTURE AND ANALYSIS
+# ============================================================
+
 def _link_capture_report(message: str):
     """
-    Analyze a link for chat/voice.
-
-    Uses a URL contained in the message when present; otherwise captures the
-    link the user is looking at from the screen / clipboard (so asking Zyra to
-    "analyze this link" works even when the URL is not typed).
+    Analyze an explicitly supplied URL or attempt to capture
+    the active URL.
 
     Returns:
-        (report_text or None, url or None)
+        (report_text, url)
     """
-    # When multiple URLs are present, never silently choose one; the caller
-    # must provide one explicit URL. A screen-focused request intentionally
-    # resolves from the current screen, not an incidental URL in its text.
+
     from backend.url_analyzer.intent import extract_target_urls
+
     candidates = extract_target_urls(message or "")
+
     if len(candidates) > 1:
-        return "I found multiple URLs. Please ask me to analyze one URL at a time.", None
+        return (
+            "I found multiple URLs. Please ask me to analyze "
+            "one URL at a time.",
+            None,
+        )
+
     lowered = (message or "").lower()
-    screen_request = any(phrase in lowered for phrase in (
-        "on the screen", "on screen", "visible on screen", "current page",
-        "this page", "page i'm on", "page i am on", "selected link", "selected url",
-        "screen link", "link on my screen", "url on my screen",
-        "website on the screen", "website on screen",
-        "website on my screen", "page on screen", "page on the screen",
-        "website on the current screen", "visible in my browser",
-    ))
-    # A URL typed/pasted into the actual request is an explicit target unless
-    # the user specifically asks for the visible/selected screen link.
+
+    screen_request = any(
+        phrase in lowered
+        for phrase in (
+            "on the screen",
+            "on screen",
+            "visible on screen",
+            "current page",
+            "this page",
+            "page i'm on",
+            "page i am on",
+            "selected link",
+            "selected url",
+            "screen link",
+            "link on my screen",
+            "url on my screen",
+            "website on the screen",
+            "website on screen",
+            "website on my screen",
+            "page on screen",
+            "page on the screen",
+            "website on the current screen",
+            "visible in my browser",
+        )
+    )
+
+    # Prefer a URL supplied by the user unless they request
+    # the currently visible browser URL.
     url = None if screen_request else extract_url(message)
+
     if not url:
         try:
             from screen_ocr import get_active_url
+
             url = get_active_url()
-        except Exception as exc:  # OCR / optional deps may be unavailable
-            print(f"   ⚠️  Screen/clipboard capture unavailable: {exc}")
-            url = None
-        if url:
-            print(f"   🔗 Captured link: {url}")
+
+            if url:
+                print(
+                    "[Zyra/LinkAnalysis] Captured active browser URL."
+                )
+
+        except Exception as exc:
+            print(
+                "[Zyra/LinkAnalysis] URL capture unavailable: "
+                f"{type(exc).__name__}"
+            )
+
     if not url:
         return None, None
+
     result = analyze_url_security(url)
+
     return format_security_report(result), url
 
 
+# ============================================================
+# MAIN CHAT ROUTER
+# ============================================================
+
 def process_chat(message: str) -> str:
     """
-    Process a chat message through Zyra's AI brain.
+    Route a text message through Zyra's existing capabilities.
 
-    Args:
-        message: The user's message/query
-
-    Returns:
-        Zyra's response as a string
+    Routing order:
+        1. Validate input.
+        2. Greeting.
+        3. Zyra identity.
+        4. Link security.
+        5. System monitoring.
+        6. DNS.
+        7. Nmap.
+        8. CyberLLM.
     """
-    if not message or not message.strip():
+
+    if not message or not str(message).strip():
         return "Please say something!"
 
-    identity_answer = _zyra_identity_answer(message)
-    if identity_answer:
-        return identity_answer
-    # ── Backend-only link security analysis ──
-    # When the user provides a link — or asks to analyze the one they are
-    # looking at — return the structured security report (now with the local
-    # ML phishing verdict fused in). When no URL is in the text the link is
-    # captured from the screen/clipboard.
+    message = str(message).strip()
+
+    greeting = _zyra_greeting_answer(message)
+
+    if greeting:
+        return greeting
+
+    identity = _zyra_identity_answer(message)
+
+    if identity:
+        return identity
+
     if is_link_analysis_request(message):
         report, _url = _link_capture_report(message)
+
         if report is not None:
             return report
+
         return (
-            "I couldn't find a link on your screen or in your clipboard. "
-            "Copy the link or show it on screen, then ask me again."
+            "I couldn't find a link to analyze. Please provide a URL "
+            "or make the page visible in your browser."
         )
 
-    # ── System Monitor ──
-    # Answered from real psutil data: an explicit monitor request returns the
-    # full card, metric questions ("what is my cpu usage?") get a focused
-    # answer — the language model is never asked to guess hardware numbers.
     if is_system_monitor_intent(message):
         return answer_system_query(message)
 
-    # ── DNS Lookup ──
-    # Intent detection is handled here; the actual lookup runs in the server
-    # (background thread) which then broadcasts the DNS Lookup panel + live
-    # progress. The acknowledgement keeps ZYRA from hallucinating DNS data.
     if is_dns_intent(message):
         target = extract_dns_target(message)
         return dns_build_chat_ack(target)
 
-    # ── Nmap Network Scanner ──
-    # Intent detection is handled by the backend; the actual scan runs in the
-    # server (background thread) which then broadcasts the Nmap Scanner panel.
     if is_nmap_intent(message):
         return _nmap_starting_message(message)
 
-    answer = ask_ai(message)
-    return answer
+    return _get_cyberllm_response(message)
 
+
+# ============================================================
+# STREAMING CHAT ROUTER
+# ============================================================
 
 def process_chat_stream(message: str) -> Dict[str, Any]:
-    """Route a chat message without invoking the model when it isn't needed.
-
-    Used by the streaming WebSocket path so deterministic answers (System
-    Monitor, DNS, Nmap, link analysis, empty input) come back instantly while
-    real questions are streamed token-by-token by the AI brain.
-
-    Returns:
-        {"kind": "static", ...}  — answer already available in "data"
-        {"kind": "ai", "question": str}  — needs the language model
     """
+    Preserve the existing WebSocket response contract.
+
+    Normal CyberLLM responses are returned as a completed static
+    response here, not token-by-token streaming.
+    """
+
     if not message or not str(message).strip():
-        return {"kind": "static", "success": True, "data": "Please say something!"}
+        return {
+            "kind": "static",
+            "success": True,
+            "data": "Please say something!",
+        }
 
     text = str(message).strip()
-    identity_answer = _zyra_identity_answer(text)
-    if identity_answer:
-        return {"kind": "static", "success": True, "data": identity_answer}
 
-    # Same order as process_chat so behaviour can never diverge.
+    greeting = _zyra_greeting_answer(text)
+
+    if greeting:
+        return {
+            "kind": "static",
+            "success": True,
+            "data": greeting,
+        }
+
+    identity = _zyra_identity_answer(text)
+
+    if identity:
+        return {
+            "kind": "static",
+            "success": True,
+            "data": identity,
+        }
+
     if is_link_analysis_request(text):
         if extract_url(text):
             report, _url = _link_capture_report(text)
-            return {"kind": "static", "success": True, "data": report}
-        # No URL in the text: the on-screen capture is slow (OCR), so let the
-        # server do it in the background and keep the chat reply instant.
-        return {"kind": "capture", "success": True, "question": text}
+
+            return {
+                "kind": "static",
+                "success": True,
+                "data": report or "I couldn't analyze that URL.",
+            }
+
+        return {
+            "kind": "capture",
+            "success": True,
+            "question": text,
+        }
 
     if is_system_monitor_intent(text):
         return {
@@ -303,142 +594,256 @@ def process_chat_stream(message: str) -> Dict[str, Any]:
             "nmap_request": text,
         }
 
-    return {"kind": "ai", "question": text}
+    return {
+        "kind": "static",
+        "success": True,
+        "data": _get_cyberllm_response(text),
+        "provider": "cyberllm",
+    }
 
 
-def process_command(command_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Execute a voice command programmatically.
+# ============================================================
+# PROGRAMMATIC COMMAND EXECUTION
+# ============================================================
 
-    Args:
-        command_name: The command to execute (e.g., "open_chrome")
-        params: Optional parameters for the command
+def process_command(
+    command_name: str,
+    params: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Execute a named Zyra command."""
 
-    Returns:
-        Result dict with success status and message
-    """
     if not command_name:
-        return {"success": False, "error": "No command specified"}
-
-    command_name = command_name.lower().strip()
-
-    # Handle close commands
-    if command_name.startswith("close_"):
-        app_name = command_name.replace("close_", "").strip()
-        response = close_app(app_name)
-        return {"success": True, "data": response}
-
-    # Handle search commands
-    if command_name.startswith("search_google"):
-        query = params.get("query", "") if params else ""
-        if query:
-            search_google(query)
-            return {"success": True, "data": f"Searched Google for {query}"}
-        return {"success": False, "error": "No search query provided"}
-
-    if command_name.startswith("search_youtube"):
-        query = params.get("query", "") if params else ""
-        if query:
-            search_youtube(query)
-            return {"success": True, "data": f"Searched YouTube for {query}"}
-        return {"success": False, "error": "No search query provided"}
-
-    # Execute from command map
-    if command_name in COMMAND_MAP:
-        try:
-            result = COMMAND_MAP[command_name]()
-            return {"success": True, "data": f"Executed {command_name}"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-
-    return {"success": False, "error": f"Unknown command: {command_name}"}
-
-
-def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
-    """
-    Process a voice command from transcribed text.
-    Parses natural language and executes the appropriate action.
-
-    Args:
-        transcribed_text: The text transcribed from voice
-
-    Returns:
-        Result dict with response text and action taken
-    """
-    if not transcribed_text:
-        return {"response": "", "action": "none"}
-
-    text = transcribed_text.lower().strip()
-
-    # Check for close commands
-    if text.startswith("close "):
-        app = text.replace("close ", "").strip()
-        response = close_app(app)
-        return {"response": response, "action": "close_app"}
-
-    # Check for memory commands
-    if "my favorite language is" in text:
-        language = text.replace("my favorite language is", "").strip()
-        remember("favorite_language", language)
         return {
-            "response": f"I'll remember that. Your favorite language is {language}.",
-            "action": "remember"
+            "success": False,
+            "error": "No command specified",
         }
 
-    if "what is my favorite language" in text:
-        language = recall("favorite_language")
+    command_name = command_name.lower().strip()
+    params = params or {}
+
+    if command_name.startswith("close_"):
+        app_name = command_name.replace("close_", "", 1).strip()
+
+        try:
+            response = close_app(app_name)
+
+            return {
+                "success": True,
+                "data": response,
+            }
+
+        except Exception as exc:
+            print(
+                "[Zyra/Command] Close failed: "
+                f"{type(exc).__name__}"
+            )
+
+            return {
+                "success": False,
+                "error": f"Could not close {app_name}",
+            }
+
+    if command_name.startswith("search_google"):
+        query = params.get("query", "")
+
+        if not query:
+            return {
+                "success": False,
+                "error": "No search query provided",
+            }
+
+        search_google(query)
+
+        return {
+            "success": True,
+            "data": f"Searched Google for {query}",
+        }
+
+    if command_name.startswith("search_youtube"):
+        query = params.get("query", "")
+
+        if not query:
+            return {
+                "success": False,
+                "error": "No search query provided",
+            }
+
+        search_youtube(query)
+
+        return {
+            "success": True,
+            "data": f"Searched YouTube for {query}",
+        }
+
+    if command_name in COMMAND_MAP:
+        try:
+            COMMAND_MAP[command_name]()
+
+            return {
+                "success": True,
+                "data": f"Executed {command_name}",
+            }
+
+        except Exception as exc:
+            print(
+                "[Zyra/Command] Command failed: "
+                f"{type(exc).__name__}"
+            )
+
+            return {
+                "success": False,
+                "error": f"Could not execute {command_name}",
+            }
+
+    return {
+        "success": False,
+        "error": f"Unknown command: {command_name}",
+    }
+
+
+# ============================================================
+# VOICE COMMAND PROCESSING
+# ============================================================
+
+def process_voice_command(
+    transcribed_text: str,
+) -> Dict[str, Any]:
+    """Process speech transcription, commands and normal chat."""
+
+    if not transcribed_text or not str(transcribed_text).strip():
+        return {
+            "response": "",
+            "action": "none",
+        }
+
+    text = str(transcribed_text).strip()
+    lowered = text.lower()
+
+    greeting = _zyra_greeting_answer(text)
+
+    if greeting:
+        return {
+            "response": greeting,
+            "action": "greeting",
+        }
+
+    identity = _zyra_identity_answer(text)
+
+    if identity:
+        return {
+            "response": identity,
+            "action": "identity",
+        }
+
+    # Close an application.
+    if lowered.startswith("close "):
+        app = lowered.replace("close ", "", 1).strip()
+
+        try:
+            response = close_app(app)
+
+            return {
+                "response": response,
+                "action": "close_app",
+            }
+
+        except Exception:
+            return {
+                "response": f"Could not close {app}.",
+                "action": "error",
+            }
+
+    # Save a preference.
+    marker = "my favorite language is"
+
+    if marker in lowered:
+        language = text[lowered.index(marker) + len(marker):].strip()
+
         if language:
-            return {"response": f"Your favorite language is {language}.", "action": "recall"}
-        return {"response": "I don't know your favorite language yet.", "action": "recall"}
+            remember("favorite_language", language)
 
-    # Check for exit commands
-    if any(word in text for word in ["exit", "quit", "goodbye", "shut it down"]):
-        return {"response": "Goodbye. Have a nice day.", "action": "exit"}
+            return {
+                "response": (
+                    f"I'll remember that. Your favorite language "
+                    f"is {language}."
+                ),
+                "action": "remember",
+            }
 
-    # ── Backend-only link security analysis ──
-    # Activated by "Analyse the link" / "Analyze this URL" or any URL in text.
-    # Without a URL in the text the link is captured from the screen/clipboard.
+    # Retrieve a preference.
+    if "what is my favorite language" in lowered:
+        language = recall("favorite_language")
+
+        if language:
+            response = f"Your favorite language is {language}."
+        else:
+            response = "I don't know your favorite language yet."
+
+        return {
+            "response": response,
+            "action": "recall",
+        }
+
+    # Exit requests.
+    if any(
+        phrase in lowered
+        for phrase in (
+            "exit",
+            "quit",
+            "goodbye",
+            "shut it down",
+        )
+    ):
+        return {
+            "response": "Goodbye. Have a nice day.",
+            "action": "exit",
+        }
+
+    # Link security.
     if is_link_analysis_request(text):
         report, _url = _link_capture_report(text)
-        if report is None:
-            report = ("I couldn't find a link on your screen or in your "
-                      "clipboard. Please copy the link or show it on screen.")
-        return {"response": report, "action": "link_analysis"}
 
-    # ── System Monitor intent ──
+        if report is None:
+            report = (
+                "I couldn't find a link to analyze. "
+                "Please provide a URL or show it in your browser."
+            )
+
+        return {
+            "response": report,
+            "action": "link_analysis",
+        }
+
+    # System monitoring.
     if is_system_monitor_intent(text):
         metrics = get_system_metrics()
         topic = classify_system_query(text) or "overall"
+
         if topic != "overall":
-            # A question about one metric: answer it directly and let the
-            # caller decide whether to open the live panel.
             return {
                 "response": answer_system_query(text, metrics),
                 "action": "system_monitor_answer",
                 "topic": topic,
             }
-        voice_resp = get_voice_summary(metrics)
+
         return {
-            "response": voice_resp,
+            "response": get_voice_summary(metrics),
             "action": "system_monitor",
             "metrics": metrics,
             "formatted": format_system_monitor_text(metrics),
         }
 
-    # ── DNS Lookup intent ──
-    # The actual lookup is executed by the server in a background thread,
-    # which then broadcasts live status + results to the DNS Lookup panel.
+    # DNS lookup.
     if is_dns_intent(text):
         target = extract_dns_target(text)
+
         return {
             "response": dns_build_chat_ack(target),
             "action": "dns_lookup",
             "dns_request": text,
         }
 
-    # ── Nmap Network Scanner intent ──
-    # The actual scan is executed by the server in a background thread, which
-    # then broadcasts live status + results to the Nmap Scanner panel.
+    # Nmap.
     if is_nmap_intent(text):
         return {
             "response": _nmap_starting_message(text),
@@ -446,7 +851,7 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
             "nmap_request": text,
         }
 
-    # Check command map (natural language matching)
+    # Natural-language command mappings.
     command_mappings = [
         ("open chrome", "open_chrome"),
         ("open vscode", "open_vscode"),
@@ -491,148 +896,285 @@ def process_voice_command(transcribed_text: str) -> Dict[str, Any]:
     ]
 
     for phrase, command in command_mappings:
-        if phrase in text:
-            try:
-                COMMAND_MAP[command]()
-                # Get friendly response based on command
-                responses = {
-                    "open_chrome": "Opening Chrome",
-                    "open_vscode": "Opening Visual Studio Code",
-                    "open_notepad": "Opening Notepad",
-                    "open_calculator": "Opening Calculator",
-                    "open_cmd": "Opening Command Prompt",
-                    "open_powershell": "Opening PowerShell",
-                    "open_task_manager": "Opening Task Manager",
-                    "open_control_panel": "Opening Control Panel",
-                    "open_file_explorer": "Opening File Explorer",
-                    "open_settings": "Opening Settings",
-                    "open_google": "Opening Google",
-                    "open_youtube": "Opening YouTube",
-                    "open_github": "Opening GitHub",
-                    "open_chatgpt": "Opening ChatGPT",
-                    "open_gmail": "Opening Gmail",
-                    "open_leetcode": "Opening LeetCode",
-                    "open_linkedin": "Opening LinkedIn",
-                    "open_downloads": "Opening Downloads",
-                    "open_documents": "Opening Documents",
-                    "open_desktop": "Opening Desktop",
-                    "open_camera": "Opening Camera",
-                    "shutdown": "Shutting down the PC",
-                    "restart": "Restarting the PC",
-                    "sleep": "Putting the PC to sleep",
-                    "lock_pc": "Locking the PC",
-                    "screenshot": "Taking a screenshot",
-                    "volume_up": "Increasing volume",
-                    "volume_down": "Decreasing volume",
-                    "mute": "Muting volume",
-                    "wifi_on": "Turning on Wi-Fi",
-                    "wifi_off": "Turning off Wi-Fi",
-                    "empty_recycle_bin": "Emptying the Recycle Bin",
-                    "current_time": "Fetching current time",
-                    "current_date": "Fetching current date",
-                    "play_music": "Playing music",
-                }
-                response_text = responses.get(command, f"Executing {command}")
-                return {"response": response_text, "action": command}
-            except Exception as e:
-                return {"response": f"Error executing command: {str(e)}", "action": "error"}
+        if phrase not in lowered:
+            continue
 
-    # For search commands
-    if "search google for" in text:
-        query = text.replace("search google for", "").strip()
-        search_google(query)
-        return {"response": f"Searching Google for {query}", "action": "search_google"}
+        try:
+            COMMAND_MAP[command]()
 
-    if "search youtube for" in text:
-        query = text.replace("search youtube for", "").strip()
-        search_youtube(query)
-        return {"response": f"Searching YouTube for {query}", "action": "search_youtube"}
+            responses = {
+                "open_chrome": "Opening Chrome.",
+                "open_vscode": "Opening Visual Studio Code.",
+                "open_notepad": "Opening Notepad.",
+                "open_calculator": "Opening Calculator.",
+                "open_cmd": "Opening Command Prompt.",
+                "open_powershell": "Opening PowerShell.",
+                "open_task_manager": "Opening Task Manager.",
+                "open_control_panel": "Opening Control Panel.",
+                "open_file_explorer": "Opening File Explorer.",
+                "open_settings": "Opening Settings.",
+                "open_google": "Opening Google.",
+                "open_youtube": "Opening YouTube.",
+                "open_github": "Opening GitHub.",
+                "open_chatgpt": "Opening ChatGPT.",
+                "open_gmail": "Opening Gmail.",
+                "open_leetcode": "Opening LeetCode.",
+                "open_linkedin": "Opening LinkedIn.",
+                "open_downloads": "Opening Downloads.",
+                "open_documents": "Opening Documents.",
+                "open_desktop": "Opening Desktop.",
+                "open_camera": "Opening Camera.",
+                "shutdown": "Shutting down the PC.",
+                "restart": "Restarting the PC.",
+                "sleep": "Putting the PC to sleep.",
+                "lock_pc": "Locking the PC.",
+                "screenshot": "Taking a screenshot.",
+                "volume_up": "Increasing volume.",
+                "volume_down": "Decreasing volume.",
+                "mute": "Muting volume.",
+                "wifi_on": "Turning on Wi-Fi.",
+                "wifi_off": "Turning off Wi-Fi.",
+                "empty_recycle_bin": "Emptying the Recycle Bin.",
+                "current_time": "Fetching current time.",
+                "current_date": "Fetching current date.",
+                "play_music": "Playing music.",
+            }
 
-    # Default: use AI brain
-    answer = ask_ai(text)
-    return {"response": answer, "action": "chat"}
+            return {
+                "response": responses.get(
+                    command,
+                    f"Executed {command}.",
+                ),
+                "action": command,
+            }
 
+        except Exception as exc:
+            print(
+                "[Zyra/VoiceCommand] Command failed: "
+                f"{type(exc).__name__}"
+            )
+
+            return {
+                "response": f"Could not execute {command}.",
+                "action": "error",
+            }
+
+    # Google search.
+    if "search google for" in lowered:
+        query = text[lowered.index("search google for") + len("search google for"):].strip()
+
+        if query:
+            search_google(query)
+
+            return {
+                "response": f"Searching Google for {query}.",
+                "action": "search_google",
+            }
+
+    # YouTube search.
+    if "search youtube for" in lowered:
+        query = text[lowered.index("search youtube for") + len("search youtube for"):].strip()
+
+        if query:
+            search_youtube(query)
+
+            return {
+                "response": f"Searching YouTube for {query}.",
+                "action": "search_youtube",
+            }
+
+    # Default: CyberLLM conversational answer.
+    return {
+        "response": _get_cyberllm_response(text),
+        "action": "chat",
+        "provider": "cyberllm",
+    }
+
+
+# ============================================================
+# TEXT-TO-SPEECH
+# ============================================================
 
 def speak_text(text: str) -> None:
-    """
-    Speak text using Zyra's TTS engine.
-    Runs in a separate thread to not block the API.
-    """
+    """Speak text in a background thread when speech is available."""
+
     if not text:
         return
 
-    thread = threading.Thread(target=speak, args=(text,), daemon=True)
+    if not _SPEECH_AVAILABLE:
+        print("[Zyra/Speech] Skipping speech: dependencies unavailable.")
+        return
+
+    thread = threading.Thread(
+        target=speak,
+        args=(text,),
+        daemon=True,
+    )
+
     thread.start()
 
 
-# Convenience functions that match the existing pattern
-def process_message(message_type: str, data: Any) -> Dict[str, Any]:
-    """
-    Unified message processing for the bridge.
-    Compatible with the existing bridge_server.py pattern.
-    """
+# ============================================================
+# UNIFIED MESSAGE PROCESSOR
+# ============================================================
+
+def process_message(
+    message_type: str,
+    data: Any,
+) -> Dict[str, Any]:
+    """Unified message processor compatible with bridge_server.py."""
+
+    # Chat.
     if message_type == "chat":
         if isinstance(data, str):
-            answer = process_chat(data)
-            return {"success": True, "data": answer}
-        return {"success": False, "error": "Invalid chat data"}
+            return {
+                "success": True,
+                "data": process_chat(data),
+            }
 
-    elif message_type == "command":
+        return {
+            "success": False,
+            "error": "Invalid chat data",
+        }
+
+    # Commands.
+    if message_type == "command":
         if isinstance(data, str):
-            result = process_command(data)
-            return result
-        elif isinstance(data, dict):
-            result = process_command(data.get("command", ""), data)
-            return result
-        return {"success": False, "error": "Invalid command data"}
+            return process_command(data)
 
-    elif message_type == "voice":
+        if isinstance(data, dict):
+            return process_command(
+                data.get("command", ""),
+                data,
+            )
+
+        return {
+            "success": False,
+            "error": "Invalid command data",
+        }
+
+    # Voice transcription.
+    if message_type == "voice":
         if isinstance(data, str):
-            result = process_voice_command(data)
-            return {"success": True, "data": result}
-        return {"success": False, "error": "Invalid voice data"}
+            return {
+                "success": True,
+                "data": process_voice_command(data),
+            }
 
-    elif message_type == "remember":
+        return {
+            "success": False,
+            "error": "Invalid voice data",
+        }
+
+    # Remember.
+    if message_type == "remember":
         if isinstance(data, dict):
             key = data.get("key")
             value = data.get("value")
+
+            if not key:
+                return {
+                    "success": False,
+                    "error": "A memory key is required",
+                }
+
             remember(key, value)
-            return {"success": True, "data": f"Remembered {key}"}
-        return {"success": False, "error": "Invalid remember data"}
 
-    elif message_type == "recall":
+            return {
+                "success": True,
+                "data": f"Remembered {key}",
+            }
+
+        return {
+            "success": False,
+            "error": "Invalid remember data",
+        }
+
+    # Recall.
+    if message_type == "recall":
         if isinstance(data, str):
-            value = recall(data)
-            return {"success": True, "data": value}
-        return {"success": False, "error": "Invalid recall data"}
+            return {
+                "success": True,
+                "data": recall(data),
+            }
 
-    elif message_type == "speak":
+        return {
+            "success": False,
+            "error": "Invalid recall data",
+        }
+
+    # Speak.
+    if message_type == "speak":
         if isinstance(data, str):
             speak_text(data)
-            return {"success": True, "data": "Speaking"}
-        return {"success": False, "error": "Invalid speak data"}
 
-    elif message_type == "analyze_link":
-        # Backend-only link security analysis via the bridge.
-        # data may be a raw URL string, a message containing a URL, or a dict
-        # with {"url": ...} / {"text": ...}.
+            return {
+                "success": _SPEECH_AVAILABLE,
+                "data": (
+                    "Speaking"
+                    if _SPEECH_AVAILABLE
+                    else "Speech dependencies are unavailable."
+                ),
+            }
+
+        return {
+            "success": False,
+            "error": "Invalid speak data",
+        }
+
+    # Link analysis.
+    if message_type == "analyze_link":
         if isinstance(data, str):
             text = data
+
         elif isinstance(data, dict):
             text = data.get("url") or data.get("text") or ""
-        else:
-            return {"success": False, "error": "Invalid analyze_link data"}
-        url = extract_url(text) if text else None
-        if not url:
-            return {"success": False, "error": "No URL found to analyze"}
-        result = analyze_url_security(url)
-        return {"success": True, "data": {
-            "report": format_security_report(result),
-            "analysis": result,
-        }}
 
-    elif message_type in ("system_metrics", "get_system_metrics", "monitor_system", "start_monitoring"):
+        else:
+            return {
+                "success": False,
+                "error": "Invalid analyze_link data",
+            }
+
+        url = extract_url(text) if text else None
+
+        if not url:
+            return {
+                "success": False,
+                "error": "No URL found to analyze",
+            }
+
+        try:
+            result = analyze_url_security(url)
+
+            return {
+                "success": True,
+                "data": {
+                    "report": format_security_report(result),
+                    "analysis": result,
+                },
+            }
+
+        except Exception as exc:
+            print(
+                "[Zyra/LinkAnalysis] Analysis failed: "
+                f"{type(exc).__name__}"
+            )
+
+            return {
+                "success": False,
+                "error": "Could not analyze the supplied URL",
+            }
+
+    # System metrics.
+    if message_type in (
+        "system_metrics",
+        "get_system_metrics",
+        "monitor_system",
+        "start_monitoring",
+    ):
         metrics = get_system_metrics()
+
         return {
             "success": True,
             "data": metrics,
@@ -640,9 +1182,10 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             "summary": get_voice_summary(metrics),
         }
 
-    elif message_type == "nmap_status":
-        # Report whether Nmap is installed + list available scan operations.
+    # Nmap status.
+    if message_type == "nmap_status":
         status = nmap_available()
+
         return {
             "success": True,
             "data": {
@@ -652,4 +1195,7 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
             },
         }
 
-    return {"success": False, "error": f"Unknown type: {message_type}"}
+    return {
+        "success": False,
+        "error": f"Unknown type: {message_type}",
+    }

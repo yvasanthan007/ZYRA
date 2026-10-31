@@ -1,50 +1,93 @@
 """
 nmap_handler.py — Zyra Nmap Network Scanner Intent Handler
 
-Main integration handler that ties together:
-  - nmap_scanner.py (Nmap network scanning engine)
-  - speak.py (Text-to-Speech output)
+Features:
+- Detects network scanning requests.
+- Extracts IP addresses and network targets.
+- Supports quick, standard, full, stealth, vulnerability, and ping-sweep scans.
+- Analyzes scan results and reports findings.
+- Provides optional speech output.
+- Allows the module to load when pygame or the speech engine is unavailable.
 
-This module provides the handle_nmap_intent() function that:
-  1. Listens for trigger phrases like "Zyra scan the network"
-  2. Extracts target IP/hostname from the command
-  3. Runs the appropriate scan type
-  4. Speaks the results directly to the user
-
-Trigger Phrases:
-  - "scan the network"
-  - "scan network"
-  - "network scan"
-  - "run nmap"
-  - "scan [IP address]"
-  - "check ports on [IP]"
-  - "is [IP] secure"
-  - "vulnerability scan"
-  - "ping sweep"
+IMPORTANT:
+Only scan systems and networks you own or have explicit permission to test.
 """
 
 import re
-from typing import Optional, Dict, Any, List
-
-from nmap_scanner import NmapScanner, analyze_scan_results, get_voice_summary, get_scan_summary
-from speak import speak
+from typing import Optional, Dict, Any
 
 
-# ──────────────────────────────────────────────
-# Persona Definition for AI System Prompt
-# ──────────────────────────────────────────────
+# ============================================================
+# OPTIONAL SPEECH
+# ============================================================
+
+try:
+    from speak import speak as _speak
+
+    def speak(text: str, *args, **kwargs):
+        """Use Zyra's speech engine when it is available."""
+        try:
+            return _speak(text, *args, **kwargs)
+        except Exception as exc:
+            print(f"[Zyra/Nmap] Speech playback unavailable: {exc}")
+            return None
+
+except Exception as exc:
+    print(
+        "[Zyra/Nmap] Speech engine unavailable. "
+        f"Continuing without audio: {exc}"
+    )
+
+    def speak(text: str, *args, **kwargs):
+        """Fallback speech function when audio is unavailable."""
+        if text:
+            print(f"[Zyra/Nmap] {text}")
+        return None
+
+
+# ============================================================
+# NMAP SCANNER IMPORT
+# ============================================================
+
+_NMAP_IMPORT_ERROR = None
+
+try:
+    from nmap_scanner import (
+        NmapScanner,
+        analyze_scan_results,
+        get_voice_summary,
+        get_scan_summary,
+    )
+except Exception as exc:
+    _NMAP_IMPORT_ERROR = exc
+
+    print(
+        "[Zyra/Nmap] Scanner module could not be loaded: "
+        f"{type(exc).__name__}: {exc}"
+    )
+
+    NmapScanner = None
+    analyze_scan_results = None
+    get_voice_summary = None
+    get_scan_summary = None
+
+
+# ============================================================
+# PERSONA
+# ============================================================
 
 NMAP_PERSONA = (
-    "NETWORK SECURITY MODE: Zyra can perform network scanning using Nmap. "
-    "When asked to scan networks or check for vulnerabilities, Zyra uses "
-    "real Nmap scans to discover hosts, open ports, services, and security issues. "
-    "This is a real security assessment tool, not simulated."
+    "NETWORK SECURITY MODE: Zyra can perform network scanning "
+    "using Nmap. When asked to scan an authorized network, Zyra "
+    "can discover hosts, open ports, services, and potential "
+    "security issues. Scan results must be interpreted carefully "
+    "and do not guarantee that a system is completely safe."
 )
 
 
-# ──────────────────────────────────────────────
-# Trigger Phrase Detection
-# ──────────────────────────────────────────────
+# ============================================================
+# INTENT TRIGGERS
+# ============================================================
 
 NMAP_TRIGGERS = [
     "scan the network",
@@ -74,254 +117,354 @@ NMAP_TRIGGERS = [
 ]
 
 
+# ============================================================
+# INTENT DETECTION
+# ============================================================
+
 def is_nmap_intent(text: str) -> bool:
     """
-    Check if the user's text matches an Nmap scanning trigger phrase.
-    
-    Args:
-        text: User's voice command or text input
-        
-    Returns:
-        bool: True if this is an Nmap scanning request
+    Return True when the supplied text appears to request a scan.
     """
-    if not text:
+    if not text or not isinstance(text, str):
         return False
-    
+
     text_lower = text.lower().strip()
-    
-    # Check for trigger phrases
-    for trigger in NMAP_TRIGGERS:
-        if trigger in text_lower:
-            return True
-    
-    # Check for IP address patterns (e.g., "scan 192.168.1.1")
-    ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}(?:/\d{1,2})?\b'
-    if re.search(ip_pattern, text_lower):
-        # Also check for scanning verbs
-        if any(word in text_lower for word in ["scan", "check", "analyze", "nmap"]):
-            return True
-    
-    # Check for "scan" + IP-like patterns
-    if "scan" in text_lower and ("ip" in text_lower or "host" in text_lower):
+
+    if any(trigger in text_lower for trigger in NMAP_TRIGGERS):
         return True
-    
+
+    ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}(?:/\d{1,2})?\b"
+
+    if re.search(ip_pattern, text_lower):
+        scan_words = ("scan", "check", "analyze", "nmap")
+        if any(word in text_lower for word in scan_words):
+            return True
+
+    if "scan" in text_lower and (
+        "ip" in text_lower or "host" in text_lower
+    ):
+        return True
+
     return False
 
 
+# ============================================================
+# TARGET EXTRACTION
+# ============================================================
+
 def extract_target_from_command(text: str) -> Optional[str]:
     """
-    Extract target IP address or hostname from the command.
-    
-    Args:
-        text: User's command text
-        
-    Returns:
-        Target IP/hostname if found, None otherwise
+    Extract an IPv4 address, CIDR target, or basic hostname.
+
+    If no target is supplied, return None. The caller decides
+    whether to use localhost as a default.
     """
-    if not text:
+    if not text or not isinstance(text, str):
         return None
-    
+
     text_lower = text.lower().strip()
-    
-    # Look for IP address pattern
-    ip_pattern = r'\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?:/\d{1,2})?)\b'
+
+    # Prefer explicit IPv4/CIDR targets.
+    ip_pattern = (
+        r"\b("
+        r"(?:\d{1,3}\.){3}\d{1,3}"
+        r"(?:/\d{1,2})?"
+        r")\b"
+    )
+
     match = re.search(ip_pattern, text)
     if match:
         return match.group(1)
-    
-    # Look for common target keywords followed by IP-like text
-    for keyword in ["scan", "check", "analyze", "target"]:
-        if keyword in text_lower:
-            idx = text_lower.find(keyword)
-            remaining = text[idx + len(keyword):]
-            match = re.search(ip_pattern, remaining)
-            if match:
-                return match.group(1)
-    
-    # Default targets based on context
+
+    # Look for a hostname following common target keywords.
+    hostname_pattern = (
+        r"\b(?:scan|check|analyze|target|on|against)\s+"
+        r"([a-zA-Z0-9]"
+        r"(?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?)"
+    )
+
+    for match in re.finditer(hostname_pattern, text, re.IGNORECASE):
+        candidate = match.group(1).rstrip(".")
+
+        ignored_words = {
+            "the",
+            "network",
+            "my",
+            "local",
+            "ports",
+            "for",
+            "vulnerabilities",
+            "security",
+            "host",
+            "ip",
+        }
+
+        if candidate.lower() not in ignored_words:
+            if "." in candidate or candidate.lower() == "localhost":
+                return candidate
+
     if "local network" in text_lower or "my network" in text_lower:
         return "192.168.1.0/24"
-    elif "localhost" in text_lower or "this computer" in text_lower:
+
+    if "localhost" in text_lower or "this computer" in text_lower:
         return "127.0.0.1"
-    
+
     return None
 
 
+# ============================================================
+# SCAN TYPE
+# ============================================================
+
 def extract_scan_type(text: str) -> str:
     """
-    Determine the scan type from the command.
-    
-    Args:
-        text: User's command text
-        
-    Returns:
-        Scan type: "quick", "standard", "full", "stealth", "vuln"
+    Determine the requested scan type.
+
+    Supported types depend on nmap_scanner.py.
     """
-    text_lower = text.lower().strip()
-    
+    text_lower = (text or "").lower().strip()
+
     if "vulnerability" in text_lower or "vuln" in text_lower:
         return "vuln"
-    elif "full" in text_lower or "complete" in text_lower or "deep" in text_lower:
+
+    if any(word in text_lower for word in ("full", "complete", "deep")):
         return "full"
-    elif "stealth" in text_lower or "slow" in text_lower or "quiet" in text_lower:
+
+    if any(word in text_lower for word in ("stealth", "slow", "quiet")):
         return "stealth"
-    elif "fast" in text_lower or "quick" in text_lower or "quickly" in text_lower:
+
+    if any(word in text_lower for word in ("fast", "quick", "quickly")):
         return "quick"
-    elif "ping sweep" in text_lower or "discover" in text_lower:
+
+    if "ping sweep" in text_lower or "discover" in text_lower:
         return "ping_sweep"
-    else:
-        return "standard"
+
+    return "standard"
 
 
-def handle_nmap_intent(user_text: Optional[str] = None) -> Dict[str, Any]:
+# ============================================================
+# INTERNAL HELPERS
+# ============================================================
+
+def _scanner_unavailable_message() -> str:
+    if _NMAP_IMPORT_ERROR:
+        return (
+            "The Nmap scanner could not be loaded. "
+            "Check its dependencies and the Python console for details."
+        )
+
+    return (
+        "The Nmap scanner is unavailable. "
+        "Check that Nmap and its Python dependencies are installed."
+    )
+
+
+def _create_scanner():
     """
-    Main entry point for Nmap scanning intent handling.
-    
-    This function:
-    1. Extracts target and scan type from user command
-    2. Runs the Nmap scan
-    3. Analyzes results and calculates risk score
-    4. Speaks the results directly to the user
-    5. Returns structured result
-    
-    Args:
-        user_text: Optional user command text
-        
-    Returns:
-        dict: Complete scan result containing:
-            - target: The scanned target
-            - scan_type: Type of scan performed
-            - success: Whether scan completed successfully
-            - analysis: Analysis results with verdict and score
-            - speech_text: Exact string that was spoken
-            - raw_results: Raw Nmap scan results
+    Create a scanner or raise a useful error.
     """
-    print("\n" + "=" * 60)
-    print("🔍 ZYRA NETWORK SCANNER — NMAP INTEGRATION")
-    print("=" * 60)
-    
-    # Step 1: Parse command to extract target and scan type
-    print("\n📝 Step 1: Parsing command...")
-    target = extract_target_from_command(user_text) if user_text else None
-    scan_type = extract_scan_type(user_text) if user_text else "standard"
-    
-    # Default target if none found
-    if not target:
-        target = "127.0.0.1"
-        print(f"   ℹ️  No target specified, defaulting to localhost ({target})")
-    else:
-        print(f"   🎯 Target: {target}")
-    
-    print(f"   📊 Scan type: {scan_type}")
-    
-    # Step 2: Initialize Nmap scanner
-    print("\n🔧 Step 2: Initializing Nmap scanner...")
+    if NmapScanner is None:
+        raise RuntimeError(_scanner_unavailable_message())
+
     try:
-        scanner = NmapScanner()
-        print("   ✅ Nmap scanner ready")
-    except RuntimeError as e:
-        error_msg = str(e)
-        print(f"   ❌ Error: {error_msg}")
-        speech_text = "I'm sorry, but Nmap is not installed on this system. Please install Nmap from nmap.org to use network scanning features."
-        speak(speech_text)
-        return {
-            "success": False,
-            "error": error_msg,
-            "target": target,
-            "scan_type": scan_type,
-            "speech_text": speech_text
-        }
-    
-    # Step 3: Run the scan
-    print(f"\n🚀 Step 3: Running {scan_type} scan on {target}...")
-    try:
-        if scan_type == "ping_sweep":
-            results = scanner.ping_sweep(target)
-        else:
-            results = scanner.scan_host(target, scan_type=scan_type)
-        
-        if not results.get("success"):
-            error_msg = results.get("error", "Unknown scan error")
-            print(f"   ❌ Scan failed: {error_msg}")
-            speech_text = f"Network scan failed. {error_msg}"
-            speak(speech_text)
-            return {
-                "success": False,
-                "error": error_msg,
-                "target": target,
-                "scan_type": scan_type,
-                "speech_text": speech_text
-            }
-        
-        hosts_found = len(results.get("hosts", []))
-        print(f"   ✅ Scan completed. Found {hosts_found} hosts.")
-        
-    except Exception as e:
-        error_msg = f"Scan execution error: {str(e)}"
-        print(f"   ❌ Error: {error_msg}")
-        speech_text = "I encountered an error while running the network scan."
-        speak(speech_text)
-        return {
-            "success": False,
-            "error": error_msg,
-            "target": target,
-            "scan_type": scan_type,
-            "speech_text": speech_text
-        }
-    
-    # Step 4: Analyze results
-    print("\n📈 Step 4: Analyzing scan results...")
-    analysis = analyze_scan_results(results)
-    
+        return NmapScanner()
+    except Exception as exc:
+        raise RuntimeError(
+            f"Unable to initialize Nmap: {exc}"
+        ) from exc
+
+
+def _run_scan(scanner, target: str, scan_type: str):
+    """
+    Run the appropriate scan method.
+    """
+    if scan_type == "ping_sweep":
+        return scanner.ping_sweep(target)
+
+    return scanner.scan_host(target, scan_type=scan_type)
+
+
+def _analyze_results(results: Dict[str, Any]):
+    """
+    Analyze scan results and validate that the analyzer is available.
+    """
+    if analyze_scan_results is None:
+        raise RuntimeError(
+            "The Nmap results analyzer is unavailable."
+        )
+
+    return analyze_scan_results(results)
+
+
+def _build_speech_summary(analysis: Dict[str, Any]) -> str:
+    """
+    Generate a readable summary, with a safe fallback.
+    """
+    if get_voice_summary is not None:
+        try:
+            summary = get_voice_summary(analysis)
+            if summary:
+                return str(summary)
+        except Exception as exc:
+            print(f"[Zyra/Nmap] Summary generation warning: {exc}")
+
     verdict = analysis.get("verdict", "Unknown")
     score = analysis.get("total_score", 0)
-    verdict_emoji = {"Safe": "✅", "Warning": "⚠️", "Critical": "🚫"}.get(verdict, "❓")
-    
-    print(f"   📊 Overall verdict: {verdict_emoji} {verdict}")
-    print(f"   📈 Risk score: {score}")
-    print(f"   🔍 Hosts analyzed: {len(analysis.get('findings', []))}")
-    
-    # Step 5: Generate voice summary and speak
-    print("\n🗣️  Step 5: Speaking results...")
-    speech_text = get_voice_summary(analysis)
-    print(f"   Speech text: {speech_text}")
-    speak(speech_text)
-    
-    # Step 6: Print detailed results
+
+    return (
+        f"Network scan completed. "
+        f"Overall verdict: {verdict}. "
+        f"Risk score: {score}."
+    )
+
+
+def _error_result(
+    message: str,
+    target: Optional[str] = None,
+    scan_type: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Create a consistent failure response.
+    """
+    return {
+        "success": False,
+        "error": message,
+        "target": target,
+        "scan_type": scan_type,
+        "speech_text": message,
+    }
+
+
+# ============================================================
+# MAIN NMAP INTENT HANDLER
+# ============================================================
+
+def handle_nmap_intent(
+    user_text: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Parse a scan request, run the scan, analyze the results,
+    and return structured output.
+
+    Audio playback is optional and will not crash this handler.
+    """
     print("\n" + "=" * 60)
-    print("📊 DETAILED SCAN REPORT")
+    print("ZYRA NETWORK SCANNER — NMAP INTEGRATION")
     print("=" * 60)
-    print(f"\n🎯 Target: {target}")
-    print(f"📊 Scan type: {scan_type}")
-    print(f"⚖️  Verdict: {verdict_emoji} {verdict}")
-    print(f"📈 Risk score: {score}")
-    
-    print(f"\n🔍 Host Analysis ({len(analysis.get('findings', []))} hosts):")
-    for host_info in analysis.get("findings", []):
-        host = host_info.get("host", "unknown")
-        host_verdict = host_info.get("verdict", "Unknown")
-        host_score = host_info.get("score", 0)
-        
-        print(f"\n   Host: {host} ({host_verdict}, Score: {host_score})")
-        
-        if host_info.get("os"):
-            print(f"      OS: {host_info['os']}")
-        
-        findings = host_info.get("findings", [])
-        if findings:
-            print(f"      Findings:")
-            for finding in findings:
-                print(f"        • {finding.get('details', '')}")
-    
+
+    target = (
+        extract_target_from_command(user_text)
+        if user_text
+        else None
+    )
+
+    scan_type = (
+        extract_scan_type(user_text)
+        if user_text
+        else "standard"
+    )
+
+    if not target:
+        target = "127.0.0.1"
+        print(f"[Zyra/Nmap] No target specified; using {target}")
+    else:
+        print(f"[Zyra/Nmap] Target: {target}")
+
+    print(f"[Zyra/Nmap] Scan type: {scan_type}")
+
+    try:
+        scanner = _create_scanner()
+    except Exception as exc:
+        message = str(exc)
+        print(f"[Zyra/Nmap] Scanner initialization failed: {message}")
+        speak(message)
+        return _error_result(message, target, scan_type)
+
+    try:
+        results = _run_scan(scanner, target, scan_type)
+
+        if not isinstance(results, dict):
+            message = "The scanner returned an unexpected response."
+            print(f"[Zyra/Nmap] {message}")
+            return _error_result(message, target, scan_type)
+
+        if not results.get("success"):
+            message = str(
+                results.get("error", "The network scan failed.")
+            )
+            print(f"[Zyra/Nmap] Scan failed: {message}")
+            speak(message)
+            return _error_result(message, target, scan_type)
+
+    except Exception as exc:
+        message = f"Scan execution failed: {exc}"
+        print(f"[Zyra/Nmap] {message}")
+        speak("I encountered an error while running the network scan.")
+        return _error_result(message, target, scan_type)
+
+    try:
+        analysis = _analyze_results(results)
+    except Exception as exc:
+        message = f"Scan completed, but result analysis failed: {exc}"
+        print(f"[Zyra/Nmap] {message}")
+        return {
+            "success": False,
+            "error": message,
+            "target": target,
+            "scan_type": scan_type,
+            "raw_results": results,
+        }
+
+    verdict = analysis.get("verdict", "Unknown")
+    score = analysis.get("total_score", 0)
+    findings = analysis.get("findings", [])
     recommendations = analysis.get("recommendations", [])
-    if recommendations:
-        print(f"\n💡 Recommendations:")
-        for i, rec in enumerate(recommendations, 1):
-            print(f"   {i}. {rec}")
-    
+
+    verdict_emoji = {
+        "Safe": "[SAFE]",
+        "Warning": "[WARNING]",
+        "Critical": "[CRITICAL]",
+    }.get(verdict, "[UNKNOWN]")
+
     print("\n" + "=" * 60)
-    
-    # Return structured result
+    print("NETWORK SCAN REPORT")
+    print("=" * 60)
+    print(f"Target: {target}")
+    print(f"Scan type: {scan_type}")
+    print(f"Verdict: {verdict_emoji} {verdict}")
+    print(f"Risk score: {score}")
+    print(f"Hosts analyzed: {len(findings)}")
+
+    for host_info in findings:
+        print(
+            "\nHost: "
+            f"{host_info.get('host', 'unknown')} "
+            f"({host_info.get('verdict', 'Unknown')}, "
+            f"score: {host_info.get('score', 0)})"
+        )
+
+        if host_info.get("os"):
+            print(f"  OS: {host_info['os']}")
+
+        for finding in host_info.get("findings", []):
+            print(
+                "  - "
+                + str(finding.get("details", finding))
+            )
+
+    if recommendations:
+        print("\nRecommendations:")
+        for index, recommendation in enumerate(recommendations, 1):
+            print(f"  {index}. {recommendation}")
+
+    speech_text = _build_speech_summary(analysis)
+    print(f"\nSummary: {speech_text}")
+
+    # Speech is optional and must not invalidate a successful scan.
+    speak(speech_text)
+
+    print("=" * 60)
+
     return {
         "success": True,
         "target": target,
@@ -329,115 +472,128 @@ def handle_nmap_intent(user_text: Optional[str] = None) -> Dict[str, Any]:
         "analysis": analysis,
         "speech_text": speech_text,
         "raw_results": results,
-        "timestamp": analysis.get("timestamp")
+        "timestamp": analysis.get("timestamp"),
     }
 
 
-def quick_scan(target: str, scan_type: str = "quick") -> Dict[str, Any]:
+# ============================================================
+# QUICK SCAN
+# ============================================================
+
+def quick_scan(
+    target: str,
+    scan_type: str = "quick",
+) -> Dict[str, Any]:
     """
-    Quick scan of a specific target (bypasses command parsing).
-    Useful for testing or direct scanning.
-    
-    Args:
-        target: IP address or hostname to scan
-        scan_type: Type of scan to perform
-        
-    Returns:
-        dict: Scan result
+    Scan a specified target directly.
+
+    Only use this function on authorized targets.
     """
-    print(f"\n🔍 Quick scanning target: {target}")
-    
+    if not target or not isinstance(target, str):
+        return _error_result("A valid target is required.")
+
+    print(f"\n[Zyra/Nmap] Scanning target: {target}")
+
     try:
-        scanner = NmapScanner()
-        
-        if scan_type == "ping_sweep":
-            results = scanner.ping_sweep(target)
-        else:
-            results = scanner.scan_host(target, scan_type=scan_type)
-        
-        if results.get("success"):
-            analysis = analyze_scan_results(results)
-            speech_text = get_voice_summary(analysis)
-            speak(speech_text)
-            
-            return {
-                "success": True,
-                "target": target,
-                "scan_type": scan_type,
-                "analysis": analysis,
-                "speech_text": speech_text,
-                "raw_results": results
-            }
-        else:
-            return {
-                "success": False,
-                "error": results.get("error", "Scan failed"),
-                "target": target,
-                "scan_type": scan_type
-            }
-    
-    except Exception as e:
+        scanner = _create_scanner()
+        results = _run_scan(scanner, target, scan_type)
+
+        if not isinstance(results, dict):
+            return _error_result(
+                "The scanner returned an unexpected response.",
+                target,
+                scan_type,
+            )
+
+        if not results.get("success"):
+            return _error_result(
+                str(results.get("error", "Scan failed.")),
+                target,
+                scan_type,
+            )
+
+        analysis = _analyze_results(results)
+        speech_text = _build_speech_summary(analysis)
+
+        speak(speech_text)
+
         return {
-            "success": False,
-            "error": str(e),
+            "success": True,
             "target": target,
-            "scan_type": scan_type
+            "scan_type": scan_type,
+            "analysis": analysis,
+            "speech_text": speech_text,
+            "raw_results": results,
+            "timestamp": analysis.get("timestamp"),
         }
 
+    except Exception as exc:
+        message = f"Quick scan failed: {exc}"
+        print(f"[Zyra/Nmap] {message}")
+        return _error_result(message, target, scan_type)
 
-# ──────────────────────────────────────────────
-# Command Line Interface
-# ──────────────────────────────────────────────
+
+# ============================================================
+# COMMAND-LINE TEST
+# ============================================================
 
 if __name__ == "__main__":
     import sys
-    
-    print("""
-╔══════════════════════════════════════════════╗
-║     ZYRA NETWORK SCANNER — TEST              ║
-╚══════════════════════════════════════════════╝
-    """)
-    
-    print("Options:")
-    print("  1. Test with voice command parsing")
-    print("  2. Test with specific target")
-    print("  3. Exit")
-    print()
-    
+
+    print(
+        """
+==============================================
+       ZYRA NETWORK SCANNER — TEST
+==============================================
+1. Test command parsing and scan
+2. Test a specific authorized target
+3. Exit
+"""
+    )
+
     choice = input("Enter choice (1-3): ").strip()
-    
+
     if choice == "1":
-        command = input("\nEnter command (e.g., 'scan network 192.168.1.1'): ").strip()
+        command = input(
+            "Enter scan command (e.g. scan localhost): "
+        ).strip()
+
         if command:
             result = handle_nmap_intent(command)
-            
-            print("\n" + "=" * 60)
-            print("RESULT SUMMARY")
-            print("=" * 60)
+            print("\nResult summary:")
             print(f"Success: {result.get('success')}")
-            if result.get('success'):
-                print(f"Target: {result['target']}")
-                print(f"Verdict: {result['analysis']['verdict']}")
-                print(f"Speech: {result['speech_text']}")
-        else:
-            print("No command provided.")
-    
+            print(f"Target: {result.get('target')}")
+
+            if result.get("error"):
+                print(f"Error: {result['error']}")
+
     elif choice == "2":
-        target = input("\nEnter target IP/hostname: ").strip()
+        target = input(
+            "Enter an authorized IP address or hostname: "
+        ).strip()
+
         if target:
-            scan_type = input("Enter scan type (quick/standard/full/stealth/vuln) [default: quick]: ").strip() or "quick"
+            scan_type = (
+                input(
+                    "Scan type (quick/standard/full/stealth/vuln) "
+                    "[default: quick]: "
+                ).strip()
+                or "quick"
+            )
+
             result = quick_scan(target, scan_type)
-            
-            print("\n" + "=" * 60)
-            print("RESULT SUMMARY")
-            print("=" * 60)
+
+            print("\nResult summary:")
             print(f"Success: {result.get('success')}")
-            if result.get('success'):
-                print(f"Verdict: {result['analysis']['verdict']}")
-                print(f"Speech: {result['speech_text']}")
-        else:
-            print("No target provided.")
-    
+
+            if result.get("error"):
+                print(f"Error: {result['error']}")
+
+            if result.get("analysis"):
+                print(
+                    "Verdict: "
+                    f"{result['analysis'].get('verdict', 'Unknown')}"
+                )
     else:
-        print("Exiting...")
+        print("Exiting.")
         sys.exit(0)

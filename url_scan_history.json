@@ -1,5 +1,4467 @@
 [
  {
+  "scan_id": "url_20261029_111911_78ca40",
+  "url": "https://www.google.com",
+  "domain": "google.com",
+  "score": 95,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-10-29T11:19:11",
+  "timestamp_display": "29 Oct 2026 11:19",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261029_111911_78ca40",
+   "url": "https://www.google.com",
+   "display_url": "https://www.google.com",
+   "hostname": "www.google.com",
+   "domain_display": "google.com",
+   "score": 95,
+   "phishing_probability": 0.0001,
+   "risk_score": 0.0,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 95: domain registration information could not be verified."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://www.google.com",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 7.7e-05,
+    "phishing_probability": 7.7e-05,
+    "percent": 0.01,
+    "risk_score": 0.01,
+    "probabilities_calibrated": false,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "prediction": "legitimate",
+    "risk_band": "LOW",
+    "confidence": 0.999923,
+    "features": {
+     "url_length": 22,
+     "hostname_length": 14,
+     "num_dots_host": 2,
+     "num_hyphens_host": 0,
+     "num_digits_host": 0,
+     "digit_ratio_host": 0.0,
+     "num_subdomains": 0,
+     "max_label_length": 6,
+     "domain_entropy": 2.8424,
+     "has_ip_host": 0,
+     "is_https": 1,
+     "has_nonstandard_port": 0,
+     "suspicious_tld": 0,
+     "is_shortener": 0,
+     "has_punycode": 0,
+     "has_userinfo_trick": 0,
+     "double_slash_in_path": 0,
+     "num_percent_encoded": 0,
+     "num_special_chars": 0,
+     "num_at": 0,
+     "path_length": 0,
+     "path_depth": 0,
+     "query_length": 0,
+     "num_query_params": 0,
+     "credential_keywords": 0,
+     "urgency_keywords": 0,
+     "brand_misplaced": 0,
+     "has_hex_blob": 0,
+     "brand_typosquat": 0,
+     "brand_in_host": 0,
+     "host_has_credential_terms": 0,
+     "host_label_count": 3,
+     "suspicious_host_pattern": 0
+    },
+    "feature_names": [
+     "url_length",
+     "hostname_length",
+     "num_dots_host",
+     "num_hyphens_host",
+     "num_digits_host",
+     "digit_ratio_host",
+     "num_subdomains",
+     "max_label_length",
+     "domain_entropy",
+     "has_ip_host",
+     "is_https",
+     "has_nonstandard_port",
+     "suspicious_tld",
+     "is_shortener",
+     "has_punycode",
+     "has_userinfo_trick",
+     "double_slash_in_path",
+     "num_percent_encoded",
+     "num_special_chars",
+     "num_at",
+     "path_length",
+     "path_depth",
+     "query_length",
+     "num_query_params",
+     "credential_keywords",
+     "urgency_keywords",
+     "brand_misplaced",
+     "has_hex_blob",
+     "brand_typosquat",
+     "brand_in_host",
+     "host_has_credential_terms",
+     "host_label_count",
+     "suspicious_host_pattern"
+    ],
+    "explanation": {
+     "available": true,
+     "method": "XGBoost native TreeSHAP (margin/log-odds)",
+     "base_value": 0.27189,
+     "contributions": [
+      {
+       "feature": "num_hyphens_host",
+       "value": 0,
+       "contribution": -1.457728,
+       "direction": "decreases phishing score",
+       "description": "Hyphen count in the hostname"
+      },
+      {
+       "feature": "num_digits_host",
+       "value": 0,
+       "contribution": -1.442371,
+       "direction": "decreases phishing score",
+       "description": "Digit count in the hostname"
+      },
+      {
+       "feature": "credential_keywords",
+       "value": 0,
+       "contribution": -1.335156,
+       "direction": "decreases phishing score",
+       "description": "Credential-bait keywords (login, verify, ...)"
+      },
+      {
+       "feature": "query_length",
+       "value": 0,
+       "contribution": -0.912917,
+       "direction": "decreases phishing score",
+       "description": "Query-string length"
+      },
+      {
+       "feature": "url_length",
+       "value": 22,
+       "contribution": -0.760236,
+       "direction": "decreases phishing score",
+       "description": "Total URL length"
+      },
+      {
+       "feature": "is_shortener",
+       "value": 0,
+       "contribution": -0.724253,
+       "direction": "decreases phishing score",
+       "description": "Known URL shortener"
+      },
+      {
+       "feature": "suspicious_tld",
+       "value": 0,
+       "contribution": -0.674813,
+       "direction": "decreases phishing score",
+       "description": "High-risk top-level domain (.xyz, .tk, ...)"
+      },
+      {
+       "feature": "domain_entropy",
+       "value": 2.8424,
+       "contribution": -0.553629,
+       "direction": "decreases phishing score",
+       "description": "Character entropy of the hostname (randomness)"
+      },
+      {
+       "feature": "num_dots_host",
+       "value": 2,
+       "contribution": -0.479347,
+       "direction": "decreases phishing score",
+       "description": "Dot count in the hostname"
+      },
+      {
+       "feature": "brand_in_host",
+       "value": 0,
+       "contribution": -0.449043,
+       "direction": "decreases phishing score",
+       "description": "Protected brand appears in hostname outside its registered domain"
+      }
+     ],
+     "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious."
+    },
+    "global_feature_importance": [
+     {
+      "feature": "num_hyphens_host",
+      "importance": 0.268561,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "importance": 0.229047,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "importance": 0.139405,
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_percent_encoded",
+      "importance": 0.064005,
+      "description": "Percent-encoded characters"
+     },
+     {
+      "feature": "num_query_params",
+      "importance": 0.058701,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "urgency_keywords",
+      "importance": 0.044377,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     },
+     {
+      "feature": "num_special_chars",
+      "importance": 0.039478,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "credential_keywords",
+      "importance": 0.037352,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "brand_typosquat",
+      "importance": 0.026392,
+      "description": "Registered domain resembles a protected brand"
+     },
+     {
+      "feature": "query_length",
+      "importance": 0.021528,
+      "description": "Query-string length"
+     },
+     {
+      "feature": "max_label_length",
+      "importance": 0.015776,
+      "description": "Longest hostname label"
+     },
+     {
+      "feature": "digit_ratio_host",
+      "importance": 0.009899,
+      "description": "Share of digits in the hostname"
+     },
+     {
+      "feature": "is_shortener",
+      "importance": 0.00817,
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "num_digits_host",
+      "importance": 0.006825,
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "url_length",
+      "importance": 0.006097,
+      "description": "Total URL length"
+     },
+     {
+      "feature": "num_dots_host",
+      "importance": 0.005093,
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "path_length",
+      "importance": 0.004862,
+      "description": "Path length"
+     },
+     {
+      "feature": "host_label_count",
+      "importance": 0.004237,
+      "description": "Number of hostname labels"
+     },
+     {
+      "feature": "hostname_length",
+      "importance": 0.003276,
+      "description": "Hostname length"
+     },
+     {
+      "feature": "is_https",
+      "importance": 0.003214,
+      "description": "Uses HTTPS"
+     },
+     {
+      "feature": "domain_entropy",
+      "importance": 0.002003,
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "path_depth",
+      "importance": 0.000917,
+      "description": "Path depth (number of '/' segments)"
+     },
+     {
+      "feature": "host_has_credential_terms",
+      "importance": 0.000551,
+      "description": "Credential-bait wording in hostname"
+     },
+     {
+      "feature": "num_subdomains",
+      "importance": 0.000233,
+      "description": "Subdomain levels below the registrable domain"
+     },
+     {
+      "feature": "has_ip_host",
+      "importance": 0.0,
+      "description": "Raw IP address instead of a domain"
+     },
+     {
+      "feature": "has_nonstandard_port",
+      "importance": 0.0,
+      "description": "Non-standard port in the URL"
+     },
+     {
+      "feature": "has_punycode",
+      "importance": 0.0,
+      "description": "Punycode ('xn--') homograph host"
+     },
+     {
+      "feature": "has_userinfo_trick",
+      "importance": 0.0,
+      "description": "'@' userinfo trick hiding the real host"
+     },
+     {
+      "feature": "double_slash_in_path",
+      "importance": 0.0,
+      "description": "'//' inside the path (redirect-style)"
+     },
+     {
+      "feature": "num_at",
+      "importance": 0.0,
+      "description": "'@' symbols in the URL"
+     },
+     {
+      "feature": "brand_misplaced",
+      "importance": 0.0,
+      "description": "Known brand in subdomain/path of another domain"
+     },
+     {
+      "feature": "has_hex_blob",
+      "importance": 0.0,
+      "description": "Long hex blob (token-like) in path/query"
+     },
+     {
+      "feature": "suspicious_host_pattern",
+      "importance": 0.0,
+      "description": "Combined brand, credential, and suspicious-domain pattern"
+     }
+    ],
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 0,
+      "contribution": -1.457728,
+      "direction": "decreases phishing score",
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "num_digits_host",
+      "value": 0,
+      "contribution": -1.442371,
+      "direction": "decreases phishing score",
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "credential_keywords",
+      "value": 0,
+      "contribution": -1.335156,
+      "direction": "decreases phishing score",
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "query_length",
+      "value": 0,
+      "contribution": -0.912917,
+      "direction": "decreases phishing score",
+      "description": "Query-string length"
+     },
+     {
+      "feature": "url_length",
+      "value": 22,
+      "contribution": -0.760236,
+      "direction": "decreases phishing score",
+      "description": "Total URL length"
+     },
+     {
+      "feature": "is_shortener",
+      "value": 0,
+      "contribution": -0.724253,
+      "direction": "decreases phishing score",
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 0,
+      "contribution": -0.674813,
+      "direction": "decreases phishing score",
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "domain_entropy",
+      "value": 2.8424,
+      "contribution": -0.553629,
+      "direction": "decreases phishing score",
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "num_dots_host",
+      "value": 2,
+      "contribution": -0.479347,
+      "direction": "decreases phishing score",
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "brand_in_host",
+      "value": 0,
+      "contribution": -0.449043,
+      "direction": "decreases phishing score",
+      "description": "Protected brand appears in hostname outside its registered domain"
+     }
+    ],
+    "analysis_time_ms": 6701.39,
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
+      "recall": 1.0,
+      "f1": 0.9554,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0141,
+      "test_size": 755
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.996,
+      "precision": 1.0,
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+       "decision_threshold": 0.35,
+       "precision": 0.9916,
+       "recall": 1.0,
+       "f1": 0.9958,
+       "confusion_matrix": {
+        "labels": [
+         "legitimate",
+         "phishing"
+        ],
+        "matrix": [
+         [
+          454,
+          3
+         ],
+         [
+          0,
+          356
+         ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+       },
+       "test_size": 813
+      }
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "ip_address": "142.251.151.119",
+    "ips": [
+     "142.251.151.119",
+     "142.251.155.119",
+     "142.251.150.119",
+     "142.251.154.119",
+     "142.251.156.119",
+     "142.251.157.119",
+     "142.251.152.119",
+     "142.251.153.119"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://www.google.com"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE2",
+    "subject": "www.google.com",
+    "expires": "Dec 30 19:09:53 2026 GMT",
+    "expires_in_days": 62,
+    "not_before": "Oct  7 19:09:54 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "www.google.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "subdomains": [
+     "www"
+    ],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "142.251.151.119",
+     "142.251.155.119",
+     "142.251.150.119",
+     "142.251.154.119",
+     "142.251.156.119",
+     "142.251.157.119",
+     "142.251.152.119",
+     "142.251.153.119"
+    ],
+    "ip_address": "142.251.151.119",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": true,
+    "provider": "virustotal",
+    "reputation": "Clean",
+    "malware": "Not Detected",
+    "phishing": "Not Detected",
+    "engines": {
+     "malicious": 0,
+     "suspicious": 0,
+     "harmless": 62,
+     "undetected": 31,
+     "total": 93
+    },
+    "note": "VirusTotal: 0 malicious / 0 suspicious of 93 engines."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-10-29T11:19:11",
+   "timestamp_display": "29 Oct 2026 11:19",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261029_083554_52a991",
+  "url": "https://www.google.com/",
+  "domain": "google.com",
+  "score": 95,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-10-29T08:35:54",
+  "timestamp_display": "29 Oct 2026 08:36",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261029_083554_52a991",
+   "url": "https://www.google.com/",
+   "display_url": "https://www.google.com/",
+   "hostname": "www.google.com",
+   "domain_display": "google.com",
+   "score": 95,
+   "phishing_probability": 0.0001,
+   "risk_score": 0.0,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 95: domain registration information could not be verified."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://www.google.com/",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.000131,
+    "phishing_probability": 0.000131,
+    "percent": 0.01,
+    "risk_score": 0.01,
+    "probabilities_calibrated": false,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "prediction": "legitimate",
+    "risk_band": "LOW",
+    "confidence": 0.999869,
+    "features": {
+     "url_length": 23,
+     "hostname_length": 14,
+     "num_dots_host": 2,
+     "num_hyphens_host": 0,
+     "num_digits_host": 0,
+     "digit_ratio_host": 0.0,
+     "num_subdomains": 0,
+     "max_label_length": 6,
+     "domain_entropy": 2.8424,
+     "has_ip_host": 0,
+     "is_https": 1,
+     "has_nonstandard_port": 0,
+     "suspicious_tld": 0,
+     "is_shortener": 0,
+     "has_punycode": 0,
+     "has_userinfo_trick": 0,
+     "double_slash_in_path": 0,
+     "num_percent_encoded": 0,
+     "num_special_chars": 0,
+     "num_at": 0,
+     "path_length": 1,
+     "path_depth": 0,
+     "query_length": 0,
+     "num_query_params": 0,
+     "credential_keywords": 0,
+     "urgency_keywords": 0,
+     "brand_misplaced": 0,
+     "has_hex_blob": 0,
+     "brand_typosquat": 0,
+     "brand_in_host": 0,
+     "host_has_credential_terms": 0,
+     "host_label_count": 3,
+     "suspicious_host_pattern": 0
+    },
+    "feature_names": [
+     "url_length",
+     "hostname_length",
+     "num_dots_host",
+     "num_hyphens_host",
+     "num_digits_host",
+     "digit_ratio_host",
+     "num_subdomains",
+     "max_label_length",
+     "domain_entropy",
+     "has_ip_host",
+     "is_https",
+     "has_nonstandard_port",
+     "suspicious_tld",
+     "is_shortener",
+     "has_punycode",
+     "has_userinfo_trick",
+     "double_slash_in_path",
+     "num_percent_encoded",
+     "num_special_chars",
+     "num_at",
+     "path_length",
+     "path_depth",
+     "query_length",
+     "num_query_params",
+     "credential_keywords",
+     "urgency_keywords",
+     "brand_misplaced",
+     "has_hex_blob",
+     "brand_typosquat",
+     "brand_in_host",
+     "host_has_credential_terms",
+     "host_label_count",
+     "suspicious_host_pattern"
+    ],
+    "explanation": {
+     "available": true,
+     "method": "XGBoost native TreeSHAP (margin/log-odds)",
+     "base_value": 0.27189,
+     "contributions": [
+      {
+       "feature": "num_hyphens_host",
+       "value": 0,
+       "contribution": -1.457193,
+       "direction": "decreases phishing score",
+       "description": "Hyphen count in the hostname"
+      },
+      {
+       "feature": "num_digits_host",
+       "value": 0,
+       "contribution": -1.441285,
+       "direction": "decreases phishing score",
+       "description": "Digit count in the hostname"
+      },
+      {
+       "feature": "credential_keywords",
+       "value": 0,
+       "contribution": -1.334787,
+       "direction": "decreases phishing score",
+       "description": "Credential-bait keywords (login, verify, ...)"
+      },
+      {
+       "feature": "query_length",
+       "value": 0,
+       "contribution": -0.867497,
+       "direction": "decreases phishing score",
+       "description": "Query-string length"
+      },
+      {
+       "feature": "is_shortener",
+       "value": 0,
+       "contribution": -0.731629,
+       "direction": "decreases phishing score",
+       "description": "Known URL shortener"
+      },
+      {
+       "feature": "suspicious_tld",
+       "value": 0,
+       "contribution": -0.674813,
+       "direction": "decreases phishing score",
+       "description": "High-risk top-level domain (.xyz, .tk, ...)"
+      },
+      {
+       "feature": "domain_entropy",
+       "value": 2.8424,
+       "contribution": -0.592843,
+       "direction": "decreases phishing score",
+       "description": "Character entropy of the hostname (randomness)"
+      },
+      {
+       "feature": "num_dots_host",
+       "value": 2,
+       "contribution": -0.531477,
+       "direction": "decreases phishing score",
+       "description": "Dot count in the hostname"
+      },
+      {
+       "feature": "brand_in_host",
+       "value": 0,
+       "contribution": -0.449043,
+       "direction": "decreases phishing score",
+       "description": "Protected brand appears in hostname outside its registered domain"
+      },
+      {
+       "feature": "max_label_length",
+       "value": 6,
+       "contribution": -0.335037,
+       "direction": "decreases phishing score",
+       "description": "Longest hostname label"
+      }
+     ],
+     "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious."
+    },
+    "global_feature_importance": [
+     {
+      "feature": "num_hyphens_host",
+      "importance": 0.268561,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "importance": 0.229047,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "importance": 0.139405,
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_percent_encoded",
+      "importance": 0.064005,
+      "description": "Percent-encoded characters"
+     },
+     {
+      "feature": "num_query_params",
+      "importance": 0.058701,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "urgency_keywords",
+      "importance": 0.044377,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     },
+     {
+      "feature": "num_special_chars",
+      "importance": 0.039478,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "credential_keywords",
+      "importance": 0.037352,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "brand_typosquat",
+      "importance": 0.026392,
+      "description": "Registered domain resembles a protected brand"
+     },
+     {
+      "feature": "query_length",
+      "importance": 0.021528,
+      "description": "Query-string length"
+     },
+     {
+      "feature": "max_label_length",
+      "importance": 0.015776,
+      "description": "Longest hostname label"
+     },
+     {
+      "feature": "digit_ratio_host",
+      "importance": 0.009899,
+      "description": "Share of digits in the hostname"
+     },
+     {
+      "feature": "is_shortener",
+      "importance": 0.00817,
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "num_digits_host",
+      "importance": 0.006825,
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "url_length",
+      "importance": 0.006097,
+      "description": "Total URL length"
+     },
+     {
+      "feature": "num_dots_host",
+      "importance": 0.005093,
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "path_length",
+      "importance": 0.004862,
+      "description": "Path length"
+     },
+     {
+      "feature": "host_label_count",
+      "importance": 0.004237,
+      "description": "Number of hostname labels"
+     },
+     {
+      "feature": "hostname_length",
+      "importance": 0.003276,
+      "description": "Hostname length"
+     },
+     {
+      "feature": "is_https",
+      "importance": 0.003214,
+      "description": "Uses HTTPS"
+     },
+     {
+      "feature": "domain_entropy",
+      "importance": 0.002003,
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "path_depth",
+      "importance": 0.000917,
+      "description": "Path depth (number of '/' segments)"
+     },
+     {
+      "feature": "host_has_credential_terms",
+      "importance": 0.000551,
+      "description": "Credential-bait wording in hostname"
+     },
+     {
+      "feature": "num_subdomains",
+      "importance": 0.000233,
+      "description": "Subdomain levels below the registrable domain"
+     },
+     {
+      "feature": "has_ip_host",
+      "importance": 0.0,
+      "description": "Raw IP address instead of a domain"
+     },
+     {
+      "feature": "has_nonstandard_port",
+      "importance": 0.0,
+      "description": "Non-standard port in the URL"
+     },
+     {
+      "feature": "has_punycode",
+      "importance": 0.0,
+      "description": "Punycode ('xn--') homograph host"
+     },
+     {
+      "feature": "has_userinfo_trick",
+      "importance": 0.0,
+      "description": "'@' userinfo trick hiding the real host"
+     },
+     {
+      "feature": "double_slash_in_path",
+      "importance": 0.0,
+      "description": "'//' inside the path (redirect-style)"
+     },
+     {
+      "feature": "num_at",
+      "importance": 0.0,
+      "description": "'@' symbols in the URL"
+     },
+     {
+      "feature": "brand_misplaced",
+      "importance": 0.0,
+      "description": "Known brand in subdomain/path of another domain"
+     },
+     {
+      "feature": "has_hex_blob",
+      "importance": 0.0,
+      "description": "Long hex blob (token-like) in path/query"
+     },
+     {
+      "feature": "suspicious_host_pattern",
+      "importance": 0.0,
+      "description": "Combined brand, credential, and suspicious-domain pattern"
+     }
+    ],
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 0,
+      "contribution": -1.457193,
+      "direction": "decreases phishing score",
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "num_digits_host",
+      "value": 0,
+      "contribution": -1.441285,
+      "direction": "decreases phishing score",
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "credential_keywords",
+      "value": 0,
+      "contribution": -1.334787,
+      "direction": "decreases phishing score",
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "query_length",
+      "value": 0,
+      "contribution": -0.867497,
+      "direction": "decreases phishing score",
+      "description": "Query-string length"
+     },
+     {
+      "feature": "is_shortener",
+      "value": 0,
+      "contribution": -0.731629,
+      "direction": "decreases phishing score",
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 0,
+      "contribution": -0.674813,
+      "direction": "decreases phishing score",
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "domain_entropy",
+      "value": 2.8424,
+      "contribution": -0.592843,
+      "direction": "decreases phishing score",
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "num_dots_host",
+      "value": 2,
+      "contribution": -0.531477,
+      "direction": "decreases phishing score",
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "brand_in_host",
+      "value": 0,
+      "contribution": -0.449043,
+      "direction": "decreases phishing score",
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "max_label_length",
+      "value": 6,
+      "contribution": -0.335037,
+      "direction": "decreases phishing score",
+      "description": "Longest hostname label"
+     }
+    ],
+    "analysis_time_ms": 6078.11,
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
+      "recall": 1.0,
+      "f1": 0.9554,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0141,
+      "test_size": 755
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.996,
+      "precision": 1.0,
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+       "decision_threshold": 0.35,
+       "precision": 0.9916,
+       "recall": 1.0,
+       "f1": 0.9958,
+       "confusion_matrix": {
+        "labels": [
+         "legitimate",
+         "phishing"
+        ],
+        "matrix": [
+         [
+          454,
+          3
+         ],
+         [
+          0,
+          356
+         ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+       },
+       "test_size": 813
+      }
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "ip_address": "142.251.151.119",
+    "ips": [
+     "142.251.151.119",
+     "142.251.155.119",
+     "142.251.152.119",
+     "142.251.154.119",
+     "142.251.150.119",
+     "142.251.153.119",
+     "142.251.156.119",
+     "142.251.157.119"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://www.google.com/"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE2",
+    "subject": "www.google.com",
+    "expires": "Dec 30 19:09:53 2026 GMT",
+    "expires_in_days": 62,
+    "not_before": "Oct  7 19:09:54 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "www.google.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "subdomains": [
+     "www"
+    ],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "142.251.151.119",
+     "142.251.155.119",
+     "142.251.152.119",
+     "142.251.154.119",
+     "142.251.150.119",
+     "142.251.153.119",
+     "142.251.156.119",
+     "142.251.157.119"
+    ],
+    "ip_address": "142.251.151.119",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": true,
+    "provider": "virustotal",
+    "reputation": "Clean",
+    "malware": "Not Detected",
+    "phishing": "Not Detected",
+    "engines": {
+     "malicious": 0,
+     "suspicious": 0,
+     "harmless": 61,
+     "undetected": 32,
+     "total": 93
+    },
+    "note": "VirusTotal: 0 malicious / 0 suspicious of 93 engines."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-10-29T08:35:54",
+   "timestamp_display": "29 Oct 2026 08:36",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261028_221414_14cf16",
+  "url": "https://www.google.com/",
+  "domain": "google.com",
+  "score": 95,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-10-28T22:14:14",
+  "timestamp_display": "28 Oct 2026 22:14",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261028_221414_14cf16",
+   "url": "https://www.google.com/",
+   "display_url": "https://www.google.com/",
+   "hostname": "www.google.com",
+   "domain_display": "google.com",
+   "score": 95,
+   "phishing_probability": 0.0001,
+   "risk_score": 0.0,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 95: domain registration information could not be verified."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://www.google.com/",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.000131,
+    "phishing_probability": 0.000131,
+    "percent": 0.01,
+    "risk_score": 0.01,
+    "probabilities_calibrated": false,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "prediction": "legitimate",
+    "risk_band": "LOW",
+    "confidence": 0.999869,
+    "features": {
+     "url_length": 23,
+     "hostname_length": 14,
+     "num_dots_host": 2,
+     "num_hyphens_host": 0,
+     "num_digits_host": 0,
+     "digit_ratio_host": 0.0,
+     "num_subdomains": 0,
+     "max_label_length": 6,
+     "domain_entropy": 2.8424,
+     "has_ip_host": 0,
+     "is_https": 1,
+     "has_nonstandard_port": 0,
+     "suspicious_tld": 0,
+     "is_shortener": 0,
+     "has_punycode": 0,
+     "has_userinfo_trick": 0,
+     "double_slash_in_path": 0,
+     "num_percent_encoded": 0,
+     "num_special_chars": 0,
+     "num_at": 0,
+     "path_length": 1,
+     "path_depth": 0,
+     "query_length": 0,
+     "num_query_params": 0,
+     "credential_keywords": 0,
+     "urgency_keywords": 0,
+     "brand_misplaced": 0,
+     "has_hex_blob": 0,
+     "brand_typosquat": 0,
+     "brand_in_host": 0,
+     "host_has_credential_terms": 0,
+     "host_label_count": 3,
+     "suspicious_host_pattern": 0
+    },
+    "feature_names": [
+     "url_length",
+     "hostname_length",
+     "num_dots_host",
+     "num_hyphens_host",
+     "num_digits_host",
+     "digit_ratio_host",
+     "num_subdomains",
+     "max_label_length",
+     "domain_entropy",
+     "has_ip_host",
+     "is_https",
+     "has_nonstandard_port",
+     "suspicious_tld",
+     "is_shortener",
+     "has_punycode",
+     "has_userinfo_trick",
+     "double_slash_in_path",
+     "num_percent_encoded",
+     "num_special_chars",
+     "num_at",
+     "path_length",
+     "path_depth",
+     "query_length",
+     "num_query_params",
+     "credential_keywords",
+     "urgency_keywords",
+     "brand_misplaced",
+     "has_hex_blob",
+     "brand_typosquat",
+     "brand_in_host",
+     "host_has_credential_terms",
+     "host_label_count",
+     "suspicious_host_pattern"
+    ],
+    "explanation": {
+     "available": true,
+     "method": "XGBoost native TreeSHAP (margin/log-odds)",
+     "base_value": 0.27189,
+     "contributions": [
+      {
+       "feature": "num_hyphens_host",
+       "value": 0,
+       "contribution": -1.457193,
+       "direction": "decreases phishing score",
+       "description": "Hyphen count in the hostname"
+      },
+      {
+       "feature": "num_digits_host",
+       "value": 0,
+       "contribution": -1.441285,
+       "direction": "decreases phishing score",
+       "description": "Digit count in the hostname"
+      },
+      {
+       "feature": "credential_keywords",
+       "value": 0,
+       "contribution": -1.334787,
+       "direction": "decreases phishing score",
+       "description": "Credential-bait keywords (login, verify, ...)"
+      },
+      {
+       "feature": "query_length",
+       "value": 0,
+       "contribution": -0.867497,
+       "direction": "decreases phishing score",
+       "description": "Query-string length"
+      },
+      {
+       "feature": "is_shortener",
+       "value": 0,
+       "contribution": -0.731629,
+       "direction": "decreases phishing score",
+       "description": "Known URL shortener"
+      },
+      {
+       "feature": "suspicious_tld",
+       "value": 0,
+       "contribution": -0.674813,
+       "direction": "decreases phishing score",
+       "description": "High-risk top-level domain (.xyz, .tk, ...)"
+      },
+      {
+       "feature": "domain_entropy",
+       "value": 2.8424,
+       "contribution": -0.592843,
+       "direction": "decreases phishing score",
+       "description": "Character entropy of the hostname (randomness)"
+      },
+      {
+       "feature": "num_dots_host",
+       "value": 2,
+       "contribution": -0.531477,
+       "direction": "decreases phishing score",
+       "description": "Dot count in the hostname"
+      },
+      {
+       "feature": "brand_in_host",
+       "value": 0,
+       "contribution": -0.449043,
+       "direction": "decreases phishing score",
+       "description": "Protected brand appears in hostname outside its registered domain"
+      },
+      {
+       "feature": "max_label_length",
+       "value": 6,
+       "contribution": -0.335037,
+       "direction": "decreases phishing score",
+       "description": "Longest hostname label"
+      }
+     ],
+     "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious."
+    },
+    "global_feature_importance": [
+     {
+      "feature": "num_hyphens_host",
+      "importance": 0.268561,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "importance": 0.229047,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "importance": 0.139405,
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_percent_encoded",
+      "importance": 0.064005,
+      "description": "Percent-encoded characters"
+     },
+     {
+      "feature": "num_query_params",
+      "importance": 0.058701,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "urgency_keywords",
+      "importance": 0.044377,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     },
+     {
+      "feature": "num_special_chars",
+      "importance": 0.039478,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "credential_keywords",
+      "importance": 0.037352,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "brand_typosquat",
+      "importance": 0.026392,
+      "description": "Registered domain resembles a protected brand"
+     },
+     {
+      "feature": "query_length",
+      "importance": 0.021528,
+      "description": "Query-string length"
+     },
+     {
+      "feature": "max_label_length",
+      "importance": 0.015776,
+      "description": "Longest hostname label"
+     },
+     {
+      "feature": "digit_ratio_host",
+      "importance": 0.009899,
+      "description": "Share of digits in the hostname"
+     },
+     {
+      "feature": "is_shortener",
+      "importance": 0.00817,
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "num_digits_host",
+      "importance": 0.006825,
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "url_length",
+      "importance": 0.006097,
+      "description": "Total URL length"
+     },
+     {
+      "feature": "num_dots_host",
+      "importance": 0.005093,
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "path_length",
+      "importance": 0.004862,
+      "description": "Path length"
+     },
+     {
+      "feature": "host_label_count",
+      "importance": 0.004237,
+      "description": "Number of hostname labels"
+     },
+     {
+      "feature": "hostname_length",
+      "importance": 0.003276,
+      "description": "Hostname length"
+     },
+     {
+      "feature": "is_https",
+      "importance": 0.003214,
+      "description": "Uses HTTPS"
+     },
+     {
+      "feature": "domain_entropy",
+      "importance": 0.002003,
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "path_depth",
+      "importance": 0.000917,
+      "description": "Path depth (number of '/' segments)"
+     },
+     {
+      "feature": "host_has_credential_terms",
+      "importance": 0.000551,
+      "description": "Credential-bait wording in hostname"
+     },
+     {
+      "feature": "num_subdomains",
+      "importance": 0.000233,
+      "description": "Subdomain levels below the registrable domain"
+     },
+     {
+      "feature": "has_ip_host",
+      "importance": 0.0,
+      "description": "Raw IP address instead of a domain"
+     },
+     {
+      "feature": "has_nonstandard_port",
+      "importance": 0.0,
+      "description": "Non-standard port in the URL"
+     },
+     {
+      "feature": "has_punycode",
+      "importance": 0.0,
+      "description": "Punycode ('xn--') homograph host"
+     },
+     {
+      "feature": "has_userinfo_trick",
+      "importance": 0.0,
+      "description": "'@' userinfo trick hiding the real host"
+     },
+     {
+      "feature": "double_slash_in_path",
+      "importance": 0.0,
+      "description": "'//' inside the path (redirect-style)"
+     },
+     {
+      "feature": "num_at",
+      "importance": 0.0,
+      "description": "'@' symbols in the URL"
+     },
+     {
+      "feature": "brand_misplaced",
+      "importance": 0.0,
+      "description": "Known brand in subdomain/path of another domain"
+     },
+     {
+      "feature": "has_hex_blob",
+      "importance": 0.0,
+      "description": "Long hex blob (token-like) in path/query"
+     },
+     {
+      "feature": "suspicious_host_pattern",
+      "importance": 0.0,
+      "description": "Combined brand, credential, and suspicious-domain pattern"
+     }
+    ],
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 0,
+      "contribution": -1.457193,
+      "direction": "decreases phishing score",
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "num_digits_host",
+      "value": 0,
+      "contribution": -1.441285,
+      "direction": "decreases phishing score",
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "credential_keywords",
+      "value": 0,
+      "contribution": -1.334787,
+      "direction": "decreases phishing score",
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "query_length",
+      "value": 0,
+      "contribution": -0.867497,
+      "direction": "decreases phishing score",
+      "description": "Query-string length"
+     },
+     {
+      "feature": "is_shortener",
+      "value": 0,
+      "contribution": -0.731629,
+      "direction": "decreases phishing score",
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 0,
+      "contribution": -0.674813,
+      "direction": "decreases phishing score",
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "domain_entropy",
+      "value": 2.8424,
+      "contribution": -0.592843,
+      "direction": "decreases phishing score",
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "num_dots_host",
+      "value": 2,
+      "contribution": -0.531477,
+      "direction": "decreases phishing score",
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "brand_in_host",
+      "value": 0,
+      "contribution": -0.449043,
+      "direction": "decreases phishing score",
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "max_label_length",
+      "value": 6,
+      "contribution": -0.335037,
+      "direction": "decreases phishing score",
+      "description": "Longest hostname label"
+     }
+    ],
+    "analysis_time_ms": 15.32,
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
+      "recall": 1.0,
+      "f1": 0.9554,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0141,
+      "test_size": 755
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.996,
+      "precision": 1.0,
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+       "decision_threshold": 0.35,
+       "precision": 0.9916,
+       "recall": 1.0,
+       "f1": 0.9958,
+       "confusion_matrix": {
+        "labels": [
+         "legitimate",
+         "phishing"
+        ],
+        "matrix": [
+         [
+          454,
+          3
+         ],
+         [
+          0,
+          356
+         ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+       },
+       "test_size": 813
+      }
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "ip_address": "2001:4860:4829:7700::",
+    "ips": [
+     "2001:4860:4829:7700::",
+     "2001:4860:4828:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:482a:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:482d:7700::",
+     "2001:4860:4826:7700::",
+     "142.251.157.119",
+     "142.251.152.119",
+     "142.251.151.119",
+     "142.251.150.119",
+     "142.251.153.119",
+     "142.251.154.119",
+     "142.251.155.119",
+     "142.251.156.119"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://www.google.com/"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE2",
+    "subject": "www.google.com",
+    "expires": "Dec 30 19:09:53 2026 GMT",
+    "expires_in_days": 63,
+    "not_before": "Oct  7 19:09:54 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "www.google.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "subdomains": [
+     "www"
+    ],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2001:4860:4829:7700::",
+     "2001:4860:4828:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:482a:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:482d:7700::",
+     "2001:4860:4826:7700::",
+     "142.251.157.119",
+     "142.251.152.119",
+     "142.251.151.119",
+     "142.251.150.119",
+     "142.251.153.119",
+     "142.251.154.119",
+     "142.251.155.119",
+     "142.251.156.119"
+    ],
+    "ip_address": "2001:4860:4829:7700::",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": true,
+    "provider": "virustotal",
+    "reputation": "Clean",
+    "malware": "Not Detected",
+    "phishing": "Not Detected",
+    "engines": {
+     "malicious": 0,
+     "suspicious": 0,
+     "harmless": 62,
+     "undetected": 31,
+     "total": 93
+    },
+    "note": "VirusTotal: 0 malicious / 0 suspicious of 93 engines."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-10-28T22:14:14",
+   "timestamp_display": "28 Oct 2026 22:14",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261028_221229_b8084e",
+  "url": "https://google.com",
+  "domain": "google.com",
+  "score": 18,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "MALICIOUS",
+  "classification_label": "MALICIOUS",
+  "timestamp": "2026-10-28T22:12:29",
+  "timestamp_display": "28 Oct 2026 22:12",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261028_221229_b8084e",
+   "url": "https://google.com",
+   "display_url": "https://google.com",
+   "hostname": "google.com",
+   "domain_display": "google.com",
+   "score": 18,
+   "phishing_probability": 0.0002,
+   "risk_score": 0.0,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "MALICIOUS",
+   "classification_label": "MALICIOUS",
+   "classification_summary": "Malicious Indicators Detected",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 95: domain registration information could not be verified.",
+    "Score capped at 18: threat intelligence reported malicious activity."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://google.com",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.000239,
+    "phishing_probability": 0.000239,
+    "percent": 0.02,
+    "risk_score": 0.02,
+    "probabilities_calibrated": false,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "prediction": "legitimate",
+    "risk_band": "LOW",
+    "confidence": 0.999761,
+    "features": {
+     "url_length": 18,
+     "hostname_length": 10,
+     "num_dots_host": 1,
+     "num_hyphens_host": 0,
+     "num_digits_host": 0,
+     "digit_ratio_host": 0.0,
+     "num_subdomains": 0,
+     "max_label_length": 6,
+     "domain_entropy": 2.6464,
+     "has_ip_host": 0,
+     "is_https": 1,
+     "has_nonstandard_port": 0,
+     "suspicious_tld": 0,
+     "is_shortener": 0,
+     "has_punycode": 0,
+     "has_userinfo_trick": 0,
+     "double_slash_in_path": 0,
+     "num_percent_encoded": 0,
+     "num_special_chars": 0,
+     "num_at": 0,
+     "path_length": 0,
+     "path_depth": 0,
+     "query_length": 0,
+     "num_query_params": 0,
+     "credential_keywords": 0,
+     "urgency_keywords": 0,
+     "brand_misplaced": 0,
+     "has_hex_blob": 0,
+     "brand_typosquat": 0,
+     "brand_in_host": 0,
+     "host_has_credential_terms": 0,
+     "host_label_count": 2,
+     "suspicious_host_pattern": 0
+    },
+    "feature_names": [
+     "url_length",
+     "hostname_length",
+     "num_dots_host",
+     "num_hyphens_host",
+     "num_digits_host",
+     "digit_ratio_host",
+     "num_subdomains",
+     "max_label_length",
+     "domain_entropy",
+     "has_ip_host",
+     "is_https",
+     "has_nonstandard_port",
+     "suspicious_tld",
+     "is_shortener",
+     "has_punycode",
+     "has_userinfo_trick",
+     "double_slash_in_path",
+     "num_percent_encoded",
+     "num_special_chars",
+     "num_at",
+     "path_length",
+     "path_depth",
+     "query_length",
+     "num_query_params",
+     "credential_keywords",
+     "urgency_keywords",
+     "brand_misplaced",
+     "has_hex_blob",
+     "brand_typosquat",
+     "brand_in_host",
+     "host_has_credential_terms",
+     "host_label_count",
+     "suspicious_host_pattern"
+    ],
+    "explanation": {
+     "available": true,
+     "method": "XGBoost native TreeSHAP (margin/log-odds)",
+     "base_value": 0.27189,
+     "contributions": [
+      {
+       "feature": "credential_keywords",
+       "value": 0,
+       "contribution": -1.428156,
+       "direction": "decreases phishing score",
+       "description": "Credential-bait keywords (login, verify, ...)"
+      },
+      {
+       "feature": "num_hyphens_host",
+       "value": 0,
+       "contribution": -1.412914,
+       "direction": "decreases phishing score",
+       "description": "Hyphen count in the hostname"
+      },
+      {
+       "feature": "num_digits_host",
+       "value": 0,
+       "contribution": -1.205309,
+       "direction": "decreases phishing score",
+       "description": "Digit count in the hostname"
+      },
+      {
+       "feature": "query_length",
+       "value": 0,
+       "contribution": -0.932237,
+       "direction": "decreases phishing score",
+       "description": "Query-string length"
+      },
+      {
+       "feature": "url_length",
+       "value": 18,
+       "contribution": -0.931497,
+       "direction": "decreases phishing score",
+       "description": "Total URL length"
+      },
+      {
+       "feature": "is_shortener",
+       "value": 0,
+       "contribution": -0.710883,
+       "direction": "decreases phishing score",
+       "description": "Known URL shortener"
+      },
+      {
+       "feature": "suspicious_tld",
+       "value": 0,
+       "contribution": -0.662398,
+       "direction": "decreases phishing score",
+       "description": "High-risk top-level domain (.xyz, .tk, ...)"
+      },
+      {
+       "feature": "brand_in_host",
+       "value": 0,
+       "contribution": -0.446649,
+       "direction": "decreases phishing score",
+       "description": "Protected brand appears in hostname outside its registered domain"
+      },
+      {
+       "feature": "num_dots_host",
+       "value": 1,
+       "contribution": 0.402594,
+       "direction": "increases phishing score",
+       "description": "Dot count in the hostname"
+      },
+      {
+       "feature": "max_label_length",
+       "value": 6,
+       "contribution": -0.351471,
+       "direction": "decreases phishing score",
+       "description": "Longest hostname label"
+      }
+     ],
+     "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious."
+    },
+    "global_feature_importance": [
+     {
+      "feature": "num_hyphens_host",
+      "importance": 0.268561,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "importance": 0.229047,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "importance": 0.139405,
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_percent_encoded",
+      "importance": 0.064005,
+      "description": "Percent-encoded characters"
+     },
+     {
+      "feature": "num_query_params",
+      "importance": 0.058701,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "urgency_keywords",
+      "importance": 0.044377,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     },
+     {
+      "feature": "num_special_chars",
+      "importance": 0.039478,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "credential_keywords",
+      "importance": 0.037352,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "brand_typosquat",
+      "importance": 0.026392,
+      "description": "Registered domain resembles a protected brand"
+     },
+     {
+      "feature": "query_length",
+      "importance": 0.021528,
+      "description": "Query-string length"
+     },
+     {
+      "feature": "max_label_length",
+      "importance": 0.015776,
+      "description": "Longest hostname label"
+     },
+     {
+      "feature": "digit_ratio_host",
+      "importance": 0.009899,
+      "description": "Share of digits in the hostname"
+     },
+     {
+      "feature": "is_shortener",
+      "importance": 0.00817,
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "num_digits_host",
+      "importance": 0.006825,
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "url_length",
+      "importance": 0.006097,
+      "description": "Total URL length"
+     },
+     {
+      "feature": "num_dots_host",
+      "importance": 0.005093,
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "path_length",
+      "importance": 0.004862,
+      "description": "Path length"
+     },
+     {
+      "feature": "host_label_count",
+      "importance": 0.004237,
+      "description": "Number of hostname labels"
+     },
+     {
+      "feature": "hostname_length",
+      "importance": 0.003276,
+      "description": "Hostname length"
+     },
+     {
+      "feature": "is_https",
+      "importance": 0.003214,
+      "description": "Uses HTTPS"
+     },
+     {
+      "feature": "domain_entropy",
+      "importance": 0.002003,
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "path_depth",
+      "importance": 0.000917,
+      "description": "Path depth (number of '/' segments)"
+     },
+     {
+      "feature": "host_has_credential_terms",
+      "importance": 0.000551,
+      "description": "Credential-bait wording in hostname"
+     },
+     {
+      "feature": "num_subdomains",
+      "importance": 0.000233,
+      "description": "Subdomain levels below the registrable domain"
+     },
+     {
+      "feature": "has_ip_host",
+      "importance": 0.0,
+      "description": "Raw IP address instead of a domain"
+     },
+     {
+      "feature": "has_nonstandard_port",
+      "importance": 0.0,
+      "description": "Non-standard port in the URL"
+     },
+     {
+      "feature": "has_punycode",
+      "importance": 0.0,
+      "description": "Punycode ('xn--') homograph host"
+     },
+     {
+      "feature": "has_userinfo_trick",
+      "importance": 0.0,
+      "description": "'@' userinfo trick hiding the real host"
+     },
+     {
+      "feature": "double_slash_in_path",
+      "importance": 0.0,
+      "description": "'//' inside the path (redirect-style)"
+     },
+     {
+      "feature": "num_at",
+      "importance": 0.0,
+      "description": "'@' symbols in the URL"
+     },
+     {
+      "feature": "brand_misplaced",
+      "importance": 0.0,
+      "description": "Known brand in subdomain/path of another domain"
+     },
+     {
+      "feature": "has_hex_blob",
+      "importance": 0.0,
+      "description": "Long hex blob (token-like) in path/query"
+     },
+     {
+      "feature": "suspicious_host_pattern",
+      "importance": 0.0,
+      "description": "Combined brand, credential, and suspicious-domain pattern"
+     }
+    ],
+    "top_signals": [
+     {
+      "feature": "credential_keywords",
+      "value": 0,
+      "contribution": -1.428156,
+      "direction": "decreases phishing score",
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "num_hyphens_host",
+      "value": 0,
+      "contribution": -1.412914,
+      "direction": "decreases phishing score",
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "num_digits_host",
+      "value": 0,
+      "contribution": -1.205309,
+      "direction": "decreases phishing score",
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "query_length",
+      "value": 0,
+      "contribution": -0.932237,
+      "direction": "decreases phishing score",
+      "description": "Query-string length"
+     },
+     {
+      "feature": "url_length",
+      "value": 18,
+      "contribution": -0.931497,
+      "direction": "decreases phishing score",
+      "description": "Total URL length"
+     },
+     {
+      "feature": "is_shortener",
+      "value": 0,
+      "contribution": -0.710883,
+      "direction": "decreases phishing score",
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 0,
+      "contribution": -0.662398,
+      "direction": "decreases phishing score",
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "value": 0,
+      "contribution": -0.446649,
+      "direction": "decreases phishing score",
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_dots_host",
+      "value": 1,
+      "contribution": 0.402594,
+      "direction": "increases phishing score",
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "max_label_length",
+      "value": 6,
+      "contribution": -0.351471,
+      "direction": "decreases phishing score",
+      "description": "Longest hostname label"
+     }
+    ],
+    "analysis_time_ms": 35.54,
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
+      "recall": 1.0,
+      "f1": 0.9554,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0141,
+      "test_size": 755
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.996,
+      "precision": 1.0,
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+       "decision_threshold": 0.35,
+       "precision": 0.9916,
+       "recall": 1.0,
+       "f1": 0.9958,
+       "confusion_matrix": {
+        "labels": [
+         "legitimate",
+         "phishing"
+        ],
+        "matrix": [
+         [
+          454,
+          3
+         ],
+         [
+          0,
+          356
+         ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+       },
+       "test_size": 813
+      }
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 0,
+    "ip_address": "2404:6800:4007:833::200e",
+    "ips": [
+     "2404:6800:4007:833::200e",
+     "142.251.223.14"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 1,
+    "redirect_chain": [
+     {
+      "status": 301,
+      "from": "https://google.com",
+      "to": "https://www.google.com/"
+     }
+    ],
+    "final_url": "https://www.google.com/"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE2",
+    "subject": "*.google.com",
+    "expires": "Dec 30 19:07:41 2026 GMT",
+    "expires_in_days": 63,
+    "not_before": "Oct  7 19:07:42 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "*.google.com",
+     "*.appengine.google.com",
+     "*.bdn.dev",
+     "*.origin-test.bdn.dev",
+     "*.cloud.google.com",
+     "*.crowdsource.google.com",
+     "*.datacompute.google.com",
+     "*.google.ca",
+     "*.google.cl",
+     "*.google.co.in"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 0,
+    "subdomains": [],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2404:6800:4007:833::200e",
+     "142.251.223.14"
+    ],
+    "ip_address": "2404:6800:4007:833::200e",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": true,
+    "provider": "virustotal",
+    "reputation": "Malicious",
+    "malware": "Detected",
+    "phishing": "Detected",
+    "engines": {
+     "malicious": 1,
+     "suspicious": 0,
+     "harmless": 63,
+     "undetected": 29,
+     "total": 93
+    },
+    "note": "VirusTotal: 1 malicious / 0 suspicious of 93 engines."
+   },
+   "findings": [],
+   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
+   "timestamp": "2026-10-28T22:12:29",
+   "timestamp_display": "28 Oct 2026 22:12",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261028_212105_785ea7",
+  "url": "https://www.google.com/",
+  "domain": "google.com",
+  "score": 95,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-10-28T21:21:05",
+  "timestamp_display": "28 Oct 2026 21:21",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261028_212105_785ea7",
+   "url": "https://www.google.com/",
+   "display_url": "https://www.google.com/",
+   "hostname": "www.google.com",
+   "domain_display": "google.com",
+   "score": 95,
+   "phishing_probability": 0.0001,
+   "risk_score": 0.0,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 95: domain registration information could not be verified."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://www.google.com/",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.000131,
+    "phishing_probability": 0.000131,
+    "percent": 0.01,
+    "risk_score": 0.01,
+    "probabilities_calibrated": false,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "prediction": "legitimate",
+    "risk_band": "LOW",
+    "confidence": 0.999869,
+    "features": {
+     "url_length": 23,
+     "hostname_length": 14,
+     "num_dots_host": 2,
+     "num_hyphens_host": 0,
+     "num_digits_host": 0,
+     "digit_ratio_host": 0.0,
+     "num_subdomains": 0,
+     "max_label_length": 6,
+     "domain_entropy": 2.8424,
+     "has_ip_host": 0,
+     "is_https": 1,
+     "has_nonstandard_port": 0,
+     "suspicious_tld": 0,
+     "is_shortener": 0,
+     "has_punycode": 0,
+     "has_userinfo_trick": 0,
+     "double_slash_in_path": 0,
+     "num_percent_encoded": 0,
+     "num_special_chars": 0,
+     "num_at": 0,
+     "path_length": 1,
+     "path_depth": 0,
+     "query_length": 0,
+     "num_query_params": 0,
+     "credential_keywords": 0,
+     "urgency_keywords": 0,
+     "brand_misplaced": 0,
+     "has_hex_blob": 0,
+     "brand_typosquat": 0,
+     "brand_in_host": 0,
+     "host_has_credential_terms": 0,
+     "host_label_count": 3,
+     "suspicious_host_pattern": 0
+    },
+    "feature_names": [
+     "url_length",
+     "hostname_length",
+     "num_dots_host",
+     "num_hyphens_host",
+     "num_digits_host",
+     "digit_ratio_host",
+     "num_subdomains",
+     "max_label_length",
+     "domain_entropy",
+     "has_ip_host",
+     "is_https",
+     "has_nonstandard_port",
+     "suspicious_tld",
+     "is_shortener",
+     "has_punycode",
+     "has_userinfo_trick",
+     "double_slash_in_path",
+     "num_percent_encoded",
+     "num_special_chars",
+     "num_at",
+     "path_length",
+     "path_depth",
+     "query_length",
+     "num_query_params",
+     "credential_keywords",
+     "urgency_keywords",
+     "brand_misplaced",
+     "has_hex_blob",
+     "brand_typosquat",
+     "brand_in_host",
+     "host_has_credential_terms",
+     "host_label_count",
+     "suspicious_host_pattern"
+    ],
+    "explanation": {
+     "available": true,
+     "method": "XGBoost native TreeSHAP (margin/log-odds)",
+     "base_value": 0.27189,
+     "contributions": [
+      {
+       "feature": "num_hyphens_host",
+       "value": 0,
+       "contribution": -1.457193,
+       "direction": "decreases phishing score",
+       "description": "Hyphen count in the hostname"
+      },
+      {
+       "feature": "num_digits_host",
+       "value": 0,
+       "contribution": -1.441285,
+       "direction": "decreases phishing score",
+       "description": "Digit count in the hostname"
+      },
+      {
+       "feature": "credential_keywords",
+       "value": 0,
+       "contribution": -1.334787,
+       "direction": "decreases phishing score",
+       "description": "Credential-bait keywords (login, verify, ...)"
+      },
+      {
+       "feature": "query_length",
+       "value": 0,
+       "contribution": -0.867497,
+       "direction": "decreases phishing score",
+       "description": "Query-string length"
+      },
+      {
+       "feature": "is_shortener",
+       "value": 0,
+       "contribution": -0.731629,
+       "direction": "decreases phishing score",
+       "description": "Known URL shortener"
+      },
+      {
+       "feature": "suspicious_tld",
+       "value": 0,
+       "contribution": -0.674813,
+       "direction": "decreases phishing score",
+       "description": "High-risk top-level domain (.xyz, .tk, ...)"
+      },
+      {
+       "feature": "domain_entropy",
+       "value": 2.8424,
+       "contribution": -0.592843,
+       "direction": "decreases phishing score",
+       "description": "Character entropy of the hostname (randomness)"
+      },
+      {
+       "feature": "num_dots_host",
+       "value": 2,
+       "contribution": -0.531477,
+       "direction": "decreases phishing score",
+       "description": "Dot count in the hostname"
+      },
+      {
+       "feature": "brand_in_host",
+       "value": 0,
+       "contribution": -0.449043,
+       "direction": "decreases phishing score",
+       "description": "Protected brand appears in hostname outside its registered domain"
+      },
+      {
+       "feature": "max_label_length",
+       "value": 6,
+       "contribution": -0.335037,
+       "direction": "decreases phishing score",
+       "description": "Longest hostname label"
+      }
+     ],
+     "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious."
+    },
+    "global_feature_importance": [
+     {
+      "feature": "num_hyphens_host",
+      "importance": 0.268561,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "importance": 0.229047,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "importance": 0.139405,
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_percent_encoded",
+      "importance": 0.064005,
+      "description": "Percent-encoded characters"
+     },
+     {
+      "feature": "num_query_params",
+      "importance": 0.058701,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "urgency_keywords",
+      "importance": 0.044377,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     },
+     {
+      "feature": "num_special_chars",
+      "importance": 0.039478,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "credential_keywords",
+      "importance": 0.037352,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "brand_typosquat",
+      "importance": 0.026392,
+      "description": "Registered domain resembles a protected brand"
+     },
+     {
+      "feature": "query_length",
+      "importance": 0.021528,
+      "description": "Query-string length"
+     },
+     {
+      "feature": "max_label_length",
+      "importance": 0.015776,
+      "description": "Longest hostname label"
+     },
+     {
+      "feature": "digit_ratio_host",
+      "importance": 0.009899,
+      "description": "Share of digits in the hostname"
+     },
+     {
+      "feature": "is_shortener",
+      "importance": 0.00817,
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "num_digits_host",
+      "importance": 0.006825,
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "url_length",
+      "importance": 0.006097,
+      "description": "Total URL length"
+     },
+     {
+      "feature": "num_dots_host",
+      "importance": 0.005093,
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "path_length",
+      "importance": 0.004862,
+      "description": "Path length"
+     },
+     {
+      "feature": "host_label_count",
+      "importance": 0.004237,
+      "description": "Number of hostname labels"
+     },
+     {
+      "feature": "hostname_length",
+      "importance": 0.003276,
+      "description": "Hostname length"
+     },
+     {
+      "feature": "is_https",
+      "importance": 0.003214,
+      "description": "Uses HTTPS"
+     },
+     {
+      "feature": "domain_entropy",
+      "importance": 0.002003,
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "path_depth",
+      "importance": 0.000917,
+      "description": "Path depth (number of '/' segments)"
+     },
+     {
+      "feature": "host_has_credential_terms",
+      "importance": 0.000551,
+      "description": "Credential-bait wording in hostname"
+     },
+     {
+      "feature": "num_subdomains",
+      "importance": 0.000233,
+      "description": "Subdomain levels below the registrable domain"
+     },
+     {
+      "feature": "has_ip_host",
+      "importance": 0.0,
+      "description": "Raw IP address instead of a domain"
+     },
+     {
+      "feature": "has_nonstandard_port",
+      "importance": 0.0,
+      "description": "Non-standard port in the URL"
+     },
+     {
+      "feature": "has_punycode",
+      "importance": 0.0,
+      "description": "Punycode ('xn--') homograph host"
+     },
+     {
+      "feature": "has_userinfo_trick",
+      "importance": 0.0,
+      "description": "'@' userinfo trick hiding the real host"
+     },
+     {
+      "feature": "double_slash_in_path",
+      "importance": 0.0,
+      "description": "'//' inside the path (redirect-style)"
+     },
+     {
+      "feature": "num_at",
+      "importance": 0.0,
+      "description": "'@' symbols in the URL"
+     },
+     {
+      "feature": "brand_misplaced",
+      "importance": 0.0,
+      "description": "Known brand in subdomain/path of another domain"
+     },
+     {
+      "feature": "has_hex_blob",
+      "importance": 0.0,
+      "description": "Long hex blob (token-like) in path/query"
+     },
+     {
+      "feature": "suspicious_host_pattern",
+      "importance": 0.0,
+      "description": "Combined brand, credential, and suspicious-domain pattern"
+     }
+    ],
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 0,
+      "contribution": -1.457193,
+      "direction": "decreases phishing score",
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "num_digits_host",
+      "value": 0,
+      "contribution": -1.441285,
+      "direction": "decreases phishing score",
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "credential_keywords",
+      "value": 0,
+      "contribution": -1.334787,
+      "direction": "decreases phishing score",
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "query_length",
+      "value": 0,
+      "contribution": -0.867497,
+      "direction": "decreases phishing score",
+      "description": "Query-string length"
+     },
+     {
+      "feature": "is_shortener",
+      "value": 0,
+      "contribution": -0.731629,
+      "direction": "decreases phishing score",
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 0,
+      "contribution": -0.674813,
+      "direction": "decreases phishing score",
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "domain_entropy",
+      "value": 2.8424,
+      "contribution": -0.592843,
+      "direction": "decreases phishing score",
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "num_dots_host",
+      "value": 2,
+      "contribution": -0.531477,
+      "direction": "decreases phishing score",
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "brand_in_host",
+      "value": 0,
+      "contribution": -0.449043,
+      "direction": "decreases phishing score",
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "max_label_length",
+      "value": 6,
+      "contribution": -0.335037,
+      "direction": "decreases phishing score",
+      "description": "Longest hostname label"
+     }
+    ],
+    "analysis_time_ms": 10.8,
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
+      "recall": 1.0,
+      "f1": 0.9554,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0141,
+      "test_size": 755
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.996,
+      "precision": 1.0,
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+       "decision_threshold": 0.35,
+       "precision": 0.9916,
+       "recall": 1.0,
+       "f1": 0.9958,
+       "confusion_matrix": {
+        "labels": [
+         "legitimate",
+         "phishing"
+        ],
+        "matrix": [
+         [
+          454,
+          3
+         ],
+         [
+          0,
+          356
+         ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+       },
+       "test_size": 813
+      }
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "ip_address": "2001:4860:482d:7700::",
+    "ips": [
+     "2001:4860:482d:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:4829:7700::",
+     "2001:4860:482a:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:4826:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:4828:7700::",
+     "142.251.152.119",
+     "142.251.150.119",
+     "142.251.154.119",
+     "142.251.151.119",
+     "142.251.157.119",
+     "142.251.156.119",
+     "142.251.155.119",
+     "142.251.153.119"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://www.google.com/"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE2",
+    "subject": "www.google.com",
+    "expires": "Dec 30 19:09:53 2026 GMT",
+    "expires_in_days": 63,
+    "not_before": "Oct  7 19:09:54 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "www.google.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "subdomains": [
+     "www"
+    ],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2001:4860:482d:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:4829:7700::",
+     "2001:4860:482a:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:4826:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:4828:7700::",
+     "142.251.152.119",
+     "142.251.150.119",
+     "142.251.154.119",
+     "142.251.151.119",
+     "142.251.157.119",
+     "142.251.156.119",
+     "142.251.155.119",
+     "142.251.153.119"
+    ],
+    "ip_address": "2001:4860:482d:7700::",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": true,
+    "provider": "virustotal",
+    "reputation": "Clean",
+    "malware": "Not Detected",
+    "phishing": "Not Detected",
+    "engines": {
+     "malicious": 0,
+     "suspicious": 0,
+     "harmless": 61,
+     "undetected": 32,
+     "total": 93
+    },
+    "note": "VirusTotal: 0 malicious / 0 suspicious of 93 engines."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-10-28T21:21:05",
+   "timestamp_display": "28 Oct 2026 21:21",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261028_211940_9c1c44",
+  "url": "https://www.google.com/",
+  "domain": "google.com",
+  "score": 95,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-10-28T21:19:40",
+  "timestamp_display": "28 Oct 2026 21:19",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261028_211940_9c1c44",
+   "url": "https://www.google.com/",
+   "display_url": "https://www.google.com/",
+   "hostname": "www.google.com",
+   "domain_display": "google.com",
+   "score": 95,
+   "phishing_probability": 0.0001,
+   "risk_score": 0.0,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 95: domain registration information could not be verified."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://www.google.com/",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.000131,
+    "phishing_probability": 0.000131,
+    "percent": 0.01,
+    "risk_score": 0.01,
+    "probabilities_calibrated": false,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "prediction": "legitimate",
+    "risk_band": "LOW",
+    "confidence": 0.999869,
+    "features": {
+     "url_length": 23,
+     "hostname_length": 14,
+     "num_dots_host": 2,
+     "num_hyphens_host": 0,
+     "num_digits_host": 0,
+     "digit_ratio_host": 0.0,
+     "num_subdomains": 0,
+     "max_label_length": 6,
+     "domain_entropy": 2.8424,
+     "has_ip_host": 0,
+     "is_https": 1,
+     "has_nonstandard_port": 0,
+     "suspicious_tld": 0,
+     "is_shortener": 0,
+     "has_punycode": 0,
+     "has_userinfo_trick": 0,
+     "double_slash_in_path": 0,
+     "num_percent_encoded": 0,
+     "num_special_chars": 0,
+     "num_at": 0,
+     "path_length": 1,
+     "path_depth": 0,
+     "query_length": 0,
+     "num_query_params": 0,
+     "credential_keywords": 0,
+     "urgency_keywords": 0,
+     "brand_misplaced": 0,
+     "has_hex_blob": 0,
+     "brand_typosquat": 0,
+     "brand_in_host": 0,
+     "host_has_credential_terms": 0,
+     "host_label_count": 3,
+     "suspicious_host_pattern": 0
+    },
+    "feature_names": [
+     "url_length",
+     "hostname_length",
+     "num_dots_host",
+     "num_hyphens_host",
+     "num_digits_host",
+     "digit_ratio_host",
+     "num_subdomains",
+     "max_label_length",
+     "domain_entropy",
+     "has_ip_host",
+     "is_https",
+     "has_nonstandard_port",
+     "suspicious_tld",
+     "is_shortener",
+     "has_punycode",
+     "has_userinfo_trick",
+     "double_slash_in_path",
+     "num_percent_encoded",
+     "num_special_chars",
+     "num_at",
+     "path_length",
+     "path_depth",
+     "query_length",
+     "num_query_params",
+     "credential_keywords",
+     "urgency_keywords",
+     "brand_misplaced",
+     "has_hex_blob",
+     "brand_typosquat",
+     "brand_in_host",
+     "host_has_credential_terms",
+     "host_label_count",
+     "suspicious_host_pattern"
+    ],
+    "explanation": {
+     "available": true,
+     "method": "XGBoost native TreeSHAP (margin/log-odds)",
+     "base_value": 0.27189,
+     "contributions": [
+      {
+       "feature": "num_hyphens_host",
+       "value": 0,
+       "contribution": -1.457193,
+       "direction": "decreases phishing score",
+       "description": "Hyphen count in the hostname"
+      },
+      {
+       "feature": "num_digits_host",
+       "value": 0,
+       "contribution": -1.441285,
+       "direction": "decreases phishing score",
+       "description": "Digit count in the hostname"
+      },
+      {
+       "feature": "credential_keywords",
+       "value": 0,
+       "contribution": -1.334787,
+       "direction": "decreases phishing score",
+       "description": "Credential-bait keywords (login, verify, ...)"
+      },
+      {
+       "feature": "query_length",
+       "value": 0,
+       "contribution": -0.867497,
+       "direction": "decreases phishing score",
+       "description": "Query-string length"
+      },
+      {
+       "feature": "is_shortener",
+       "value": 0,
+       "contribution": -0.731629,
+       "direction": "decreases phishing score",
+       "description": "Known URL shortener"
+      },
+      {
+       "feature": "suspicious_tld",
+       "value": 0,
+       "contribution": -0.674813,
+       "direction": "decreases phishing score",
+       "description": "High-risk top-level domain (.xyz, .tk, ...)"
+      },
+      {
+       "feature": "domain_entropy",
+       "value": 2.8424,
+       "contribution": -0.592843,
+       "direction": "decreases phishing score",
+       "description": "Character entropy of the hostname (randomness)"
+      },
+      {
+       "feature": "num_dots_host",
+       "value": 2,
+       "contribution": -0.531477,
+       "direction": "decreases phishing score",
+       "description": "Dot count in the hostname"
+      },
+      {
+       "feature": "brand_in_host",
+       "value": 0,
+       "contribution": -0.449043,
+       "direction": "decreases phishing score",
+       "description": "Protected brand appears in hostname outside its registered domain"
+      },
+      {
+       "feature": "max_label_length",
+       "value": 6,
+       "contribution": -0.335037,
+       "direction": "decreases phishing score",
+       "description": "Longest hostname label"
+      }
+     ],
+     "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious."
+    },
+    "global_feature_importance": [
+     {
+      "feature": "num_hyphens_host",
+      "importance": 0.268561,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "importance": 0.229047,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "importance": 0.139405,
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_percent_encoded",
+      "importance": 0.064005,
+      "description": "Percent-encoded characters"
+     },
+     {
+      "feature": "num_query_params",
+      "importance": 0.058701,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "urgency_keywords",
+      "importance": 0.044377,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     },
+     {
+      "feature": "num_special_chars",
+      "importance": 0.039478,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "credential_keywords",
+      "importance": 0.037352,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "brand_typosquat",
+      "importance": 0.026392,
+      "description": "Registered domain resembles a protected brand"
+     },
+     {
+      "feature": "query_length",
+      "importance": 0.021528,
+      "description": "Query-string length"
+     },
+     {
+      "feature": "max_label_length",
+      "importance": 0.015776,
+      "description": "Longest hostname label"
+     },
+     {
+      "feature": "digit_ratio_host",
+      "importance": 0.009899,
+      "description": "Share of digits in the hostname"
+     },
+     {
+      "feature": "is_shortener",
+      "importance": 0.00817,
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "num_digits_host",
+      "importance": 0.006825,
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "url_length",
+      "importance": 0.006097,
+      "description": "Total URL length"
+     },
+     {
+      "feature": "num_dots_host",
+      "importance": 0.005093,
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "path_length",
+      "importance": 0.004862,
+      "description": "Path length"
+     },
+     {
+      "feature": "host_label_count",
+      "importance": 0.004237,
+      "description": "Number of hostname labels"
+     },
+     {
+      "feature": "hostname_length",
+      "importance": 0.003276,
+      "description": "Hostname length"
+     },
+     {
+      "feature": "is_https",
+      "importance": 0.003214,
+      "description": "Uses HTTPS"
+     },
+     {
+      "feature": "domain_entropy",
+      "importance": 0.002003,
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "path_depth",
+      "importance": 0.000917,
+      "description": "Path depth (number of '/' segments)"
+     },
+     {
+      "feature": "host_has_credential_terms",
+      "importance": 0.000551,
+      "description": "Credential-bait wording in hostname"
+     },
+     {
+      "feature": "num_subdomains",
+      "importance": 0.000233,
+      "description": "Subdomain levels below the registrable domain"
+     },
+     {
+      "feature": "has_ip_host",
+      "importance": 0.0,
+      "description": "Raw IP address instead of a domain"
+     },
+     {
+      "feature": "has_nonstandard_port",
+      "importance": 0.0,
+      "description": "Non-standard port in the URL"
+     },
+     {
+      "feature": "has_punycode",
+      "importance": 0.0,
+      "description": "Punycode ('xn--') homograph host"
+     },
+     {
+      "feature": "has_userinfo_trick",
+      "importance": 0.0,
+      "description": "'@' userinfo trick hiding the real host"
+     },
+     {
+      "feature": "double_slash_in_path",
+      "importance": 0.0,
+      "description": "'//' inside the path (redirect-style)"
+     },
+     {
+      "feature": "num_at",
+      "importance": 0.0,
+      "description": "'@' symbols in the URL"
+     },
+     {
+      "feature": "brand_misplaced",
+      "importance": 0.0,
+      "description": "Known brand in subdomain/path of another domain"
+     },
+     {
+      "feature": "has_hex_blob",
+      "importance": 0.0,
+      "description": "Long hex blob (token-like) in path/query"
+     },
+     {
+      "feature": "suspicious_host_pattern",
+      "importance": 0.0,
+      "description": "Combined brand, credential, and suspicious-domain pattern"
+     }
+    ],
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 0,
+      "contribution": -1.457193,
+      "direction": "decreases phishing score",
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "num_digits_host",
+      "value": 0,
+      "contribution": -1.441285,
+      "direction": "decreases phishing score",
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "credential_keywords",
+      "value": 0,
+      "contribution": -1.334787,
+      "direction": "decreases phishing score",
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "query_length",
+      "value": 0,
+      "contribution": -0.867497,
+      "direction": "decreases phishing score",
+      "description": "Query-string length"
+     },
+     {
+      "feature": "is_shortener",
+      "value": 0,
+      "contribution": -0.731629,
+      "direction": "decreases phishing score",
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 0,
+      "contribution": -0.674813,
+      "direction": "decreases phishing score",
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "domain_entropy",
+      "value": 2.8424,
+      "contribution": -0.592843,
+      "direction": "decreases phishing score",
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "num_dots_host",
+      "value": 2,
+      "contribution": -0.531477,
+      "direction": "decreases phishing score",
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "brand_in_host",
+      "value": 0,
+      "contribution": -0.449043,
+      "direction": "decreases phishing score",
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "max_label_length",
+      "value": 6,
+      "contribution": -0.335037,
+      "direction": "decreases phishing score",
+      "description": "Longest hostname label"
+     }
+    ],
+    "analysis_time_ms": 3201.42,
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
+      "recall": 1.0,
+      "f1": 0.9554,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0141,
+      "test_size": 755
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.996,
+      "precision": 1.0,
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+       "decision_threshold": 0.35,
+       "precision": 0.9916,
+       "recall": 1.0,
+       "f1": 0.9958,
+       "confusion_matrix": {
+        "labels": [
+         "legitimate",
+         "phishing"
+        ],
+        "matrix": [
+         [
+          454,
+          3
+         ],
+         [
+          0,
+          356
+         ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+       },
+       "test_size": 813
+      }
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "ip_address": "2001:4860:482d:7700::",
+    "ips": [
+     "2001:4860:482d:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:4829:7700::",
+     "2001:4860:482a:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:4826:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:4828:7700::",
+     "142.251.152.119",
+     "142.251.150.119",
+     "142.251.154.119",
+     "142.251.151.119",
+     "142.251.157.119",
+     "142.251.156.119",
+     "142.251.155.119",
+     "142.251.153.119"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://www.google.com/"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE2",
+    "subject": "www.google.com",
+    "expires": "Dec 30 19:09:53 2026 GMT",
+    "expires_in_days": 63,
+    "not_before": "Oct  7 19:09:54 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "www.google.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "subdomains": [
+     "www"
+    ],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2001:4860:482d:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:4829:7700::",
+     "2001:4860:482a:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:4826:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:4828:7700::",
+     "142.251.152.119",
+     "142.251.150.119",
+     "142.251.154.119",
+     "142.251.151.119",
+     "142.251.157.119",
+     "142.251.156.119",
+     "142.251.155.119",
+     "142.251.153.119"
+    ],
+    "ip_address": "2001:4860:482d:7700::",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": true,
+    "provider": "virustotal",
+    "reputation": "Clean",
+    "malware": "Not Detected",
+    "phishing": "Not Detected",
+    "engines": {
+     "malicious": 0,
+     "suspicious": 0,
+     "harmless": 61,
+     "undetected": 32,
+     "total": 93
+    },
+    "note": "VirusTotal: 0 malicious / 0 suspicious of 93 engines."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-10-28T21:19:40",
+   "timestamp_display": "28 Oct 2026 21:19",
+   "source": "panel"
+  }
+ },
+ {
+  "scan_id": "url_20261028_210536_2ff919",
+  "url": "https://www.google.com/",
+  "domain": "google.com",
+  "score": 95,
+  "risk_level": "LOW",
+  "risk_level_label": "LOW",
+  "classification": "LIKELY_SAFE",
+  "classification_label": "LIKELY SAFE",
+  "timestamp": "2026-10-28T21:05:36",
+  "timestamp_display": "28 Oct 2026 21:05",
+  "result": {
+   "success": true,
+   "scan_id": "url_20261028_210536_2ff919",
+   "url": "https://www.google.com/",
+   "display_url": "https://www.google.com/",
+   "hostname": "www.google.com",
+   "domain_display": "google.com",
+   "score": 95,
+   "phishing_probability": 0.0001,
+   "risk_score": 0.0,
+   "phishing_risk_level": "LOW",
+   "score_semantics": "score is safety 0-100 (higher = safer); risk_score is phishing risk 0-100 (higher = more dangerous) and equals phishing_probability * 100",
+   "risk_level": "LOW",
+   "risk_level_label": "LOW",
+   "classification": "LIKELY_SAFE",
+   "classification_label": "LIKELY SAFE",
+   "classification_summary": "Likely Safe",
+   "reasoning": [
+    "Base score: 100",
+    "Score capped at 95: domain registration information could not be verified."
+   ],
+   "ml_phishing": {
+    "available": true,
+    "url": "https://www.google.com/",
+    "algorithm": "XGBClassifier",
+    "model_version": "1.0.0",
+    "probability": 0.000131,
+    "phishing_probability": 0.000131,
+    "percent": 0.01,
+    "risk_score": 0.01,
+    "probabilities_calibrated": false,
+    "decision_threshold": 0.35,
+    "verdict": "SAFE",
+    "prediction": "legitimate",
+    "risk_band": "LOW",
+    "confidence": 0.999869,
+    "features": {
+     "url_length": 23,
+     "hostname_length": 14,
+     "num_dots_host": 2,
+     "num_hyphens_host": 0,
+     "num_digits_host": 0,
+     "digit_ratio_host": 0.0,
+     "num_subdomains": 0,
+     "max_label_length": 6,
+     "domain_entropy": 2.8424,
+     "has_ip_host": 0,
+     "is_https": 1,
+     "has_nonstandard_port": 0,
+     "suspicious_tld": 0,
+     "is_shortener": 0,
+     "has_punycode": 0,
+     "has_userinfo_trick": 0,
+     "double_slash_in_path": 0,
+     "num_percent_encoded": 0,
+     "num_special_chars": 0,
+     "num_at": 0,
+     "path_length": 1,
+     "path_depth": 0,
+     "query_length": 0,
+     "num_query_params": 0,
+     "credential_keywords": 0,
+     "urgency_keywords": 0,
+     "brand_misplaced": 0,
+     "has_hex_blob": 0,
+     "brand_typosquat": 0,
+     "brand_in_host": 0,
+     "host_has_credential_terms": 0,
+     "host_label_count": 3,
+     "suspicious_host_pattern": 0
+    },
+    "feature_names": [
+     "url_length",
+     "hostname_length",
+     "num_dots_host",
+     "num_hyphens_host",
+     "num_digits_host",
+     "digit_ratio_host",
+     "num_subdomains",
+     "max_label_length",
+     "domain_entropy",
+     "has_ip_host",
+     "is_https",
+     "has_nonstandard_port",
+     "suspicious_tld",
+     "is_shortener",
+     "has_punycode",
+     "has_userinfo_trick",
+     "double_slash_in_path",
+     "num_percent_encoded",
+     "num_special_chars",
+     "num_at",
+     "path_length",
+     "path_depth",
+     "query_length",
+     "num_query_params",
+     "credential_keywords",
+     "urgency_keywords",
+     "brand_misplaced",
+     "has_hex_blob",
+     "brand_typosquat",
+     "brand_in_host",
+     "host_has_credential_terms",
+     "host_label_count",
+     "suspicious_host_pattern"
+    ],
+    "explanation": {
+     "available": true,
+     "method": "XGBoost native TreeSHAP (margin/log-odds)",
+     "base_value": 0.27189,
+     "contributions": [
+      {
+       "feature": "num_hyphens_host",
+       "value": 0,
+       "contribution": -1.457193,
+       "direction": "decreases phishing score",
+       "description": "Hyphen count in the hostname"
+      },
+      {
+       "feature": "num_digits_host",
+       "value": 0,
+       "contribution": -1.441285,
+       "direction": "decreases phishing score",
+       "description": "Digit count in the hostname"
+      },
+      {
+       "feature": "credential_keywords",
+       "value": 0,
+       "contribution": -1.334787,
+       "direction": "decreases phishing score",
+       "description": "Credential-bait keywords (login, verify, ...)"
+      },
+      {
+       "feature": "query_length",
+       "value": 0,
+       "contribution": -0.867497,
+       "direction": "decreases phishing score",
+       "description": "Query-string length"
+      },
+      {
+       "feature": "is_shortener",
+       "value": 0,
+       "contribution": -0.731629,
+       "direction": "decreases phishing score",
+       "description": "Known URL shortener"
+      },
+      {
+       "feature": "suspicious_tld",
+       "value": 0,
+       "contribution": -0.674813,
+       "direction": "decreases phishing score",
+       "description": "High-risk top-level domain (.xyz, .tk, ...)"
+      },
+      {
+       "feature": "domain_entropy",
+       "value": 2.8424,
+       "contribution": -0.592843,
+       "direction": "decreases phishing score",
+       "description": "Character entropy of the hostname (randomness)"
+      },
+      {
+       "feature": "num_dots_host",
+       "value": 2,
+       "contribution": -0.531477,
+       "direction": "decreases phishing score",
+       "description": "Dot count in the hostname"
+      },
+      {
+       "feature": "brand_in_host",
+       "value": 0,
+       "contribution": -0.449043,
+       "direction": "decreases phishing score",
+       "description": "Protected brand appears in hostname outside its registered domain"
+      },
+      {
+       "feature": "max_label_length",
+       "value": 6,
+       "contribution": -0.335037,
+       "direction": "decreases phishing score",
+       "description": "Longest hostname label"
+      }
+     ],
+     "disclaimer": "Contributions describe this model's output, not proof that a URL is malicious."
+    },
+    "global_feature_importance": [
+     {
+      "feature": "num_hyphens_host",
+      "importance": 0.268561,
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "suspicious_tld",
+      "importance": 0.229047,
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "brand_in_host",
+      "importance": 0.139405,
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "num_percent_encoded",
+      "importance": 0.064005,
+      "description": "Percent-encoded characters"
+     },
+     {
+      "feature": "num_query_params",
+      "importance": 0.058701,
+      "description": "Number of query parameters"
+     },
+     {
+      "feature": "urgency_keywords",
+      "importance": 0.044377,
+      "description": "Urgency/manipulation keywords (urgent, claim, ...)"
+     },
+     {
+      "feature": "num_special_chars",
+      "importance": 0.039478,
+      "description": "Special characters (= & % $ ! * , ; ~ _ +)"
+     },
+     {
+      "feature": "credential_keywords",
+      "importance": 0.037352,
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "brand_typosquat",
+      "importance": 0.026392,
+      "description": "Registered domain resembles a protected brand"
+     },
+     {
+      "feature": "query_length",
+      "importance": 0.021528,
+      "description": "Query-string length"
+     },
+     {
+      "feature": "max_label_length",
+      "importance": 0.015776,
+      "description": "Longest hostname label"
+     },
+     {
+      "feature": "digit_ratio_host",
+      "importance": 0.009899,
+      "description": "Share of digits in the hostname"
+     },
+     {
+      "feature": "is_shortener",
+      "importance": 0.00817,
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "num_digits_host",
+      "importance": 0.006825,
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "url_length",
+      "importance": 0.006097,
+      "description": "Total URL length"
+     },
+     {
+      "feature": "num_dots_host",
+      "importance": 0.005093,
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "path_length",
+      "importance": 0.004862,
+      "description": "Path length"
+     },
+     {
+      "feature": "host_label_count",
+      "importance": 0.004237,
+      "description": "Number of hostname labels"
+     },
+     {
+      "feature": "hostname_length",
+      "importance": 0.003276,
+      "description": "Hostname length"
+     },
+     {
+      "feature": "is_https",
+      "importance": 0.003214,
+      "description": "Uses HTTPS"
+     },
+     {
+      "feature": "domain_entropy",
+      "importance": 0.002003,
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "path_depth",
+      "importance": 0.000917,
+      "description": "Path depth (number of '/' segments)"
+     },
+     {
+      "feature": "host_has_credential_terms",
+      "importance": 0.000551,
+      "description": "Credential-bait wording in hostname"
+     },
+     {
+      "feature": "num_subdomains",
+      "importance": 0.000233,
+      "description": "Subdomain levels below the registrable domain"
+     },
+     {
+      "feature": "has_ip_host",
+      "importance": 0.0,
+      "description": "Raw IP address instead of a domain"
+     },
+     {
+      "feature": "has_nonstandard_port",
+      "importance": 0.0,
+      "description": "Non-standard port in the URL"
+     },
+     {
+      "feature": "has_punycode",
+      "importance": 0.0,
+      "description": "Punycode ('xn--') homograph host"
+     },
+     {
+      "feature": "has_userinfo_trick",
+      "importance": 0.0,
+      "description": "'@' userinfo trick hiding the real host"
+     },
+     {
+      "feature": "double_slash_in_path",
+      "importance": 0.0,
+      "description": "'//' inside the path (redirect-style)"
+     },
+     {
+      "feature": "num_at",
+      "importance": 0.0,
+      "description": "'@' symbols in the URL"
+     },
+     {
+      "feature": "brand_misplaced",
+      "importance": 0.0,
+      "description": "Known brand in subdomain/path of another domain"
+     },
+     {
+      "feature": "has_hex_blob",
+      "importance": 0.0,
+      "description": "Long hex blob (token-like) in path/query"
+     },
+     {
+      "feature": "suspicious_host_pattern",
+      "importance": 0.0,
+      "description": "Combined brand, credential, and suspicious-domain pattern"
+     }
+    ],
+    "top_signals": [
+     {
+      "feature": "num_hyphens_host",
+      "value": 0,
+      "contribution": -1.457193,
+      "direction": "decreases phishing score",
+      "description": "Hyphen count in the hostname"
+     },
+     {
+      "feature": "num_digits_host",
+      "value": 0,
+      "contribution": -1.441285,
+      "direction": "decreases phishing score",
+      "description": "Digit count in the hostname"
+     },
+     {
+      "feature": "credential_keywords",
+      "value": 0,
+      "contribution": -1.334787,
+      "direction": "decreases phishing score",
+      "description": "Credential-bait keywords (login, verify, ...)"
+     },
+     {
+      "feature": "query_length",
+      "value": 0,
+      "contribution": -0.867497,
+      "direction": "decreases phishing score",
+      "description": "Query-string length"
+     },
+     {
+      "feature": "is_shortener",
+      "value": 0,
+      "contribution": -0.731629,
+      "direction": "decreases phishing score",
+      "description": "Known URL shortener"
+     },
+     {
+      "feature": "suspicious_tld",
+      "value": 0,
+      "contribution": -0.674813,
+      "direction": "decreases phishing score",
+      "description": "High-risk top-level domain (.xyz, .tk, ...)"
+     },
+     {
+      "feature": "domain_entropy",
+      "value": 2.8424,
+      "contribution": -0.592843,
+      "direction": "decreases phishing score",
+      "description": "Character entropy of the hostname (randomness)"
+     },
+     {
+      "feature": "num_dots_host",
+      "value": 2,
+      "contribution": -0.531477,
+      "direction": "decreases phishing score",
+      "description": "Dot count in the hostname"
+     },
+     {
+      "feature": "brand_in_host",
+      "value": 0,
+      "contribution": -0.449043,
+      "direction": "decreases phishing score",
+      "description": "Protected brand appears in hostname outside its registered domain"
+     },
+     {
+      "feature": "max_label_length",
+      "value": 6,
+      "contribution": -0.335037,
+      "direction": "decreases phishing score",
+      "description": "Longest hostname label"
+     }
+    ],
+    "analysis_time_ms": 15475.65,
+    "metrics": {
+     "RandomForestClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.9497,
+      "precision": 0.9146,
+      "recall": 1.0,
+      "f1": 0.9554,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0141,
+      "test_size": 755
+     },
+     "LogisticRegression": {
+      "decision_threshold": 0.35,
+      "accuracy": 0.996,
+      "precision": 1.0,
+      "recall": 0.9926,
+      "f1": 0.9963,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "brier_score": 0.0046,
+      "test_size": 755
+     },
+     "XGBClassifier": {
+      "decision_threshold": 0.35,
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier_score": 0.0006,
+      "test_size": 755,
+      "held_out_test": {
+       "decision_threshold": 0.35,
+       "precision": 0.9916,
+       "recall": 1.0,
+       "f1": 0.9958,
+       "confusion_matrix": {
+        "labels": [
+         "legitimate",
+         "phishing"
+        ],
+        "matrix": [
+         [
+          454,
+          3
+         ],
+         [
+          0,
+          356
+         ]
+        ],
+        "tn": 454,
+        "fp": 3,
+        "fn": 0,
+        "tp": 356
+       },
+       "test_size": 813
+      }
+     }
+    }
+   },
+   "summary": {
+    "checks": [
+     {
+      "name": "URL Format",
+      "status": "pass"
+     },
+     {
+      "name": "HTTPS",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "SSL Certificate",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "DNS Resolution",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Reputation",
+      "status": "pass",
+      "detail": null
+     },
+     {
+      "name": "Domain Age",
+      "status": "warn",
+      "detail": "Information unavailable"
+     },
+     {
+      "name": "ML Phishing Model",
+      "status": "pass",
+      "detail": "No phishing pattern (100% confidence)"
+     }
+    ]
+   },
+   "url_details": {
+    "protocol": "HTTPS",
+    "domain": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "ip_address": "2001:4860:482a:7700::",
+    "ips": [
+     "2001:4860:482a:7700::",
+     "2001:4860:482d:7700::",
+     "2001:4860:4829:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:4826:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:4828:7700::",
+     "142.251.156.119",
+     "142.251.155.119",
+     "142.251.154.119",
+     "142.251.153.119",
+     "142.251.150.119",
+     "142.251.151.119",
+     "142.251.152.119",
+     "142.251.157.119"
+    ],
+    "port": 443,
+    "path": "/",
+    "query": null,
+    "fragment": null,
+    "redirects": 0,
+    "redirect_chain": [],
+    "final_url": "https://www.google.com/"
+   },
+   "ssl": {
+    "checked": true,
+    "status": "valid",
+    "https_enabled": true,
+    "valid": true,
+    "issuer": "WE2",
+    "subject": "www.google.com",
+    "expires": "Dec 30 19:09:53 2026 GMT",
+    "expires_in_days": 63,
+    "not_before": "Oct  7 19:09:54 2026 GMT",
+    "self_signed": false,
+    "hostname_mismatch": false,
+    "tls_version": "TLSv1.3",
+    "cipher": "TLS_AES_256_GCM_SHA384",
+    "san": [
+     "www.google.com"
+    ],
+    "error": null
+   },
+   "domain": {
+    "hostname": "www.google.com",
+    "registered_domain": "google.com",
+    "subdomain_count": 1,
+    "subdomains": [
+     "www"
+    ],
+    "is_ip_address": false,
+    "resolved": true,
+    "ips": [
+     "2001:4860:482a:7700::",
+     "2001:4860:482d:7700::",
+     "2001:4860:4829:7700::",
+     "2001:4860:4827:7700::",
+     "2001:4860:482c:7700::",
+     "2001:4860:4826:7700::",
+     "2001:4860:482b:7700::",
+     "2001:4860:4828:7700::",
+     "142.251.156.119",
+     "142.251.155.119",
+     "142.251.154.119",
+     "142.251.153.119",
+     "142.251.150.119",
+     "142.251.151.119",
+     "142.251.152.119",
+     "142.251.157.119"
+    ],
+    "ip_address": "2001:4860:482a:7700::",
+    "dns_error": null,
+    "whois_available": false,
+    "domain_age": "Information unavailable",
+    "registrar": null,
+    "hosting_asn": null,
+    "note": "WHOIS / domain-age lookup unavailable (no WHOIS provider configured)."
+   },
+   "reputation": {
+    "available": true,
+    "provider": "virustotal",
+    "reputation": "Clean",
+    "malware": "Not Detected",
+    "phishing": "Not Detected",
+    "engines": {
+     "malicious": 0,
+     "suspicious": 0,
+     "harmless": 61,
+     "undetected": 32,
+     "total": 93
+    },
+    "note": "VirusTotal: 0 malicious / 0 suspicious of 93 engines."
+   },
+   "findings": [],
+   "recommendation": "No significant malicious indicators were detected, but users should still verify the destination before entering credentials or sensitive information.",
+   "timestamp": "2026-10-28T21:05:36",
+   "timestamp_display": "28 Oct 2026 21:05",
+   "source": "panel"
+  }
+ },
+ {
   "scan_id": "url_20261022_151542_eac8be",
   "url": "https://www.amazon.com/dp/B08N5WRWNW?ref_=header_logo",
   "domain": "amazon.com",
@@ -2621,916 +7083,6 @@
    "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
    "timestamp": "2026-10-12T19:20:00",
    "timestamp_display": "12 Oct 2026 19:20",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261012_191905_62c91c",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-12T19:19:05",
-  "timestamp_display": "12 Oct 2026 19:19",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261012_191905_62c91c",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-12T19:19:05",
-   "timestamp_display": "12 Oct 2026 19:19",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261012_191537_b5b230",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-12T19:15:37",
-  "timestamp_display": "12 Oct 2026 19:15",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261012_191537_b5b230",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-12T19:15:37",
-   "timestamp_display": "12 Oct 2026 19:15",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261011_164610_ccc64c",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-11T16:46:10",
-  "timestamp_display": "11 Oct 2026 16:46",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261011_164610_ccc64c",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-11T16:46:10",
-   "timestamp_display": "11 Oct 2026 16:46",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261011_163710_7458d3",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-11T16:37:10",
-  "timestamp_display": "11 Oct 2026 16:37",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261011_163710_7458d3",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-11T16:37:10",
-   "timestamp_display": "11 Oct 2026 16:37",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261010_222324_a56dde",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-10T22:23:24",
-  "timestamp_display": "10 Oct 2026 22:23",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261010_222324_a56dde",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-10T22:23:24",
-   "timestamp_display": "10 Oct 2026 22:23",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261010_222114_c833cc",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-10T22:21:14",
-  "timestamp_display": "10 Oct 2026 22:21",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261010_222114_c833cc",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-10T22:21:14",
-   "timestamp_display": "10 Oct 2026 22:21",
-   "source": "panel"
-  }
- },
- {
-  "scan_id": "url_20261010_212948_c29dbd",
-  "url": "https://fake.example/path",
-  "domain": "fake.example",
-  "score": 15,
-  "risk_level": "CRITICAL",
-  "risk_level_label": "CRITICAL",
-  "classification": "MALICIOUS",
-  "classification_label": "MALICIOUS",
-  "timestamp": "2026-10-10T21:29:48",
-  "timestamp_display": "10 Oct 2026 21:29",
-  "result": {
-   "success": true,
-   "scan_id": "url_20261010_212948_c29dbd",
-   "url": "https://fake.example/path",
-   "display_url": "https://fake.example/path",
-   "hostname": "fake.example",
-   "domain_display": "fake.example",
-   "score": 15,
-   "risk_level": "CRITICAL",
-   "risk_level_label": "CRITICAL",
-   "classification": "MALICIOUS",
-   "classification_label": "MALICIOUS",
-   "classification_summary": "Malicious Indicators Detected",
-   "reasoning": [
-    "Base score: 100",
-    "-22 HIGH: test heuristic",
-    "-40 CRITICAL: ML classifier: 91% phishing probability",
-    "ML phishing classifier (XGBClassifier) estimated a 91% phishing probability from URL structure.",
-    "Score capped at 15: ML classifier reports very high phishing probability."
-   ],
-   "ml_phishing": {
-    "available": true,
-    "algorithm": "XGBClassifier",
-    "probability": 0.91,
-    "percent": 91,
-    "verdict": "PHISHING",
-    "top_signals": []
-   },
-   "summary": {
-    "checks": [
-     {
-      "name": "URL Format",
-      "status": "pass"
-     },
-     {
-      "name": "HTTPS",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "SSL Certificate",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "DNS Resolution",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Reputation",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "Domain Age",
-      "status": "pass",
-      "detail": null
-     },
-     {
-      "name": "ML Phishing Model",
-      "status": "fail",
-      "detail": "91% phishing probability"
-     }
-    ]
-   },
-   "url_details": {
-    "protocol": "HTTPS",
-    "domain": "fake.example",
-    "registered_domain": "fake.example",
-    "subdomain_count": 0,
-    "ip_address": null,
-    "ips": [],
-    "port": 443,
-    "path": "/path",
-    "query": null,
-    "fragment": null,
-    "redirects": 0,
-    "redirect_chain": [],
-    "final_url": null
-   },
-   "ssl": {
-    "checked": true,
-    "status": "valid",
-    "valid": true
-   },
-   "domain": {
-    "hostname": "fake.example",
-    "registered_domain": "example",
-    "resolved": true,
-    "whois_available": true
-   },
-   "reputation": {
-    "available": true,
-    "reputation": "clean"
-   },
-   "findings": [
-    {
-     "id": "heuristic_test",
-     "severity": "HIGH",
-     "title": "test heuristic",
-     "score_impact": 22
-    },
-    {
-     "id": "ml_phishing_classifier",
-     "severity": "CRITICAL",
-     "category": "ml",
-     "title": "ML classifier: 91% phishing probability",
-     "detail": "The machine-learning phishing classifier (XGBClassifier, trained on lexical URL patterns) scored this URL at 91% phishing probability.",
-     "score_impact": 40,
-     "positive": false
-    }
-   ],
-   "recommendation": "Malicious indicators were detected. Do NOT open this URL, do not enter credentials or personal information, and report the source of the link.",
-   "timestamp": "2026-10-10T21:29:48",
-   "timestamp_display": "10 Oct 2026 21:29",
    "source": "panel"
   }
  }

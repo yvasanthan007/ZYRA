@@ -13,10 +13,7 @@ module.exports = (env) => {
     // require('electron') resolves to node_modules/electron/index.js, which
     // exports the executable PATH (a string), not the API.
     externals: {
-      electron: 'commonjs2 electron/main',
-      'electron/main': 'commonjs2 electron/main',
-      'electron/common': 'commonjs2 electron',
-      'electron/renderer': 'commonjs2 electron',
+      electron: 'commonjs2 electron',
     },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],

@@ -1,171 +1,324 @@
 import React, { useState } from 'react';
 import DatasetExplorer from './DatasetExplorer';
 
-interface LinkAnalysisResult {
-  url?: string;
-  verdict?: string;
-  risk_score?: number | string;
-  phishing_probability?: number | null;
-  analysis_time_ms?: number;
-  prediction?: string;
-  algorithm?: string;
-  model_version?: string;
-  analyzed_at?: string;
-  model_status?: string;
-  probabilities_calibrated?: boolean;
-  features?: Record<string, number>;
-  explanation?: { available?: boolean; method?: string; note?: string; disclaimer?: string; contributions?: Array<{feature: string; value: number; contribution: number; direction: string; description: string}> };
-  global_feature_importance?: Array<{feature: string; importance: number; description: string}>;
-  recommendation?: string;
-  observations?: string[];
-  reasoning?: string[];
-  findings?: Array<{id?: string; title?: string; detail?: string; matched_keywords?: Array<{keyword: string; category: string; locations: string[]; weight: number}> }>;
+interface CyberLLMData {
+  url: string;
+  prediction: 'PHISHING' | 'LEGITIMATE';
+  phishing_score: number;
+  score_is_calibrated_probability: boolean;
+  disclaimer?: string;
 }
-interface ModelInfo {
-  available?: boolean; algorithm?: string; version?: string; trained_at?: string; model_path?: string; note?: string;
-  evaluation?: {
-    dataset_version?: string; split_strategy?: string; test_set_size?: number;
-    test_metrics?: {
-      precision?: number; recall?: number; f1?: number;
-      confusion_matrix?: { tn?: number; fp?: number; fn?: number; tp?: number };
-    };
-  };
+
+interface CyberLLMResponse {
+  success?: boolean;
+  provider?: string;
+  advisory_only?: boolean;
+  data?: CyberLLMData;
+  error?: string;
+}
+
+interface BackendResponse {
+  ok?: boolean;
+  status?: number;
+  body?: unknown;
+  error?: string | null;
 }
 
 const LinkAnalyzer: React.FC = () => {
   const [url, setUrl] = useState('');
   const [analyzedUrl, setAnalyzedUrl] = useState('');
-  const [result, setResult] = useState<LinkAnalysisResult | null>(null);
+  const [result, setResult] = useState<CyberLLMData | null>(null);
+  const [provider, setProvider] = useState('CyberLLM');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<'analysis' | 'dataset'>('analysis');
-  const [lastAnalyzedAt, setLastAnalyzedAt] = useState('');
-  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
-  React.useEffect(() => {
-    const request = window.zyraAPI.requestBackend;
-    if (!request) { setModelInfo({ available: false, note: 'Backend API is unavailable.' }); return; }
-    void request('GET', '/api/ml/phishing/model').then((raw: unknown) => {
-      const response = raw as { success?: boolean; data?: ModelInfo; error?: string };
-      if (response?.success && response.data) setModelInfo(response.data);
-      else setModelInfo({ available: false, note: response?.error || 'Model metadata unavailable.' });
-    }).catch((err: unknown) => setModelInfo({ available: false, note: err instanceof Error ? err.message : 'Backend unavailable.' }));
-  }, []);
 
-  const handleAnalyze = async (capture = false) => {
+  const analyzeWithCyberLLM = async (target: string): Promise<void> => {
+    const request = window.zyraAPI?.requestBackend;
+
+    if (!request) {
+      throw new Error(
+        'Zyra backend bridge is unavailable. Restart Zyra and try again.'
+      );
+    }
+
+    const raw = await request(
+      'POST',
+      '/api/cyberllm/phishing',
+      { url: target }
+    );
+
+    const wrapped = raw as BackendResponse;
+
+    if (!wrapped || wrapped.ok !== true) {
+      throw new Error(
+        wrapped?.error ||
+          `Zyra backend request failed (HTTP ${wrapped?.status ?? 'unknown'}).`
+      );
+    }
+
+    const response = wrapped.body as CyberLLMResponse;
+
+    if (!response || response.success !== true || !response.data) {
+      throw new Error(
+        response?.error ||
+          'CyberLLM analysis failed. No verdict was produced.'
+      );
+    }
+
+    const data = response.data;
+
+    if (data.url !== target) {
+      throw new Error(
+        'The backend returned a different URL. The result was not displayed.'
+      );
+    }
+
+    if (
+      data.prediction !== 'PHISHING' &&
+      data.prediction !== 'LEGITIMATE'
+    ) {
+      throw new Error('CyberLLM returned an unrecognized prediction.');
+    }
+
+    if (
+      typeof data.phishing_score !== 'number' ||
+      !Number.isFinite(data.phishing_score)
+    ) {
+      throw new Error('CyberLLM returned an invalid phishing score.');
+    }
+
+    setProvider(response.provider || 'CyberLLM');
+    setAnalyzedUrl(target);
+    setResult(data);
+  };
+
+  const handleAnalyze = async (capture = false): Promise<void> => {
     const target = url.trim();
-    if (!capture && !target) { setError('Enter a URL or use Capture screen URL. No safety verdict was made.'); setResult(null); return; }
-    if (busy) return;
+
+    if (!capture && !target) {
+      setError('Enter a URL before starting the analysis.');
+      setResult(null);
+      return;
+    }
+
+    if (busy) {
+      return;
+    }
+
     setBusy(true);
     setError('');
     setResult(null);
-    setAnalyzedUrl(capture ? 'Capturing a fresh screen URL…' : target);
+    setAnalyzedUrl(capture ? 'Capturing screen URL...' : target);
+
     try {
-      const raw = capture
-        ? await window.zyraAPI.captureAndAnalyzeLink?.()
-        : await window.zyraAPI.analyzeLink(target);
-      // Guard: a resolved `{success:false, error}` payload (bridge-style
-      // failure) must surface as an error, not an empty result.
-      const status = raw as { success?: boolean; error?: string } | null;
-      if (status && status.success === false) {
-        setError(status.error || 'Link analysis failed; no safety verdict was made.');
-        return;
+      let targetUrl = target;
+
+      if (capture) {
+        const captureFunction = window.zyraAPI?.captureAndAnalyzeLink;
+
+        if (!captureFunction) {
+          throw new Error(
+            'Screen URL capture is unavailable in this Zyra build.'
+          );
+        }
+
+        const captured = await captureFunction();
+
+        if (!captured) {
+          throw new Error(
+            'No URL was captured. Copy a URL into the input field and try again.'
+          );
+        }
+
+        targetUrl = String(captured).trim();
+
+        if (!targetUrl) {
+          throw new Error('The captured URL is empty.');
+        }
+
+        setUrl(targetUrl);
+        setAnalyzedUrl(targetUrl);
       }
-      const payload = (raw as { analysis?: LinkAnalysisResult })?.analysis
-        ?? (raw as { data?: LinkAnalysisResult })?.data
-        ?? (raw as LinkAnalysisResult);
-      const analyzedTarget = capture ? payload?.url : target;
-      if (!payload || typeof payload !== 'object' || typeof payload.verdict !== 'string') {
-        setError('Link analysis returned no valid verdict. Treat this URL as unverified.');
-        return;
+
+      let parsedUrl: URL;
+
+      try {
+        parsedUrl = new URL(targetUrl);
+      } catch {
+        throw new Error(
+          'Enter a valid URL, including https:// or http://.'
+        );
       }
-      if (!analyzedTarget || (payload.url && payload.url !== analyzedTarget)) {
-        setError('Backend analyzed a different URL than the one entered. No result was displayed.');
-        return;
+
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('Only HTTP and HTTPS URLs can be analyzed.');
       }
-      setLastAnalyzedAt(payload.analyzed_at ?? new Date().toISOString());
-      setAnalyzedUrl(analyzedTarget);
-      setResult({ ...payload, url: payload.url ?? analyzedTarget });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Link analysis failed');
+
+      await analyzeWithCyberLLM(targetUrl);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'An unexpected error occurred during URL analysis.';
+
+      setError(message);
+      setResult(null);
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="link-analyzer">
-      <h3>Phishing Link Analyzer</h3>
-      <div className="dataset-filters"><button onClick={() => setTab('analysis')} aria-pressed={tab === 'analysis'}>URL risk analysis</button><button onClick={() => setTab('dataset')} aria-pressed={tab === 'dataset'}>Dataset explorer</button></div>
-      {tab === 'dataset' ? <DatasetExplorer /> : <>
-      <section className="dataset-summary" aria-label="Model evaluation">
-        <span><b>Model status:</b> {modelInfo?.available ? `${modelInfo.algorithm} v${modelInfo.version} loaded` : modelInfo?.note ?? 'Checking model…'}</span>
-        {modelInfo?.evaluation?.test_metrics && <><span>Dataset {modelInfo.evaluation.dataset_version} · {modelInfo.evaluation.split_strategy}</span><span>Held-out test size {modelInfo.evaluation.test_set_size}</span><span>Precision {modelInfo.evaluation.test_metrics.precision} · Recall {modelInfo.evaluation.test_metrics.recall} · F1 {modelInfo.evaluation.test_metrics.f1}</span><span>Confusion matrix TN {modelInfo.evaluation.test_metrics.confusion_matrix?.tn}, FP {modelInfo.evaluation.test_metrics.confusion_matrix?.fp}, FN {modelInfo.evaluation.test_metrics.confusion_matrix?.fn}, TP {modelInfo.evaluation.test_metrics.confusion_matrix?.tp}</span></>}
-        {!modelInfo?.evaluation?.test_metrics && <span>Held-out evaluation metrics unavailable.</span>}
-      </section>
-      <p className="voice-hint">
-        Paste or type a URL, then Analyze. Or explicitly capture the current screen. The exact URL returned is checked below; links are never opened automatically.
-      </p>
-      <div className="chat-input-area">
-        <textarea
-          className="chat-input"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://example.com/login"
-          rows={2}
-          disabled={busy}
-          aria-label="URL to analyze"
-        />
-          <button
-          className="send-button"
-          onClick={() => void handleAnalyze(false)}
-          disabled={busy}
-        >
-          {busy ? '...' : 'Analyze'}
-        </button>
-        <button className="send-button" onClick={() => void handleAnalyze(true)} disabled={busy}>Capture screen URL</button>
+    <div className="voice-panel">
+      <div className="voice-header">
+        <div>
+          <h2>CyberLLM Link Analyzer</h2>
+          <p className="voice-hint">
+            Analyze URLs using your CyberLLM phishing detection service.
+          </p>
+        </div>
       </div>
-      {analyzedUrl && (
-        <div className="transcript-item">
-          <span className="transcript-label">Analyzing:</span>
-          <p>{analyzedUrl}</p>
-        </div>
-      )}
-      {error && (
-        <p className="voice-hint" role="alert">{error} No URL is considered safe when analysis fails.</p>
-      )}
-      {result && (
-        <div className="voice-transcript-area">
-          <div className="transcript-item">
-            <span className="transcript-label">Verdict:</span>
-            <p>{result.verdict ?? '—'}</p>
+
+      <div className="voice-tabs">
+        <button
+          type="button"
+          className={tab === 'analysis' ? 'active' : ''}
+          onClick={() => setTab('analysis')}
+        >
+          Link Analysis
+        </button>
+
+        <button
+          type="button"
+          className={tab === 'dataset' ? 'active' : ''}
+          onClick={() => setTab('dataset')}
+        >
+          Dataset Explorer
+        </button>
+      </div>
+
+      {tab === 'dataset' ? (
+        <DatasetExplorer />
+      ) : (
+        <>
+          <div className="voice-input-area">
+            <label htmlFor="cyberllm-url">
+              Website URL
+            </label>
+
+            <input
+              id="cyberllm-url"
+              type="url"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              placeholder="https://example.com"
+              disabled={busy}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !busy) {
+                  void handleAnalyze(false);
+                }
+              }}
+            />
+
+            <div className="voice-actions">
+              <button
+                type="button"
+                onClick={() => void handleAnalyze(false)}
+                disabled={busy || !url.trim()}
+              >
+                {busy ? 'Analyzing...' : 'Analyze with CyberLLM'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleAnalyze(true)}
+                disabled={busy}
+              >
+                Capture Screen URL
+              </button>
+            </div>
+
+            <p className="voice-hint">
+              The URL is submitted to your configured Zyra backend, which
+              forwards the analysis request to CyberLLM.
+            </p>
           </div>
-          <div className="transcript-item">
-            <span className="transcript-label">Risk:</span>
-            <p>{result.risk_score ?? '—'}</p>
-          </div>
-          {result.phishing_probability !== null && result.phishing_probability !== undefined && (
+
+          {analyzedUrl && (
             <div className="transcript-item">
-              <span className="transcript-label">XGBoost phishing probability (uncalibrated):</span>
-              <p>{(result.phishing_probability * 100).toFixed(2)}% · risk score {Number(result.risk_score ?? result.phishing_probability * 100).toFixed(1)}/100</p>
+              <span className="transcript-label">
+                URL submitted for analysis:
+              </span>
+              <p>{analyzedUrl}</p>
             </div>
           )}
-          <div className="transcript-item"><span className="transcript-label">Model / status / prediction:</span><p>{result.algorithm ?? 'Unavailable'} {result.model_version ? `v${result.model_version}` : ''} · {result.prediction ?? 'unavailable'} · {result.model_status ?? (result.phishing_probability == null ? 'model status unavailable' : 'loaded')}</p></div>
-          {lastAnalyzedAt && <div className="transcript-item"><span className="transcript-label">Analyzed at / duration:</span><p>{lastAnalyzedAt}{result.analysis_time_ms !== undefined ? ` · ${result.analysis_time_ms} ms` : ''}</p></div>}
-          {result.explanation && <div className="transcript-item"><span className="transcript-label">Individual URL explanation:</span><p>{result.explanation.available ? result.explanation.method : result.explanation.note}</p>{result.explanation.available && <ul>{result.explanation.contributions?.map(item => <li key={item.feature}><b>{item.description}</b> = {item.value}; {item.direction} (margin contribution {item.contribution.toFixed(3)}). This is a model contribution, not proof of maliciousness.</li>)}</ul>}</div>}
-          {!!result.findings?.filter(item => item.id === 'phishing_keyword_signals').length && <div className="transcript-item"><span className="transcript-label">Matched phishing-related keywords:</span><ul>{result.findings.filter(item => item.id === 'phishing_keyword_signals').map((item, index) => <li key={`${item.id}-${index}`}>{item.detail}</li>)}</ul></div>}
-          {!!result.reasoning?.length && <div className="transcript-item"><span className="transcript-label">Risk reasoning:</span><ul>{result.reasoning.map((reason, index) => <li key={`${index}-${reason}`}>{reason}</li>)}</ul></div>}
-          {result.features && <details className="transcript-item"><summary>Exact feature values passed to XGBoost ({Object.keys(result.features).length})</summary><pre>{JSON.stringify(result.features, null, 2)}</pre></details>}
-          {!!result.global_feature_importance?.length && <details className="transcript-item"><summary>Global XGBoost feature importance (separate from this URL)</summary><ol>{result.global_feature_importance.slice(0, 10).map(item => <li key={item.feature}>{item.description}: {item.importance.toFixed(4)}</li>)}</ol></details>}
-          <p className="voice-hint">The shipped model uses synthetic seed patterns, not independently verified real-world labels. Its probabilities are uncalibrated model scores and are not verified real-world risk estimates.</p>
-          {result.recommendation && (
-            <div className="transcript-item">
-              <span className="transcript-label">Recommendation:</span>
-              <p>{result.recommendation}</p>
+
+          {error && (
+            <p className="voice-hint" role="alert">
+              {error}
+            </p>
+          )}
+
+          {result && (
+            <div className="voice-transcript-area">
+              <div className="transcript-item">
+                <span className="transcript-label">
+                  Analysis provider:
+                </span>
+                <p>{provider}</p>
+              </div>
+
+              <div className="transcript-item">
+                <span className="transcript-label">
+                  CyberLLM prediction:
+                </span>
+                <p>{result.prediction}</p>
+              </div>
+
+              <div className="transcript-item">
+                <span className="transcript-label">
+                  Phishing score (uncalibrated):
+                </span>
+                <p>
+                  {result.phishing_score}
+                  {result.phishing_score >= 0 &&
+                  result.phishing_score <= 1
+                    ? ` (${(result.phishing_score * 100).toFixed(2)} on a 0–100 display scale)`
+                    : ''}
+                </p>
+              </div>
+
+              <div className="transcript-item">
+                <span className="transcript-label">
+                  Calibrated probability:
+                </span>
+                <p>
+                  {result.score_is_calibrated_probability
+                    ? 'Reported as calibrated by the API'
+                    : 'No — this is an uncalibrated model score.'}
+                </p>
+              </div>
+
+              <div className="transcript-item">
+                <span className="transcript-label">
+                  Assessment disclaimer:
+                </span>
+                <p>
+                  {result.disclaimer ||
+                    'This model assessment is not a guarantee of safety. False positives and false negatives are possible.'}
+                </p>
+              </div>
+
+              <p className="voice-hint">
+                Security notice: A LEGITIMATE prediction does not prove
+                that a website is safe. Verify suspicious links independently
+                before entering credentials or sensitive information.
+              </p>
             </div>
           )}
-        </div>
+        </>
       )}
-      </>}
     </div>
   );
 };
