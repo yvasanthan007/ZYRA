@@ -20,6 +20,21 @@ interface LinkAnalysisResult {
   observations?: string[];
   reasoning?: string[];
   findings?: Array<{id?: string; title?: string; detail?: string; matched_keywords?: Array<{keyword: string; category: string; locations: string[]; weight: number}> }>;
+  threat_intel?: {
+    available?: boolean;
+    provider?: string;
+    reputation?: string;
+    malware?: string;
+    phishing?: string;
+    note?: string;
+    verdict_hint?: string;
+    latency_ms?: number;
+    cached?: boolean;
+    engines?: { malicious?: number; suspicious?: number; harmless?: number; undetected?: number; total?: number } | null;
+  };
+  reputation_verified?: boolean;
+  observation?: string;
+  fused_verdict?: { verdict?: string; risk_score?: string; escalated_by?: string | null; reasons?: string[] };
 }
 interface ModelInfo {
   available?: boolean; algorithm?: string; version?: string; trained_at?: string; model_path?: string; note?: string;
@@ -143,6 +158,34 @@ const LinkAnalyzer: React.FC = () => {
             <span className="transcript-label">Risk:</span>
             <p>{result.risk_score ?? '—'}</p>
           </div>
+          {/* Threat intelligence belongs NEXT TO the verdict: it is the primary
+              external evidence behind it, and an unverified link must not be
+              read as "safe" just because the local model was unsure. */}
+          <div className="transcript-item">
+            <span className="transcript-label">Threat intelligence (VirusTotal):</span>
+            {result.threat_intel && result.threat_intel.available ? (
+              <p>
+                <b>{result.threat_intel.reputation ?? 'Unknown'}</b>
+                {result.threat_intel.engines && (
+                  <> · {result.threat_intel.engines.malicious ?? 0} malicious / {result.threat_intel.engines.suspicious ?? 0} suspicious / {result.threat_intel.engines.total ?? 0} engines</>
+                )}
+                {result.threat_intel.cached ? ' · cached' : ''}
+                {result.threat_intel.latency_ms !== undefined ? ` · ${Math.round(result.threat_intel.latency_ms)} ms` : ''}
+                {result.threat_intel.note ? <><br /><small>{result.threat_intel.note}</small></> : null}
+              </p>
+            ) : (
+              <p>
+                <b>UNVERIFIED</b> - {result.threat_intel?.note ?? 'no reputation provider configured'}.
+                This verdict relies on the local model only; an unverified link is not a safe link.
+              </p>
+            )}
+          </div>
+          {result.fused_verdict?.escalated_by && (
+            <div className="transcript-item">
+              <span className="transcript-label">Combined verdict:</span>
+              <p>{result.fused_verdict.verdict} · {result.fused_verdict.risk_score} (raised by {result.fused_verdict.escalated_by})</p>
+            </div>
+          )}
           {result.phishing_probability !== null && result.phishing_probability !== undefined && (
             <div className="transcript-item">
               <span className="transcript-label">XGBoost phishing probability (uncalibrated):</span>

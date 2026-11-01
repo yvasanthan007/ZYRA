@@ -435,34 +435,60 @@ def _ml_voice_sentence(ml_analysis):
 
 
 # ──────────────────────────────────────────────
-# Optional Backend Tool: VirusTotal (silent)
+# Threat intelligence evidence (VirusTotal)
 # ──────────────────────────────────────────────
+
+_LEVEL_RANK = {"Low": 0, "Medium": 1, "High": 2, "Critical": 3}
+
+
+def _map_risk_points(risk):
+    """Heuristic/ML risk points -> base (verdict, risk level)."""
+    if risk >= 8:
+        return "PHISHING DETECTED", "Critical"
+    if risk >= 5:
+        return "PHISHING DETECTED", "High"
+    if risk >= 3:
+        return "SUSPICIOUS", "Medium"
+    return "SUSPICIOUS", "Low"
+
+
+def _collect_evidence(url):
+    """
+    Fetch VirusTotal evidence for *url*, bounded and never raising.
+
+    Uses the shared evidence layer (backend/link_intel.py), which caches results
+    and honours a hard lookup budget, so repeated or concurrent analyses of the
+    same link are cheap and a slow provider can never stall the report.
+    """
+    try:
+        from backend.link_intel import lookup
+        return lookup(url)
+    except Exception as exc:  # noqa: BLE001 — evidence is optional, never fatal
+        return {
+            "available": False, "provider": "virustotal",
+            "reputation": "Unknown", "malware": "Unknown",
+            "phishing": "Unknown", "engines": None,
+            "verdict_hint": "UNKNOWN",
+            "note": f"Reputation check error ({type(exc).__name__}).",
+        }
+
 
 def _virustotal_check(url):
     """
-    Silent backend tool call to VirusTotal via the shared threat-intel client
-    (backend/threat_intel.py). Only runs when an API key is configured.
-
-    Returns "MALICIOUS:m/total", "SUSPICIOUS:m/total", "CLEAN:total", or None
-    when the key is missing or the lookup could not be completed.
+    Legacy textual form of the reputation verdict, kept for callers that expect
+    "MALICIOUS:m/total" / "SUSPICIOUS:m/total" / "CLEAN:total" or None.
     """
-    try:
-        from backend.threat_intel import check_url
-    except Exception:
+    rep = _collect_evidence(url)
+    if not rep.get("available"):
         return None
-    result = check_url(url)
-    if not result or not result.get("available"):
-        return None
-    rep = str(result.get("reputation") or "").lower()
-    engines = result.get("engines") or {}
+    engines = rep.get("engines") or {}
     total = int(engines.get("total") or 0)
-    if rep == "malicious":
+    hint = rep.get("verdict_hint")
+    if hint == "MALICIOUS":
         return f"MALICIOUS:{int(engines.get('malicious') or 0)}/{total}"
-    if rep == "suspicious":
+    if hint == "SUSPICIOUS":
         return f"SUSPICIOUS:{int(engines.get('suspicious') or 0)}/{total}"
-    if total > 0:
-        return f"CLEAN:{total}"
-    return None
+    return f"CLEAN:{total}" if total else None
 
 
 # ──────────────────────────────────────────────
@@ -666,26 +692,10 @@ def analyze_url_security(url):
             "malicious parameters or redirects."
         )
 
-    # ── Optional silent backend tool: VirusTotal ──
-    vt = _virustotal_check(original_url)
-    if vt:
-        verdict_tag, _, detail = vt.partition(":")
-        if verdict_tag == "MALICIOUS":
-            risk = max(risk, 8)
-            findings.append(
-                f"VirusTotal backend scan: flagged MALICIOUS by {detail} security vendors."
-            )
-        elif verdict_tag == "SUSPICIOUS":
-            risk += 2
-            findings.append(
-                f"VirusTotal backend scan: flagged suspicious by {detail} security vendors."
-            )
-        else:
-            domain_notes.append(f"VirusTotal backend scan clean ({detail} vendors)")
-
-    # ── ML phishing classifier (local, offline advisory layer) ──
+    # ── Local ML classifier first (cheap, offline) ──
     # Same model the deep URL Analyzer uses; keep thresholds and report scoring
-    # aligned with backend/url_analyzer/risk_scorer.py.
+    # aligned with backend/url_analyzer/risk_scorer.py. It runs before the
+    # reputation lookup so its probability can be fed into the verdict fusion.
     ml_analysis = _ml_assessment(original_url)
     ml_prob = 0.0
     if ml_analysis and ml_analysis.get("available"):
@@ -699,6 +709,48 @@ def analyze_url_security(url):
     if ml_analysis and ml_analysis.get("available") and not 0.0 <= ml_prob <= 1.0:
         ml_analysis = {"available": False, "note": "Invalid ML probability."}
         ml_prob = 0.0
+
+    # ── Threat-intelligence evidence (VirusTotal) ──
+    # Bounded by ZYRA_VT_LOOKUP_BUDGET and cached, so a repeated or concurrent
+    # check of the same link costs no extra API calls and can never stall the
+    # report.
+    reputation = _collect_evidence(original_url)
+
+    # ── Verdict fusion: VirusTotal is authoritative when it has an opinion ──
+    from backend.link_intel import fuse_verdict
+    fused = fuse_verdict(
+        verdict="SUSPICIOUS", risk_score="Low", risk_points=risk,
+        reputation=reputation, ml_probability=ml_prob,
+    )
+    if reputation.get("available"):
+        engines = reputation.get("engines") or {}
+        hint = reputation.get("verdict_hint")
+        if hint == "MALICIOUS":
+            findings.append(
+                "VirusTotal: flagged MALICIOUS by "
+                f"{int(engines.get('malicious') or 0)} of {int(engines.get('total') or 0)} "
+                "security vendors — authoritative evidence of malware or phishing."
+            )
+        elif hint == "SUSPICIOUS":
+            findings.append(
+                "VirusTotal: flagged suspicious by "
+                f"{int(engines.get('suspicious') or 0)} of {int(engines.get('total') or 0)} "
+                "security vendors."
+            )
+        else:
+            domain_notes.append(
+                f"VirusTotal reports no detections across "
+                f"{int(engines.get('total') or 0)} engines"
+            )
+    else:
+        # Unverified is NOT the same as clean — say so in the report.
+        findings.append(
+            "Threat-intelligence check unavailable: "
+            f"{reputation.get('note') or 'no reputation provider configured'}. "
+            "This verdict relies on ZYRA's local analysis only."
+        )
+
+    # ── ML-based risk floor (advisory, local only) ──
     if ml_analysis and ml_analysis.get("available") and ml_prob >= 0.90:
         risk = max(risk, 8)
         ml_obs = _ml_observation(ml_analysis)
@@ -721,16 +773,15 @@ def analyze_url_security(url):
             findings.append(ml_obs)
 
     # ── Verdict & risk mapping ──
-    if risk >= 8:
-        verdict, risk_score = "PHISHING DETECTED", "Critical"
-    elif risk >= 5:
-        verdict, risk_score = "PHISHING DETECTED", "High"
-    elif risk >= 3:
-        verdict, risk_score = "SUSPICIOUS", "Medium"
-    elif risk >= 1:
-        verdict, risk_score = "SUSPICIOUS", "Low"
-    else:
-        verdict, risk_score = "SUSPICIOUS", "Low"
+    # The heuristic/ML mapping produces the BASE verdict; fuse_verdict above
+    # escalates it when VirusTotal has authoritative or corroborating evidence.
+    base_verdict, base_level = _map_risk_points(risk)
+    verdict, risk_score = fused["verdict"], fused["risk_score"]
+    if base_verdict == "PHISHING DETECTED" and verdict != "PHISHING DETECTED":
+        # Fusion never downgrades a local detection.
+        verdict = base_verdict
+    if _LEVEL_RANK.get(base_level, 0) > _LEVEL_RANK.get(risk_score, 0):
+        risk_score = base_level
 
     # ── First bullet: domain / protocol state ──
     if scheme == "https":
@@ -774,7 +825,19 @@ def analyze_url_security(url):
         "MEDIUM" if ml_analysis and ml_analysis.get("available") and ml_prob >= 0.55 else
         "LOW" if ml_analysis and ml_analysis.get("available") else "UNKNOWN"
     )
-    return {
+    # VirusTotal detections outrank the local model for the risk level: an
+    # engine-confirmed malware/phishing URL is never reported as less than HIGH,
+    # even when the lexical model is unsure (unseen or brand-new URLs).
+    _vt_level = {
+        "MALICIOUS": "CRITICAL" if int((reputation.get("engines") or {}).get("malicious") or 0) >= 3
+                            else "HIGH",
+        "SUSPICIOUS": "MEDIUM",
+    }.get(str(reputation.get("verdict_hint") or "").upper())
+    if _vt_level and _LEVEL_RANK.get(_vt_level.capitalize(), 0) >= 2:
+        if phishing_risk_level == "UNKNOWN" or _LEVEL_RANK.get(phishing_risk_level.capitalize(), 0) < 2:
+            phishing_risk_level = _vt_level
+
+    result_dict = {
         "url": original_url,
         "host": host_display,
         "scheme": scheme,
@@ -789,7 +852,13 @@ def analyze_url_security(url):
         "observations": observations,
         "recommendation": recommendation,
         "ml_phishing": ml_analysis if isinstance(ml_analysis, dict) else {"available": False},
+        # Full VirusTotal evidence, so any UI/consumer can show the engine
+        # counts and know whether the reputation was actually verified.
+        "threat_intel": reputation,
+        "reputation_verified": bool(reputation.get("available")),
+        "verdict_escalated_by": fused.get("escalated_by"),
     }
+    return result_dict
 
 
 # ──────────────────────────────────────────────
@@ -814,6 +883,20 @@ def format_security_report(result):
         f"Verdict: {result['verdict']}",
         f"Risk Level: {result.get('phishing_risk_level') or result['risk_score']}",
     ]
+    intel = result.get("threat_intel") or {}
+    if intel:
+        # State the external evidence explicitly: counts when verified, and an
+        # unmistakable "unverified" marker otherwise (never imply "clean").
+        # ASCII-only separators: this text is spoken by TTS and printed to
+        # Windows consoles, where a Unicode em dash can degrade to noise.
+        if intel.get("available"):
+            engines = intel.get("engines") or {}
+            lines.append(
+                f"Threat Intelligence: VirusTotal - {int(engines.get('malicious') or 0)} malicious / "
+                f"{int(engines.get('suspicious') or 0)} suspicious of {int(engines.get('total') or 0)} engines"
+            )
+        else:
+            lines.append("Threat Intelligence: UNVERIFIED - VirusTotal check unavailable")
     if result.get("phishing_probability") is not None:
         lines.append(f"Phishing Probability: {float(result['phishing_probability']) * 100:.1f}%")
         lines.append(f"Safety Score: {result.get('safety_score')} / 100 (higher = safer)")

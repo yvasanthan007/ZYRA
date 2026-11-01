@@ -1574,8 +1574,17 @@ async def threat_intel_status_endpoint(probe: bool = True):
 @app.post("/api/ml/phishing")
 async def ml_phishing_check(data: Dict[str, Any]):
     """
-    Instant ML-only phishing check for a URL (lexical model — no DNS/HTTP
-    probes). Returns phishing probability, verdict and top signals.
+    Phishing check for a URL = local lexical ML model + VirusTotal evidence.
+
+    The two layers are independent, so they run concurrently and the wall-clock
+    cost is the slower one (the reputation lookup is bounded by
+    ZYRA_VT_LOOKUP_BUDGET and cached). The response keeps the original ML
+    fields at the top level and adds:
+
+        threat_intel         — full VirusTotal evidence record
+        reputation_verified  — False means UNVERIFIED (never "safe")
+        verdict / risk_level — fused verdict (VirusTotal outranks the model)
+        observation          — one-line summary of the combined evidence
     """
     if analyze_url_ml is None:
         return JSONResponse(status_code=503, content={
@@ -1587,6 +1596,9 @@ async def ml_phishing_check(data: Dict[str, Any]):
     if not url:
         return JSONResponse(status_code=400, content={
             "success": False, "error": "A 'url' field is required."})
+
+    # Reputation lookup in a worker thread while the model scores locally.
+    intel_future = asyncio.to_thread(_link_intel_lookup, url)
     try:
         result = analyze_url_ml(url)
     except Exception as exc:
@@ -1596,12 +1608,49 @@ async def ml_phishing_check(data: Dict[str, Any]):
         status = 503 if "model" in str(result.get("note", "")).lower() else 400
         return JSONResponse(status_code=status, content={"success": False,
             "error": result.get("note", "ML analysis unavailable; no safety verdict was made."), "data": result})
+
+    reputation = await intel_future
     from backend.ml_phishing.live_history import add_live_record
     from datetime import datetime, timezone
     result["analyzed_at"] = datetime.now(timezone.utc).isoformat()
     result["model_status"] = "loaded"
+
+    # Fuse: an engine-confirmed detection outranks the lexical model, which
+    # cannot know about a brand-new URL that no dataset has seen yet.
+    from backend.link_intel import fuse_verdict, summary_line
+    ml_prob = result.get("probability")
+    try:
+        ml_prob = float(ml_prob) if ml_prob is not None else None
+    except (TypeError, ValueError):
+        ml_prob = None
+    base_verdict = "PHISHING DETECTED" if str(result.get("verdict", "")).lower().startswith("phish") else "SUSPICIOUS"
+    base_level = str(result.get("risk_band") or "Low").capitalize()
+    fused = fuse_verdict(base_verdict, base_level, risk_points=0,
+                         reputation=reputation, ml_probability=ml_prob)
+    # A local PHISHING DETECTED must never be reported with a lower level than
+    # the model's own base band (fusion only caps UNVERIFIED cases).
+    if base_verdict == "PHISHING DETECTED" and fused.get("verdict") == "PHISHING DETECTED":
+        rank = {"Low": 0, "Medium": 1, "High": 2, "Critical": 3}
+        if rank.get(base_level, 0) > rank.get(str(fused.get("risk_score")), 0):
+            fused["risk_score"] = base_level
+    result["threat_intel"] = reputation
+    result["reputation_verified"] = bool(reputation.get("available"))
+    result["fused_verdict"] = fused
+    result["observation"] = summary_line(reputation)
     add_live_record(url, result)
     return {"success": True, "data": result}
+
+
+def _link_intel_lookup(url: str) -> Dict[str, Any]:
+    """Bounded VirusTotal evidence for a URL; never raises."""
+    try:
+        from backend.link_intel import lookup
+        return lookup(url)
+    except Exception as exc:  # noqa: BLE001
+        return {"available": False, "provider": "virustotal",
+                "reputation": "Unknown", "engines": None,
+                "verdict_hint": "UNKNOWN",
+                "note": f"Reputation check error ({type(exc).__name__})."}
 
 @app.post("/api/ml/phishing/capture")
 async def ml_phishing_capture():

@@ -59,6 +59,8 @@ REQUEST_TIMEOUT = _env_float(
 TLS_TIMEOUT = _env_float("ZYRA_SCAN_TLS_TIMEOUT", 4.0 if SCAN_FAST else TLS_TIMEOUT, 1.0, 30.0)
 # Reputation (VirusTotal) can submit a brand-new URL and poll for the result;
 # that is the slowest single stage, so it is capped here (seconds).
+# NOTE: the 5th argument is the previous value being re-clamped (3..60), not a
+# fallback — keep these defaults inside that range.
 REPUTATION_MAX_WAIT = _env_float(
     "ZYRA_THREAT_INTEL_MAX_WAIT", 8.0 if SCAN_FAST else 25.0, 3.0, 60.0
 )

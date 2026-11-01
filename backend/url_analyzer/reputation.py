@@ -108,23 +108,32 @@ def check_reputation(url: str, hostname: str) -> dict:
 
 def _check_virustotal(url: str) -> dict:
     """
-    Delegate to the shared VirusTotal client (backend/threat_intel.py).
+    Delegate to the shared, cached VirusTotal evidence layer
+    (backend/link_intel.py).
 
-    That client submits unknown URLs for a fresh scan and polls until the
-    analysis completes, so a brand-new phishing URL is actually scanned
-    instead of silently reported as "Unknown".
+    That layer submits unknown URLs for a fresh scan, polls until the analysis
+    completes within a hard budget, and caches the answer — so the same link
+    seen by the URL Analyzer, the chat link check and the desktop ML panel costs
+    one API call instead of three (the free tier allows 4 requests / minute).
     """
     try:
-        from backend.threat_intel import check_url
+        from backend.link_intel import lookup
     except Exception as exc:  # pragma: no cover — defensive
         return _unavailable(
             f"Reputation data unavailable — threat-intel client import "
             f"failed ({type(exc).__name__})."
         )
-    # Bounded wait: an unknown URL needs a fresh VirusTotal analysis. The
-    # budget comes from ZYRA_THREAT_INTEL_MAX_WAIT (default 8s in fast mode),
-    # so an unverified URL cannot stall the whole scan.
-    return check_url(url, max_wait=REPUTATION_MAX_WAIT, poll_interval=2)
+    record = lookup(url, budget=REPUTATION_MAX_WAIT)
+    # Return the threat-intel shaped dict the rest of the scan expects.
+    return {
+        "available": record.get("available", False),
+        "provider": record.get("provider"),
+        "reputation": record.get("reputation", "Unknown"),
+        "malware": record.get("malware", "Unknown"),
+        "phishing": record.get("phishing", "Unknown"),
+        "engines": record.get("engines"),
+        "note": record.get("note"),
+    }
 
 
 # ──────────────────────────────────────────────
