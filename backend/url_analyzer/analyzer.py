@@ -15,6 +15,7 @@ progress to the dashboard over WebSocket. All analysis happens in the
 backend â€” the frontend never fakes a security result.
 """
 
+import os
 import threading
 import time
 import uuid
@@ -175,6 +176,164 @@ def _run_with_timeout(func, args=(), kwargs=None, timeout=20):
     return box.get("result"), None
 
 
+def _scan_stage_timeout(key: str, default: float) -> float:
+    """Per-stage wall-clock budget (seconds), overridable from the environment."""
+    try:
+        return max(1.0, float(os.environ.get(f"ZYRA_SCAN_{key.upper()}_TIMEOUT", default)))
+    except (TypeError, ValueError):
+        return default
+
+
+def _run_network_stages(url: str, parts: dict, emit) -> tuple:
+    """Run DNS, SSL, redirect, domain-info and reputation CONCURRENTLY.
+
+    The five stages are independent network probes. Starting them together
+    makes the scan take roughly as long as the slowest one instead of the
+    sum of all five, which is the single biggest win for perceived scan
+    speed. Each stage is wrapped so its exception/timeout can only affect
+    its own section of the result, and each stage updates its own row in
+    the live UI as it finishes (no global stage lock).
+
+    Returns (domain_info, ssl_info, redirect_info, reputation).
+    """
+    _empty_domain = {
+        "hostname": parts.get("hostname"), "registered_domain": parts.get("hostname"),
+        "subdomain_count": 0, "subdomains": [], "is_ip_address": False,
+        "resolved": False, "ips": [], "ip_address": None,
+        "dns_error": "DNS analysis unavailable.",
+        "whois_available": False, "domain_age": "Information unavailable",
+        "registrar": None, "hosting_asn": None, "note": None,
+    }
+    _empty_reputation = {
+        "available": False, "provider": None, "reputation": "Unknown",
+        "malware": "Unknown", "phishing": "Unknown", "engines": None,
+        "note": "Reputation check unavailable.",
+    }
+
+    box: dict = {}
+    done = {"dns": threading.Event(), "ssl": threading.Event(),
+            "redirects": threading.Event(), "domain_info": threading.Event(),
+            "reputation": threading.Event()}
+
+    # The UI already shows these stages as 'running' (they are the current
+    # stage block right after VALIDATING); each worker emits its own 'done'.
+
+    def _dns():
+        try:
+            box["domain_info"] = analyze_dns(url, parts)
+        except Exception as exc:  # noqa: BLE001
+            info = dict(_empty_domain)
+            info["dns_error"] = f"DNS analysis error ({type(exc).__name__})."
+            box["domain_info"] = info
+        finally:
+            done["dns"].set()
+            info = box.get("domain_info") or _empty_domain
+            emit("dns", "done" if info.get("resolved") else "fail",
+                 info.get("ip_address") or info.get("dns_error"))
+            done["domain_info"].set()
+            emit("domain_info", "done", info.get("registered_domain"))
+            # The redirect probe wants the resolved domain, but it must not
+            # wait long for it: start it as soon as DNS answers.
+            _start_redirects()
+
+    def _ssl():
+        try:
+            box["ssl"] = analyze_ssl(url, parts)
+        except Exception as exc:  # noqa: BLE001
+            box["ssl"] = {
+                "checked": False, "status": "unreachable",
+                "https_enabled": parts.get("scheme") == "https",
+                "valid": False, "error": f"SSL analysis error ({type(exc).__name__}).",
+            }
+        finally:
+            done["ssl"].set()
+            info = box.get("ssl") or {}
+            if info.get("status") == "valid":
+                emit("ssl", "done", info.get("tls_version") or "valid")
+            elif info.get("status") == "not_https":
+                emit("ssl", "skip", "HTTP target")
+            else:
+                emit("ssl", "fail", info.get("error"))
+
+    def _redirects():
+        domain_info = box.get("domain_info") or _empty_domain
+        try:
+            box["redirects"] = _probe_redirects(url, parts, domain_info)
+        except Exception as exc:  # noqa: BLE001
+            box["redirects"] = {
+                "chain": [], "note": f"Redirect probe error ({type(exc).__name__})."}
+        finally:
+            done["redirects"].set()
+            info = box.get("redirects") or {}
+            emit("redirects", "fail" if info.get("blocked") else "done",
+                 info.get("block_reason")
+                 or f"{len(info.get('chain', []))} redirect(s)")
+
+    def _start_redirects():
+        threading.Thread(target=_redirects, daemon=True,
+                         name="zyra-url-redirects").start()
+
+    def _reputation():
+        try:
+            box["reputation"] = check_reputation(url, parts.get("hostname") or "")
+        except Exception as exc:  # noqa: BLE001
+            rep = dict(_empty_reputation)
+            rep["note"] = f"Reputation check error ({type(exc).__name__})."
+            box["reputation"] = rep
+        finally:
+            done["reputation"].set()
+            rep = box.get("reputation") or _empty_reputation
+            emit("reputation", "done" if rep.get("available") else "skip",
+                 rep.get("reputation") or rep.get("note") or "checked")
+
+    workers = {
+        "dns": _dns,
+        "ssl": _ssl,
+        "reputation": _reputation,
+    }
+    for name, fn in workers.items():
+        threading.Thread(target=fn, daemon=True, name=f"zyra-url-{name}").start()
+
+    # Hard stage budgets. A wedged provider thread is abandoned (daemon) and
+    # reported as unavailable rather than blocking the scan indefinitely.
+    # SSL and reputation start immediately and are joined in parallel; the
+    # redirect probe is chained off DNS (it needs the resolved domain) but is
+    # started by the DNS worker itself, so nothing waits serially here.
+    budgets = {
+        "dns": _scan_stage_timeout("dns_stage", 20.0),
+        "ssl": _scan_stage_timeout("ssl_stage", 20.0),
+        "reputation": _scan_stage_timeout("reputation_stage", 30.0),
+    }
+    redirect_budget = _scan_stage_timeout("redirects_stage", 20.0)
+
+    deadline = time.time() + max(budgets.values()) + redirect_budget
+    for key, budget in budgets.items():
+        if not done[key].wait(budget):
+            emit(key, "skip", "Stage timed out.")
+        if key == "dns":
+            # DNS has answered (or timed out) - the redirect probe was started
+            # by the DNS worker; give it its own budget from here.
+            deadline = time.time() + redirect_budget
+    done["redirects"].wait(max(0.0, deadline - time.time()))
+
+    if not done["domain_info"].is_set():
+        box.setdefault("domain_info", dict(_empty_domain))
+    if "ssl" not in box:
+        box["ssl"] = {
+            "checked": False, "status": "unreachable",
+            "https_enabled": parts.get("scheme") == "https",
+            "valid": False, "error": "SSL analysis timed out.",
+        }
+    if "redirects" not in box:
+        box["redirects"] = {"chain": [], "note": "Redirect probe timed out."}
+    if "reputation" not in box:
+        rep = dict(_empty_reputation)
+        rep["note"] = "Reputation check timed out."
+        box["reputation"] = rep
+
+    return box["domain_info"], box["ssl"], box["redirects"], box["reputation"]
+
+
 def _probe_redirects(url: str, parts: dict, domain_info: dict) -> dict:
     """Follow redirects manually (max 5) with re-validation of each hop."""
     try:
@@ -329,99 +488,17 @@ def run_url_scan(url: str, scan_id: str = None, source: str = "panel",
 
     # â”€â”€ Stage: RESOLVING DOMAIN â”€â”€
     emit("resolving", "running")
-    time.sleep(0.15)  # smooth stage transitions for the live UI
+    time.sleep(0.05)  # brief stage transition mark for the live UI
     emit("resolving", "done")
 
-    # â”€â”€ Stage: CHECKING DNS â”€â”€
-    emit("dns", "running")
-    try:
-        _dns, _derr = _run_with_timeout(analyze_dns, args=(url, parts), timeout=25)
-        if _dns is not None:
-            domain_info = _dns
-        else:
-            raise TimeoutError("DNS analysis timed out.") if _derr == "timeout" else _derr
-    except Exception as e:
-        domain_info = {
-            "hostname": parts["hostname"], "registered_domain": parts["hostname"],
-            "subdomain_count": 0, "subdomains": [], "is_ip_address": False,
-            "resolved": False, "ips": [], "ip_address": None,
-            "dns_error": f"DNS analysis error ({type(e).__name__}).",
-            "whois_available": False, "domain_age": "Information unavailable",
-            "registrar": None, "hosting_asn": None, "note": None,
-        }
-    dns_detail = domain_info.get("ip_address") or domain_info.get("dns_error")
-    emit("dns", "done" if domain_info.get("resolved") else "fail", dns_detail)
-
-    # â”€â”€ Stage: ANALYZING SSL/TLS â”€â”€
-    emit("ssl", "running")
-    try:
-        _ssl, _serr = _run_with_timeout(analyze_ssl, args=(url, parts), timeout=25)
-        if _ssl is not None:
-            ssl_info = _ssl
-        else:
-            raise TimeoutError("SSL analysis timed out.") if _serr == "timeout" else _serr
-    except Exception as e:
-        ssl_info = {
-            "checked": False, "status": "unreachable",
-            "https_enabled": parts["scheme"] == "https",
-            "valid": False, "error": f"SSL analysis error ({type(e).__name__}).",
-        }
-    if ssl_info.get("status") == "valid":
-        emit("ssl", "done", ssl_info.get("tls_version") or "valid")
-    elif ssl_info.get("status") == "not_https":
-        emit("ssl", "skip", "HTTP target")
-    else:
-        emit("ssl", "fail", ssl_info.get("error"))
-
-    # â”€â”€ Stage: ANALYZING REDIRECTS â”€â”€
-    emit("redirects", "running")
-    try:
-        _redir, _rerr = _run_with_timeout(
-            _probe_redirects, args=(url, parts, domain_info), timeout=30)
-        if _redir is not None:
-            redirect_info = _redir
-        else:
-            reason = "Redirect probe timed out." if _rerr == "timeout" else f"Redirect probe error ({type(_rerr).__name__})."
-            redirect_info = {"chain": [], "note": reason}
-    except Exception as e:
-        redirect_info = {"chain": [], "note": f"Redirect probe error ({type(e).__name__})."}
-    emit("redirects", "fail" if redirect_info.get("blocked") else "done",
-         redirect_info.get("block_reason") or f"{len(redirect_info.get('chain', []))} redirect(s)")
-
-    # â”€â”€ Stage: CHECKING DOMAIN INFORMATION â”€â”€
-    emit("domain_info", "running")
-    emit("domain_info", "done", domain_info.get("registered_domain"))
-
-    # â”€â”€ Stage: CHECKING REPUTATION â”€â”€
-    emit("reputation", "running")
-    try:
-        # Bounded wait: VirusTotal may submit the URL for a fresh scan and
-        # poll until the analysis completes, so cap the total time here.
-        _rep, _rerr = _run_with_timeout(
-            check_reputation,
-            args=(url, parts.get("hostname") or ""),
-            timeout=60,
-        )
-        if _rep is not None:
-            reputation = _rep
-        else:
-            reputation = {
-                "available": False, "provider": None,
-                "reputation": "Unknown", "malware": "Unknown",
-                "phishing": "Unknown", "engines": None,
-                "note": ("Reputation check timed out."
-                         if _rerr == "timeout"
-                         else f"Reputation check error ({type(_rerr).__name__})."),
-            }
-    except Exception as e:
-        reputation = {
-            "available": False, "provider": None,
-            "reputation": "Unknown", "malware": "Unknown",
-            "phishing": "Unknown", "engines": None,
-            "note": f"Reputation check error ({type(e).__name__}).",
-        }
-    rep_detail = reputation.get("reputation") or reputation.get("note") or "checked"
-    emit("reputation", "done" if reputation.get("available") else "skip", rep_detail)
+    # ── Stages: DNS / SSL / REDIRECTS / DOMAIN INFO / REPUTATION (parallel) ──
+    # These stages share no state, so they run concurrently and the scan's
+    # wall-clock time becomes the SLOWEST stage instead of the sum of all
+    # five (the sequential pipeline took ~60s worst case; this takes a few
+    # seconds). Each stage keeps its own timeout/exception guard.
+    domain_info, ssl_info, redirect_info, reputation = _run_network_stages(
+        url, parts, emit
+    )
 
     # â”€â”€ Stages: THREAT INDICATORS + URL STRUCTURE â”€â”€
     emit("threats", "running")

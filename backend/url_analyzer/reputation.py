@@ -22,7 +22,7 @@ from typing import Optional
 
 import requests
 
-from backend.url_analyzer.validator import REQUEST_TIMEOUT
+from backend.url_analyzer.validator import REQUEST_TIMEOUT, REPUTATION_MAX_WAIT
 
 _VT_URL_ENDPOINT = "https://www.virustotal.com/api/v3/urls/"
 _GSB_ENDPOINT = "https://safebrowsing.googleapis.com/v4/threatMatches:find"
@@ -121,7 +121,10 @@ def _check_virustotal(url: str) -> dict:
             f"Reputation data unavailable — threat-intel client import "
             f"failed ({type(exc).__name__})."
         )
-    return check_url(url)
+    # Bounded wait: an unknown URL needs a fresh VirusTotal analysis. The
+    # budget comes from ZYRA_THREAT_INTEL_MAX_WAIT (default 8s in fast mode),
+    # so an unverified URL cannot stall the whole scan.
+    return check_url(url, max_wait=REPUTATION_MAX_WAIT, poll_interval=2)
 
 
 # ──────────────────────────────────────────────

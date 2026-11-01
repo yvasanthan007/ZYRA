@@ -572,10 +572,17 @@ def process_message(message_type: str, data: Any) -> Dict[str, Any]:
     Compatible with the existing bridge_server.py pattern.
     """
     if message_type == "chat":
-        if isinstance(data, str):
-            answer = process_chat(data)
-            return {"success": True, "data": answer}
-        return {"success": False, "error": "Invalid chat data"}
+        if not isinstance(data, str):
+            return {"success": False, "error": "Invalid chat data"}
+        # Primary path: the same intent router the streaming WebSocket uses, so
+        # System Monitor / DNS / Nmap / identity questions are answered locally
+        # and identically on every entry point instead of reaching Ollama.
+        routed = process_chat_stream(data)
+        if routed.get("kind") == "static" and routed.get("success"):
+            return {"success": True, "data": routed.get("data"),
+                    "action": routed.get("action")}
+        # "ai" / "capture": the language model owns the answer.
+        return {"success": True, "data": process_chat(data)}
 
     elif message_type == "command":
         if isinstance(data, str):

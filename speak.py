@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import os
 import re
+import shutil
 import sys
 import tempfile
 import subprocess
@@ -20,13 +22,19 @@ for _stream in (sys.stdout, sys.stderr):
 # JennyNeural is primary; these English (United States) female Edge voices are
 # tried in order as fallbacks before resorting to offline Windows SAPI speech.
 DEFAULT_VOICE = "en-US-JennyNeural"
+# Identical spoken lines are cached on disk (see _cached_audio_path) so repeated
+# ack/greeting/verdict audio starts instantly instead of re-synthesising.
+TTS_CACHE_ENABLED = os.environ.get("ZYRA_TTS_CACHE", "1").strip().lower() not in (
+    "0", "false", "no", "off"
+)
+TTS_CACHE_MAX = 100
 FALLBACK_VOICES = ("en-US-AriaNeural", "en-US-AvaNeural", "en-US-EmmaNeural")
 VOICE = DEFAULT_VOICE
 # Edge TTS retry settings. Microsoft's free Edge TTS endpoint intermittently
 # returns no audio (NoAudioReceived) under load/throttling, so we retry with
 # backoff and fall back to an offline Windows TTS voice if it keeps failing.
 MAX_RETRIES = 3
-RETRY_DELAY = 1.2          # seconds, multiplied by attempt number
+RETRY_DELAY = 0.4          # seconds, multiplied by attempt number
 MAX_TEXT_LEN = 2000
 
 _CONTROL_CHAR_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
@@ -155,6 +163,7 @@ async def _render_audio(text, output_file):
                 communicate = edge_tts.Communicate(text, voice)
                 await communicate.save(output_file)
                 if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+                    _store_cached_audio(text, output_file)
                     if index > 0:
                         # Never silently substitute: tell the user which
                         # non-primary voice produced this audio.
@@ -185,12 +194,17 @@ async def _speak_async(text):
         if _stop_requested.is_set():
             return False
 
-        success = await _render_audio(text, output_file)
+        # Identical lines (the greeting, the "analysing... please wait" ack,
+        # repeated verdicts) are synthesised once and replayed from a small
+        # on-disk cache. Edge TTS synthesis is the dominant start-up cost
+        # (~0.6-1.5s per line); a cached line starts in milliseconds.
+        cached = _cached_audio_path(text)
+        success = bool(cached) or await _render_audio(text, output_file)
         if not success or _stop_requested.is_set():
             return False
 
         try:
-            pygame.mixer.music.load(output_file)
+            pygame.mixer.music.load(cached if cached else output_file)
             pygame.mixer.music.play()
 
             while pygame.mixer.music.get_busy():
@@ -207,12 +221,58 @@ async def _speak_async(text):
         return not _stop_requested.is_set()
     finally:
         # Clean up temp file on success, failure and interruption alike so a
-        # stopped or failed run never leaks audio files.
+        # stopped or failed run never leaks audio files. Cache entries are
+        # deliberately kept (bounded by _TTS_CACHE_MAX).
         try:
             if os.path.exists(output_file):
                 os.remove(output_file)
         except Exception:
             pass
+
+
+def _cache_dir() -> str:
+    path = os.path.join(tempfile.gettempdir(), "zyra_tts_cache")
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError:
+        pass
+    return path
+
+
+def _cached_audio_path(text: str):
+    """Path of the cached audio for *text*, or None when not cached."""
+    if not TTS_CACHE_ENABLED:
+        return None
+    try:
+        digest = hashlib.sha1(f"{VOICE}|{text}".encode("utf-8")).hexdigest()
+        path = os.path.join(_cache_dir(), f"{digest}.mp3")
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            return path
+    except Exception:
+        pass
+    return None
+
+
+def _store_cached_audio(text: str, source: str) -> None:
+    """Persist a freshly synthesised line so the next identical line is instant."""
+    if not TTS_CACHE_ENABLED:
+        return
+    try:
+        digest = hashlib.sha1(f"{VOICE}|{text}".encode("utf-8")).hexdigest()
+        target = os.path.join(_cache_dir(), f"{digest}.mp3")
+        shutil.copyfile(source, target)
+        # Bounded cache: drop the oldest files once the limit is exceeded.
+        try:
+            files = sorted(
+                (os.path.join(_cache_dir(), f) for f in os.listdir(_cache_dir())),
+                key=os.path.getmtime,
+            )
+            for old in files[: max(0, len(files) - TTS_CACHE_MAX)]:
+                os.remove(old)
+        except OSError:
+            pass
+    except Exception:
+        pass
 
 
 def speak(text):

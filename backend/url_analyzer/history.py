@@ -69,12 +69,12 @@ def add_entry(result: dict) -> None:
                    if e.get("scan_id") != entry["scan_id"]]
         entries.insert(0, entry)
         _save_unlocked(entries[:_MAX_ENTRIES])
+    _invalidate_cache()
 
 
 def recent(limit: int = 8) -> list:
     """Most recent scan summaries (without the heavy result payloads)."""
-    with _LOCK:
-        entries = _load_unlocked()
+    entries = _read_cached()
     out = []
     for e in entries[: max(0, int(limit))]:
         out.append({k: v for k, v in e.items() if k != "result"})
@@ -85,8 +85,7 @@ def find(scan_id: str):
     """Return the full stored result for a scan_id, or None."""
     if not scan_id:
         return None
-    with _LOCK:
-        entries = _load_unlocked()
+    entries = _read_cached()
     for e in entries:
         if e.get("scan_id") == scan_id:
             return e.get("result")
@@ -96,6 +95,36 @@ def find(scan_id: str):
 def entry_count() -> int:
     with _LOCK:
         return len(_load_unlocked())
+
+
+# The history is read on every panel open/history refresh. Reading and parsing
+# the JSON file each time was the main avoidable cost, so the parsed entries are
+# cached and only re-read when the file changes (size or mtime).
+_CACHE = {"key": None, "entries": None}
+
+
+def _read_cached() -> list:
+    """Return the history entries, re-reading the file only when it changed."""
+    path = _history_path()
+    try:
+        st = os.stat(path)
+        key = (path, st.st_mtime_ns, st.st_size)
+    except OSError:
+        return []
+    with _LOCK:
+        if _CACHE["key"] == key and _CACHE["entries"] is not None:
+            return _CACHE["entries"]
+    entries = _load_unlocked()
+    with _LOCK:
+        _CACHE["key"] = key
+        _CACHE["entries"] = entries
+    return entries
+
+
+def _invalidate_cache() -> None:
+    with _LOCK:
+        _CACHE["key"] = None
+        _CACHE["entries"] = None
 
 
 def _now_display() -> str:

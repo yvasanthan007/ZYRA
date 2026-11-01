@@ -198,6 +198,52 @@ async def on_startup():
     threading.Thread(target=_warm_ocr, name="zyra-ocr-warmup",
                      daemon=True).start()
 
+    # Preload the ML phishing model. Loading its pickle takes ~2.5s on a cold
+    # process, which otherwise lands inside the first URL Analyzer scan (it runs
+    # after the threat-indicator stage and blocks the result). A warm model
+    # scores a URL in milliseconds.
+    def _warm_ml():
+        try:
+            from backend.ml_phishing import analyze_url_ml
+            if analyze_url_ml is None:
+                return
+            analyze_url_ml("https://example.com")
+            print("[startup] ML phishing classifier warmed up")
+        except Exception:
+            pass
+
+    threading.Thread(target=_warm_ml, name="zyra-ml-warmup",
+                     daemon=True).start()
+
+    # Warm the system-monitor process table so the first "what is my CPU
+    # usage?" answers in milliseconds instead of paying a ~2s psutil walk.
+    def _warm_monitor():
+        try:
+            start_system_monitor()
+        except Exception:
+            pass
+
+    threading.Thread(target=_warm_monitor, name="zyra-monitor-warmup",
+                     daemon=True).start()
+
+    # Fast path for backend readiness probes: /api/health is polled every 250ms
+    # while Electron waits for the backend, and uvicorn logs one "INFO: ... "
+    # line per request. A GET-only access-log filter keeps those polls from
+    # writing to the log pipe (which costs milliseconds each on Windows).
+    try:
+        import logging
+
+        class _HealthPollFilter(logging.Filter):
+            def filter(self, record: logging.LogRecord) -> bool:  # noqa: D401
+                try:
+                    return "GET /api/health" not in record.getMessage()
+                except Exception:
+                    return True
+
+        logging.getLogger("uvicorn.access").addFilter(_HealthPollFilter())
+    except Exception:
+        pass
+
 
 def broadcast_message_sync(message: Dict[str, Any]) -> None:
     """Thread-safe helper to broadcast a message to all connected clients."""
@@ -539,11 +585,11 @@ def _url_run_worker(scan_id: str, url: str, source: str) -> None:
         broadcast_message_sync({"type": "url_error", "data": {"reason": str(e)}})
 
 
-# Maximum wall-clock lifetime of a URL scan. The pipeline's own timeouts
-# (DNS/TLS/HTTP) already bound individual network ops, but a hung worker
-# thread must never permanently block all future scans, so this watchdog
-# forcibly clears _url_active once the deadline is exceeded.
-_URL_SCAN_MAX_LIFETIME = 240  # seconds; allow slower DNS/TLS/reputation providers to finish
+# Maximum wall-clock lifetime of a URL scan. With the network stages running
+# concurrently the whole scan takes a few seconds; this is only the ceiling for
+# a genuinely wedged worker (which would otherwise permanently block all future
+# scans), so it is deliberately short — the panel fails fast instead of spinning.
+_URL_SCAN_MAX_LIFETIME = 60  # seconds
 
 
 def _url_watchdog(scan_id: str, deadline: float) -> None:
@@ -901,11 +947,35 @@ async def get_dashboard():
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint.
+
+    This is polled by Electron while the backend boots and by main.py's
+    readiness check. It must answer as fast as possible, so it stays a pure
+    in-memory constant response. The richer diagnostic (AI provider, threat
+    intel, scan state) lives in /api/status so a slow probe can never delay
+    the desktop shell's startup handshake.
+    """
     return {
         "status": "ok",
         "zyra": "running",
         "version": "1.0.0"
+    }
+
+
+@app.get("/api/status")
+async def status_check():
+    """Diagnostic status snapshot (not used for readiness / startup timing)."""
+    return {
+        "status": "ok",
+        "zyra": "running",
+        "version": "1.0.0",
+        "ai_loaded": True,
+        "websocket": "/ws",
+        "endpoints": [
+            "/api/health", "/api/status", "/api/ai/status", "/api/chat",
+            "/api/command", "/api/voice", "/api/url/analyze", "/api/dns/lookup",
+            "/api/nmap/scan", "/api/system/metrics", "/api/ml/phishing",
+        ],
     }
 
 
@@ -1593,11 +1663,13 @@ async def dns_lookup_endpoint(data: Dict[str, Any]):
         {"source": "panel"}                # optional: panel | chat | voice
 
     The lookup runs in a background thread (live progress is streamed to
-    dashboard clients over WebSocket as `dns_status` messages). The endpoint
-    waits for completion (up to ~50s — typical lookups take 1-5s) and returns
-    the full structured result: DNS records (A, AAAA, CNAME, MX, NS, TXT,
-    SOA, PTR), DNSSEC status, TTLs, response time, resolution status and
-    errors (NXDOMAIN / SERVFAIL / timeout).
+    dashboard clients over WebSocket as `dns_status` messages) and the
+    endpoint waits for completion in a worker thread (never on the event
+    loop), up to ~15s — typical lookups take 1-3s. Pass `"async": true` (the
+    dashboard does) to get `202 + lookup_id` immediately and poll
+    `/api/dns/result/<id>` instead. The full structured result contains DNS
+    records (A, AAAA, CNAME, MX, NS, TXT, SOA, PTR), DNSSEC status, TTLs,
+    response time, resolution status and errors (NXDOMAIN / SERVFAIL / timeout).
     """
     domain = (data.get("domain") or data.get("target") or "").strip()
     text = (data.get("text") or "").strip()
@@ -1634,7 +1706,16 @@ async def dns_lookup_endpoint(data: Dict[str, Any]):
         )
 
     lookup_id = launch.get("lookup_id")
-    done.wait(timeout=50)
+
+    # Non-blocking contract: the panel already receives every stage over
+    # WebSocket, so returning the id immediately is all it needs. This keeps
+    # the request fast and avoids holding an HTTP connection during DNS I/O.
+    wants_async = bool(data.get("async")) or source == "panel"
+    if wants_async:
+        return {"success": True, "lookup_id": lookup_id, "pending": True}
+
+    # Programmatic callers get the result: wait off the event loop.
+    await asyncio.to_thread(done.wait, 15)
 
     result = holder.get("result")
     if result is None:
@@ -1652,7 +1733,7 @@ async def dns_lookup_endpoint(data: Dict[str, Any]):
                      "error": result.get("error", "DNS lookup failed.")},
         )
 
-    # Still running after 50s (rare): report pending state.
+    # Still running after 15s (rare): report pending state.
     return JSONResponse(
         status_code=202,
         content={"success": True, "lookup_id": lookup_id, "pending": True,

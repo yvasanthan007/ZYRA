@@ -51,7 +51,9 @@ const zyra_paths_1 = __webpack_require__(/*! ./zyra-paths */ "./src/main/zyra-pa
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 8080;
 const STARTUP_TIMEOUT_MS = 45000;
-const POLL_INTERVAL_MS = 500;
+// Poll fast enough that the splash-to-dashboard hand-off feels instant once
+// uvicorn binds the port. 250ms is cheap because /api/health is in-memory.
+const POLL_INTERVAL_MS = 250;
 const LOG_LIMIT = 400;
 // uvicorn / Windows socket errors emitted when the port is already taken.
 const BIND_ERROR_RE = /address already in use|error while attempting to bind|only one usage of each socket address|WinError 10048|Errno 10048/i;
@@ -299,7 +301,10 @@ class BackendService extends events_1.EventEmitter {
                 port: this.port,
                 path: '/api/health',
                 method: 'GET',
-                timeout: 2500,
+                // The health probe is a local, in-memory response. A short timeout
+                // means a half-started uvicorn socket cannot stall the poll loop.
+                timeout: 1000,
+                headers: { Connection: 'close' },
             }, (res) => {
                 const chunks = [];
                 res.on('data', (chunk) => chunks.push(chunk));

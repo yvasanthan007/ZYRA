@@ -266,10 +266,13 @@ def open_dashboard_in_edge(url):
     return True
 
 
-def wait_for_server(url, max_retries=10, retry_interval=1.0):
+def wait_for_server(url, max_retries=25, retry_interval=0.2):
     """
     Poll the backend server's health endpoint until it responds.
     This ensures the server is fully initialized before opening the browser.
+    Polls are short (200ms apart, 25 attempts = ~5s) because /api/health is an
+    in-memory constant: the dashboard opens as soon as uvicorn binds the port
+    instead of waiting on fixed 1s sleeps.
 
     Args:
         url: Base URL of the server (e.g. http://127.0.0.1:8080)
@@ -423,7 +426,7 @@ def _url_voice_completion_watcher(scan_id: str):
                 except Exception as e:
                     print(f"[URL WATCHER] speak failed: {e}")
                 return
-        time.sleep(1.0)
+        time.sleep(0.25)
     try:
         speak("The URL analysis could not be completed within the allowed time.")
     except Exception as e:
@@ -520,7 +523,7 @@ def _dns_voice_completion_watcher(lookup_id: str):
                 except Exception as e:
                     print(f"[DNS WATCHER] speak failed: {e}")
                 return
-        time.sleep(1.0)
+        time.sleep(0.25)
     try:
         speak("The DNS lookup could not be completed within the allowed time.")
     except Exception as e:
@@ -645,7 +648,7 @@ if __name__ == "__main__":
     # Wait for the server to be fully initialized and listening
     # This polls the /api/health endpoint with retries
     try:
-        server_ready = wait_for_server(DASHBOARD_URL, max_retries=8, retry_interval=1.0)
+        server_ready = wait_for_server(DASHBOARD_URL, max_retries=25, retry_interval=0.2)
     except BaseException as _e:  # noqa: BLE001
         print(f"[ZYRA] Server readiness check skipped ({_e!r}) - continuing.")
         server_ready = False

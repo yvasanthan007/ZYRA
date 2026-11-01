@@ -16,8 +16,11 @@ package so every network module shares one safety policy.
 """
 
 import ipaddress
+import os
 import re
 import socket
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse, urlunparse
 
@@ -30,6 +33,35 @@ MAX_REDIRECTS = 5
 DNS_TIMEOUT = 6          # seconds for hostname resolution
 REQUEST_TIMEOUT = 10     # seconds for outbound HTTP probes
 TLS_TIMEOUT = 8          # seconds for TLS handshake
+
+
+def _env_float(key: str, default: float, low: float, high: float) -> float:
+    """Read a numeric override from the environment (clamped to a safe range)."""
+    try:
+        return max(low, min(high, float(os.environ.get(key, default))))
+    except (TypeError, ValueError):
+        return default
+
+
+# ── Fast-response budgets ──────────────────────────────────────────────
+# The scan pipeline runs its independent stages CONCURRENTLY (see
+# analyzer.py), so the wall-clock time of a scan is roughly the slowest
+# single stage. These budgets bound each stage; ZYRA_SCAN_FAST=1 tightens
+# them further for an interactive desktop (a slow provider is reported as
+# "unverified" instead of making the user wait).
+SCAN_FAST = os.environ.get("ZYRA_SCAN_FAST", "1").strip().lower() in (
+    "1", "true", "yes", "on"
+)
+DNS_TIMEOUT = _env_float("ZYRA_SCAN_DNS_TIMEOUT", 3.0 if SCAN_FAST else DNS_TIMEOUT, 1.0, 30.0)
+REQUEST_TIMEOUT = _env_float(
+    "ZYRA_SCAN_HTTP_TIMEOUT", 4.0 if SCAN_FAST else REQUEST_TIMEOUT, 1.0, 30.0
+)
+TLS_TIMEOUT = _env_float("ZYRA_SCAN_TLS_TIMEOUT", 4.0 if SCAN_FAST else TLS_TIMEOUT, 1.0, 30.0)
+# Reputation (VirusTotal) can submit a brand-new URL and poll for the result;
+# that is the slowest single stage, so it is capped here (seconds).
+REPUTATION_MAX_WAIT = _env_float(
+    "ZYRA_THREAT_INTEL_MAX_WAIT", 8.0 if SCAN_FAST else 25.0, 3.0, 60.0
+)
 
 ALLOWED_SCHEMES = {"http", "https"}
 
@@ -57,6 +89,13 @@ BLOCKED_HOST_SUFFIXES = (
 DEFAULT_PORTS = {"http": 80, "https": 443}
 
 _THREAD_POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix="zyra-url")
+
+# Short-lived resolution cache. One scan resolves the same hostname up to three
+# times (DNS stage, SSL stage, redirect probe per hop); caching the answer for
+# the lifetime of a scan removes those duplicate OS lookups entirely.
+_RESOLVE_CACHE: dict = {}
+_RESOLVE_CACHE_LOCK = threading.Lock()
+RESOLVE_CACHE_TTL = _env_float("ZYRA_SCAN_DNS_CACHE_TTL", 60.0, 0.0, 600.0)
 
 
 # ──────────────────────────────────────────────
@@ -96,6 +135,13 @@ def resolve_host_ips(hostname: str, timeout: float = DNS_TIMEOUT):
         (True, [ip, ...])        — resolved successfully
         (False, "error message") — resolution failed / timed out
     """
+    key = (hostname or "").strip().lower().rstrip(".")
+    now = time.time()
+    with _RESOLVE_CACHE_LOCK:
+        hit = _RESOLVE_CACHE.get(key)
+        if hit and (RESOLVE_CACHE_TTL <= 0 or now - hit[0] < RESOLVE_CACHE_TTL):
+            return hit[1], hit[2]
+
     def _resolve():
         infos = socket.getaddrinfo(hostname, None)
         ips = []
@@ -108,11 +154,14 @@ def resolve_host_ips(hostname: str, timeout: float = DNS_TIMEOUT):
     try:
         future = _THREAD_POOL.submit(_resolve)
         ips = future.result(timeout=timeout)
-        return True, ips
+        outcome = (True, ips)
     except socket.gaierror:
         return False, "Domain could not be resolved."
     except Exception as e:
         return False, f"DNS resolution error ({type(e).__name__})."
+    with _RESOLVE_CACHE_LOCK:
+        _RESOLVE_CACHE[key] = (now, outcome[0], outcome[1])
+    return outcome
 
 
 def hostname_is_blocked(hostname: str) -> bool:
