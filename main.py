@@ -564,7 +564,7 @@ def handle_dns_analysis_voice(command: str):
 
 # ========== Main Entry Point ==========
 
-if __name__ == "__main__":
+def main():
     # ── Process-wide safety net ──────────────────────────────────────────
     # Nothing — not an analysis failure, not a stray sys.exit() in a helper,
     # not an uncaught exception in a daemon thread — may silently terminate
@@ -1019,3 +1019,6 @@ if __name__ == "__main__":
         # Always run cleanup when the main loop exits
         print("[ZYRA] Voice loop ended - running cleanup (intentional shutdown).")
         cleanup()
+
+if __name__ == "__main__":
+    main()

@@ -1,14 +1,21 @@
 """
 ZYRA Startup Script
-Checks dependencies and starts the application
+Checks dependencies and starts the application.
 """
-import sys
-import subprocess
-import importlib
 
-# ── Windows console safety ──────────────────────────────────────────────
-# Force UTF-8 output so the ✅/❌/box-drawing prints below never crash with
-# UnicodeEncodeError on cp1252 Windows consoles.
+import sys
+import os
+import importlib
+import traceback
+from pathlib import Path
+
+
+# Always run from the directory containing this script.
+PROJECT_ROOT = Path(__file__).resolve().parent
+os.chdir(PROJECT_ROOT)
+
+
+# Windows console safety: ensure Unicode output works where possible.
 for _stream in (sys.stdout, sys.stderr):
     if _stream is not None and hasattr(_stream, "reconfigure"):
         try:
@@ -16,28 +23,35 @@ for _stream in (sys.stdout, sys.stderr):
         except (ValueError, OSError):
             pass
 
+
 def check_package(package_name, import_name=None):
-    """Check if a package is installed."""
+    """Return True when a required Python package can be imported."""
+
     if import_name is None:
         import_name = package_name
-    
+
     try:
         importlib.import_module(import_name)
-        print(f"  ✅ {package_name}")
+        print(f"  [OK] {package_name}")
         return True
     except ImportError:
-        print(f"  ❌ {package_name} - NOT INSTALLED")
+        print(f"  [MISSING] {package_name}")
         return False
 
+
 def main():
-    print("""
-    ╔══════════════════════════════════════╗
-    ║       ZYRA DEPENDENCY CHECK          ║
-    ╚══════════════════════════════════════╝
-    """)
-    
-    print("Checking required packages...")
-    
+    """Check dependencies and start the ZYRA application."""
+
+    print(
+        """
+    ======================================
+             ZYRA DEPENDENCY CHECK
+    ======================================
+        """
+    )
+
+    print("Checking required packages...\n")
+
     required_packages = [
         ("edge-tts", "edge_tts"),
         ("pyperclip", "pyperclip"),
@@ -56,49 +70,63 @@ def main():
         ("requests", "requests"),
         ("Pillow", "PIL"),
     ]
-    
+
     missing = []
+
     for package_name, import_name in required_packages:
         if not check_package(package_name, import_name):
             missing.append(package_name)
-    
+
     if missing:
-        print(f"\n❌ Missing {len(missing)} package(s): {', '.join(missing)}")
-        print("\n📦 Install them with:")
-        print(f"   pip install {' '.join(missing)}")
-        print("\n   Or install all requirements:")
-        print("   pip install -r requirements.txt")
+        print(f"\nMissing {len(missing)} package(s):")
+        for package_name in missing:
+            print(f"  - {package_name}")
+
+        print("\nActivate your project's virtual environment and install them:")
+        print("  python -m pip install " + " ".join(missing))
+        print("\nOr install the project's requirements:")
+        print("  python -m pip install -r requirements.txt")
+
         return False
-    
-    print("\n✅ All required packages are installed!")
-    print("\n🚀 Starting ZYRA...")
+
+    print("\nAll required packages are installed.")
+    print("\nStarting ZYRA...")
     print("=" * 50)
-    
-    # Import and run main
+
     try:
+        # main.py must define a callable main() function.
         from main import main as run_zyra
-        # Note: main.py uses if __name__ == "__main__" so we need to exec it
-        import main
-        import threading
-        
-        # Start in a way that works
-        print("\n✨ ZYRA is starting...")
-        print("   🎤 Voice commands: Speak into your microphone")
-        print("   🌐 Dashboard: Will open in browser")
-        print("   ⌨️  Say 'exit' or press Ctrl+C to quit\n")
-        
-        # Execute main
-        exec(open("main.py").read())
-        
+
+        print("\nZYRA is starting.")
+        print("  Voice commands: Speak into your microphone")
+        print("  Dashboard: The application may open it automatically")
+        print("  Shutdown: Say 'exit' or press Ctrl+C\n")
+
+        # Call the application entry point directly.
+        run_zyra()
+
     except KeyboardInterrupt:
-        print("\n\n👋 ZYRA shutdown complete")
-    except Exception as e:
-        print(f"\n❌ Error starting ZYRA: {e}")
-        import traceback
+        print("\nZYRA shutdown requested.")
+
+    except ImportError as exc:
+        print(f"\nCould not import a required module: {exc}")
+        print(
+            "Check main.py and its imports. "
+            "Confirm that main.py defines a callable main() function."
+        )
         traceback.print_exc()
         return False
-    
+
+    except Exception as exc:
+        print(f"\nError starting ZYRA: {type(exc).__name__}: {exc}")
+        traceback.print_exc()
+        return False
+
+    print("\nZYRA has stopped.")
     return True
 
+
 if __name__ == "__main__":
-    main()
+    success = main()
+    if not success:
+        sys.exit(1)

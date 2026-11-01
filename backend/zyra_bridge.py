@@ -161,6 +161,81 @@ from backend.nmap_service import (
 # CYBERLLM INTEGRATION
 # ============================================================
 
+def _is_cybersecurity_question(message: str) -> bool:
+    """Check if a message is a cybersecurity question suitable for CyberLLM."""
+    message_lower = str(message or "").lower().strip()
+    if not message_lower:
+        return False
+
+    cyber_keywords = [
+        "phishing", "malware", "ransomware", "virus", "trojan", "worm",
+        "social engineering", "sql injection", "xss", "cross-site scripting",
+        "brute force", "ddos", "dos", "man-in-the-middle", "mitm",
+        "network security", "web security", "application security",
+        "endpoint security", "cloud security", "cryptography", "encryption",
+        "decryption", "hash", "salting", "authentication", "authorization",
+        "access control", "privilege escalation", "zero day", "zero-day",
+        "vulnerability", "exploit", "payload", "botnet", "rootkit",
+        "keylogger", "spyware", "adware", "ransomware-as-a-service",
+        "raas", "apt", "advanced persistent threat", "csrf",
+        "cross-site request forgery", "session hijacking",
+        "credential stuffing", "credential mining",
+    ]
+
+    for keyword in cyber_keywords:
+        if keyword in message_lower:
+            return True
+
+    # Check for question patterns about security
+    question_starts = ["what is", "how does", "how do i", "how to", "explain", "tell me about"]
+    for qs in question_starts:
+        if message_lower.startswith(qs) and len(message_lower) > len(qs):
+            remaining = message_lower[len(qs) :].strip()
+            if any(kw in remaining for kw in ["security", "attack", "virus", "hack", "phishing"]):
+                return True
+
+    return False
+
+
+def _is_analysis_followup(message: str) -> bool:
+    """Check if a message is a follow-up question about a previous analysis."""
+    message_lower = str(message or "").lower().strip()
+    if not message_lower:
+        return False
+
+    followup_keywords = [
+        "explain",
+        "why",
+        "how",
+        "details",
+        "more information",
+        "tell me more",
+        "about that",
+        "about the",
+        "result",
+        "verdict",
+        "score",
+        "score was",
+        "flagged",
+        "detected",
+        "phishing score",
+        "verdict was",
+        "analysis shows",
+    ]
+
+    for kw in followup_keywords:
+        if kw in message_lower:
+            return True
+
+    return False
+
+
+def _handle_analysis_followup(message: str) -> str:
+    """Handle follow-up questions about a previous analysis result."""
+    # Route to CyberLLM for explanation using stored context
+    return _get_cyberllm_response(message)
+
+
 def _get_cyberllm_response(message: str) -> str:
     """
     Send ordinary conversational messages to CyberLLM.
@@ -489,6 +564,16 @@ def process_chat(message: str) -> str:
     if identity:
         return identity
 
+    # CYBERSECURITY_QUESTION - route cybersecurity questions to CyberLLM
+    # Covers topics like phishing, malware, social engineering, network security, etc.
+    if _is_cybersecurity_question(message):
+        return _get_cyberllm_response(message)
+
+    # ANALYSIS_FOLLOW_UP - if user asks about a previous analysis result
+    if _is_analysis_followup(message):
+        return _handle_analysis_followup(message)
+
+    # Existing link analysis (moved down from its previous position)
     if is_link_analysis_request(message):
         report, _url = _link_capture_report(message)
 
