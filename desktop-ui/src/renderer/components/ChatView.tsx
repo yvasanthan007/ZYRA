@@ -3,6 +3,9 @@ import React, { useState, useRef, useEffect } from 'react';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  source?: string;
+  confidence?: number;
+  retrievedSources?: Array<{ title?: string; source?: string; url?: string }>;
 }
 
 interface ChatViewProps {
@@ -32,7 +35,13 @@ const ChatView: React.FC<ChatViewProps> = ({ setStatus }) => {
 
     try {
       const response = await window.zyraAPI.aiChat(userMessage);
-      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        content: typeof response === 'string' ? response : response.answer,
+        source: typeof response === 'string' ? undefined : response.source,
+        confidence: typeof response === 'string' ? undefined : response.confidence,
+        retrievedSources: typeof response === 'string' ? undefined : response.retrieved_sources,
+      }]);
       setStatus('Ready');
     } catch (err) {
       setMessages((prev) => [
@@ -74,6 +83,12 @@ const ChatView: React.FC<ChatViewProps> = ({ setStatus }) => {
                 </div>
               ) : (
                 <p className="message-text">{msg.content}</p>
+              )}
+              {msg.role === 'assistant' && msg.source && (
+                <div className="message-source">
+                  Evidence source: {msg.source}{msg.confidence !== undefined ? ` · confidence ${msg.confidence.toFixed(2)}` : ''}
+                  {!!msg.retrievedSources?.length && <ul>{msg.retrievedSources.map((item, sourceIndex) => <li key={`${item.title}-${sourceIndex}`}>{item.title || item.source}{item.url ? ` — ${item.url}` : ''}</li>)}</ul>}
+                </div>
               )}
             </div>
           </div>

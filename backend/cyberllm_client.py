@@ -19,9 +19,11 @@ load_dotenv(PROJECT_ROOT / ".env", override=False)
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8765"
 
-# Chat can take longer because the local LLM runs on the CPU.
-CHAT_TIMEOUT_SECONDS = 45.0
-PHISHING_TIMEOUT_SECONDS = 8.0
+# Chat can take longer because local inference may run on the CPU. Allow
+# environment overrides for local deployments without changing API contracts.
+CHAT_TIMEOUT_SECONDS = float(os.getenv("CYBERLLM_CHAT_TIMEOUT_SECONDS", "45"))
+PHISHING_TIMEOUT_SECONDS = float(os.getenv("CYBERLLM_REQUEST_TIMEOUT_SECONDS", "8"))
+HEALTH_TIMEOUT_SECONDS = min(PHISHING_TIMEOUT_SECONDS, 3.0)
 
 
 # ============================================================
@@ -63,7 +65,25 @@ def _configuration():
         )
 
     return base_url, api_key
-
+def check_health() -> dict:
+    "CyberLLM health-check helper."
+    base_url = os.getenv("CYBERLLM_BASE_URL", DEFAULT_BASE_URL).strip().rstrip("/")
+    if not base_url.startswith(("http://", "https://")):
+        raise CyberLLMClientError("CyberLLM base URL configuration is invalid.", status_code=503)
+    try:
+        with httpx.Client(timeout=HEALTH_TIMEOUT_SECONDS, follow_redirects=False) as client:
+            response = client.get(f"{base_url}/health")
+            response.raise_for_status()
+            health = response.json()
+    except httpx.TimeoutException:
+        raise CyberLLMClientError("CyberLLM health check timed out.", status_code=504) from None
+    except httpx.RequestError:
+        raise CyberLLMClientError("CyberLLM is unreachable. Check that its local API server is running.", status_code=503) from None
+    except ValueError:
+        raise CyberLLMClientError("CyberLLM returned invalid health data.", status_code=502) from None
+    if not isinstance(health, dict) or health.get("status") not in {"ok", "degraded"}:
+        raise CyberLLMClientError("CyberLLM returned unexpected health data.", status_code=502)
+    return health
 
 def _request_json(
     method: str,

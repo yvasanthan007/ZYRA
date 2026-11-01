@@ -356,3 +356,35 @@ MIT License - Feel free to modify and use!
 - **Edge TTS** - Text-to-speech
 - **Three.js** - 3D graphics
 - **FastAPI** - Backend framework
+
+## CyberLLM Desktop Integration
+Zyra keeps CyberLLM separate and proxies its documented local API. Configure `CYBERLLM_BASE_URL` (default `http://127.0.0.1:8765`), `CYBERLLM_API_KEY` (read from Zyra's backend `.env`), `CYBERLLM_REQUEST_TIMEOUT_SECONDS` (default 8), and `CYBERLLM_CHAT_TIMEOUT_SECONDS` (default 45). Do not put credentials in the renderer. Cybersecurity prompts use CyberLLM's `/chat`; other conversation and greeting routes remain in Zyra. Phishing reports are advisory; uncalibrated scores are not probabilities.
+
+Start CyberLLM in its own PowerShell window:
+
+```powershell
+Set-Location D:\CyberLLM
+.\CyberLLM.ps1 serve
+```
+
+Start the Zyra backend in another window:
+
+```powershell
+Set-Location 'C:\Users\Vasanthan Y\OneDrive\Desktop\ZYRA - AI BUILD\ZYRA\ZYRA'
+.\.venv\Scripts\python.exe -m uvicorn backend.server:app --host 127.0.0.1 --port 8080
+```
+
+Start the Electron/React app in a third window:
+
+```powershell
+Set-Location 'C:\Users\Vasanthan Y\OneDrive\Desktop\ZYRA - AI BUILD\ZYRA\ZYRA\desktop-ui'
+npm run dev
+```
+
+Verify service health and the analysis proxy (the URL is submitted only to the API and is never opened):
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/api/cyberllm/status
+Invoke-RestMethod http://127.0.0.1:8765/health
+Invoke-RestMethod -Uri http://127.0.0.1:8080/api/cyberllm/phishing -Method Post -ContentType 'application/json' -Body '{"url":"https://example.com/"}'
+```

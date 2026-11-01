@@ -1,4 +1,4 @@
-interface CommandItem {
+﻿interface CommandItem {
   id: string;
   label: string;
   category: string;

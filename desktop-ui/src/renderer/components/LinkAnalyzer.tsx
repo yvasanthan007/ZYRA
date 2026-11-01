@@ -7,6 +7,8 @@ interface CyberLLMData {
   phishing_score: number;
   score_is_calibrated_probability: boolean;
   disclaimer?: string;
+  evidence?: unknown;
+  checks?: unknown;
 }
 
 interface CyberLLMResponse {
@@ -31,7 +33,60 @@ const LinkAnalyzer: React.FC = () => {
   const [provider, setProvider] = useState('CyberLLM');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState<'checking' | 'connected' | 'offline'>('checking');
+  const [statusError, setStatusError] = useState('');
+  const [analyzedAt, setAnalyzedAt] = useState('');
   const [tab, setTab] = useState<'analysis' | 'dataset'>('analysis');
+
+  const checkService = async (): Promise<void> => {
+    const request = window.zyraAPI?.requestBackend;
+    if (!request) {
+      setServiceStatus('offline');
+      setStatusError('Zyra backend bridge is unavailable.');
+      return;
+    }
+    setServiceStatus('checking');
+    try {
+      const raw = await request('GET', '/api/cyberllm/status');
+      const wrapped = raw as BackendResponse;
+      const body = wrapped?.body as { connected?: boolean; error?: string } | undefined;
+      if (wrapped?.ok && body?.connected === true) {
+        setServiceStatus('connected');
+        setStatusError('');
+      } else {
+        setServiceStatus('offline');
+        setStatusError(body?.error || wrapped?.error || 'CyberLLM is unavailable.');
+      }
+    } catch (err) {
+      setServiceStatus('offline');
+      setStatusError(err instanceof Error ? err.message : 'CyberLLM is unavailable.');
+    }
+  };
+
+  React.useEffect(() => { void checkService(); }, []);
+
+  const exportReport = (): void => {
+    if (!result || !analyzedAt) return;
+    const report = {
+      analysis_timestamp: analyzedAt,
+      submitted_url: analyzedUrl,
+      provider,
+      prediction: result.prediction,
+      phishing_score: result.phishing_score,
+      score_interpretation: result.score_is_calibrated_probability
+        ? 'API marks this score as a calibrated probability.'
+        : 'Raw uncalibrated model score; not a probability.',
+      evidence: result.evidence ?? result.checks ?? null,
+      limitations: result.disclaimer || 'False positives and false negatives are possible.',
+      safety_disclaimer: 'Advisory model assessment only. A LEGITIMATE result does not prove a URL is safe.',
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'zyra-cyberllm-analysis.json';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 
   const analyzeWithCyberLLM = async (target: string): Promise<void> => {
     const request = window.zyraAPI?.requestBackend;
@@ -90,7 +145,10 @@ const LinkAnalyzer: React.FC = () => {
 
     setProvider(response.provider || 'CyberLLM');
     setAnalyzedUrl(target);
+    setAnalyzedAt(new Date().toISOString());
     setResult(data);
+    setServiceStatus('connected');
+    setStatusError('');
   };
 
   const handleAnalyze = async (capture = false): Promise<void> => {
@@ -174,6 +232,13 @@ const LinkAnalyzer: React.FC = () => {
       <div className="voice-header">
         <div>
           <h2>CyberLLM Link Analyzer</h2>
+          <p className="voice-hint" role="status">
+            CyberLLM: {serviceStatus === 'checking' ? 'Checkingâ€¦' : serviceStatus === 'connected' ? 'Connected' : 'Unavailable'}
+          </p>
+          {statusError && <p className="voice-hint" role="alert">{statusError}</p>}
+          <button type="button" onClick={() => void checkService()} disabled={serviceStatus === 'checking'}>
+            {serviceStatus === 'checking' ? 'Checkingâ€¦' : 'Retry connection'}
+          </button>
           <p className="voice-hint">
             Analyze URLs using your CyberLLM phishing detection service.
           </p>
@@ -263,6 +328,10 @@ const LinkAnalyzer: React.FC = () => {
           {result && (
             <div className="voice-transcript-area">
               <div className="transcript-item">
+                <span className="transcript-label">Analysis timestamp:</span>
+                <p>{analyzedAt}</p>
+              </div>
+              <div className="transcript-item">
                 <span className="transcript-label">
                   Analysis provider:
                 </span>
@@ -282,9 +351,8 @@ const LinkAnalyzer: React.FC = () => {
                 </span>
                 <p>
                   {result.phishing_score}
-                  {result.phishing_score >= 0 &&
-                  result.phishing_score <= 1
-                    ? ` (${(result.phishing_score * 100).toFixed(2)} on a 0–100 display scale)`
+                  {result.score_is_calibrated_probability && result.phishing_score >= 0 && result.phishing_score <= 1
+                    ? ` (${(result.phishing_score * 100).toFixed(2)}% calibrated probability)`
                     : ''}
                 </p>
               </div>
@@ -296,7 +364,7 @@ const LinkAnalyzer: React.FC = () => {
                 <p>
                   {result.score_is_calibrated_probability
                     ? 'Reported as calibrated by the API'
-                    : 'No — this is an uncalibrated model score.'}
+                    : 'No â€” this is an uncalibrated model score.'}
                 </p>
               </div>
 
@@ -310,6 +378,7 @@ const LinkAnalyzer: React.FC = () => {
                 </p>
               </div>
 
+              <button type="button" onClick={exportReport}>Export JSON report</button>
               <p className="voice-hint">
                 Security notice: A LEGITIMATE prediction does not prove
                 that a website is safe. Verify suspicious links independently

@@ -504,6 +504,8 @@ body {
 }
 
 /* ===== URL risk dashboard and dataset explorer ===== */
+.voice-panel { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.voice-panel .voice-transcript-area { width: 100%; max-width: none; max-height: min(48vh, 440px); overflow-y: auto; }
 .dataset-summary, .dataset-filters, .dataset-pagination { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
 .dataset-summary span { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 8px 10px; font-size: .82rem; }
 .dataset-filters input, .dataset-filters select, .dataset-filters button, .dataset-pagination button { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 8px 10px; }

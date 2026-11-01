@@ -10,9 +10,9 @@ import asyncio
 import threading
 import webbrowser
 
-# ── Windows console safety ──────────────────────────────────────────────
-# Reconfigure stdout/stderr to UTF-8 so emoji status prints (🚀 📡 🔍 …)
-# can never raise UnicodeEncodeError on cp1252 Windows consoles — an
+# â”€â”€ Windows console safety â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Reconfigure stdout/stderr to UTF-8 so emoji status prints (ðŸš€ ðŸ“¡ ðŸ” â€¦)
+# can never raise UnicodeEncodeError on cp1252 Windows consoles â€” an
 # unhandled encode error here would abort the server before uvicorn starts.
 for _stream in (sys.stdout, sys.stderr):
     if _stream is not None and hasattr(_stream, "reconfigure"):
@@ -109,14 +109,14 @@ from backend.dns_lookup import (
     start_dns_lookup,
 )
 
-# ── ML phishing classifier (optional layer; the API works without it) ──
+# â”€â”€ ML phishing classifier (optional layer; the API works without it) â”€â”€
 try:
     from backend.ml_phishing import analyze_url_ml, model_info as ml_model_info
 except Exception:  # ML stack (scikit-learn / joblib) may be absent
     analyze_url_ml = None
     ml_model_info = None
 
-# ── Shared threat-intelligence (VirusTotal) connectivity ──
+# â”€â”€ Shared threat-intelligence (VirusTotal) connectivity â”€â”€
 try:
     from backend.threat_intel import provider_status as threat_intel_status
 except Exception:
@@ -137,7 +137,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dashboard directory — bundled read-only asset in a packaged build, the
+# Dashboard directory â€” bundled read-only asset in a packaged build, the
 # project's desktop-dashboard/ folder in development (see zyra_paths).
 DASHBOARD_DIR = zyra_paths.resource_path("desktop-dashboard")
 
@@ -214,7 +214,7 @@ def broadcast_system_monitor_trigger(metrics: Optional[Dict[str, Any]] = None) -
 
     Called from the voice loop thread (main.py) when the user asks to monitor
     the system, and by the chat/voice intents. The broadcast is what opens the
-    dashboard's System Monitor panel and seeds it with the current metrics —
+    dashboard's System Monitor panel and seeds it with the current metrics â€”
     without it the panel never appears for voice/chat activation.
     """
     if metrics is None:
@@ -450,7 +450,7 @@ _url_lock = threading.Lock()
 _url_active: Optional[Dict[str, Any]] = None
 _url_last: Optional[Dict[str, Any]] = None
 
-# ── URL analysis rate limiting ──
+# â”€â”€ URL analysis rate limiting â”€â”€
 # Sliding-window limiter: at most _URL_RATE_MAX scans per _URL_RATE_WINDOW
 # seconds. Applied to every entry point (panel button, chat intent, voice
 # intent) so the analyzer can't be hammered.
@@ -618,7 +618,7 @@ def start_url_scan(url: str, source: str = "panel") -> Dict[str, Any]:
 
         # Generate the scan id here and pass it through to the worker,
         # which calls start_scan(scan_id=...) with the callbacks. Do NOT
-        # call start_scan() here — that would spawn a second callback-less
+        # call start_scan() here â€” that would spawn a second callback-less
         # inner thread and desync the scan registry from _url_active.
         from datetime import datetime as _dt
         import uuid as _uuid
@@ -737,7 +737,7 @@ def _dns_finish(scan_id: str, result: Dict[str, Any]) -> None:
     if snapshot:
         try:
             dns_history_add(result)
-        except Exception:  # noqa: BLE001 — history is best-effort
+        except Exception:  # noqa: BLE001 â€” history is best-effort
             pass
         broadcast_message_sync({"type": "dns_status", "data": snapshot})
 
@@ -1109,7 +1109,7 @@ async def analyze_link_endpoint(data: Dict[str, Any]):
     """
     Backend-only link security analysis.
     Inspects a URL for phishing, malicious intent, or suspicious attributes.
-    Never modifies the frontend dashboard UI — returns a text-only report.
+    Never modifies the frontend dashboard UI â€” returns a text-only report.
 
     Request body (provide either field):
         {"url": "http://example.com/login"}
@@ -1504,7 +1504,7 @@ async def threat_intel_status_endpoint(probe: bool = True):
 @app.post("/api/ml/phishing")
 async def ml_phishing_check(data: Dict[str, Any]):
     """
-    Instant ML-only phishing check for a URL (lexical model — no DNS/HTTP
+    Instant ML-only phishing check for a URL (lexical model â€” no DNS/HTTP
     probes). Returns phishing probability, verdict and top signals.
     """
     if analyze_url_ml is None:
@@ -1594,7 +1594,7 @@ async def dns_lookup_endpoint(data: Dict[str, Any]):
 
     The lookup runs in a background thread (live progress is streamed to
     dashboard clients over WebSocket as `dns_status` messages). The endpoint
-    waits for completion (up to ~50s — typical lookups take 1-5s) and returns
+    waits for completion (up to ~50s â€” typical lookups take 1-5s) and returns
     the full structured result: DNS records (A, AAAA, CNAME, MX, NS, TXT,
     SOA, PTR), DNSSEC status, TTLs, response time, resolution status and
     errors (NXDOMAIN / SERVFAIL / timeout).
@@ -1638,7 +1638,7 @@ async def dns_lookup_endpoint(data: Dict[str, Any]):
 
     result = holder.get("result")
     if result is None:
-        # Timed out waiting — check the registry once more before giving up.
+        # Timed out waiting â€” check the registry once more before giving up.
         state = get_dns_scan_state(lookup_id)
         if state and state.get("result"):
             result = state["result"]
@@ -1736,7 +1736,7 @@ async def dns_report_generate_endpoint(data: Dict[str, Any]):
 
     With format=json (default) returns the assembled report structure.
     With format=txt or format=pdf returns the generated report as a
-    downloadable attachment — so 'DOWNLOAD REPORT' always fetches the real
+    downloadable attachment â€” so 'DOWNLOAD REPORT' always fetches the real
     server-generated report, even for lookups no longer in the registry.
     """
     result = data.get("result") or {}
@@ -1860,7 +1860,7 @@ def _spawn_link_capture(question: str, websocket: WebSocket = None) -> None:
                     {"type": "response", "success": True, "data": report},
                     websocket,
                 )
-            print("[ZYRA][link-capture] finished — server thread still alive.")
+            print("[ZYRA][link-capture] finished â€” server thread still alive.")
         except BaseException as exc:  # noqa: BLE001 - absolute last line of defence
             print(f"[ZYRA][link-capture] unexpected worker error (suppressed): {exc!r}")
 
@@ -1943,7 +1943,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             {
                                 "type": "response",
                                 "success": True,
-                                "data": ("Looking at the link on your screen — "
+                                "data": ("Looking at the link on your screen â€” "
                                          "analyzing it now..."),
                             },
                             websocket,
@@ -2006,7 +2006,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "data": voice_data["response"]
                         })
 
-                # ── Nmap intent from chat or voice ──
+                # â”€â”€ Nmap intent from chat or voice â”€â”€
                 # Launch the whitelisted scan in a background thread and
                 # auto-open the Nmap Scanner panel on the dashboard.
                 nmap_text = ""
@@ -2039,7 +2039,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             websocket,
                         )
 
-                # ── DNS lookup intent from chat or voice ──
+                # â”€â”€ DNS lookup intent from chat or voice â”€â”€
                 # Detect the intent, extract the domain, open the DNS Lookup
                 # panel and run the real lookup. The panel streams live
                 # progress from the background worker.
@@ -2086,7 +2086,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             websocket,
                         )
 
-                # ── URL analysis intent from chat or voice ──
+                # â”€â”€ URL analysis intent from chat or voice â”€â”€
                 # Detect the intent, extract the URL, open the URL Analyzer panel
                 # and start the scan. The panel streams live progress from the
                 # background worker.
@@ -2122,7 +2122,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                 websocket,
                             )
                     else:
-                        # No URL in the text — analyze the link the user is
+                        # No URL in the text â€” analyze the link the user is
                         # looking at (screen/clipboard). When the chat path
                         # already produced a link report (link-analysis intent),
                         # don't capture a second time.
@@ -2175,13 +2175,13 @@ def run_server(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = F
     """
     if open_browser:
         url = f"http://{host}:{port}"
-        print(f"\n🌐 Opening dashboard at {url}")
+        print(f"\nðŸŒ Opening dashboard at {url}")
         webbrowser.open(url)
 
-    print(f"\n🚀 ZYRA Backend Server running at http://{host}:{port}")
-    print(f"📡 WebSocket endpoint: ws://{host}:{port}/ws")
-    print(f"📋 API docs: http://{host}:{port}/docs")
-    print(f"🔍 Health check: http://{host}:{port}/api/health\n")
+    print(f"\nðŸš€ ZYRA Backend Server running at http://{host}:{port}")
+    print(f"ðŸ“¡ WebSocket endpoint: ws://{host}:{port}/ws")
+    print(f"ðŸ“‹ API docs: http://{host}:{port}/docs")
+    print(f"ðŸ” Health check: http://{host}:{port}/api/health\n")
 
     # The server thread must survive transient failures (e.g. port briefly in
     # use, an internal uvicorn error). Retry a few times before giving up;
@@ -2191,7 +2191,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = F
     # CRITICAL: uvicorn.run() calls sys.exit() on several fatal startup paths
     # (port already bound, bad config, signal during boot). SystemExit derives
     # from BaseException, NOT Exception, so the generic handler below would
-    # never catch it — it would propagate out of this thread, kill the daemon
+    # never catch it â€” it would propagate out of this thread, kill the daemon
     # ZYRA-Server thread, and silently disconnect the dashboard/WebSocket.
     # That was the "process disconnects after a link analysis" bug. We catch
     # SystemExit explicitly (and BaseException as a last resort) so the server
@@ -2209,12 +2209,12 @@ def run_server(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = F
             print("[ZYRA][server] uvicorn stopped cleanly (programmatic shutdown).")
             return  # clean shutdown requested (e.g. via programmatic stop)
         except KeyboardInterrupt:
-            print("[ZYRA][server] KeyboardInterrupt — shutting server thread down.")
+            print("[ZYRA][server] KeyboardInterrupt â€” shutting server thread down.")
             return
         except SystemExit as e:
             # A sys.exit() from uvicorn must never kill the whole ZYRA process.
             print(f"[ZYRA][server] suppressed SystemExit({e.code}) on attempt "
-                  f"{attempt}/{max_attempts} — server thread stays alive, will retry.")
+                  f"{attempt}/{max_attempts} â€” server thread stays alive, will retry.")
             if attempt < max_attempts:
                 wait = 3 * attempt
                 print(f"[ZYRA][server] restarting backend server in {wait}s...")
@@ -2222,7 +2222,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8080, open_browser: bool = F
             else:
                 print("[ZYRA][server] could not start after "
                       f"{max_attempts} attempts. Voice assistant keeps running.")
-        except BaseException as e:  # noqa: BLE001 — nothing may kill this thread
+        except BaseException as e:  # noqa: BLE001 â€” nothing may kill this thread
             print(f"[ZYRA][server] backend server error (attempt {attempt}/{max_attempts}): {e!r}")
             if attempt < max_attempts:
                 wait = 3 * attempt
@@ -2252,6 +2252,46 @@ def start_server_thread(host: str = "127.0.0.1", port: int = 8080, open_browser:
 
 
 # ========== CyberLLM Integration (advisory only) ==========
+
+@app.get("/api/cyberllm/status")
+async def cyberllm_status():
+    "CyberLLM integration route."
+    try:
+        from backend.cyberllm_client import CyberLLMClientError, check_health
+        health = await asyncio.to_thread(check_health)
+        return {"success": True, "connected": True, "health": health}
+    except CyberLLMClientError as exc:
+        return JSONResponse(status_code=exc.status_code, content={
+            "success": False, "connected": False, "error": str(exc),
+        })
+    except Exception:
+        return JSONResponse(status_code=502, content={
+            "success": False, "connected": False,
+            "error": "CyberLLM health check failed unexpectedly.",
+        })
+
+@app.post("/api/cyberllm/chat")
+async def cyberllm_chat(data: Dict[str, Any]):
+    "CyberLLM integration route."
+    message = str(data.get("message") or "").strip()
+    if not message or len(message) > 2000:
+        return JSONResponse(status_code=400, content={
+            "success": False,
+            "error": "Provide a message between 1 and 2000 characters.",
+        })
+    try:
+        from backend.cyberllm_client import CyberLLMClientError, generate_chat_response
+        result = await asyncio.to_thread(generate_chat_response, message)
+        return {"success": True, "provider": "CyberLLM", "data": result}
+    except CyberLLMClientError as exc:
+        return JSONResponse(status_code=exc.status_code, content={
+            "success": False, "provider": "CyberLLM", "error": str(exc),
+        })
+    except Exception:
+        return JSONResponse(status_code=502, content={
+            "success": False, "provider": "CyberLLM",
+            "error": "Cybersecurity question could not be answered by CyberLLM.",
+        })
 
 @app.post("/api/cyberllm/phishing")
 async def cyberllm_phishing_check(data: Dict[str, Any]):
