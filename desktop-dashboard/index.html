@@ -3682,6 +3682,7 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
   let urlStagesMap = {};      // key -> stage row element
   let urlLastChatScan = null; // scan_id whose completion notification was already shown
   let urlReportReady = false; // report generated for current scan
+  let cyberLLMLastResult = null;
 
   // All feature panels open on the left, below their top-bar buttons. When
   // multiple panels are visible at the same time they stack vertically
@@ -4002,58 +4003,294 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
     }
   }
 
+  function renderCyberLLMResult(r, requestedUrl) {
+    if (!r || !r.data) {
+      showUrlError('CyberLLM returned an invalid assessment.');
+      return;
+    }
+
+    cyberLLMLastResult = r;
+    const result = r.data;
+    const prediction = String(result.prediction || '').toUpperCase();
+
+    if (prediction !== 'PHISHING' && prediction !== 'LEGITIMATE') {
+      showUrlError('CyberLLM returned an unrecognized prediction.');
+      return;
+    }
+
+    // This is a model score, not a calibrated probability.
+    const rawScore = Number(result.phishing_score);
+    const hasScore = Number.isFinite(rawScore);
+
+    // This result does not have a legacy URL scan ID.
+    urlScanId = null;
+    urlReportReady = false;
+    setUrlButtonsEnabled(true);
+    if (urlActionsEl) urlActionsEl.style.display = 'flex';
+    if (urlReportBtn) urlReportBtn.textContent = 'GENERATE REPORT';
+
+    if (urlStagesSection) urlStagesSection.style.display = 'none';
+    if (urlResultSection) urlResultSection.style.display = 'block';
+
+    if (urlTargetEl) urlTargetEl.textContent = result.url || requestedUrl;
+
+    if (urlScoreEl) {
+      urlScoreEl.textContent = hasScore
+        ? rawScore.toFixed(4) + ' (raw score)'
+        : 'Not provided';
+      urlScoreEl.classList.remove('safe', 'suspicious', 'danger');
+      urlScoreEl.classList.add(prediction === 'PHISHING' ? 'danger' : 'safe');
+    }
+
+    if (urlRiskLabel) {
+      urlRiskLabel.textContent =
+        prediction === 'PHISHING' ? 'MODEL FLAG: PHISHING' : 'MODEL FLAG: LEGITIMATE';
+    }
+
+    if (urlClassLabel) {
+      urlClassLabel.textContent = 'Provider: ' + String(r.provider || 'CyberLLM');
+    }
+
+    const checks = [
+      {
+        name: 'CyberLLM prediction',
+        detail: prediction,
+        status: prediction === 'PHISHING' ? 'fail' : 'pass'
+      },
+      {
+        name: 'Score calibration',
+        detail: result.score_is_calibrated_probability === true
+          ? 'Calibrated probability'
+          : 'Uncalibrated model score; not a probability',
+        status: 'warn'
+      },
+      {
+        name: 'Assessment limitation',
+        detail: result.disclaimer ||
+          'This model assessment is not a guarantee of safety.',
+        status: 'warn'
+      }
+    ];
+
+    if (urlChecksEl) {
+      urlChecksEl.innerHTML = checks.map(function (c) {
+        const icons = { pass: '&#10003;', fail: '&#10007;', warn: '&#9888;' };
+        return '<div class="url-check ' + c.status + '">'
+          + '<span class="url-check-icon">' + icons[c.status] + '</span>'
+          + '<span>' + escapeHtml(c.name) + ' — ' + escapeHtml(c.detail) + '</span>'
+          + '</div>';
+      }).join('');
+    }
+    if (urlSummarySection) urlSummarySection.style.display = 'block';
+
+    // These fields belong to the legacy multi-stage scanner.
+    // Hide them rather than displaying misleading empty results.
+    [
+      urlDetailsSection, urlSslSection, urlThreatSection,
+      urlFindingsSection, urlRecSection
+    ].forEach(function (el) {
+      if (el) el.style.display = 'none';
+    });
+
+    if (urlActionsEl) urlActionsEl.style.display = 'flex';
+
+    setUrlBadge('CYBERLLM');
+    if (urlProgressBar) urlProgressBar.style.width = '100%';
+    if (urlProgressVal) urlProgressVal.textContent = '100%';
+
+    if (urlStageLabel) {
+      urlStageLabel.textContent = 'CYBERLLM ASSESSMENT COMPLETE';
+    }
+
+    if (urlAnalyzeBtn) {
+      urlAnalyzeBtn.disabled = false;
+      urlAnalyzeBtn.classList.remove('scanning');
+    }
+
+    if (prediction === 'PHISHING') {
+      addMessage(
+        'CyberLLM flagged this URL as PHISHING. Avoid entering credentials or sensitive information unless independently verified.',
+        'zyra'
+      );
+    }
+  }
   function startUrlScanManual() {
     const url = (urlInput && urlInput.value || '').trim();
-    if (!url) { showUrlError('Please enter a valid URL.'); return; }
+
+    if (!url) {
+      showUrlError('Please enter a valid HTTP or HTTPS URL.');
+      return;
+    }
+
     clearUrlError();
     resetUrlResultSections();
-    if (urlStagesSection) urlStagesSection.style.display = 'block';
-    if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = true; urlAnalyzeBtn.classList.add('scanning'); }
-    setUrlBadge('SCANNING');
-    if (urlStageLabel) urlStageLabel.textContent = 'INITIALIZING URL ANALYZER...';
-    if (urlProgressBar) urlProgressBar.style.width = '0%';
-    if (urlProgressVal) urlProgressVal.textContent = '0%';
 
-    fetch('/api/url/analyze', {
+    // Do not reuse an ID from an earlier legacy scan.
+    urlScanId = null;
+    urlReportReady = false;
+    setUrlButtonsEnabled(true);
+    if (urlActionsEl) urlActionsEl.style.display = 'flex';
+    if (urlReportBtn) urlReportBtn.textContent = 'GENERATE REPORT';
+
+    if (urlStagesSection) urlStagesSection.style.display = 'block';
+    if (urlAnalyzeBtn) {
+      urlAnalyzeBtn.disabled = true;
+      urlAnalyzeBtn.classList.add('scanning');
+    }
+
+    setUrlBadge('SCANNING');
+    if (urlStageLabel) urlStageLabel.textContent = 'CONTACTING CYBERLLM...';
+    if (urlProgressBar) urlProgressBar.style.width = '25%';
+    if (urlProgressVal) urlProgressVal.textContent = '25%';
+
+    fetch('/api/cyberllm/phishing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: url, source: 'panel' }),
-    }).then(function (res) { return res.json(); }).then(function (data) {
-      if (!data.success) {
-        showUrlError(data.error || 'URL analysis could not be started.');
-        if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = false; urlAnalyzeBtn.classList.remove('scanning'); }
-        return;
-      }
-      urlScanId = data.scan_id;
-      if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = false; urlAnalyzeBtn.classList.remove('scanning'); }
-    }).catch(function (err) {
-      showUrlError('Could not reach the ZYRA backend: ' + err);
-      if (urlAnalyzeBtn) { urlAnalyzeBtn.disabled = false; urlAnalyzeBtn.classList.remove('scanning'); }
-    });
+      body: JSON.stringify({ url: url })
+    })
+      .then(function (res) {
+        return res.json().catch(function () {
+          throw new Error('Zyra returned an invalid response.');
+        }).then(function (data) {
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || ('Request failed with HTTP ' + res.status));
+          }
+          return data;
+        });
+      })
+      .then(function (data) {
+        if (urlProgressBar) urlProgressBar.style.width = '75%';
+        if (urlProgressVal) urlProgressVal.textContent = '75%';
+
+        renderCyberLLMResult(data, url);
+      })
+      .catch(function (err) {
+        showUrlError('CyberLLM assessment failed: ' + (err.message || String(err)));
+      })
+      .finally(function () {
+        if (urlAnalyzeBtn) {
+          urlAnalyzeBtn.disabled = false;
+          urlAnalyzeBtn.classList.remove('scanning');
+        }
+      });
+  }
+  function buildCyberLLMReportText() {
+    if (!cyberLLMLastResult || !cyberLLMLastResult.data) return '';
+
+    const response = cyberLLMLastResult;
+    const data = response.data;
+    const prediction = String(data.prediction || 'UNKNOWN').toUpperCase();
+    const score = Number(data.phishing_score);
+    const scoreText = Number.isFinite(score) ? score.toFixed(4) : 'Not provided';
+    const calibrationText = data.score_is_calibrated_probability === true
+      ? 'Calibrated probability'
+      : 'Uncalibrated model score; NOT a probability';
+
+    return [
+      '============================================================',
+      'ZYRA CYBERLLM URL SECURITY ASSESSMENT',
+      '============================================================',
+      '',
+      'Provider: ' + String(response.provider || 'CyberLLM'),
+      'Timestamp: ' + new Date().toISOString(),
+      'Target URL: ' + String(data.url || ''),
+      '',
+      'ASSESSMENT',
+      '------------------------------------------------------------',
+      'Prediction: ' + prediction,
+      'Raw model score: ' + scoreText,
+      'Score interpretation: ' + calibrationText,
+      'Advisory only: ' + String(response.advisory_only === true),
+      '',
+      'DISCLAIMER',
+      '------------------------------------------------------------',
+      String(data.disclaimer ||
+        'This model assessment is not a guarantee of safety.'),
+      '',
+      'This assessment may contain false positives or false negatives.',
+      'Independently verify the destination before entering credentials',
+      'or sensitive information.',
+      '============================================================'
+    ].join('\r\n');
   }
 
   function generateUrlReport() {
-    if (!urlScanId) return;
-    if (urlReportBtn) { urlReportBtn.disabled = true; urlReportBtn.textContent = 'GENERATING REPORT...'; }
+    if (cyberLLMLastResult && cyberLLMLastResult.data) {
+      const text = buildCyberLLMReportText();
+      if (!text) {
+        showUrlError('Could not build the CyberLLM report.');
+        return;
+      }
+
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = 'zyra-cyberllm-report-' +
+        new Date().toISOString().replace(/[:.]/g, '-') + '.txt';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+
+      urlReportReady = true;
+      if (urlReportBtn) {
+        urlReportBtn.disabled = false;
+        urlReportBtn.textContent = 'REPORT READY';
+      }
+      if (urlDownloadBtn) urlDownloadBtn.disabled = false;
+
+      addMessage('CyberLLM assessment report generated and downloaded as a text file.', 'zyra');
+      return;
+    }
+
+    // Preserve the original report workflow for legacy URL scans.
+    if (!urlScanId) {
+      showUrlError('No CyberLLM assessment or legacy scan is available for reporting.');
+      return;
+    }
+
+    if (urlReportBtn) {
+      urlReportBtn.disabled = true;
+      urlReportBtn.textContent = 'GENERATING REPORT...';
+    }
+
     fetch('/api/url/report/' + urlScanId + '?format=txt', { method: 'GET' })
-      .then(function (res) { return res.text(); })
-      .then(function (text) {
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function () {
         urlReportReady = true;
-        if (urlReportBtn) { urlReportBtn.disabled = false; urlReportBtn.textContent = 'REPORT READY'; }
+        if (urlReportBtn) {
+          urlReportBtn.disabled = false;
+          urlReportBtn.textContent = 'REPORT READY';
+        }
         if (urlDownloadBtn) urlDownloadBtn.disabled = false;
-        // Brief confirmation in chat
         addMessage('URL analysis report generated. Click DOWNLOAD REPORT to save the PDF.', 'zyra');
-      }).catch(function (err) {
-        if (urlReportBtn) { urlReportBtn.disabled = false; urlReportBtn.textContent = 'GENERATE REPORT'; }
-        showUrlError('Report generation failed: ' + err);
+      })
+      .catch(function (err) {
+        if (urlReportBtn) {
+          urlReportBtn.disabled = false;
+          urlReportBtn.textContent = 'GENERATE REPORT';
+        }
+        showUrlError('Report generation failed: ' + err.message);
       });
   }
 
   function downloadUrlReport() {
-    if (!urlScanId) return;
+    if (cyberLLMLastResult && cyberLLMLastResult.data) {
+      generateUrlReport();
+      return;
+    }
+
+    if (!urlScanId) {
+      showUrlError('No report is available to download.');
+      return;
+    }
+
     window.open('/api/url/report/' + urlScanId + '?format=pdf', '_blank');
   }
-
   function loadUrlHistory() {
     fetch('/api/url/history').then(function (res) { return res.json(); }).then(function (data) {
       if (!data.success || !data.data || !data.data.length) {
@@ -4727,3 +4964,6 @@ body.zyra-light [style*="color"] { color: var(--lt-ink) !important; }
 </script>
 </body>
 </html>
+
+
+
