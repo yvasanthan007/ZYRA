@@ -447,6 +447,49 @@ function preloadPath() {
 function rendererFile(name) {
     return path.join(__dirname, '..', 'renderer', name);
 }
+// ── Security policy ─────────────────────────────────────────────────────────
+/**
+ * Origins a window is allowed to stay on: the locally served dashboard, the
+ * bundled UI pages, and about:blank during initial load.
+ */
+function isAllowedUrl(url) {
+    if (url === 'about:blank')
+        return true;
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol === 'file:')
+            return true;
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
+            return false;
+        if (!backendService)
+            return false;
+        const status = backendService.getStatus();
+        return !!status.url && parsed.origin === new URL(status.url).origin;
+    }
+    catch {
+        return false;
+    }
+}
+/**
+ * Lock a window down: no Node access (set in webPreferences), no in-page
+ * navigation away from the ZYRA dashboard, and every external link opens in
+ * the system browser instead of inside the app.
+ */
+function applySecurityPolicy(win) {
+    win.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            void electron_1.shell.openExternal(url);
+        }
+        return { action: 'deny' };
+    });
+    win.webContents.on('will-navigate', (event, url) => {
+        if (!isAllowedUrl(url))
+            event.preventDefault();
+    });
+    // Deny every renderer permission (mic/camera/geolocation/notifications).
+    // Voice capture runs in the Python backend, never in the renderer.
+    win.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+}
 function sendBackendStatus(status) {
     for (const win of electron_1.BrowserWindow.getAllWindows()) {
         if (!win.isDestroyed()) {
@@ -509,8 +552,11 @@ function createWindow() {
             preload: preloadPath(),
             contextIsolation: true,
             nodeIntegration: false,
+            // Renderers never get Node/Electron internals; only the preload bridge.
+            sandbox: true,
         },
     });
+    applySecurityPolicy(mainWindow);
     // Show the startup screen first; the holographic dashboard is swapped in once
     // the FastAPI backend reports ready. The once() guard prevents a reload loop.
     void mainWindow.loadFile(rendererFile('splash.html'));
@@ -554,8 +600,10 @@ function openDesktopUiWindow() {
             preload: preloadPath(),
             contextIsolation: true,
             nodeIntegration: false,
+            sandbox: true,
         },
     });
+    applySecurityPolicy(desktopWindow);
     desktopWindow.loadFile(rendererFile('index.html')).catch((err) => {
         console.error('Failed to load the ZYRA desktop UI window:', err);
     });
@@ -679,8 +727,26 @@ process.on('exit', () => {
 // is started lazily and only if the backend cannot serve the request. This
 // keeps every existing React feature working while avoiding a second Python
 // process in normal use.
+// ── IPC input validation ────────────────────────────────────────────────────
+//
+// Every handler re-validates its arguments: a compromised renderer can invoke
+// these channels with any shape, so nothing is trusted by type annotation.
+const MAX_TEXT = 8000;
+const MAX_PATH = 512;
+const ALLOWED_METHODS = new Set(['GET', 'POST', 'PUT', 'DELETE']);
+function requireText(value, field, { allowEmpty = false } = {}) {
+    if (typeof value !== 'string')
+        throw new Error(`${field} must be a string`);
+    const trimmed = value.trim();
+    if (!allowEmpty && !trimmed)
+        throw new Error(`${field} must not be empty`);
+    if (trimmed.length > MAX_TEXT)
+        throw new Error(`${field} is too long`);
+    return trimmed;
+}
 // Send message to Zyra's AI brain (Ollama).
 electron_1.ipcMain.handle('ai:chat', async (_event, message) => {
+    requireText(message, 'message');
     if (backendReady()) {
         const body = (await backendCall('POST', '/api/chat', { message }));
         if (typeof body?.response === 'string')
@@ -691,6 +757,7 @@ electron_1.ipcMain.handle('ai:chat', async (_event, message) => {
 });
 // Execute a system command.
 electron_1.ipcMain.handle('command:execute', async (_event, command) => {
+    requireText(command, 'command');
     if (backendReady()) {
         return backendCall('POST', '/api/command', { command });
     }
@@ -711,6 +778,8 @@ electron_1.ipcMain.handle('command:execute', async (_event, command) => {
 // their own FastAPI process, so they never share this capture lock or listener.
 let voiceInFlight = null;
 electron_1.ipcMain.handle('voice:toggle', async (_event, enabled) => {
+    if (typeof enabled !== 'boolean')
+        throw new Error('enabled must be a boolean');
     if (!enabled) {
         // Stand down: never open the microphone on a stop request.
         // If a capture is in flight it runs to its timeout on the bridge side;
@@ -753,6 +822,8 @@ electron_1.ipcMain.handle('voice:status', async () => {
 // backend request so an old captured URL can never replace a typed target.
 electron_1.ipcMain.handle('link:analyze', async (_event, url) => {
     const target = typeof url === 'string' ? url.trim() : '';
+    if (target.length > MAX_TEXT)
+        throw new Error('url is too long');
     if (backendReady()) {
         return backendCall('POST', '/api/ml/phishing', { url: target });
     }
@@ -765,6 +836,8 @@ electron_1.ipcMain.handle('link:capture-analyze', async () => {
 });
 // Remember something.
 electron_1.ipcMain.handle('memory:remember', async (_event, key, value) => {
+    requireText(key, 'key');
+    requireText(value, 'value', { allowEmpty: true });
     if (backendReady()) {
         return backendCall('POST', '/api/memory/remember', { key, value });
     }
@@ -772,6 +845,7 @@ electron_1.ipcMain.handle('memory:remember', async (_event, key, value) => {
 });
 // Recall something.
 electron_1.ipcMain.handle('memory:recall', async (_event, key) => {
+    requireText(key, 'key');
     if (backendReady()) {
         const body = (await backendCall('POST', '/api/memory/recall', { key }));
         return body?.data ?? null;
@@ -836,10 +910,19 @@ electron_1.ipcMain.handle('backend:restart', async () => {
 });
 // Call the existing FastAPI API on the renderer's behalf.
 electron_1.ipcMain.handle('backend:request', async (_event, method, apiPath, payload) => {
+    // Only the ZYRA API surface is reachable, and only with plain HTTP verbs.
+    // This channel must never become a general-purpose network proxy.
+    const verb = typeof method === 'string' ? method.toUpperCase() : '';
+    if (!ALLOWED_METHODS.has(verb)) {
+        return { ok: false, status: 0, body: null, error: 'Unsupported method' };
+    }
+    if (typeof apiPath !== 'string' || !apiPath.startsWith('/api/') || apiPath.length > MAX_PATH) {
+        return { ok: false, status: 0, body: null, error: 'Unsupported API path' };
+    }
     if (!backendService) {
         return { ok: false, status: 0, body: null, error: 'Backend not initialised' };
     }
-    return backendService.request(method, apiPath, payload);
+    return backendService.request(verb, apiPath, payload);
 });
 // Open the existing React desktop UI in its own window.
 electron_1.ipcMain.handle('ui:open-desktop', () => {

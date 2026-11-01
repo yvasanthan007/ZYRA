@@ -194,7 +194,10 @@ main.py                 # Entry point - voice loop + server startup
 │   ├── zyra_bridge.py # Bridge between backend and Zyra modules
 │   └── link_security.py # Link security analysis (backend-only)
 ├── link_analysis.py    # Legacy link analysis with OCR
-└── desktop-dashboard/  # HTML dashboard (Three.js)
+├── desktop-dashboard/  # HTML dashboard (Three.js)
+├── desktop-ui/         # Electron desktop shell (see "Windows Desktop Application")
+├── zyra_paths.py       # Read-only resources vs. writable data paths
+└── zyra.spec           # PyInstaller recipe for the bundled backend
 ```
 
 ## API Endpoints
@@ -338,6 +341,7 @@ URL-analysis response path.
 - Bridge logic in `backend/zyra_bridge.py`
 - Security analysis in `backend/link_security.py`
 - Dashboard UI in `desktop-dashboard/index.html`
+- Electron desktop shell in `desktop-ui/src/` (see the desktop section below)
 
 ### Adding New Commands
 1. Add function in `commands/open_app.py` or `commands/close_app.py`
@@ -356,3 +360,156 @@ MIT License - Feel free to modify and use!
 - **Edge TTS** - Text-to-speech
 - **Three.js** - 3D graphics
 - **FastAPI** - Backend framework
+## Windows Desktop Application (Electron)
+
+ZYRA ships as a standalone Windows desktop application. The Electron shell owns
+the window, the splash screen and the Python backend lifecycle; the interface
+you see inside it is the existing Three.js holographic dashboard, served by the
+local FastAPI backend. Nothing about the dashboard is re-implemented — the shell
+loads `http://127.0.0.1:8080`, exactly the page the browser used to open.
+
+```
+Electron (ZYRA.exe)
+  └── main process (desktop-ui/src/main/main.ts)
+        ├── splash screen (renderer/splash.html) until /api/health answers
+        ├── BackendService ── spawns ──> ZYRA-backend.exe  (or .venv python main.py)
+        └── BrowserWindow ── loads ──>  http://127.0.0.1:8080  (FastAPI dashboard)
+```
+
+### Desktop components
+
+| File | Responsibility |
+| --- | --- |
+| `desktop-ui/src/main/main.ts` | Window creation, lifecycle, menu, IPC handlers, security policy |
+| `desktop-ui/src/main/backend-service.ts` | Backend discovery/spawn, health polling, retry, shutdown |
+| `desktop-ui/src/main/zyra-paths.ts` | Resolves the project root, Python interpreter and packaged backend |
+| `desktop-ui/src/main/preload.ts` | `contextBridge` surface (`window.zyraAPI`) — the only renderer↔main channel |
+| `desktop-ui/src/main/python-bridge.ts` | Lazily started legacy `bridge_server.py` fallback for voice capture |
+| `desktop-ui/src/renderer/` | Splash screen + the optional React desktop UI window |
+| `zyra.spec` | PyInstaller recipe for the bundled Python backend |
+| `tools/build_installer.ps1` | One-command build: PyInstaller → webpack → NSIS installer |
+| `zyra_paths.py` | Read-only resource vs. writable data separation (Python side) |
+
+### Backend lifecycle
+
+1. On launch Electron probes `GET /api/health` on port **8080**.
+2. If a ZYRA backend already answers (`{"zyra": "running"}`) it is **adopted** —
+   no second process is started and Electron never terminates it.
+3. If the port is held by some *other* service, startup fails with a clear
+   message instead of adopting the wrong server.
+4. Otherwise Electron spawns the backend with `ZYRA_NO_EDGE=1`, so `main.py`
+   starts the FastAPI server and voice loop **without** opening the Edge kiosk
+   window, and polls `/api/health` for up to 45 s.
+5. When the backend is ready the splash screen is replaced by the dashboard.
+6. On quit, only the process Electron spawned is terminated (the whole process
+   tree, so `uvicorn` is never orphaned).
+
+Failures are shown in the splash screen with the backend's recent output and a
+**Retry backend startup** button (IPC `backend:restart`).
+
+### Development mode
+
+Prerequisites:
+
+- Python 3.10+ with `pip install -r requirements.txt`
+- Node.js 18+ with `cd desktop-ui; npm install`
+- The project virtualenv at `.venv/` (the shell prefers it over PATH Python)
+
+```bash
+# 1. Build the Electron bundles (main, preload, renderer)
+cd desktop-ui
+npm run build
+
+# 2. Launch the desktop app against the source checkout
+npm start
+```
+
+`npm start` rebuilds and runs Electron. Electron starts `.venv\Scripts\python.exe
+main.py` itself — do **not** start `main.py` separately.
+
+Useful flags / environment variables:
+
+| Variable | Effect |
+| --- | --- |
+| `ZYRA_PYTHON` | Explicit interpreter path (skips venv detection) |
+| `ZYRA_BACKEND` | Explicit backend executable (skips all other detection) |
+| `ZYRA_DATA_DIR` | Override the writable data directory |
+| `electron . --desktop-ui` | Also open the legacy React desktop UI window |
+
+You can still run the classic Python-only workflow (`python main.py`); in a
+source checkout it keeps opening the Edge kiosk dashboard unless `ZYRA_NO_EDGE=1`
+is set.
+
+### Packaging the backend (PyInstaller)
+
+```powershell
+.venv\Scripts\python.exe -m PyInstaller zyra.spec --noconfirm --clean
+```
+
+Produces `dist\ZYRA-backend\ZYRA-backend.exe` plus `_internal\` containing the
+dashboard, the XGBoost phishing model, EasyOCR weights and Torch/Torchvision
+DLLs. The result needs no Python installation on the target machine.
+
+### Building the Windows installer
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\build_installer.ps1
+```
+
+The script runs PyInstaller, then `npm run build` (webpack main + preload +
+renderer), then electron-builder with the NSIS target. Options: `-BackendOnly`,
+`-SkipBackend`, `-SkipWebpack`.
+
+Output:
+
+```
+dist/ZYRA-backend/                            # self-contained Python backend
+desktop-ui/dist/                              # webpack bundles
+desktop-ui/release/win-unpacked/ZYRA.exe      # unpacked application
+desktop-ui/release/ZYRA-Setup-<version>.exe   # NSIS installer
+```
+
+The installer creates Desktop and Start-menu shortcuts, lets the user choose
+the install directory, and reuses the ZYRA icon (`desktop-ui/build-assets/icon.ico`)
+for the window, the executable, the installer and the shortcuts.
+
+### Packaged resource layout
+
+```
+ZYRA/                     (install directory)
+└── resources/
+    ├── app.asar          Electron code (dist/ + package.json)
+    └── zyra/
+        ├── ZYRA-backend.exe
+        └── _internal/
+            ├── desktop-dashboard/          # evaluated read-only
+            └── backend/ml_phishing/models/phishing_model.joblib
+```
+
+### Writable data location
+
+Packaged builds never write next to the executable. All runtime data goes to:
+
+```
+%LOCALAPPDATA%\ZYRA\data\
+```
+
+which includes `memory/data.json`, `url_scan_history.json`,
+`dns_lookup_history.json`, `nmap/*.xml` and `ml_phishing/live_analysis.jsonl`.
+Set `ZYRA_DATA_DIR` to relocate it. In a source checkout the project root is
+still used, so the development layout is unchanged.
+
+### Desktop troubleshooting
+
+- **"Port 8080 is in use by a service that is not the ZYRA backend."** Another
+  program owns the port. Close it (or stop the stray `python main.py`) and press
+  *Retry backend startup*.
+- **"The ZYRA backend did not become ready…"** The splash screen shows the last
+  backend lines. In development, check `npm start` output for Python import
+  errors; in a packaged build, reinstall.
+- **No Edge window appears.** Expected: desktop mode sets `ZYRA_NO_EDGE=1`.
+- **Model/OCR unavailable in the packaged build.** Rebuild with
+  `.venv\Scripts\python.exe -m PyInstaller zyra.spec --clean`, and make sure the
+  EasyOCR cache exists under `%USERPROFILE%\.EasyOCR\model` before packing.
+- **Orphaned backend after a crash.** Conflict with a hard kill; normally the
+  process tree is reaped. If needed, end `ZYRA-backend.exe` in Task Manager.

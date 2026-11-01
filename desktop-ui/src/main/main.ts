@@ -20,6 +20,46 @@ function rendererFile(name: string): string {
   return path.join(__dirname, '..', 'renderer', name);
 }
 
+// ── Security policy ─────────────────────────────────────────────────────────
+
+/**
+ * Origins a window is allowed to stay on: the locally served dashboard, the
+ * bundled UI pages, and about:blank during initial load.
+ */
+function isAllowedUrl(url: string): boolean {
+  if (url === 'about:blank') return true;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'file:') return true;
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+    if (!backendService) return false;
+    const status = backendService.getStatus();
+    return !!status.url && parsed.origin === new URL(status.url).origin;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Lock a window down: no Node access (set in webPreferences), no in-page
+ * navigation away from the ZYRA dashboard, and every external link opens in
+ * the system browser instead of inside the app.
+ */
+function applySecurityPolicy(win: BrowserWindow): void {
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      void shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!isAllowedUrl(url)) event.preventDefault();
+  });
+  // Deny every renderer permission (mic/camera/geolocation/notifications).
+  // Voice capture runs in the Python backend, never in the renderer.
+  win.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+}
+
 function sendBackendStatus(status: BackendStatus | null): void {
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) {
@@ -84,8 +124,11 @@ function createWindow(): void {
       preload: preloadPath(),
       contextIsolation: true,
       nodeIntegration: false,
+      // Renderers never get Node/Electron internals; only the preload bridge.
+      sandbox: true,
     },
   });
+  applySecurityPolicy(mainWindow);
 
   // Show the startup screen first; the holographic dashboard is swapped in once
   // the FastAPI backend reports ready. The once() guard prevents a reload loop.
@@ -131,8 +174,10 @@ function openDesktopUiWindow(): void {
       preload: preloadPath(),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
   });
+  applySecurityPolicy(desktopWindow);
   desktopWindow.loadFile(rendererFile('index.html')).catch((err: Error) => {
     console.error('Failed to load the ZYRA desktop UI window:', err);
   });
@@ -263,8 +308,26 @@ process.on('exit', () => {
 // keeps every existing React feature working while avoiding a second Python
 // process in normal use.
 
+// ── IPC input validation ────────────────────────────────────────────────────
+//
+// Every handler re-validates its arguments: a compromised renderer can invoke
+// these channels with any shape, so nothing is trusted by type annotation.
+
+const MAX_TEXT = 8000;
+const MAX_PATH = 512;
+const ALLOWED_METHODS = new Set(['GET', 'POST', 'PUT', 'DELETE']);
+
+function requireText(value: unknown, field: string, { allowEmpty = false } = {}): string {
+  if (typeof value !== 'string') throw new Error(`${field} must be a string`);
+  const trimmed = value.trim();
+  if (!allowEmpty && !trimmed) throw new Error(`${field} must not be empty`);
+  if (trimmed.length > MAX_TEXT) throw new Error(`${field} is too long`);
+  return trimmed;
+}
+
 // Send message to Zyra's AI brain (Ollama).
 ipcMain.handle('ai:chat', async (_event, message: string): Promise<string> => {
+  requireText(message, 'message');
   if (backendReady()) {
     const body = (await backendCall('POST', '/api/chat', { message })) as {
       success?: boolean;
@@ -278,6 +341,7 @@ ipcMain.handle('ai:chat', async (_event, message: string): Promise<string> => {
 
 // Execute a system command.
 ipcMain.handle('command:execute', async (_event, command: string): Promise<unknown> => {
+  requireText(command, 'command');
   if (backendReady()) {
     return backendCall('POST', '/api/command', { command });
   }
@@ -300,6 +364,7 @@ ipcMain.handle('command:execute', async (_event, command: string): Promise<unkno
 let voiceInFlight: Promise<unknown> | null = null;
 
 ipcMain.handle('voice:toggle', async (_event, enabled: boolean): Promise<unknown> => {
+  if (typeof enabled !== 'boolean') throw new Error('enabled must be a boolean');
   if (!enabled) {
     // Stand down: never open the microphone on a stop request.
     // If a capture is in flight it runs to its timeout on the bridge side;
@@ -342,6 +407,7 @@ ipcMain.handle('voice:status', async (): Promise<unknown> => {
 // backend request so an old captured URL can never replace a typed target.
 ipcMain.handle('link:analyze', async (_event, url: string): Promise<unknown> => {
   const target = typeof url === 'string' ? url.trim() : '';
+  if (target.length > MAX_TEXT) throw new Error('url is too long');
   if (backendReady()) {
     return backendCall('POST', '/api/ml/phishing', { url: target });
   }
@@ -355,6 +421,8 @@ ipcMain.handle('link:capture-analyze', async (): Promise<unknown> => {
 
 // Remember something.
 ipcMain.handle('memory:remember', async (_event, key: string, value: string): Promise<unknown> => {
+  requireText(key, 'key');
+  requireText(value, 'value', { allowEmpty: true });
   if (backendReady()) {
     return backendCall('POST', '/api/memory/remember', { key, value });
   }
@@ -363,6 +431,7 @@ ipcMain.handle('memory:remember', async (_event, key: string, value: string): Pr
 
 // Recall something.
 ipcMain.handle('memory:recall', async (_event, key: string): Promise<unknown> => {
+  requireText(key, 'key');
   if (backendReady()) {
     const body = (await backendCall('POST', '/api/memory/recall', { key })) as {
       data?: string | null;
@@ -437,10 +506,19 @@ ipcMain.handle('backend:restart', async () => {
 ipcMain.handle(
   'backend:request',
   async (_event, method: string, apiPath: string, payload?: unknown) => {
+    // Only the ZYRA API surface is reachable, and only with plain HTTP verbs.
+    // This channel must never become a general-purpose network proxy.
+    const verb = typeof method === 'string' ? method.toUpperCase() : '';
+    if (!ALLOWED_METHODS.has(verb)) {
+      return { ok: false, status: 0, body: null, error: 'Unsupported method' };
+    }
+    if (typeof apiPath !== 'string' || !apiPath.startsWith('/api/') || apiPath.length > MAX_PATH) {
+      return { ok: false, status: 0, body: null, error: 'Unsupported API path' };
+    }
     if (!backendService) {
       return { ok: false, status: 0, body: null, error: 'Backend not initialised' };
     }
-    return backendService.request(method, apiPath, payload);
+    return backendService.request(verb, apiPath, payload);
   },
 );
 
