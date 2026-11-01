@@ -11,9 +11,25 @@ interface BackendResponse {
   statusCode?: number;
 }
 
+interface CyberLLMChatBody {
+  success?: boolean;
+  provider?: string;
+  data?: {
+    answer?: string;
+    response?: string;
+    message?: string;
+  };
+  answer?: string;
+  response?: string;
+  message?: string;
+  detail?: string;
+  error?: string;
+}
+
 const BACKEND_HOST = '127.0.0.1';
 const BACKEND_PORT = 8080;
 const REQUEST_TIMEOUT_MS = 15000;
+const CHAT_REQUEST_TIMEOUT_MS = 90000;
 
 const APPROVED_PATHS = new Set<string>([
   '/api/cyberllm/status',
@@ -58,6 +74,11 @@ function forwardToBackend(
       method === 'POST' && payload !== undefined
         ? JSON.stringify(payload)
         : undefined;
+
+    const timeoutMs =
+      apiPath === '/api/cyberllm/chat'
+        ? CHAT_REQUEST_TIMEOUT_MS
+        : REQUEST_TIMEOUT_MS;
 
     const req = http.request(
       {
@@ -109,7 +130,7 @@ function forwardToBackend(
       },
     );
 
-    req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+    req.setTimeout(timeoutMs, () => {
       req.destroy(new Error('Backend request timed out.'));
     });
 
@@ -158,8 +179,68 @@ function registerBackendRequestHandler(): void {
   );
 }
 
+/**
+ * Connects the renderer's aiChat() call to the CyberLLM chat API.
+ * The renderer expects a string, so this returns the generated answer.
+ */
+function registerAIChatHandler(): void {
+  ipcMain.removeHandler('ai:chat');
+
+  ipcMain.handle(
+    'ai:chat',
+    async (_event, message: unknown): Promise<string> => {
+      if (typeof message !== 'string' || !message.trim()) {
+        throw new Error('Please enter a message.');
+      }
+
+      const result = await forwardToBackend(
+        'POST',
+        '/api/cyberllm/chat',
+        { message: message.trim() },
+      );
+
+      if (!result.success) {
+        throw new Error(
+          result.error ?? 'Unable to contact the Zyra backend.',
+        );
+      }
+
+      const body = result.body as CyberLLMChatBody | undefined;
+
+      if (!body || typeof body !== 'object') {
+        throw new Error('The backend returned an invalid chat response.');
+      }
+
+      if (body.success === false) {
+        throw new Error(
+          body.error ??
+            body.detail ??
+            'CyberLLM could not generate a response.',
+        );
+      }
+
+      const answer =
+        body.data?.answer ??
+        body.data?.response ??
+        body.data?.message ??
+        body.answer ??
+        body.response ??
+        body.message;
+
+      if (typeof answer !== 'string' || !answer.trim()) {
+        throw new Error(
+          body.detail ??
+            body.error ??
+            'CyberLLM returned an empty answer.',
+        );
+      }
+
+      return answer.trim();
+    },
+  );
+}
+
 function createWindow(): void {
-  // Adjust these paths if webpack.config.js emits different filenames.
   const preloadPath = path.join(__dirname, '../preload/preload.js');
   const rendererPath = path.join(__dirname, '../renderer/index.html');
 
@@ -180,15 +261,12 @@ function createWindow(): void {
     mainWindow = null;
   });
 
-  if (app.isPackaged) {
-    void mainWindow.loadFile(rendererPath);
-  } else {
-    void mainWindow.loadFile(rendererPath);
-  }
+  void mainWindow.loadFile(rendererPath);
 }
 
 app.whenReady().then(() => {
   registerBackendRequestHandler();
+  registerAIChatHandler();
   createWindow();
 
   app.on('activate', () => {

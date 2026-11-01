@@ -49,6 +49,7 @@ const path = __importStar(__webpack_require__(/*! path */ "path"));
 const BACKEND_HOST = '127.0.0.1';
 const BACKEND_PORT = 8080;
 const REQUEST_TIMEOUT_MS = 15000;
+const CHAT_REQUEST_TIMEOUT_MS = 90000;
 const APPROVED_PATHS = new Set([
     '/api/cyberllm/status',
     '/api/cyberllm/phishing',
@@ -84,6 +85,9 @@ function forwardToBackend(method, apiPath, payload) {
         const body = method === 'POST' && payload !== undefined
             ? JSON.stringify(payload)
             : undefined;
+        const timeoutMs = apiPath === '/api/cyberllm/chat'
+            ? CHAT_REQUEST_TIMEOUT_MS
+            : REQUEST_TIMEOUT_MS;
         const req = http.request({
             hostname: BACKEND_HOST,
             port: BACKEND_PORT,
@@ -125,7 +129,7 @@ function forwardToBackend(method, apiPath, payload) {
                 });
             });
         });
-        req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+        req.setTimeout(timeoutMs, () => {
             req.destroy(new Error('Backend request timed out.'));
         });
         req.on('error', (error) => {
@@ -158,8 +162,44 @@ function registerBackendRequestHandler() {
         return forwardToBackend(method, apiPath, payload);
     });
 }
+/**
+ * Connects the renderer's aiChat() call to the CyberLLM chat API.
+ * The renderer expects a string, so this returns the generated answer.
+ */
+function registerAIChatHandler() {
+    electron_1.ipcMain.removeHandler('ai:chat');
+    electron_1.ipcMain.handle('ai:chat', async (_event, message) => {
+        if (typeof message !== 'string' || !message.trim()) {
+            throw new Error('Please enter a message.');
+        }
+        const result = await forwardToBackend('POST', '/api/cyberllm/chat', { message: message.trim() });
+        if (!result.success) {
+            throw new Error(result.error ?? 'Unable to contact the Zyra backend.');
+        }
+        const body = result.body;
+        if (!body || typeof body !== 'object') {
+            throw new Error('The backend returned an invalid chat response.');
+        }
+        if (body.success === false) {
+            throw new Error(body.error ??
+                body.detail ??
+                'CyberLLM could not generate a response.');
+        }
+        const answer = body.data?.answer ??
+            body.data?.response ??
+            body.data?.message ??
+            body.answer ??
+            body.response ??
+            body.message;
+        if (typeof answer !== 'string' || !answer.trim()) {
+            throw new Error(body.detail ??
+                body.error ??
+                'CyberLLM returned an empty answer.');
+        }
+        return answer.trim();
+    });
+}
 function createWindow() {
-    // Adjust these paths if webpack.config.js emits different filenames.
     const preloadPath = path.join(__dirname, '../preload/preload.js');
     const rendererPath = path.join(__dirname, '../renderer/index.html');
     mainWindow = new electron_1.BrowserWindow({
@@ -177,15 +217,11 @@ function createWindow() {
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
-    if (electron_1.app.isPackaged) {
-        void mainWindow.loadFile(rendererPath);
-    }
-    else {
-        void mainWindow.loadFile(rendererPath);
-    }
+    void mainWindow.loadFile(rendererPath);
 }
 electron_1.app.whenReady().then(() => {
     registerBackendRequestHandler();
+    registerAIChatHandler();
     createWindow();
     electron_1.app.on('activate', () => {
         if (electron_1.BrowserWindow.getAllWindows().length === 0) {
