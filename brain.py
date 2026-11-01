@@ -67,6 +67,25 @@ try:
         ])
     else:
         _env_candidates.append(os.path.join(os.path.dirname(__file__), ".env"))
+    for candidate in _env_candidates:
+        try:
+            load_dotenv(candidate, override=False)
+        except Exception:
+            pass
+except Exception:
+    pass
+
+# Fast response configuration for simple queries like "Introduce yourself"
+# These reduce token budget and use a concise system prompt for rapid replies
+FAST_RESPONSE_TRIGGERS = (
+    "introduce", "who are you", "tell me about yourself",
+    "capabilities", "what can you do",
+)
+FAST_RESPONSE_NUM_PREDICT = 80   # Reduced from default 320 for fast intros
+FAST_RESPONSE_TEMPERATURE = 0.3   # Slightly lower for more deterministic fast replies
+FAST_SYSTEM_PROMPT = """You are Zyra, a helpful AI assistant. Keep responses concise and direct. 
+For introductions: "I'm Zyra, your AI assistant. I can help with voice commands, 
+security analysis, system monitoring, and answer questions. How can I help you today?""""nv"))
     for _env_path in _env_candidates:
         if os.path.isfile(_env_path):
             load_dotenv(_env_path, override=False)
